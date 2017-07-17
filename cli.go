@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	arg "github.com/alexflint/go-arg"
-	"github.com/k0kubun/pp"
 	"github.com/lycoris0731/go-grpc-client/lib/parser"
 
 	"io"
@@ -18,6 +17,14 @@ type Meta struct {
 type UI struct {
 	Reader            io.Reader
 	Writer, ErrWriter io.Writer
+}
+
+func NewUI() *UI {
+	return &UI{
+		Reader:    os.Stdin,
+		Writer:    os.Stdout,
+		ErrWriter: os.Stderr,
+	}
 }
 
 type Options struct {
@@ -39,11 +46,7 @@ func NewCLI(title, version string) *CLI {
 			Title:   title,
 			Version: version,
 		},
-		ui: &UI{
-			Reader:    os.Stdin,
-			Writer:    os.Stdout,
-			ErrWriter: os.Stderr,
-		},
+		ui: NewUI(),
 		options: &Options{
 			Port: 50051,
 		},
@@ -57,13 +60,19 @@ func (c *CLI) Error(err error) {
 func (c *CLI) Run(args []string) int {
 	arg.MustParse(c.options)
 
-	d, err := parser.ParseFile(args[0])
+	_, err := parser.ParseFile(args[0])
 	if err != nil {
 		c.Error(err)
 		return 1
 	}
 
-	pp.Println(d.GetServices())
+	config := &Config{
+		Port: c.options.Port,
+	}
+	if err := NewREPL(config).Start(); err != nil {
+		c.Error(err)
+		return 1
+	}
 
 	return 0
 }
