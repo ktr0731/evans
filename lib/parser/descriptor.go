@@ -32,6 +32,10 @@ func (d *FileDescriptorSet) GetServices() model.Services {
 	return services
 }
 
+func (d *FileDescriptorSet) GetMessage(pack, name string) *model.Message {
+	return model.NewMessage(d.FileDescriptorSet.GetMessage(pack, name))
+}
+
 func (d *FileDescriptorSet) GetMessages() model.Messages {
 	var messages model.Messages
 	for _, f := range d.GetFile() {

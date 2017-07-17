@@ -78,7 +78,7 @@ func NewREPL(config *Config, env *Env) *REPL {
 		config: config,
 		env:    env,
 		liner:  liner.NewLiner(),
-		state:  &State{},
+		state:  new(State),
 	}
 }
 
@@ -103,22 +103,25 @@ func (r *REPL) Read() (string, error) {
 func (r *REPL) Eval(l string) (string, error) {
 	part := strings.Split(l, " ")
 	switch part[0] {
-	case "show":
+	case "s", "show":
 		if len(part) < 2 {
 			return "", errors.Wrap(ErrArgumentRequired, "target")
 		}
 
 		switch part[1] {
-		case "svc", "service", "services":
+		case "s", "svc", "service", "services":
 			return r.env.desc.GetServices().String(), nil
 
-		case "package", "packages":
+		case "p", "package", "packages":
 			return r.env.desc.GetPackages().String(), nil
+
+		case "m", "message", "messages":
+			return r.env.desc.GetMessages().String(), nil
 
 		default:
 			return "", errors.Wrap(ErrUnknownTarget, part[1])
 		}
-	case "package":
+	case "p", "package":
 		if len(part) < 2 {
 			return "", errors.Wrap(ErrArgumentRequired, "package name")
 		}
@@ -127,7 +130,7 @@ func (r *REPL) Eval(l string) (string, error) {
 			return "", err
 		}
 
-	case "service":
+	case "svc", "service":
 		if len(part) < 2 {
 			return "", errors.Wrap(ErrArgumentRequired, "service name")
 		}
@@ -136,7 +139,7 @@ func (r *REPL) Eval(l string) (string, error) {
 			return "", err
 		}
 
-	case "call":
+	case "c", "call":
 		if len(part) < 2 {
 			return "", errors.Wrap(ErrArgumentRequired, "service or RPC name")
 		}
@@ -153,6 +156,23 @@ func (r *REPL) Eval(l string) (string, error) {
 			rpc = part[1]
 		}
 		fmt.Println(svc, rpc)
+
+	case "d", "desc", "description":
+		if len(part) < 2 {
+			return "", errors.Wrap(ErrArgumentRequired, "message name")
+		}
+		var pack, name string
+		splitted := strings.Split(part[1], ".")
+		if r.state.currentPackage == "" {
+			if len(splitted) < 2 {
+				return "", errors.Wrap(ErrArgumentRequired, "package name")
+			}
+			pack, name = splitted[0], splitted[1]
+		} else {
+			pack = r.state.currentPackage
+			name = part[1]
+		}
+		return r.env.desc.GetMessage(pack, name).String(), nil
 
 	default:
 		return "", errors.Wrap(ErrUnknownCommand, part[0])

@@ -6,8 +6,14 @@ service Greeter {
   rpc SayHelloAgain (HelloRequest) returns (HelloReply) {}
 }
 
-message HelloRequest {
+message Person {
   string name = 1;
+  int32 age = 2;
+}
+
+message HelloRequest {
+  Person person = 1;
+  string msg = 2;
 }
 
 message HelloReply {
