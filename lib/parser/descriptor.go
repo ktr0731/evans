@@ -1,4 +1,4 @@
-package lib
+package parser
 
 import (
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"

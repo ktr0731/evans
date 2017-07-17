@@ -5,7 +5,7 @@ import (
 
 	arg "github.com/alexflint/go-arg"
 	"github.com/k0kubun/pp"
-	"github.com/lycoris0731/go-grpc-client/lib"
+	"github.com/lycoris0731/go-grpc-client/lib/parser"
 
 	"io"
 	"os"
@@ -57,7 +57,7 @@ func (c *CLI) Error(err error) {
 func (c *CLI) Run(args []string) int {
 	arg.MustParse(c.options)
 
-	d, err := lib.ParseFile(args[0])
+	d, err := parser.ParseFile(args[0])
 	if err != nil {
 		c.Error(err)
 		return 1
