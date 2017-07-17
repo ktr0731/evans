@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	arg "github.com/alexflint/go-arg"
-	"github.com/lycoris0731/go-grpc-client/lib/parser"
+	"github.com/lycoris0731/evans/lib/parser"
 
 	"io"
 	"os"

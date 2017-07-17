@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	os.Exit(NewCLI("client", "0.1.0").Run(os.Args[1:]))
+	os.Exit(NewCLI("evans", "0.1.0").Run(os.Args[1:]))
 }
