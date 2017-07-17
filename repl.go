@@ -1,8 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"io"
+	"os"
+
+	"github.com/peterh/liner"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -13,6 +17,7 @@ var (
 type REPL struct {
 	ui     *UI
 	config *Config
+	liner  *liner.State
 }
 
 type Config struct {
@@ -23,11 +28,12 @@ func NewREPL(config *Config) *REPL {
 	return &REPL{
 		ui:     NewUI(),
 		config: config,
+		liner:  liner.NewLiner(),
 	}
 }
 
-func (r *REPL) ShowPrompt() {
-	fmt.Fprintf(r.ui.Writer, "localhost:%d> ", r.config.Port)
+func (r *REPL) Read() (string, error) {
+	return r.liner.Prompt(fmt.Sprintf("127.0.0.1:%d> ", r.config.Port))
 }
 
 func (r *REPL) Response(text string) {
@@ -35,22 +41,33 @@ func (r *REPL) Response(text string) {
 }
 
 func (r *REPL) Start() error {
-	r.ShowPrompt()
-	scanner := bufio.NewScanner(r.ui.Reader)
+	defer func() {
+		r.Response("Bye!")
+		if err := r.Close(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}()
 
 REPL:
-	for scanner.Scan() {
-		cmd := scanner.Text()
+	for {
+		cmd, err := r.Read()
+		if err == io.EOF {
+			fmt.Println()
+			break REPL
+		} else if err != nil {
+			return errors.Wrap(err, "failed to read line")
+		}
 
 		switch cmd {
 		case CmdQuit, CmdExit:
-			r.Response("Bye!")
 			break REPL
 		default:
 			r.Response(cmd)
 		}
-
-		r.ShowPrompt()
 	}
-	return scanner.Err()
+	return nil
+}
+
+func (r *REPL) Close() error {
+	return r.liner.Close()
 }
