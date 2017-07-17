@@ -8,7 +8,9 @@ import (
 )
 
 type RPC struct {
-	Name string
+	Name         string
+	RequestType  string
+	ResponseType string
 }
 
 type Service struct {
@@ -20,7 +22,9 @@ func NewService(service *descriptor.ServiceDescriptorProto) *Service {
 	rpcs := make([]RPC, len(service.GetMethod()))
 	for i, rpc := range service.GetMethod() {
 		rpcs[i] = RPC{
-			Name: rpc.GetName(),
+			Name:         rpc.GetName(),
+			RequestType:  rpc.GetInputType(),
+			ResponseType: rpc.GetOutputType(),
 		}
 	}
 	return &Service{
@@ -34,7 +38,7 @@ type Services []*Service
 func (s Services) String() string {
 	buf := new(bytes.Buffer)
 	table := tablewriter.NewWriter(buf)
-	table.SetHeader([]string{"service", "RPC"})
+	table.SetHeader([]string{"service", "RPC", "RequestType", "ResponseType"})
 	rows := [][]string{}
 	for _, service := range s {
 		first := true
@@ -44,7 +48,7 @@ func (s Services) String() string {
 				serviceName = service.Name
 				first = false
 			}
-			row := []string{serviceName, rpc.Name}
+			row := []string{serviceName, rpc.Name, rpc.RequestType, rpc.ResponseType}
 			rows = append(rows, row)
 		}
 	}

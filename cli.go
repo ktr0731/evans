@@ -17,6 +17,7 @@ type Meta struct {
 type UI struct {
 	Reader            io.Reader
 	Writer, ErrWriter io.Writer
+	Prompt            string
 }
 
 func NewUI() *UI {
