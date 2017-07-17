@@ -26,3 +26,4 @@ _testmain.go
 *.prof
 
 go-grpc-client
+coverage.out

@@ -13,7 +13,7 @@ func Test_runProtoc(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			targets:     []string{"../testdata/proto/test.proto"},
+			targets:     []string{"../../testdata/proto/test.proto"},
 			expectedErr: nil,
 		},
 	}
@@ -33,9 +33,10 @@ func Test_runProtoc(t *testing.T) {
 		args = append(args, test.targets...)
 
 		code, err := runProtoc(args)
-		if err != nil {
-			t.Fatalf("runProto returns err: %s", err)
+		if err != test.expectedErr {
+			t.Fatalf("expectedErr: %s, actual: %s", test.expectedErr, err)
 		}
+
 		if len(code) == 0 {
 			t.Fatalf("returned byte length is 0")
 		}
