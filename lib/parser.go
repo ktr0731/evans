@@ -11,22 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func runProtoc(args []string) ([]byte, error) {
-	buf, errBuf := new(bytes.Buffer), new(bytes.Buffer)
-	cmd := exec.Command("protoc", args...)
-	cmd.Stdout = buf
-	cmd.Stderr = errBuf
-	if err := cmd.Run(); err != nil {
-		if errBuf.Len() != 0 {
-			return nil, errors.Wrap(err, errBuf.String())
-		}
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
-func ParseFile(filename string, paths ...string) (*descriptor.FileDescriptorSet, error) {
+func ParseFile(filename string, paths ...string) (*FileDescriptorSet, error) {
 	args := []string{
 		fmt.Sprintln("--proto_path=%s", strings.Join(paths, ":")),
 		"--proto_path=.",
@@ -41,10 +26,25 @@ func ParseFile(filename string, paths ...string) (*descriptor.FileDescriptorSet,
 		return nil, err
 	}
 
-	desc := &descriptor.FileDescriptorSet{}
-	if err := proto.Unmarshal(code, desc); err != nil {
+	desc := descriptor.FileDescriptorSet{}
+	if err := proto.Unmarshal(code, &desc); err != nil {
 		return nil, err
 	}
-	fmt.Println("hoge", desc)
-	return desc, nil
+
+	return &FileDescriptorSet{&desc}, nil
+}
+
+func runProtoc(args []string) ([]byte, error) {
+	buf, errBuf := new(bytes.Buffer), new(bytes.Buffer)
+	cmd := exec.Command("protoc", args...)
+	cmd.Stdout = buf
+	cmd.Stderr = errBuf
+	if err := cmd.Run(); err != nil {
+		if errBuf.Len() != 0 {
+			return nil, errors.Wrap(err, errBuf.String())
+		}
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
