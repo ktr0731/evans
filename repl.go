@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
+	"github.com/lycoris0731/evans/lib/parser"
 	"github.com/peterh/liner"
 	"github.com/pkg/errors"
 )
@@ -17,6 +19,7 @@ var (
 type REPL struct {
 	ui     *UI
 	config *Config
+	env    *Env
 	liner  *liner.State
 }
 
@@ -24,46 +27,70 @@ type Config struct {
 	Port int
 }
 
-func NewREPL(config *Config) *REPL {
+type Env struct {
+	desc *parser.FileDescriptorSet
+}
+
+func NewREPL(config *Config, env *Env) *REPL {
 	return &REPL{
 		ui:     NewUI(),
 		config: config,
+		env:    env,
 		liner:  liner.NewLiner(),
 	}
 }
 
 func (r *REPL) Read() (string, error) {
-	return r.liner.Prompt(fmt.Sprintf("127.0.0.1:%d> ", r.config.Port))
+	l, err := r.liner.Prompt(fmt.Sprintf("127.0.0.1:%d> ", r.config.Port))
+	if err == nil {
+		// TODO: 書き出し
+		r.liner.AppendHistory(l)
+	}
+	return l, err
 }
 
-func (r *REPL) Response(text string) {
+func (r *REPL) Eval(l string) (string, error) {
+	part := strings.Split(l, " ")
+	switch part[0] {
+	case "show":
+		switch part[1] {
+		case "svc", "service", "services":
+			return r.env.desc.GetServices().String(), nil
+		}
+	}
+	return "", nil
+}
+
+func (r *REPL) Print(text string) {
 	fmt.Fprintf(r.ui.Writer, "%s\n", text)
 }
 
 func (r *REPL) Start() error {
 	defer func() {
-		r.Response("Bye!")
+		r.Print("Bye!")
 		if err := r.Close(); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}()
 
-REPL:
 	for {
-		cmd, err := r.Read()
-		if err == io.EOF {
-			fmt.Println()
-			break REPL
-		} else if err != nil {
+		l, err := r.Read()
+
+		if err == io.EOF || l == CmdQuit || l == CmdExit {
+			if err == io.EOF {
+				fmt.Println()
+			}
+			break
+		}
+		if err != nil {
 			return errors.Wrap(err, "failed to read line")
 		}
 
-		switch cmd {
-		case CmdQuit, CmdExit:
-			break REPL
-		default:
-			r.Response(cmd)
+		result, err := r.Eval(l)
+		if err != nil {
+			return errors.Wrap(err, "failed to evaluate line")
 		}
+		r.Print(result)
 	}
 	return nil
 }

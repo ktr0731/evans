@@ -9,7 +9,7 @@ type FileDescriptorSet struct {
 	*descriptor.FileDescriptorSet
 }
 
-func (d *FileDescriptorSet) GetServices() []*model.Service {
+func (d *FileDescriptorSet) GetServices() model.Services {
 	// TODO: Optimization
 	var services []*model.Service
 	for _, f := range d.GetFile() {

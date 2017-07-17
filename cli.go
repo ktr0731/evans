@@ -60,7 +60,7 @@ func (c *CLI) Error(err error) {
 func (c *CLI) Run(args []string) int {
 	arg.MustParse(c.options)
 
-	_, err := parser.ParseFile(args[0])
+	desc, err := parser.ParseFile(args[0])
 	if err != nil {
 		c.Error(err)
 		return 1
@@ -69,7 +69,10 @@ func (c *CLI) Run(args []string) int {
 	config := &Config{
 		Port: c.options.Port,
 	}
-	if err := NewREPL(config).Start(); err != nil {
+	env := &Env{
+		desc: desc,
+	}
+	if err := NewREPL(config, env).Start(); err != nil {
 		c.Error(err)
 		return 1
 	}
