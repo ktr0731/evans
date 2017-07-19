@@ -26,14 +26,14 @@ type State struct {
 }
 
 type Env struct {
-	Desc *parser.FileDescriptorSet
+	desc *parser.FileDescriptorSet
 	State
 
 	cache cache
 }
 
 func NewEnv(desc *parser.FileDescriptorSet) *Env {
-	env := &Env{Desc: desc}
+	env := &Env{desc: desc}
 	env.cache.mapPackages = map[string]*model.Package{}
 	return env
 }
@@ -43,7 +43,7 @@ func (e *Env) GetPackages() model.Packages {
 		return e.cache.packages
 	}
 
-	packNames := e.Desc.GetPackages()
+	packNames := e.desc.GetPackages()
 	packages := make(model.Packages, len(packNames))
 	for i, name := range packNames {
 		packages[i] = &model.Package{Name: name}
@@ -85,23 +85,22 @@ func (e *Env) GetMessages() (model.Messages, error) {
 }
 
 func (e *Env) UsePackage(name string) error {
-	for _, p := range e.Desc.GetPackages() {
+	for _, p := range e.desc.GetPackages() {
 		if name == p {
 			e.currentPackage = name
-			e.loadPackage(p)
-			return nil
+			return e.loadPackage(p)
 		}
 	}
 	return ErrUnknownPackage
 }
 
 func (e *Env) UseService(name string) error {
-	// for _, svc := range r.env.Desc.GetServices() {
-	// 	if name == svc.Name {
-	// 		r.env.state.currentService = name
-	// 		return nil
-	// 	}
-	// }
+	for _, svc := range e.desc.GetServices(e.currentPackage) {
+		if name == svc.Name {
+			e.currentService = name
+			return nil
+		}
+	}
 	return ErrUnknownService
 }
 
@@ -118,8 +117,8 @@ func (e *Env) GetDSN() string {
 
 // loadPackage loads all services and messages in itself
 func (e *Env) loadPackage(name string) error {
-	svc := e.Desc.GetServices(name)
-	msg := e.Desc.GetMessages(name)
+	svc := e.desc.GetServices(name)
+	msg := e.desc.GetMessages(name)
 
 	_, ok := e.cache.mapPackages[name]
 	if ok {
