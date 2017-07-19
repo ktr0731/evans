@@ -1,4 +1,4 @@
-package main
+package repl
 
 import (
 	"fmt"
@@ -25,16 +25,34 @@ var (
 	ErrArgumentRequired = errors.New("argument required")
 )
 
+func newUI() *UI {
+	return &UI{
+		Reader:    os.Stdin,
+		Writer:    os.Stdout,
+		ErrWriter: os.Stderr,
+	}
+}
+
 type REPL struct {
-	ui     *replUI
+	ui     *UI
 	config *Config
 	env    *Env
 	liner  *liner.State
 	state  *State
 }
 
-type replUI struct {
-	*UI
+type UI struct {
+	Reader            io.Reader
+	Writer, ErrWriter io.Writer
+	prompt            string
+}
+
+func NewUI() *UI {
+	return &UI{
+		Reader:    os.Stdin,
+		Writer:    os.Stdout,
+		ErrWriter: os.Stderr,
+	}
 }
 
 type State struct {
@@ -43,7 +61,7 @@ type State struct {
 }
 
 func (r *REPL) usePackage(name string) error {
-	for _, p := range r.env.desc.GetPackages() {
+	for _, p := range r.env.Desc.GetPackages() {
 		if name == p {
 			r.state.currentPackage = name
 			return nil
@@ -53,7 +71,7 @@ func (r *REPL) usePackage(name string) error {
 }
 
 func (r *REPL) useService(name string) error {
-	for _, svc := range r.env.desc.GetServices() {
+	for _, svc := range r.env.Desc.GetServices() {
 		if name == svc.Name {
 			r.state.currentService = name
 			return nil
@@ -67,14 +85,12 @@ type Config struct {
 }
 
 type Env struct {
-	desc *parser.FileDescriptorSet
+	Desc *parser.FileDescriptorSet
 }
 
-func NewREPL(config *Config, env *Env) *REPL {
+func NewREPL(config *Config, env *Env, ui *UI) *REPL {
 	return &REPL{
-		ui: &replUI{
-			UI: NewUI(),
-		},
+		ui:     ui,
 		config: config,
 		env:    env,
 		liner:  liner.NewLiner(),
@@ -102,25 +118,26 @@ func (r *REPL) Read() (string, error) {
 
 func (r *REPL) Eval(l string) (string, error) {
 	part := strings.Split(l, " ")
+
 	switch part[0] {
-	case "s", "show":
+	case "show":
 		if len(part) < 2 {
-			return "", errors.Wrap(ErrArgumentRequired, "target")
+			return "", errors.Wrap(ErrArgumentRequired, "target type (package, service, message)")
 		}
+		return show(r.env, part[1])
 
-		switch part[1] {
-		case "s", "svc", "service", "services":
-			return r.env.desc.GetServices().String(), nil
-
-		case "p", "package", "packages":
-			return r.env.desc.GetPackages().String(), nil
-
-		case "m", "message", "messages":
-			return r.env.desc.GetMessages().String(), nil
-
-		default:
-			return "", errors.Wrap(ErrUnknownTarget, part[1])
+	case "c", "call":
+		if len(part) < 2 {
+			return "", errors.Wrap(ErrArgumentRequired, "service or RPC name")
 		}
+		return call(r.state, part[1])
+
+	case "d", "desc", "describe":
+		if len(part) < 2 {
+			return "", errors.Wrap(ErrArgumentRequired, "message name")
+		}
+		return describe(r.env, r.state, part[1])
+
 	case "p", "package":
 		if len(part) < 2 {
 			return "", errors.Wrap(ErrArgumentRequired, "package name")
@@ -130,7 +147,7 @@ func (r *REPL) Eval(l string) (string, error) {
 			return "", err
 		}
 
-	case "svc", "service":
+	case "s", "svc", "service":
 		if len(part) < 2 {
 			return "", errors.Wrap(ErrArgumentRequired, "service name")
 		}
@@ -139,43 +156,9 @@ func (r *REPL) Eval(l string) (string, error) {
 			return "", err
 		}
 
-	case "c", "call":
-		if len(part) < 2 {
-			return "", errors.Wrap(ErrArgumentRequired, "service or RPC name")
-		}
-
-		var svc, rpc string
-		if r.state.currentService == "" {
-			splitted := strings.Split(part[1], ".")
-			if len(splitted) < 2 {
-				return "", errors.Wrap(ErrArgumentRequired, "service or RPC name")
-			}
-			svc, rpc = splitted[0], splitted[1]
-		} else {
-			svc = r.state.currentService
-			rpc = part[1]
-		}
-		fmt.Println(svc, rpc)
-
-	case "d", "desc", "description":
-		if len(part) < 2 {
-			return "", errors.Wrap(ErrArgumentRequired, "message name")
-		}
-		var pack, name string
-		splitted := strings.Split(part[1], ".")
-		if r.state.currentPackage == "" {
-			if len(splitted) < 2 {
-				return "", errors.Wrap(ErrArgumentRequired, "package name")
-			}
-			pack, name = splitted[0], splitted[1]
-		} else {
-			pack = r.state.currentPackage
-			name = part[1]
-		}
-		return r.env.desc.GetMessage(pack, name).String(), nil
-
 	default:
 		return "", errors.Wrap(ErrUnknownCommand, part[0])
+
 	}
 	return "", nil
 }

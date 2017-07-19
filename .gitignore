@@ -25,5 +25,5 @@ _testmain.go
 *.test
 *.prof
 
-go-grpc-client
+evans
 coverage.out

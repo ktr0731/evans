@@ -5,6 +5,7 @@ import (
 
 	arg "github.com/alexflint/go-arg"
 	"github.com/lycoris0731/evans/lib/parser"
+	"github.com/lycoris0731/evans/repl"
 
 	"io"
 	"os"
@@ -17,7 +18,6 @@ type Meta struct {
 type UI struct {
 	Reader            io.Reader
 	Writer, ErrWriter io.Writer
-	Prompt            string
 }
 
 func NewUI() *UI {
@@ -67,13 +67,13 @@ func (c *CLI) Run(args []string) int {
 		return 1
 	}
 
-	config := &Config{
+	config := &repl.Config{
 		Port: c.options.Port,
 	}
-	env := &Env{
-		desc: desc,
+	env := &repl.Env{
+		Desc: desc,
 	}
-	if err := NewREPL(config, env).Start(); err != nil {
+	if err := repl.NewREPL(config, env, repl.NewUI()).Start(); err != nil {
 		c.Error(err)
 		return 1
 	}
