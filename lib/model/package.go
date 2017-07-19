@@ -6,7 +6,13 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-type Packages []string
+type Package struct {
+	Name     string
+	Services Services
+	Messages Messages
+}
+
+type Packages []*Package
 
 func (p Packages) String() string {
 	buf := new(bytes.Buffer)
@@ -14,7 +20,7 @@ func (p Packages) String() string {
 	table.SetHeader([]string{"package"})
 	rows := [][]string{}
 	for _, pack := range p {
-		row := []string{pack}
+		row := []string{pack.Name}
 		rows = append(rows, row)
 	}
 	table.AppendBulk(rows)

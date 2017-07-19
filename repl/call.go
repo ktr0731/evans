@@ -1,24 +1,35 @@
 package repl
 
 import (
-	"fmt"
 	"strings"
 
+	"github.com/k0kubun/pp"
 	"github.com/pkg/errors"
 )
 
 func call(env *Env, name string) (string, error) {
-	var svc, rpc string
+	var svcName, rpcName string
 	if env.state.currentService == "" {
 		splitted := strings.Split(name, ".")
 		if len(splitted) < 2 {
 			return "", errors.Wrap(ErrArgumentRequired, "service or RPC name")
 		}
-		svc, rpc = splitted[0], splitted[1]
+		svcName, rpcName = splitted[0], splitted[1]
 	} else {
-		svc = env.state.currentService
-		rpc = name
+		svcName = env.state.currentService
+		rpcName = name
 	}
-	fmt.Println(svc, rpc)
+
+	// 1. 引数、戻り値取得
+	// 2. 各フィールド取得
+	// 3. 新しいプロンプトを起動
+	rpc, err := env.Desc.GetRPC(svcName, rpcName)
+	if err != nil {
+		return "", err
+	}
+	// TODO: Type はパッケージ名を取り除く (.test.HelloRequest => HelloRequest)
+	resType := env.Desc.GetMessage(env.state.currentPackage, rpc.RequestType)
+	pp.Println(resType)
+
 	return "", nil
 }

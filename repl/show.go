@@ -6,11 +6,15 @@ import (
 
 func show(env *Env, target string) (string, error) {
 	switch target {
-	case "s", "svc", "service", "services":
-		return env.Desc.GetServices().String(), nil
-
 	case "p", "package", "packages":
-		return env.Desc.GetPackages().String(), nil
+		return env.GetPackages().String(), nil
+
+	case "s", "svc", "service", "services":
+		svc, err := env.GetServices()
+		if err != nil {
+			return "", err
+		}
+		return svc.String(), nil
 
 	case "m", "message", "messages":
 		return env.Desc.GetMessages().String(), nil

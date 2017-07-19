@@ -61,7 +61,7 @@ func (c *CLI) Error(err error) {
 func (c *CLI) Run(args []string) int {
 	arg.MustParse(c.options)
 
-	desc, err := parser.ParseFile(args[0])
+	desc, err := parser.ParseFile(args, []string{})
 	if err != nil {
 		c.Error(err)
 		return 1

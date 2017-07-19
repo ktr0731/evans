@@ -11,14 +11,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-func ParseFile(filename string, paths ...string) (*FileDescriptorSet, error) {
+func ParseFile(filename []string, paths []string) (*FileDescriptorSet, error) {
 	args := []string{
 		fmt.Sprintln("--proto_path=%s", strings.Join(paths, ":")),
 		"--proto_path=.",
 		"--include_source_info",
 		"--include_imports",
 		"--descriptor_set_out=/dev/stdout",
-		filename,
+	}
+
+	for _, file := range filename {
+		args = append(args, file)
 	}
 
 	code, err := runProtoc(args)

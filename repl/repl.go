@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/lycoris0731/evans/lib/parser"
 	"github.com/peterh/liner"
 	"github.com/pkg/errors"
 )
@@ -70,22 +69,17 @@ func (r *REPL) usePackage(name string) error {
 }
 
 func (r *REPL) useService(name string) error {
-	for _, svc := range r.env.Desc.GetServices() {
-		if name == svc.Name {
-			r.env.state.currentService = name
-			return nil
-		}
-	}
+	// for _, svc := range r.env.Desc.GetServices() {
+	// 	if name == svc.Name {
+	// 		r.env.state.currentService = name
+	// 		return nil
+	// 	}
+	// }
 	return ErrUnknownService
 }
 
 type Config struct {
 	Port int
-}
-
-type Env struct {
-	Desc  *parser.FileDescriptorSet
-	state state
 }
 
 func NewREPL(config *Config, env *Env, ui *UI) *REPL {
