@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
-	"github.com/k0kubun/pp"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -24,7 +23,6 @@ type Message struct {
 func NewMessage(message *descriptor.DescriptorProto) *Message {
 	var fields []*Field
 	for _, field := range message.GetField() {
-		pp.Println(field)
 		fields = append(fields, &Field{
 			Name:     field.GetName(),
 			JSONName: field.GetJsonName(),

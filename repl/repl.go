@@ -38,7 +38,6 @@ type REPL struct {
 	config *Config
 	env    *Env
 	liner  *liner.State
-	state  *State
 }
 
 type UI struct {
@@ -55,7 +54,7 @@ func NewUI() *UI {
 	}
 }
 
-type State struct {
+type state struct {
 	currentPackage string
 	currentService string
 }
@@ -63,7 +62,7 @@ type State struct {
 func (r *REPL) usePackage(name string) error {
 	for _, p := range r.env.Desc.GetPackages() {
 		if name == p {
-			r.state.currentPackage = name
+			r.env.state.currentPackage = name
 			return nil
 		}
 	}
@@ -73,7 +72,7 @@ func (r *REPL) usePackage(name string) error {
 func (r *REPL) useService(name string) error {
 	for _, svc := range r.env.Desc.GetServices() {
 		if name == svc.Name {
-			r.state.currentService = name
+			r.env.state.currentService = name
 			return nil
 		}
 	}
@@ -85,7 +84,8 @@ type Config struct {
 }
 
 type Env struct {
-	Desc *parser.FileDescriptorSet
+	Desc  *parser.FileDescriptorSet
+	state state
 }
 
 func NewREPL(config *Config, env *Env, ui *UI) *REPL {
@@ -94,16 +94,15 @@ func NewREPL(config *Config, env *Env, ui *UI) *REPL {
 		config: config,
 		env:    env,
 		liner:  liner.NewLiner(),
-		state:  new(State),
 	}
 }
 
 func (r *REPL) Read() (string, error) {
 	prompt := fmt.Sprintf("127.0.0.1:%d> ", r.config.Port)
-	if r.state.currentPackage != "" {
-		dsn := r.state.currentPackage
-		if r.state.currentService != "" {
-			dsn += "." + r.state.currentService
+	if r.env.state.currentPackage != "" {
+		dsn := r.env.state.currentPackage
+		if r.env.state.currentService != "" {
+			dsn += "." + r.env.state.currentService
 		}
 		prompt = fmt.Sprintf("%s@%s", dsn, prompt)
 	}
@@ -130,13 +129,13 @@ func (r *REPL) Eval(l string) (string, error) {
 		if len(part) < 2 {
 			return "", errors.Wrap(ErrArgumentRequired, "service or RPC name")
 		}
-		return call(r.state, part[1])
+		return call(r.env, part[1])
 
 	case "d", "desc", "describe":
 		if len(part) < 2 {
 			return "", errors.Wrap(ErrArgumentRequired, "message name")
 		}
-		return describe(r.env, r.state, part[1])
+		return describe(r.env, part[1])
 
 	case "p", "package":
 		if len(part) < 2 {
