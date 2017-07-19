@@ -1,8 +1,6 @@
 package env
 
 import (
-	"log"
-
 	"github.com/lycoris0731/evans/lib/model"
 	"github.com/lycoris0731/evans/lib/parser"
 	"github.com/pkg/errors"
@@ -29,9 +27,15 @@ type State struct {
 
 type Env struct {
 	Desc *parser.FileDescriptorSet
-	*State
+	State
 
 	cache cache
+}
+
+func NewEnv(desc *parser.FileDescriptorSet) *Env {
+	env := &Env{Desc: desc}
+	env.cache.mapPackages = map[string]*model.Package{}
+	return env
 }
 
 func (e *Env) GetPackages() model.Packages {
@@ -59,14 +63,10 @@ func (e *Env) GetServices() (model.Services, error) {
 
 	pack, ok := e.cache.mapPackages[name]
 	if ok {
-		log.Println("use cache")
 		return pack.Services, nil
 	}
 
-	log.Println("no cache")
-	pack.Services = e.Desc.GetServices(name)
-
-	return pack.Services, nil
+	return nil, errors.New("caching failed")
 }
 
 func (e *Env) GetMessages() (model.Messages, error) {
@@ -81,15 +81,14 @@ func (e *Env) GetMessages() (model.Messages, error) {
 		return pack.Messages, nil
 	}
 
-	pack.Messages = e.Desc.GetMessages(name)
-
-	return pack.Messages, nil
+	return nil, errors.New("caching failed")
 }
 
 func (e *Env) UsePackage(name string) error {
 	for _, p := range e.Desc.GetPackages() {
 		if name == p {
 			e.currentPackage = name
+			e.loadPackage(p)
 			return nil
 		}
 	}
@@ -115,4 +114,21 @@ func (e *Env) GetDSN() string {
 		dsn += "." + e.currentService
 	}
 	return dsn
+}
+
+// loadPackage loads all services and messages in itself
+func (e *Env) loadPackage(name string) error {
+	svc := e.Desc.GetServices(name)
+	msg := e.Desc.GetMessages(name)
+
+	_, ok := e.cache.mapPackages[name]
+	if ok {
+		return errors.New("duplicated loading")
+	}
+	e.cache.mapPackages[name] = &model.Package{
+		Name:     name,
+		Services: svc,
+		Messages: msg,
+	}
+	return nil
 }

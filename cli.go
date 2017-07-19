@@ -71,9 +71,7 @@ func (c *CLI) Run(args []string) int {
 	config := &repl.Config{
 		Port: c.options.Port,
 	}
-	env := &env.Env{
-		Desc: desc,
-	}
+	env := env.NewEnv(desc)
 	if err := repl.NewREPL(config, env, repl.NewUI()).Start(); err != nil {
 		c.Error(err)
 		return 1
