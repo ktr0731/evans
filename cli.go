@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	arg "github.com/alexflint/go-arg"
+	"github.com/lycoris0731/evans/env"
 	"github.com/lycoris0731/evans/lib/parser"
 	"github.com/lycoris0731/evans/repl"
 
@@ -70,7 +71,7 @@ func (c *CLI) Run(args []string) int {
 	config := &repl.Config{
 		Port: c.options.Port,
 	}
-	env := &repl.Env{
+	env := &env.Env{
 		Desc: desc,
 	}
 	if err := repl.NewREPL(config, env, repl.NewUI()).Start(); err != nil {

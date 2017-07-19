@@ -26,6 +26,10 @@ func (d *FileDescriptorSet) GetPackages() []string {
 func (d *FileDescriptorSet) GetServices(pack string) model.Services {
 	var services model.Services
 	for _, f := range d.GetFile() {
+		if f.GetPackage() != pack {
+			continue
+		}
+
 		for _, proto := range f.GetService() {
 			services = append(services, model.NewService(proto))
 		}
@@ -34,9 +38,13 @@ func (d *FileDescriptorSet) GetServices(pack string) model.Services {
 	return services
 }
 
-func (d *FileDescriptorSet) GetMessages() model.Messages {
+func (d *FileDescriptorSet) GetMessages(pack string) model.Messages {
 	var messages model.Messages
 	for _, f := range d.GetFile() {
+		if f.GetPackage() != pack {
+			continue
+		}
+
 		for _, proto := range f.GetMessageType() {
 			messages = append(messages, model.NewMessage(proto))
 		}

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/lycoris0731/evans/env"
 	"github.com/peterh/liner"
 	"github.com/pkg/errors"
 )
@@ -18,10 +19,8 @@ var (
 
 var (
 	ErrUnknownCommand   = errors.New("unknown command")
-	ErrUnknownTarget    = errors.New("unknown target")
-	ErrUnknownPackage   = errors.New("unknown package")
-	ErrUnknownService   = errors.New("unknown service")
 	ErrArgumentRequired = errors.New("argument required")
+	ErrUnknownTarget    = errors.New("unknown target")
 )
 
 func newUI() *UI {
@@ -35,7 +34,7 @@ func newUI() *UI {
 type REPL struct {
 	ui     *UI
 	config *Config
-	env    *Env
+	env    *env.Env
 	liner  *liner.State
 }
 
@@ -53,36 +52,11 @@ func NewUI() *UI {
 	}
 }
 
-type state struct {
-	currentPackage string
-	currentService string
-}
-
-func (r *REPL) usePackage(name string) error {
-	for _, p := range r.env.Desc.GetPackages() {
-		if name == p {
-			r.env.state.currentPackage = name
-			return nil
-		}
-	}
-	return ErrUnknownPackage
-}
-
-func (r *REPL) useService(name string) error {
-	// for _, svc := range r.env.Desc.GetServices() {
-	// 	if name == svc.Name {
-	// 		r.env.state.currentService = name
-	// 		return nil
-	// 	}
-	// }
-	return ErrUnknownService
-}
-
 type Config struct {
 	Port int
 }
 
-func NewREPL(config *Config, env *Env, ui *UI) *REPL {
+func NewREPL(config *Config, env *env.Env, ui *UI) *REPL {
 	return &REPL{
 		ui:     ui,
 		config: config,
@@ -93,11 +67,7 @@ func NewREPL(config *Config, env *Env, ui *UI) *REPL {
 
 func (r *REPL) Read() (string, error) {
 	prompt := fmt.Sprintf("127.0.0.1:%d> ", r.config.Port)
-	if r.env.state.currentPackage != "" {
-		dsn := r.env.state.currentPackage
-		if r.env.state.currentService != "" {
-			dsn += "." + r.env.state.currentService
-		}
+	if dsn := r.env.GetDSN(); dsn != "" {
 		prompt = fmt.Sprintf("%s@%s", dsn, prompt)
 	}
 
@@ -136,7 +106,7 @@ func (r *REPL) Eval(l string) (string, error) {
 			return "", errors.Wrap(ErrArgumentRequired, "package name")
 		}
 
-		if err := r.usePackage(part[1]); err != nil {
+		if err := r.env.UsePackage(part[1]); err != nil {
 			return "", err
 		}
 
@@ -145,7 +115,7 @@ func (r *REPL) Eval(l string) (string, error) {
 			return "", errors.Wrap(ErrArgumentRequired, "service name")
 		}
 
-		if err := r.useService(part[1]); err != nil {
+		if err := r.env.UseService(part[1]); err != nil {
 			return "", err
 		}
 
@@ -166,7 +136,7 @@ func (r *REPL) Error(err error) {
 
 func (r *REPL) Start() error {
 	defer func() {
-		r.Print("Bye!")
+		r.Print("Good Bye :)")
 		if err := r.Close(); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}

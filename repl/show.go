@@ -1,10 +1,11 @@
 package repl
 
 import (
+	"github.com/lycoris0731/evans/env"
 	"github.com/pkg/errors"
 )
 
-func show(env *Env, target string) (string, error) {
+func show(env *env.Env, target string) (string, error) {
 	switch target {
 	case "p", "package", "packages":
 		return env.GetPackages().String(), nil
@@ -17,7 +18,11 @@ func show(env *Env, target string) (string, error) {
 		return svc.String(), nil
 
 	case "m", "message", "messages":
-		return env.Desc.GetMessages().String(), nil
+		msg, err := env.GetMessages()
+		if err != nil {
+			return "", err
+		}
+		return msg.String(), nil
 
 	default:
 		return "", errors.Wrap(ErrUnknownTarget, target)
