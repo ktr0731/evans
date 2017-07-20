@@ -7,21 +7,15 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-type RPC struct {
-	Name         string
-	RequestType  string
-	ResponseType string
-}
-
 type Service struct {
 	Name string
-	RPCs []RPC
+	RPCs RPCs
 }
 
 func NewService(service *descriptor.ServiceDescriptorProto) *Service {
-	rpcs := make([]RPC, len(service.GetMethod()))
+	rpcs := make(RPCs, len(service.GetMethod()))
 	for i, rpc := range service.GetMethod() {
-		rpcs[i] = RPC{
+		rpcs[i] = &RPC{
 			Name:         rpc.GetName(),
 			RequestType:  rpc.GetInputType(),
 			ResponseType: rpc.GetOutputType(),

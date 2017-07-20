@@ -7,10 +7,13 @@ import (
 )
 
 var (
-	ErrUnselected     = errors.New("unselected")
-	ErrUnknownTarget  = errors.New("unknown target")
-	ErrUnknownPackage = errors.New("unknown package")
-	ErrUnknownService = errors.New("unknown service")
+	ErrUnselected         = errors.New("unselected")
+	ErrUnknownTarget      = errors.New("unknown target")
+	ErrUnknownPackage     = errors.New("unknown package")
+	ErrUnknownService     = errors.New("unknown service")
+	ErrInvalidServiceName = errors.New("invalid service name")
+	ErrInvalidMessageName = errors.New("invalid message name")
+	ErrInvalidRPCName     = errors.New("invalid RPC name")
 )
 
 // packages is used by showing all packages
@@ -82,6 +85,59 @@ func (e *Env) GetMessages() (model.Messages, error) {
 	}
 
 	return nil, errors.New("caching failed")
+}
+
+func (e *Env) GetRPCs() (model.RPCs, error) {
+	if e.currentService == "" {
+		return nil, errors.Wrap(ErrUnselected, "service")
+	}
+
+	name := e.currentService
+
+	svc, err := e.GetService(name)
+	if err != nil {
+		return nil, err
+	}
+	return svc.RPCs, nil
+}
+
+func (e *Env) GetService(name string) (*model.Service, error) {
+	svc, err := e.GetServices()
+	if err != nil {
+		return nil, err
+	}
+	for _, svc := range svc {
+		if name == svc.Name {
+			return svc, nil
+		}
+	}
+	return nil, errors.Wrap(ErrInvalidServiceName, name)
+}
+
+func (e *Env) GetMessage(name string) (*model.Message, error) {
+	msg, err := e.GetMessages()
+	if err != nil {
+		return nil, err
+	}
+	for _, msg := range msg {
+		if name == msg.Name {
+			return msg, nil
+		}
+	}
+	return nil, errors.Wrap(ErrInvalidMessageName, name)
+}
+
+func (e *Env) GetRPC(name string) (*model.RPC, error) {
+	rpcs, err := e.GetRPCs()
+	if err != nil {
+		return nil, err
+	}
+	for _, rpc := range rpcs {
+		if name == rpc.Name {
+			return rpc, nil
+		}
+	}
+	return nil, errors.Wrap(ErrInvalidRPCName, name)
 }
 
 func (e *Env) UsePackage(name string) error {

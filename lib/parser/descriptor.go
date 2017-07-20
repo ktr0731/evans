@@ -51,31 +51,3 @@ func (d *FileDescriptorSet) GetMessages(pack string) model.Messages {
 	}
 	return messages
 }
-
-func (d *FileDescriptorSet) GetService(packName string, svcName string) (*model.Service, error) {
-	// for _, svc := range d.GetServices() {
-	// 	if svc.Name == name {
-	// 		return svc, nil
-	// 	}
-	// }
-	// return nil, fmt.Errorf("service %s not found", name)
-	return nil, nil
-}
-func (d *FileDescriptorSet) GetRPC(svcName, rpcName string) (*model.RPC, error) {
-	// services, err := d.GetService(svcName)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// for _, rpc := range services.RPCs {
-	// 	if rpc.Name == rpcName {
-	// 		return &rpc, nil
-	// 	}
-	// }
-	// return nil, fmt.Errorf("RPC %s in service %s not found", rpcName, svcName)
-	return nil, nil
-}
-
-func (d *FileDescriptorSet) GetMessage(pack, name string) *model.Message {
-	// TODO: 自前 descriptor の GetMessage 引くようにする
-	return model.NewMessage(d.FileDescriptorSet.GetMessage(pack, name))
-}
