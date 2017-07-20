@@ -93,7 +93,7 @@ func (r *REPL) Eval(l string) (string, error) {
 		if len(part) < 2 {
 			return "", errors.Wrap(ErrArgumentRequired, "service or RPC name")
 		}
-		return call(r.env, part[1])
+		return r.env.Call(part[1])
 
 	case "d", "desc", "describe":
 		if len(part) < 2 {

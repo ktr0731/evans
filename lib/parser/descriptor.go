@@ -2,7 +2,7 @@ package parser
 
 import (
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
-	"github.com/lycoris0731/evans/lib/model"
+	"github.com/lycoris0731/evans/model"
 )
 
 type FileDescriptorSet struct {

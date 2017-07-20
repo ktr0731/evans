@@ -7,34 +7,16 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-type Field struct {
-	Name     string
-	JSONName string
-	Type     descriptor.FieldDescriptorProto_Type
-	TypeName string
-	Default  string
-}
-
 type Message struct {
 	Name   string
 	Fields []*Field
 }
 
 func NewMessage(message *descriptor.DescriptorProto) *Message {
-	var fields []*Field
-	for _, field := range message.GetField() {
-		fields = append(fields, &Field{
-			Name:     field.GetName(),
-			JSONName: field.GetJsonName(),
-			Type:     field.GetType(),
-			TypeName: field.GetTypeName(),
-			Default:  field.GetDefaultValue(),
-		})
-	}
-	return &Message{
-		Name:   message.GetName(),
-		Fields: fields,
-	}
+	var msg Message
+	msg.Name = message.GetName()
+	msg.Fields = NewFields(message)
+	return &msg
 }
 
 func (m *Message) String() string {

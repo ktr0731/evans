@@ -1,8 +1,10 @@
 package env
 
 import (
-	"github.com/lycoris0731/evans/lib/model"
+	"strings"
+
 	"github.com/lycoris0731/evans/lib/parser"
+	"github.com/lycoris0731/evans/model"
 	"github.com/pkg/errors"
 )
 
@@ -120,7 +122,8 @@ func (e *Env) GetMessage(name string) (*model.Message, error) {
 		return nil, err
 	}
 	for _, msg := range msg {
-		if name == msg.Name {
+		msgName := e.getNameFromFQN(name)
+		if msgName == msg.Name {
 			return msg, nil
 		}
 	}
@@ -186,4 +189,11 @@ func (e *Env) loadPackage(name string) error {
 		Messages: msg,
 	}
 	return nil
+}
+
+// Full Qualified Name
+// It contains message or service with package name
+// e.g.: .test.Person
+func (e *Env) getNameFromFQN(fqn string) string {
+	return strings.TrimLeft(fqn, "."+e.currentPackage+".")
 }
