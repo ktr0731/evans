@@ -1,10 +1,8 @@
 package model
 
 import (
-	"fmt"
-
-	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
-	"github.com/k0kubun/pp"
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/jhump/protoreflect/desc"
 )
 
 type Field struct {
@@ -18,23 +16,18 @@ type Field struct {
 	Fields    []*Field
 }
 
-func NewFields(getMessage func(typeName string) *descriptor.DescriptorProto, msg *descriptor.DescriptorProto) []*Field {
+func NewFields(getMessage func(typeName string) *desc.MessageDescriptor, msg *desc.MessageDescriptor) []*Field {
 	var fields []*Field
-	for _, field := range msg.GetField() {
+	for _, field := range msg.GetFields() {
 		f := &Field{
-			Name:     field.GetName(),
-			JSONName: field.GetJsonName(),
-			Type:     field.GetType(),
-			TypeName: field.GetTypeName(),
-			Default:  field.GetDefaultValue(),
+			Name: field.GetName(),
+			Type: field.GetType(),
 		}
 
-		if field.Type.String() == "TYPE_MESSAGE" {
+		if field.GetType() == descriptor.FieldDescriptorProto_TYPE_MESSAGE {
 			f.IsMessage = true
 
-			fmt.Println("さいき")
-			msg := getMessage(field.GetTypeName())
-			pp.Println(msg)
+			msg := getMessage(field.GetType().String())
 			f.Fields = NewFields(getMessage, msg)
 		}
 

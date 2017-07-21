@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
-	"github.com/k0kubun/pp"
+	"github.com/jhump/protoreflect/desc"
 	"github.com/lycoris0731/evans/lib/parser"
 	"github.com/lycoris0731/evans/model"
 	"github.com/pkg/errors"
@@ -190,7 +189,6 @@ func (e *Env) loadPackage(name string) error {
 		fmt.Println(msg.GetName())
 		messages[i] = model.NewMessage(msg)
 		messages[i].Fields = model.NewFields(e.getMessage(e.currentPackage), msg)
-		pp.Println(messages[i].Fields)
 	}
 
 	_, ok := e.cache.mapPackages[name]
@@ -213,9 +211,15 @@ func (e *Env) getNameFromFQN(fqn string) string {
 	return strings.TrimLeft(fqn, "."+e.currentPackage+".")
 }
 
-func (e *Env) getMessage(pkgName string) func(typeName string) *descriptor.DescriptorProto {
-	return func(typeName string) *descriptor.DescriptorProto {
-		return e.desc.GetMessage(pkgName, e.getNameFromFQN(typeName))
+func (e *Env) getMessage(pkgName string) func(typeName string) *desc.MessageDescriptor {
+	messages := e.desc.GetMessages(pkgName)
 
+	return func(msgName string) *desc.MessageDescriptor {
+		for _, msg := range messages {
+			if msg.GetName() == msgName {
+				return msg
+			}
+		}
+		return nil
 	}
 }

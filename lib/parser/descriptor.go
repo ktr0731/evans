@@ -1,11 +1,16 @@
 package parser
 
 import (
-	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
+	"github.com/jhump/protoreflect/desc"
 )
 
+type fileDescriptorSet []*desc.FileDescriptor
 type FileDescriptorSet struct {
-	*descriptor.FileDescriptorSet
+	fileDescriptorSet
+}
+
+func (d *FileDescriptorSet) GetFile() []*desc.FileDescriptor {
+	return d.fileDescriptorSet
 }
 
 func (d *FileDescriptorSet) GetPackages() []string {
@@ -22,25 +27,25 @@ func (d *FileDescriptorSet) GetPackages() []string {
 	return packages
 }
 
-func (d *FileDescriptorSet) GetServices(pkg string) []*descriptor.ServiceDescriptorProto {
-	svc := []*descriptor.ServiceDescriptorProto{}
+func (d *FileDescriptorSet) GetServices(pkg string) []*desc.ServiceDescriptor {
+	svc := []*desc.ServiceDescriptor{}
 	for _, f := range d.GetFile() {
 		if f.GetPackage() != pkg {
 			continue
 		}
-		svc = append(svc, f.GetService()...)
+		svc = append(svc, f.GetServices()...)
 	}
 
 	return svc
 }
 
-func (d *FileDescriptorSet) GetMessages(pkg string) []*descriptor.DescriptorProto {
-	msg := []*descriptor.DescriptorProto{}
+func (d *FileDescriptorSet) GetMessages(pkg string) []*desc.MessageDescriptor {
+	msg := []*desc.MessageDescriptor{}
 	for _, f := range d.GetFile() {
 		if f.GetPackage() != pkg {
 			continue
 		}
-		msg = append(msg, f.GetMessageType()...)
+		msg = append(msg, f.GetMessageTypes()...)
 	}
 
 	return msg

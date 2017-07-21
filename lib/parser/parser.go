@@ -6,8 +6,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/gogo/protobuf/proto"
-	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/jhump/protoreflect/desc"
 	"github.com/pkg/errors"
 )
 
@@ -29,12 +30,21 @@ func ParseFile(filename []string, paths []string) (*FileDescriptorSet, error) {
 		return nil, err
 	}
 
-	desc := descriptor.FileDescriptorSet{}
-	if err := proto.Unmarshal(code, &desc); err != nil {
+	ds := descriptor.FileDescriptorSet{}
+	if err := proto.Unmarshal(code, &ds); err != nil {
 		return nil, err
 	}
 
-	return &FileDescriptorSet{&desc}, nil
+	set := make([]*desc.FileDescriptor, len(ds.GetFile()))
+	for i, d := range ds.GetFile() {
+		var err error
+		set[i], err = desc.CreateFileDescriptor(d)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &FileDescriptorSet{set}, nil
 }
 
 func runProtoc(args []string) ([]byte, error) {

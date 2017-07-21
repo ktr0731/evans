@@ -3,7 +3,7 @@ package model
 import (
 	"bytes"
 
-	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
+	"github.com/jhump/protoreflect/desc"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -12,7 +12,7 @@ type Message struct {
 	Fields []*Field
 }
 
-func NewMessage(message *descriptor.DescriptorProto) *Message {
+func NewMessage(message *desc.MessageDescriptor) *Message {
 	var msg Message
 	msg.Name = message.GetName()
 	// msg.Fields = NewFields(message)

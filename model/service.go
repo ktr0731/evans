@@ -3,7 +3,7 @@ package model
 import (
 	"bytes"
 
-	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
+	"github.com/jhump/protoreflect/desc"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -12,9 +12,9 @@ type Service struct {
 	RPCs RPCs
 }
 
-func NewService(service *descriptor.ServiceDescriptorProto) *Service {
-	rpcs := make(RPCs, len(service.GetMethod()))
-	for i, rpc := range service.GetMethod() {
+func NewService(service *desc.ServiceDescriptor) *Service {
+	rpcs := make(RPCs, len(service.GetMethods()))
+	for i, rpc := range service.GetMethods() {
 		rpcs[i] = &RPC{
 			Name:         rpc.GetName(),
 			RequestType:  rpc.GetInputType(),
@@ -42,7 +42,7 @@ func (s Services) String() string {
 				serviceName = service.Name
 				first = false
 			}
-			row := []string{serviceName, rpc.Name, rpc.RequestType, rpc.ResponseType}
+			row := []string{serviceName, rpc.Name, rpc.RequestType.GetName(), rpc.ResponseType.GetName()}
 			rows = append(rows, row)
 		}
 	}
