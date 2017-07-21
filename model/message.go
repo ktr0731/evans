@@ -15,7 +15,7 @@ type Message struct {
 func NewMessage(message *descriptor.DescriptorProto) *Message {
 	var msg Message
 	msg.Name = message.GetName()
-	msg.Fields = NewFields(message)
+	// msg.Fields = NewFields(message)
 	return &msg
 }
 

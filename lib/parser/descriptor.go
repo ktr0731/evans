@@ -2,7 +2,6 @@ package parser
 
 import (
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
-	"github.com/lycoris0731/evans/model"
 )
 
 type FileDescriptorSet struct {
@@ -23,31 +22,26 @@ func (d *FileDescriptorSet) GetPackages() []string {
 	return packages
 }
 
-func (d *FileDescriptorSet) GetServices(pack string) model.Services {
-	var services model.Services
+func (d *FileDescriptorSet) GetServices(pkg string) []*descriptor.ServiceDescriptorProto {
+	svc := []*descriptor.ServiceDescriptorProto{}
 	for _, f := range d.GetFile() {
-		if f.GetPackage() != pack {
+		if f.GetPackage() != pkg {
 			continue
 		}
-
-		for _, proto := range f.GetService() {
-			services = append(services, model.NewService(proto))
-		}
+		svc = append(svc, f.GetService()...)
 	}
 
-	return services
+	return svc
 }
 
-func (d *FileDescriptorSet) GetMessages(pack string) model.Messages {
-	var messages model.Messages
+func (d *FileDescriptorSet) GetMessages(pkg string) []*descriptor.DescriptorProto {
+	msg := []*descriptor.DescriptorProto{}
 	for _, f := range d.GetFile() {
-		if f.GetPackage() != pack {
+		if f.GetPackage() != pkg {
 			continue
 		}
-
-		for _, proto := range f.GetMessageType() {
-			messages = append(messages, model.NewMessage(proto))
-		}
+		msg = append(msg, f.GetMessageType()...)
 	}
-	return messages
+
+	return msg
 }

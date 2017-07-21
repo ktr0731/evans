@@ -2,10 +2,9 @@ package model
 
 import (
 	"fmt"
-	"log"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
+	"github.com/k0kubun/pp"
 )
 
 type Field struct {
@@ -19,7 +18,7 @@ type Field struct {
 	Fields    []*Field
 }
 
-func NewFields(msg *descriptor.DescriptorProto) []*Field {
+func NewFields(getMessage func(typeName string) *descriptor.DescriptorProto, msg *descriptor.DescriptorProto) []*Field {
 	var fields []*Field
 	for _, field := range msg.GetField() {
 		f := &Field{
@@ -31,17 +30,12 @@ func NewFields(msg *descriptor.DescriptorProto) []*Field {
 		}
 
 		if field.Type.String() == "TYPE_MESSAGE" {
-			fmt.Println("msg!")
-
 			f.IsMessage = true
 
-			var desc descriptor.DescriptorProto
-			data, _ := field.Descriptor()
-			if err := proto.UnmarshalMerge(data, &desc); err != nil {
-				log.Fatal(err)
-				return nil
-			}
-			f.Fields = NewFields(&desc)
+			fmt.Println("さいき")
+			msg := getMessage(field.GetTypeName())
+			pp.Println(msg)
+			f.Fields = NewFields(getMessage, msg)
 		}
 
 		fields = append(fields, f)

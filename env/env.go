@@ -1,8 +1,11 @@
 package env
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
+	"github.com/k0kubun/pp"
 	"github.com/lycoris0731/evans/lib/parser"
 	"github.com/lycoris0731/evans/model"
 	"github.com/pkg/errors"
@@ -64,11 +67,11 @@ func (e *Env) GetServices() (model.Services, error) {
 		return nil, errors.Wrap(ErrUnselected, "package")
 	}
 
+	// services, messages and rpc are cached by Env on startup
 	name := e.currentPackage
-
-	pack, ok := e.cache.mapPackages[name]
+	pkg, ok := e.cache.mapPackages[name]
 	if ok {
-		return pack.Services, nil
+		return pkg.Services, nil
 	}
 
 	return nil, errors.New("caching failed")
@@ -80,7 +83,6 @@ func (e *Env) GetMessages() (model.Messages, error) {
 	}
 
 	name := e.currentPackage
-
 	pack, ok := e.cache.mapPackages[name]
 	if ok {
 		return pack.Messages, nil
@@ -95,7 +97,6 @@ func (e *Env) GetRPCs() (model.RPCs, error) {
 	}
 
 	name := e.currentService
-
 	svc, err := e.GetService(name)
 	if err != nil {
 		return nil, err
@@ -155,7 +156,7 @@ func (e *Env) UsePackage(name string) error {
 
 func (e *Env) UseService(name string) error {
 	for _, svc := range e.desc.GetServices(e.currentPackage) {
-		if name == svc.Name {
+		if name == svc.GetName() {
 			e.currentService = name
 			return nil
 		}
@@ -176,8 +177,21 @@ func (e *Env) GetDSN() string {
 
 // loadPackage loads all services and messages in itself
 func (e *Env) loadPackage(name string) error {
-	svc := e.desc.GetServices(name)
-	msg := e.desc.GetMessages(name)
+	dSvc := e.desc.GetServices(name)
+	dMsg := e.desc.GetMessages(name)
+
+	services := make(model.Services, len(dSvc))
+	for i, svc := range dSvc {
+		services[i] = model.NewService(svc)
+	}
+
+	messages := make(model.Messages, len(dMsg))
+	for i, msg := range dMsg {
+		fmt.Println(msg.GetName())
+		messages[i] = model.NewMessage(msg)
+		messages[i].Fields = model.NewFields(e.getMessage(e.currentPackage), msg)
+		pp.Println(messages[i].Fields)
+	}
 
 	_, ok := e.cache.mapPackages[name]
 	if ok {
@@ -185,9 +199,10 @@ func (e *Env) loadPackage(name string) error {
 	}
 	e.cache.mapPackages[name] = &model.Package{
 		Name:     name,
-		Services: svc,
-		Messages: msg,
+		Services: services,
+		Messages: messages,
 	}
+
 	return nil
 }
 
@@ -196,4 +211,11 @@ func (e *Env) loadPackage(name string) error {
 // e.g.: .test.Person
 func (e *Env) getNameFromFQN(fqn string) string {
 	return strings.TrimLeft(fqn, "."+e.currentPackage+".")
+}
+
+func (e *Env) getMessage(pkgName string) func(typeName string) *descriptor.DescriptorProto {
+	return func(typeName string) *descriptor.DescriptorProto {
+		return e.desc.GetMessage(pkgName, e.getNameFromFQN(typeName))
+
+	}
 }
