@@ -10,6 +10,8 @@ import (
 type Service struct {
 	Name string
 	RPCs RPCs
+
+	Desc *desc.ServiceDescriptor
 }
 
 func NewService(service *desc.ServiceDescriptor) *Service {

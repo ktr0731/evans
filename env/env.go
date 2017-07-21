@@ -1,7 +1,10 @@
 package env
 
 import (
+	"fmt"
 	"strings"
+
+	"google.golang.org/grpc"
 
 	"github.com/jhump/protoreflect/desc"
 	"github.com/lycoris0731/evans/lib/parser"
@@ -35,13 +38,21 @@ type Env struct {
 	desc *parser.FileDescriptorSet
 	State
 
+	conn *grpc.ClientConn
+
 	cache cache
 }
 
-func NewEnv(desc *parser.FileDescriptorSet) *Env {
+func NewEnv(desc *parser.FileDescriptorSet, port int) (*Env, error) {
 	env := &Env{desc: desc}
 	env.cache.mapPackages = map[string]*model.Package{}
-	return env
+	// TODO: other than localhost
+	var err error
+	env.conn, err = grpc.Dial(fmt.Sprintf("localhost:%d", port))
+	if err != nil {
+		return nil, err
+	}
+	return env, nil
 }
 
 func (e *Env) GetPackages() model.Packages {
@@ -222,4 +233,8 @@ func (e *Env) getMessage(pkgName string) func(typeName string) *desc.MessageDesc
 		// TODO: エラーを返す
 		return nil
 	}
+}
+
+func (e *Env) Close() error {
+	return e.conn.Close()
 }

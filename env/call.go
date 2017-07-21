@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
-	"github.com/k0kubun/pp"
+	"github.com/jhump/protoreflect/dynamic"
 	"github.com/lycoris0731/evans/model"
 	"github.com/peterh/liner"
 	"github.com/pkg/errors"
@@ -18,7 +18,7 @@ type field struct {
 	name        string
 	pVal        *string
 	mVal        []*field
-	fType       string
+	descType    descriptor.FieldDescriptorProto_Type
 }
 
 func (e *Env) Call(name string) (string, error) {
@@ -29,22 +29,18 @@ func (e *Env) Call(name string) (string, error) {
 
 	_ = e.genEndpoint(name)
 
-	req, err := e.GetMessage(rpc.RequestType.GetName())
+	reqMsg, err := e.GetMessage(rpc.RequestType.GetName())
 	if err != nil {
 		return "", err
 	}
 
-	pp.Println(req)
-	// req, err := e.GetMessage(rpc.ResponseType.String())
-	// if err != nil {
-	// 	return "", err
-	// }
-	// pp.Println(req)
-
-	_, err = inputFields(req.Fields)
+	input, err := inputFields(reqMsg.Fields)
 	if err != nil {
 		return "", err
 	}
+
+	req := dynamic.NewMessage(reqMsg)
+	e.setInput(req, input)
 
 	// marshal して
 	// invoke
@@ -57,6 +53,12 @@ func (e *Env) genEndpoint(rpcName string) string {
 	return ep
 }
 
+func (e *Env) setInput(req *dynamic.Message, fields []*fields) *dynamic.Message {
+	for _, f := range fields {
+	}
+	return
+}
+
 func inputFields(fields []*model.Field) ([]*field, error) {
 	const format = "%s (%s) | "
 
@@ -67,7 +69,7 @@ func inputFields(fields []*model.Field) ([]*field, error) {
 	max := maxLen(fields, format)
 	for i, f := range fields {
 		input[i] = &field{
-			name:  f.JSONName,
+			name:  f.Name,
 			fType: f.Type.String(),
 		}
 

@@ -3,14 +3,13 @@ package model
 import (
 	"bytes"
 
-	"github.com/jhump/protoreflect/desc"
 	"github.com/olekukonko/tablewriter"
 )
 
 type RPC struct {
 	Name         string
-	RequestType  *desc.MessageDescriptor
-	ResponseType *desc.MessageDescriptor
+	RequestType  *Message
+	ResponseType *Message
 }
 
 type RPCs []*RPC
@@ -21,7 +20,7 @@ func (r *RPCs) String() string {
 	table.SetHeader([]string{"RPC", "RequestType", "ResponseType"})
 	rows := [][]string{}
 	for _, rpc := range *r {
-		row := []string{rpc.Name, rpc.RequestType.GetName(), rpc.ResponseType.GetName()}
+		row := []string{rpc.Name, rpc.RequestType.Name, rpc.ResponseType.Name}
 		rows = append(rows, row)
 	}
 	table.AppendBulk(rows)

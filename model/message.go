@@ -10,11 +10,14 @@ import (
 type Message struct {
 	Name   string
 	Fields []*Field
+
+	Desc *desc.MessageDescriptor
 }
 
 func NewMessage(message *desc.MessageDescriptor) *Message {
 	var msg Message
 	msg.Name = message.GetName()
+	msg.Desc = message
 	return &msg
 }
 
@@ -25,10 +28,7 @@ func (m *Message) String() string {
 	rows := [][]string{}
 	for _, field := range m.Fields {
 		fType := field.Type.String()
-		if field.TypeName != "" {
-			fType = field.TypeName
-		}
-		row := []string{field.JSONName, fType}
+		row := []string{field.Name, fType}
 		rows = append(rows, row)
 	}
 	table.AppendBulk(rows)

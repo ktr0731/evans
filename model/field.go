@@ -7,12 +7,12 @@ import (
 	"github.com/jhump/protoreflect/desc"
 )
 
+// TODO: モデルの設計が冗長
 type Field struct {
-	Name     string
-	JSONName string
-	Type     descriptor.FieldDescriptorProto_Type
-	TypeName string
-	Default  string
+	Name    string
+	Type    descriptor.FieldDescriptorProto_Type
+	Default string
+	Desc    *desc.FieldDescriptor
 
 	IsMessage bool
 	Fields    []*Field
@@ -25,6 +25,7 @@ func NewFields(getMessage func(msgName string) *desc.MessageDescriptor, msg *des
 		f := &Field{
 			Name: field.GetName(),
 			Type: field.GetType(),
+			Desc: field,
 		}
 
 		if field.GetType() == descriptor.FieldDescriptorProto_TYPE_MESSAGE {

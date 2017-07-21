@@ -75,7 +75,12 @@ func (c *CLI) Run(args []string) int {
 	config := &repl.Config{
 		Port: c.options.Port,
 	}
-	env := env.NewEnv(desc)
+	env, err := env.NewEnv(desc, config.Port)
+	if err != nil {
+		c.Error(err)
+		return 1
+	}
+
 	if c.options.Package != "" {
 		if err := env.UsePackage(c.options.Package); err != nil {
 			c.Error(err)
