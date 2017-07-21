@@ -6,8 +6,10 @@ import (
 	"strconv"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/k0kubun/pp"
 	"github.com/lycoris0731/evans/model"
 	"github.com/peterh/liner"
+	"github.com/pkg/errors"
 )
 
 // msg なら再帰的構造になる
@@ -25,15 +27,19 @@ func (e *Env) Call(name string) (string, error) {
 		return "", err
 	}
 
-	req, err := e.GetMessage(rpc.RequestType.String())
+	_ = e.genEndpoint(name)
+
+	req, err := e.GetMessage(rpc.RequestType.GetName())
 	if err != nil {
 		return "", err
 	}
 
-	// res, err := e.GetMessage(rpc.ResponseType)
+	pp.Println(req)
+	// req, err := e.GetMessage(rpc.ResponseType.String())
 	// if err != nil {
 	// 	return "", err
 	// }
+	// pp.Println(req)
 
 	_, err = inputFields(req.Fields)
 	if err != nil {
@@ -44,6 +50,11 @@ func (e *Env) Call(name string) (string, error) {
 	// invoke
 
 	return "", nil
+}
+
+func (e *Env) genEndpoint(rpcName string) string {
+	ep := fmt.Sprint("/%s.%s/%s", e.currentPackage, e.currentService, rpcName)
+	return ep
 }
 
 func inputFields(fields []*model.Field) ([]*field, error) {
@@ -63,7 +74,7 @@ func inputFields(fields []*model.Field) ([]*field, error) {
 		if isMessageType(f.Type) {
 			fields, err := inputFields(f.Fields)
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "failed to read inputs")
 			}
 
 			input[i].mVal = fields
@@ -89,7 +100,7 @@ func maxLen(fields []*model.Field, format string) int {
 		if isMessageType(f.Type) {
 			continue
 		}
-		l := len(fmt.Sprintf(format, f.JSONName, f.Type))
+		l := len(fmt.Sprintf(format, f.Name, f.Type))
 		if l > max {
 			max = l
 		}
@@ -98,5 +109,5 @@ func maxLen(fields []*model.Field, format string) int {
 }
 
 func isMessageType(typeName descriptor.FieldDescriptorProto_Type) bool {
-	return typeName.String() == "TYPE_MESSAGE"
+	return typeName == descriptor.FieldDescriptorProto_TYPE_MESSAGE
 }

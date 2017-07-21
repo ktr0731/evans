@@ -1,7 +1,6 @@
 package env
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/jhump/protoreflect/desc"
@@ -186,7 +185,6 @@ func (e *Env) loadPackage(name string) error {
 
 	messages := make(model.Messages, len(dMsg))
 	for i, msg := range dMsg {
-		fmt.Println(msg.GetName())
 		messages[i] = model.NewMessage(msg)
 		messages[i].Fields = model.NewFields(e.getMessage(e.currentPackage), msg)
 	}
@@ -216,10 +214,12 @@ func (e *Env) getMessage(pkgName string) func(typeName string) *desc.MessageDesc
 
 	return func(msgName string) *desc.MessageDescriptor {
 		for _, msg := range messages {
-			if msg.GetName() == msgName {
+			// TODO: GetName が lower case になっている
+			if msgName == strings.ToLower(msg.GetName()) {
 				return msg
 			}
 		}
+		// TODO: エラーを返す
 		return nil
 	}
 }
