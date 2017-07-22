@@ -14,10 +14,6 @@ import (
 	"os"
 )
 
-type Meta struct {
-	Title, Version string
-}
-
 type UI struct {
 	Reader            io.Reader
 	Writer, ErrWriter io.Writer
@@ -40,18 +36,17 @@ type Options struct {
 	Service     string `arg:"help:default service. evans parse package from this if --package is nothing."`
 }
 
+func (o *Options) Version() string {
+	return "evans 0.1.0"
+}
+
 type CLI struct {
-	meta    *Meta
 	ui      *UI
 	options *Options
 }
 
 func NewCLI(title, version string) *CLI {
 	return &CLI{
-		meta: &Meta{
-			Title:   title,
-			Version: version,
-		},
 		ui: NewUI(),
 		options: &Options{
 			Port: 50051,

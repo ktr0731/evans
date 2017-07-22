@@ -72,35 +72,6 @@ func (r *REPL) GetCompletion(line string) []string {
 			s[i] = svc.Name
 		}
 		return s
-
-	default:
-		p := r.env.GetPackages()
-		s, err := r.env.GetServices()
-		if err != nil {
-			r.Error(err)
-			return nil
-		}
-		m, err := r.env.GetMessages()
-		if err != nil {
-			r.Error(err)
-			return nil
-		}
-
-		var i int
-		c := make([]string, len(p)+len(s)+len(m))
-		for _, p := range p {
-			c[i] = line + p.Name + " "
-		}
-		for _, s := range s {
-			c[i] = line + s.Name + " "
-		}
-		for _, m := range m {
-			c[i] = line + m.Name + " "
-		}
-		return c
-
-	case "s", "svc", "service":
-
 	}
 
 	// Completion for command name
