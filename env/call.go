@@ -67,7 +67,7 @@ func (e *Env) Call(name string) (string, error) {
 		return "", err
 	}
 
-	return string(data), nil
+	return string(data) + "\n", nil
 }
 
 func (e *Env) genEndpoint(rpcName string) string {
