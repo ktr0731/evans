@@ -57,12 +57,16 @@ type Config struct {
 }
 
 func NewREPL(config *Config, env *env.Env, ui *UI) *REPL {
-	return &REPL{
+	repl := &REPL{
 		ui:     ui,
 		config: config,
 		env:    env,
-		liner:  liner.NewLiner(),
 	}
+	l := liner.NewLiner()
+	l.SetCompleter(repl.GetCompletion)
+	repl.liner = l
+
+	return repl
 }
 
 func (r *REPL) Read() (string, error) {

@@ -66,6 +66,11 @@ func (c *CLI) Error(err error) {
 func (c *CLI) Run(args []string) int {
 	arg.MustParse(c.options)
 
+	if len(c.options.Proto) == 0 {
+		c.Error(errors.New("invalid argument"))
+		return 1
+	}
+
 	desc, err := parser.ParseFile(c.options.Proto, []string{})
 	if err != nil {
 		c.Error(err)
