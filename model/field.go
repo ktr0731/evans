@@ -1,8 +1,6 @@
 package model
 
 import (
-	"fmt"
-
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 )
@@ -21,7 +19,6 @@ type Field struct {
 func NewFields(getMessage func(msgName string) *desc.MessageDescriptor, msg *desc.MessageDescriptor) []*Field {
 	var fields []*Field
 	for _, field := range msg.GetFields() {
-		fmt.Println(field.GetName())
 		f := &Field{
 			Name: field.GetName(),
 			Type: field.GetType(),

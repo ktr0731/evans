@@ -1,10 +1,7 @@
 package env
 
 import (
-	"fmt"
 	"strings"
-
-	"google.golang.org/grpc"
 
 	"github.com/jhump/protoreflect/desc"
 	"github.com/lycoris0731/evans/lib/parser"
@@ -34,11 +31,15 @@ type State struct {
 	currentService string
 }
 
+type config struct {
+	port int
+}
+
 type Env struct {
 	desc *parser.FileDescriptorSet
 	State
 
-	conn *grpc.ClientConn
+	config *config
 
 	cache cache
 }
@@ -46,12 +47,7 @@ type Env struct {
 func NewEnv(desc *parser.FileDescriptorSet, port int) (*Env, error) {
 	env := &Env{desc: desc}
 	env.cache.mapPackages = map[string]*model.Package{}
-	// TODO: other than localhost
-	var err error
-	env.conn, err = grpc.Dial(fmt.Sprintf("localhost:%d", port))
-	if err != nil {
-		return nil, err
-	}
+	env.config = &config{port: port}
 	return env, nil
 }
 
@@ -192,6 +188,7 @@ func (e *Env) loadPackage(name string) error {
 	services := make(model.Services, len(dSvc))
 	for i, svc := range dSvc {
 		services[i] = model.NewService(svc)
+		services[i].RPCs = model.NewRPCs(svc)
 	}
 
 	messages := make(model.Messages, len(dMsg))
@@ -235,6 +232,22 @@ func (e *Env) getMessage(pkgName string) func(typeName string) *desc.MessageDesc
 	}
 }
 
+func (e *Env) getService(pkgName string) func(typeName string) *desc.ServiceDescriptor {
+	services := e.desc.GetServices(pkgName)
+
+	return func(svcName string) *desc.ServiceDescriptor {
+		for _, svc := range services {
+			// TODO: GetName が lower case になっている
+			if svcName == strings.ToLower(svc.GetName()) {
+				return svc
+			}
+		}
+		// TODO: エラーを返す
+		return nil
+	}
+}
+
 func (e *Env) Close() error {
-	return e.conn.Close()
+	// return e.conn.Close()
+	return nil
 }

@@ -15,17 +15,9 @@ type Service struct {
 }
 
 func NewService(service *desc.ServiceDescriptor) *Service {
-	rpcs := make(RPCs, len(service.GetMethods()))
-	for i, rpc := range service.GetMethods() {
-		rpcs[i] = &RPC{
-			Name:         rpc.GetName(),
-			RequestType:  rpc.GetInputType(),
-			ResponseType: rpc.GetOutputType(),
-		}
-	}
 	return &Service{
 		Name: service.GetName(),
-		RPCs: rpcs,
+		RPCs: NewRPCs(service),
 	}
 }
 

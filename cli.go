@@ -80,6 +80,7 @@ func (c *CLI) Run(args []string) int {
 		c.Error(err)
 		return 1
 	}
+	defer env.Close()
 
 	if c.options.Package != "" {
 		if err := env.UsePackage(c.options.Package); err != nil {
