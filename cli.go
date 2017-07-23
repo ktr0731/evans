@@ -1,13 +1,14 @@
 package main
 
 import (
-	"errors"
 	"fmt"
+	"strings"
 
 	arg "github.com/alexflint/go-arg"
 	"github.com/lycoris0731/evans/env"
 	"github.com/lycoris0731/evans/parser"
 	"github.com/lycoris0731/evans/repl"
+	"github.com/pkg/errors"
 
 	"io"
 	"os"
@@ -89,22 +90,24 @@ func (c *CLI) Run(args []string) int {
 		c.Error(err)
 		return 1
 	}
-	defer env.Close()
 
 	if c.options.Package != "" {
 		if err := env.UsePackage(c.options.Package); err != nil {
-			c.Error(err)
+			c.Error(errors.Wrapf(err, "file %s", strings.Join(c.options.Proto, ", ")))
 			return 1
 		}
 	}
 	if c.options.Service != "" {
 		if err := env.UseService(c.options.Service); err != nil {
-			c.Error(err)
+			c.Error(errors.Wrapf(err, "file %s", strings.Join(c.options.Proto, ", ")))
 			return 1
 		}
 	}
 
-	if err := repl.NewREPL(config, env, repl.NewUI()).Start(); err != nil {
+	r := repl.NewREPL(config, env, repl.NewUI())
+	defer r.Close()
+
+	if err := r.Start(); err != nil {
 		c.Error(err)
 		return 1
 	}

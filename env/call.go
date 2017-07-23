@@ -16,7 +16,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// msg なら再帰的構造になる
+// field is used to read and store input for each field
+// if field type is message, this struct is recursive
 type field struct {
 	isPrimitive bool
 	name        string
@@ -32,10 +33,10 @@ func (e *Env) Call(name string) (string, error) {
 		return "", err
 	}
 
-	ep := e.genEndpoint(name)
-
 	input, err := inputFields(rpc.RequestType.GetFields())
-	if err != nil {
+	if errors.Cause(err) == io.EOF {
+		return "", nil
+	} else if err != nil {
 		return "", err
 	}
 
@@ -44,10 +45,7 @@ func (e *Env) Call(name string) (string, error) {
 		return "", err
 	}
 
-	// marshal して
-	// invoke
 	res := dynamic.NewMessage(rpc.ResponseType)
-
 	// TODO: other than localhost
 	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", e.config.port), grpc.WithInsecure())
 	if err != nil {
@@ -55,19 +53,18 @@ func (e *Env) Call(name string) (string, error) {
 	}
 	defer conn.Close()
 
+	ep := e.genEndpoint(name)
 	if err := grpc.Invoke(context.Background(), ep, req, res, conn); err != nil {
 		return "", err
 	}
 
-	m := jsonpb.Marshaler{
-		Indent: "  ",
-	}
-	data, err := m.MarshalToString(res)
+	m := jsonpb.Marshaler{Indent: "  "}
+	json, err := m.MarshalToString(res)
 	if err != nil {
 		return "", err
 	}
 
-	return string(data) + "\n", nil
+	return json + "\n", nil
 }
 
 func (e *Env) genEndpoint(rpcName string) string {
@@ -86,139 +83,74 @@ func (e *Env) setInput(req *dynamic.Message, fields []*field) error {
 			req.SetField(f.desc, msg)
 		} else {
 			pv := *f.pVal
+
+			// it holds value and error of conversion
+			// each cast (Parse*) returns falsy value when failed to parse argument
+			var v interface{}
+			var err error
+
 			switch f.descType {
 			case descriptor.FieldDescriptorProto_TYPE_DOUBLE:
-				v, err := strconv.ParseFloat(pv, 64)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, v); err != nil {
-					return err
-				}
+				v, err = strconv.ParseFloat(pv, 64)
 
 			case descriptor.FieldDescriptorProto_TYPE_FLOAT:
-				v, err := strconv.ParseFloat(pv, 32)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, float32(v)); err != nil {
-					return err
-				}
+				v, err = strconv.ParseFloat(pv, 32)
+				v = float32(v.(float64))
 
 			case descriptor.FieldDescriptorProto_TYPE_INT64:
-				v, err := strconv.ParseInt(pv, 10, 64)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, v); err != nil {
-					return err
-				}
+				v, err = strconv.ParseInt(pv, 10, 64)
 
 			case descriptor.FieldDescriptorProto_TYPE_UINT64:
-				v, err := strconv.ParseUint(pv, 10, 64)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, v); err != nil {
-					return err
-				}
+				v, err = strconv.ParseUint(pv, 10, 64)
 
 			case descriptor.FieldDescriptorProto_TYPE_INT32:
-				v, err := strconv.ParseInt(*f.pVal, 10, 32)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, int32(v)); err != nil {
-					return err
-				}
+				v, err = strconv.ParseInt(*f.pVal, 10, 32)
+				v = int32(v.(int64))
 
 			case descriptor.FieldDescriptorProto_TYPE_UINT32:
-				v, err := strconv.ParseUint(pv, 10, 32)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, uint32(v)); err != nil {
-					return err
-				}
+				v, err = strconv.ParseUint(pv, 10, 32)
+				v = uint32(v.(uint64))
 
 			case descriptor.FieldDescriptorProto_TYPE_FIXED64:
-				v, err := strconv.ParseUint(pv, 10, 64)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, v); err != nil {
-					return err
-				}
+				v, err = strconv.ParseUint(pv, 10, 64)
 
 			case descriptor.FieldDescriptorProto_TYPE_FIXED32:
-				v, err := strconv.ParseUint(pv, 10, 32)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, uint32(v)); err != nil {
-					return err
-				}
+				v, err = strconv.ParseUint(pv, 10, 32)
+				v = uint32(v.(uint64))
 
 			case descriptor.FieldDescriptorProto_TYPE_BOOL:
-				v, err := strconv.ParseBool(pv)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, v); err != nil {
-					return err
-				}
+				v, err = strconv.ParseBool(pv)
 
 			case descriptor.FieldDescriptorProto_TYPE_STRING:
 				// already string
-				v := pv
-				if err := req.TrySetField(f.desc, v); err != nil {
-					return err
-				}
+				v = pv
 
 			case descriptor.FieldDescriptorProto_TYPE_BYTES:
-				v := []byte(pv)
-				if err := req.TrySetField(f.desc, v); err != nil {
-					return err
-				}
+				v = []byte(pv)
 
 			case descriptor.FieldDescriptorProto_TYPE_SFIXED64:
-				v, err := strconv.ParseUint(pv, 10, 64)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, v); err != nil {
-					return err
-				}
+				v, err = strconv.ParseUint(pv, 10, 64)
 
 			case descriptor.FieldDescriptorProto_TYPE_SFIXED32:
-				v, err := strconv.ParseUint(pv, 10, 32)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, int32(v)); err != nil {
-					return err
-				}
+				v, err = strconv.ParseUint(pv, 10, 32)
+				v = int32(v.(int64))
 
 			case descriptor.FieldDescriptorProto_TYPE_SINT64:
-				v, err := strconv.ParseInt(pv, 10, 64)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, v); err != nil {
-					return err
-				}
+				v, err = strconv.ParseInt(pv, 10, 64)
 
 			case descriptor.FieldDescriptorProto_TYPE_SINT32:
-				v, err := strconv.ParseInt(pv, 10, 32)
-				if err != nil {
-					return err
-				}
-				if err := req.TrySetField(f.desc, int32(v)); err != nil {
-					return err
-				}
+				v, err = strconv.ParseInt(pv, 10, 32)
+				v = int32(v.(int64))
 
 			default:
 				return fmt.Errorf("invalid type: %#v", f.descType)
+			}
+
+			if err != nil {
+				return err
+			}
+			if err := req.TrySetField(f.desc, v); err != nil {
+				return err
 			}
 
 		}
@@ -227,7 +159,7 @@ func (e *Env) setInput(req *dynamic.Message, fields []*field) error {
 }
 
 func inputFields(fields []*desc.FieldDescriptor) ([]*field, error) {
-	const format = "%s (%s) | "
+	const format = "%s (%s) = "
 
 	liner := liner.NewLiner()
 	defer liner.Close()
@@ -250,9 +182,6 @@ func inputFields(fields []*desc.FieldDescriptor) ([]*field, error) {
 			input[i].mVal = fields
 		} else {
 			l, err := liner.Prompt(fmt.Sprintf("%"+strconv.Itoa(max)+"s", fmt.Sprintf(format, f.GetName(), f.GetType())))
-			if err == io.EOF {
-				break
-			}
 			if err != nil {
 				return nil, err
 			}

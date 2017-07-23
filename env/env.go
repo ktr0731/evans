@@ -154,7 +154,7 @@ func (e *Env) UsePackage(name string) error {
 			return e.loadPackage(p)
 		}
 	}
-	return ErrUnknownPackage
+	return errors.Wrapf(ErrUnknownPackage, "%s not found", name)
 }
 
 func (e *Env) UseService(name string) error {
@@ -165,12 +165,12 @@ func (e *Env) UseService(name string) error {
 			return errors.Wrap(ErrPackageUnselected, "please set package (package_name.service_name or set --package flag)")
 		}
 		if err := e.UsePackage(s[0]); err != nil {
-			return err
+			return errors.Wrapf(err, name)
 		}
 	}
 	services, err := e.GetServices()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to get services")
 	}
 	for _, svc := range services {
 		if name == svc.Name {
@@ -178,7 +178,7 @@ func (e *Env) UseService(name string) error {
 			return nil
 		}
 	}
-	return ErrUnknownService
+	return errors.Wrapf(ErrUnknownService, "%s not fould", name)
 }
 
 func (e *Env) GetDSN() string {
@@ -214,7 +214,7 @@ func (e *Env) loadPackage(name string) error {
 		messages[i] = model.NewMessage(msg)
 		fields, err := model.NewFields(e.getMessage(), messages[i])
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "failed to get field of %s", msg.GetName())
 		}
 		messages[i].Fields = fields
 	}
@@ -247,9 +247,4 @@ func (e *Env) getService() func(typeName string) (*model.Service, error) {
 	return func(svcName string) (*model.Service, error) {
 		return e.GetService(svcName)
 	}
-}
-
-func (e *Env) Close() error {
-	// return e.conn.Close()
-	return nil
 }

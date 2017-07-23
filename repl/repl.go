@@ -13,11 +13,6 @@ import (
 )
 
 var (
-	CmdQuit = "quit"
-	CmdExit = "exit"
-)
-
-var (
 	ErrUnknownCommand   = errors.New("unknown command")
 	ErrArgumentRequired = errors.New("argument required")
 	ErrUnknownTarget    = errors.New("unknown target")
@@ -125,7 +120,7 @@ func (r *REPL) Eval(l string) (string, error) {
 		}
 
 		if err := r.env.UsePackage(part[1]); err != nil {
-			return "", err
+			return "", errors.Wrapf(err, "file %s", part[1])
 		}
 
 	case "s", "svc", "service":
@@ -157,20 +152,13 @@ func (r *REPL) Error(err error) {
 }
 
 func (r *REPL) Start() error {
-	defer func() {
-		r.Print("Good Bye :)")
-		if err := r.Close(); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
-	}()
-
 	for {
 		l, err := r.Read()
-		if err == io.EOF || l == CmdQuit || l == CmdExit {
+		if err == io.EOF || l == "quit" || l == "exit" {
 			if err == io.EOF {
 				fmt.Println()
 			}
-			break
+			return nil
 		}
 		if err != nil {
 			return errors.Wrap(err, "failed to read line")
@@ -191,5 +179,6 @@ func (r *REPL) Start() error {
 }
 
 func (r *REPL) Close() error {
-	return r.liner.Close()
+	r.Print("Good Bye :)")
+	return nil
 }
