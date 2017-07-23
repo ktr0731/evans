@@ -26,7 +26,7 @@ type cache struct {
 	mapPackages map[string]*model.Package
 }
 
-type State struct {
+type state struct {
 	currentPackage string
 	currentService string
 }
@@ -36,15 +36,15 @@ type config struct {
 }
 
 type Env struct {
-	desc *parser.FileDescriptorSet
-	State
+	desc  *parser.FileDescriptorSet
+	state state
 
 	config *config
 
 	cache cache
 }
 
-func NewEnv(desc *parser.FileDescriptorSet, port int) (*Env, error) {
+func New(desc *parser.FileDescriptorSet, port int) (*Env, error) {
 	env := &Env{desc: desc}
 	env.cache.mapPackages = map[string]*model.Package{}
 	env.config = &config{port: port}
@@ -68,12 +68,12 @@ func (e *Env) GetPackages() model.Packages {
 }
 
 func (e *Env) GetServices() (model.Services, error) {
-	if e.currentPackage == "" {
+	if e.state.currentPackage == "" {
 		return nil, errors.Wrap(ErrUnselected, "package")
 	}
 
 	// services, messages and rpc are cached by Env on startup
-	name := e.currentPackage
+	name := e.state.currentPackage
 	pkg, ok := e.cache.mapPackages[name]
 	if ok {
 		return pkg.Services, nil
@@ -83,11 +83,11 @@ func (e *Env) GetServices() (model.Services, error) {
 }
 
 func (e *Env) GetMessages() (model.Messages, error) {
-	if e.currentPackage == "" {
+	if e.state.currentPackage == "" {
 		return nil, errors.Wrap(ErrUnselected, "package")
 	}
 
-	name := e.currentPackage
+	name := e.state.currentPackage
 	pack, ok := e.cache.mapPackages[name]
 	if ok {
 		return pack.Messages, nil
@@ -97,11 +97,11 @@ func (e *Env) GetMessages() (model.Messages, error) {
 }
 
 func (e *Env) GetRPCs() (model.RPCs, error) {
-	if e.currentService == "" {
+	if e.state.currentService == "" {
 		return nil, errors.Wrap(ErrUnselected, "service")
 	}
 
-	name := e.currentService
+	name := e.state.currentService
 	svc, err := e.GetService(name)
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func (e *Env) GetRPC(name string) (*model.RPC, error) {
 func (e *Env) UsePackage(name string) error {
 	for _, p := range e.desc.GetPackages() {
 		if name == p {
-			e.currentPackage = name
+			e.state.currentPackage = name
 			return e.loadPackage(p)
 		}
 	}
@@ -160,9 +160,19 @@ func (e *Env) UsePackage(name string) error {
 }
 
 func (e *Env) UseService(name string) error {
-	for _, svc := range e.desc.GetServices(e.currentPackage) {
+	// set package if setted service with package name
+	if e.state.currentPackage == "" {
+		s := strings.SplitN(name, ".", 2)
+		if len(s) != 2 {
+			return errors.New("please set package (package_name.service_name or set --package flag)")
+		}
+		if err := e.UsePackage(s[0]); err != nil {
+			return err
+		}
+	}
+	for _, svc := range e.desc.GetServices(e.state.currentPackage) {
 		if name == svc.GetName() {
-			e.currentService = name
+			e.state.currentService = name
 			return nil
 		}
 	}
@@ -170,12 +180,12 @@ func (e *Env) UseService(name string) error {
 }
 
 func (e *Env) GetDSN() string {
-	if e.currentPackage == "" {
+	if e.state.currentPackage == "" {
 		return ""
 	}
-	dsn := e.currentPackage
-	if e.currentService != "" {
-		dsn += "." + e.currentService
+	dsn := e.state.currentPackage
+	if e.state.currentService != "" {
+		dsn += "." + e.state.currentService
 	}
 	return dsn
 }
@@ -194,7 +204,7 @@ func (e *Env) loadPackage(name string) error {
 	messages := make(model.Messages, len(dMsg))
 	for i, msg := range dMsg {
 		messages[i] = model.NewMessage(msg)
-		messages[i].Fields = model.NewFields(e.getMessage(e.currentPackage), msg)
+		messages[i].Fields = model.NewFields(e.getMessage(e.state.currentPackage), msg)
 	}
 
 	_, ok := e.cache.mapPackages[name]
@@ -214,7 +224,7 @@ func (e *Env) loadPackage(name string) error {
 // It contains message or service with package name
 // e.g.: .test.Person
 func (e *Env) getNameFromFQN(fqn string) string {
-	return strings.TrimLeft(fqn, "."+e.currentPackage+".")
+	return strings.TrimLeft(fqn, "."+e.state.currentPackage+".")
 }
 
 func (e *Env) getMessage(pkgName string) func(typeName string) *desc.MessageDescriptor {

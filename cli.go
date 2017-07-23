@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	arg "github.com/alexflint/go-arg"
 	"github.com/lycoris0731/evans/env"
@@ -41,7 +40,9 @@ func (o *Options) Version() string {
 }
 
 type CLI struct {
-	ui      *UI
+	ui *UI
+
+	parser  *arg.Parser
 	options *Options
 }
 
@@ -58,8 +59,16 @@ func (c *CLI) Error(err error) {
 	fmt.Fprintln(c.ui.ErrWriter, err)
 }
 
+func (c *CLI) Help() {
+	c.parser.WriteHelp(c.ui.Writer)
+}
+
+func (c *CLI) Usage() {
+	c.parser.WriteUsage(c.ui.Writer)
+}
+
 func (c *CLI) Run(args []string) int {
-	arg.MustParse(c.options)
+	c.parser = arg.MustParse(c.options)
 
 	if len(c.options.Proto) == 0 {
 		c.Error(errors.New("invalid argument"))
@@ -75,39 +84,20 @@ func (c *CLI) Run(args []string) int {
 	config := &repl.Config{
 		Port: c.options.Port,
 	}
-	env, err := env.NewEnv(desc, config.Port)
+	env, err := env.New(desc, config.Port)
 	if err != nil {
 		c.Error(err)
 		return 1
 	}
 	defer env.Close()
 
-	if c.options.Package != "" {
-		if err := env.UsePackage(c.options.Package); err != nil {
-			c.Error(err)
-			return 1
-		}
-
-		if c.options.Service != "" {
-			if err := env.UseService(c.options.Service); err != nil {
-				c.Error(err)
-				return 1
-			}
-		}
-	} else if c.options.Service != "" {
-		s := strings.SplitN(c.options.Service, ".", 2)
-		if len(s) != 2 {
-			c.Error(errors.New("please set package (package_name.service_name or set --package flag)"))
-			return 1
-		}
-		if err := env.UsePackage(s[0]); err != nil {
-			c.Error(err)
-			return 1
-		}
-		if err := env.UseService(s[1]); err != nil {
-			c.Error(err)
-			return 1
-		}
+	if err := env.UsePackage(c.options.Package); err != nil {
+		c.Error(err)
+		return 1
+	}
+	if err := env.UseService(c.options.Service); err != nil {
+		c.Error(err)
+		return 1
 	}
 
 	if err := repl.NewREPL(config, env, repl.NewUI()).Start(); err != nil {

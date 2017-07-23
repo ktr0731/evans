@@ -71,7 +71,7 @@ func (e *Env) Call(name string) (string, error) {
 }
 
 func (e *Env) genEndpoint(rpcName string) string {
-	ep := fmt.Sprintf("/%s.%s/%s", e.currentPackage, e.currentService, rpcName)
+	ep := fmt.Sprintf("/%s.%s/%s", e.state.currentPackage, e.state.currentService, rpcName)
 	return ep
 }
 
