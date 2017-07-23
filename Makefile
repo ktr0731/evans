@@ -1,12 +1,16 @@
 SHELL := /bin/bash
 
+.PHONY: deps
+build:
+	glide install
+
 .PHONY: build
 build:
 	go build 
 
 .PHONY: test
 test:
-	go test -v -race -coverprofile=coverage.out ./...
+	for p in `go list`; do go test -v -race -coverprofile=coverage.out $p; done
 
 .PHONY: coverage
 coverage: 

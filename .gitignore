@@ -27,3 +27,4 @@ _testmain.go
 
 evans
 coverage.out
+vendor/
