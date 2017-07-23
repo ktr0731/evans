@@ -6,7 +6,7 @@ import (
 
 	arg "github.com/alexflint/go-arg"
 	"github.com/lycoris0731/evans/env"
-	"github.com/lycoris0731/evans/lib/parser"
+	"github.com/lycoris0731/evans/parser"
 	"github.com/lycoris0731/evans/repl"
 
 	"io"
