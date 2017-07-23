@@ -16,9 +16,9 @@ type Field struct {
 	Fields    []*Field
 }
 
-func NewFields(getMessage func(msgName string) *desc.MessageDescriptor, msg *desc.MessageDescriptor) []*Field {
+func NewFields(getMessage func(msgName string) (*Message, error), msg *Message) ([]*Field, error) {
 	var fields []*Field
-	for _, field := range msg.GetFields() {
+	for _, field := range msg.Desc.GetFields() {
 		f := &Field{
 			Name: field.GetName(),
 			Type: field.GetType(),
@@ -28,15 +28,16 @@ func NewFields(getMessage func(msgName string) *desc.MessageDescriptor, msg *des
 		if field.GetType() == descriptor.FieldDescriptorProto_TYPE_MESSAGE {
 			f.IsMessage = true
 
-			msg := getMessage(field.GetName())
-			if msg == nil {
-				return nil
+			// TODO: 別パッケージの msg が取得できない
+			msg, err := getMessage(field.GetName())
+			if err != nil {
+				return nil, err
 			}
 
-			f.Fields = NewFields(getMessage, msg)
+			f.Fields, err = NewFields(getMessage, msg)
 		}
 
 		fields = append(fields, f)
 	}
-	return fields
+	return fields, nil
 }

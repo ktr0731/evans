@@ -91,13 +91,17 @@ func (c *CLI) Run(args []string) int {
 	}
 	defer env.Close()
 
-	if err := env.UsePackage(c.options.Package); err != nil {
-		c.Error(err)
-		return 1
+	if c.options.Package != "" {
+		if err := env.UsePackage(c.options.Package); err != nil {
+			c.Error(err)
+			return 1
+		}
 	}
-	if err := env.UseService(c.options.Service); err != nil {
-		c.Error(err)
-		return 1
+	if c.options.Service != "" {
+		if err := env.UseService(c.options.Service); err != nil {
+			c.Error(err)
+			return 1
+		}
 	}
 
 	if err := repl.NewREPL(config, env, repl.NewUI()).Start(); err != nil {
