@@ -1,11 +1,15 @@
 SHELL := /bin/bash
 
+.PHONY: glide
+glide:
+	curl https://glide.sh/get | sh
+
 .PHONY: deps
-build:
+deps: glide
 	glide install
 
 .PHONY: build
-build:
+build: deps
 	go build 
 
 .PHONY: test
