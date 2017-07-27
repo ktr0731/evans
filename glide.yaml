@@ -2,10 +2,6 @@ package: github.com/lycoris0731/evans
 import:
 - package: github.com/alexflint/go-arg
 - package: github.com/fatih/color
-- package: github.com/gogo/protobuf
-  subpackages:
-  - proto
-  - protoc-gen-gogo/generator
 - package: github.com/golang/protobuf
   subpackages:
   - jsonpb
@@ -18,7 +14,4 @@ import:
 - package: github.com/olekukonko/tablewriter
 - package: github.com/peterh/liner
 - package: github.com/pkg/errors
-- package: golang.org/x/net
-  subpackages:
-  - context
 - package: google.golang.org/grpc

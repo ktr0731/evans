@@ -1,5 +1,5 @@
-hash: ad3ef2aa515de0ab104cf4c679dacee66c362615b9088b0c94c5bc65eb4023e4
-updated: 2017-07-23T21:50:28.2345656+09:00
+hash: 9b110fe65e53714f2e18f00a7d9b8e97181867975e8dc9fc06129dc7e64cdc4b
+updated: 2017-07-27T14:29:25.832833445+09:00
 imports:
 - name: github.com/alexflint/go-arg
   version: cef6506c97e5731da728c374ff3523e481026423
@@ -7,14 +7,6 @@ imports:
   version: 45e5d6cd8605faef82fda2bacc59e734a0b6f1f0
 - name: github.com/fatih/color
   version: 62e9147c64a1ed519147b62a56a14e83e2be02c1
-- name: github.com/gogo/protobuf
-  version: efccd33a0c20aa078705571d5ddbfa14c8395a63
-  subpackages:
-  - gogoproto
-  - proto
-  - protoc-gen-gogo/descriptor
-  - protoc-gen-gogo/generator
-  - protoc-gen-gogo/plugin
 - name: github.com/golang/protobuf
   version: 6e4cc92cc905d5f4a73041c1b8228ea08f4c6147
   subpackages:
@@ -47,7 +39,7 @@ imports:
 - name: github.com/pkg/errors
   version: c605e284fe17294bda444b34710735b29d1a9d90
 - name: golang.org/x/net
-  version: 3470a06c1357df533e251f14d3a181f67396fe35
+  version: fe686d45ea04bc1bd4eff6a52865ce8757320325
   subpackages:
   - context
   - http2
@@ -62,7 +54,7 @@ imports:
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 210eee5cf7323015d097341bcf7166130d001cd8
+  version: 9e2f80a6ba7ed4ba13e0cd4b1f094bf916875735
   subpackages:
   - secure/bidirule
   - transform
@@ -76,7 +68,7 @@ imports:
   - protobuf/ptype
   - protobuf/source_context
 - name: google.golang.org/grpc
-  version: d8960bd63c6743defa6d54926e5edfa8e4a28e43
+  version: 172ccacff3cfbddedcf1ba5ea06cda943bc976c1
   subpackages:
   - codes
   - credentials
