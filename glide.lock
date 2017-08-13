@@ -1,12 +1,16 @@
 hash: 9b110fe65e53714f2e18f00a7d9b8e97181867975e8dc9fc06129dc7e64cdc4b
-updated: 2017-07-27T14:29:25.832833445+09:00
+updated: 2017-08-13T15:22:47.701630767+09:00
 imports:
 - name: github.com/alexflint/go-arg
   version: cef6506c97e5731da728c374ff3523e481026423
 - name: github.com/alexflint/go-scalar
   version: 45e5d6cd8605faef82fda2bacc59e734a0b6f1f0
+- name: github.com/davecgh/go-spew
+  version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
+  subpackages:
+  - spew
 - name: github.com/fatih/color
-  version: 62e9147c64a1ed519147b62a56a14e83e2be02c1
+  version: 67c513e5729f918f5e69786686770c27141a4490
 - name: github.com/golang/protobuf
   version: 6e4cc92cc905d5f4a73041c1b8228ea08f4c6147
   subpackages:
@@ -20,7 +24,7 @@ imports:
   - ptypes/timestamp
   - ptypes/wrappers
 - name: github.com/jhump/protoreflect
-  version: cba7dc071926a6a5da76c83c7e1e6fc1ffe77c81
+  version: d4239230719ff12559038002774dfab9d089b6a8
   subpackages:
   - desc
   - dynamic
@@ -38,8 +42,19 @@ imports:
   version: 88609521dc4b6c858fd4c98b628147da928ce4ac
 - name: github.com/pkg/errors
   version: c605e284fe17294bda444b34710735b29d1a9d90
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: f390dcf405f7b83c997eac1b06768bb9f44dec18
+  subpackages:
+  - assert
+  - require
+  - vendor/github.com/davecgh/go-spew/spew
+  - vendor/github.com/pmezard/go-difflib/difflib
 - name: golang.org/x/net
-  version: fe686d45ea04bc1bd4eff6a52865ce8757320325
+  version: 3470a06c1357df533e251f14d3a181f67396fe35
   subpackages:
   - context
   - http2
@@ -54,7 +69,7 @@ imports:
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 9e2f80a6ba7ed4ba13e0cd4b1f094bf916875735
+  version: 210eee5cf7323015d097341bcf7166130d001cd8
   subpackages:
   - secure/bidirule
   - transform
@@ -68,7 +83,7 @@ imports:
   - protobuf/ptype
   - protobuf/source_context
 - name: google.golang.org/grpc
-  version: 172ccacff3cfbddedcf1ba5ea06cda943bc976c1
+  version: d8960bd63c6743defa6d54926e5edfa8e4a28e43
   subpackages:
   - codes
   - credentials
