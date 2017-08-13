@@ -24,7 +24,7 @@ func TestNewFields(t *testing.T) {
 			msgName: "TimeleapReq", err: nil,
 			expect: []*Field{
 				{Name: "when", Type: descriptor.FieldDescriptorProto_TYPE_STRING},
-				{Name: "person", Type: descriptor.FieldDescriptorProto_TYPE_MESSAGE},
+				{Name: "person", Type: descriptor.FieldDescriptorProto_TYPE_MESSAGE, IsMessage: true},
 			}},
 	}
 
@@ -40,13 +40,11 @@ func TestNewFields(t *testing.T) {
 			// Erase descriptor because it not need
 			for _, a := range actual {
 				a.Desc = nil
+				a.Fields = nil
 			}
 
 			assert.Equal(t, test.err, err)
-			for i, actual := range actual {
-				assert.Equal(t, test.expect[i].Name, actual.Name)
-				assert.Equal(t, test.expect[i].Type, actual.Type)
-			}
+			assert.Exactly(t, test.expect, actual)
 		})
 	}
 }
