@@ -85,6 +85,7 @@ func (e *Env) GetServices() (model.Services, error) {
 }
 
 func (e *Env) GetMessages() (model.Messages, error) {
+	// TODO: current package 以外からも取得したい
 	name := e.state.currentPackage
 	if name == "" {
 		return nil, ErrPackageUnselected

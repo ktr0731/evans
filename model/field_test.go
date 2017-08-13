@@ -9,7 +9,7 @@ import (
 
 func TestNewFields(t *testing.T) {
 	const pkgName = "steinsgate"
-	desc := fileDesc(t, []string{"test/test.proto"}, []string{})
+	desc := fileDesc(t, []string{"testdata/test.proto"}, []string{})
 	tests := map[string]struct {
 		msgName string
 		expect  []*Field
@@ -31,9 +31,10 @@ func TestNewFields(t *testing.T) {
 	for title, test := range tests {
 		t.Run(title, func(t *testing.T) {
 			msg := getMessage(t, desc, pkgName, test.msgName)
+
 			// Message struct is used only extract field from descriptor
 			actual, err := NewFields(func(msgName string) (*Message, error) {
-				return getMessage(t, desc, pkgName, msg.Name), nil
+				return getMessage(t, desc, pkgName, msgName), nil
 			}, &Message{Desc: msg.Desc})
 
 			// Erase descriptor because it not need
@@ -42,7 +43,10 @@ func TestNewFields(t *testing.T) {
 			}
 
 			assert.Equal(t, test.err, err)
-			assert.Equal(t, test.expect, actual)
+			for i, actual := range actual {
+				assert.Equal(t, test.expect[i].Name, actual.Name)
+				assert.Equal(t, test.expect[i].Type, actual.Type)
+			}
 		})
 	}
 }
