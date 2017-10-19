@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	arg "github.com/alexflint/go-arg"
+	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/env"
 	"github.com/ktr0731/evans/parser"
 	"github.com/ktr0731/evans/repl"
@@ -30,8 +31,9 @@ func NewUI() *UI {
 type Options struct {
 	Proto []string `arg:"positional,help:.proto files"`
 
-	Port        int    `arg:"-p,help:gRPC port"`
 	Interactive bool   `arg:"-i,help:use interactive mode"`
+	EditConfig  bool   `arg:"-e,help:edit config file by $EDITOR"`
+	Port        int    `arg:"-p,help:gRPC port"`
 	Package     string `arg:"help:default package"`
 	Service     string `arg:"help:default service. evans parse package from this if --package is nothing."`
 }
@@ -41,7 +43,8 @@ func (o *Options) Version() string {
 }
 
 type CLI struct {
-	ui *UI
+	ui     *UI
+	config *config.Config
 
 	parser  *arg.Parser
 	options *Options
@@ -70,6 +73,14 @@ func (c *CLI) Usage() {
 
 func (c *CLI) Run(args []string) int {
 	c.parser = arg.MustParse(c.options)
+
+	if c.options.EditConfig {
+		err := config.Edit()
+		if err != nil {
+			panic(err)
+		}
+		return 0
+	}
 
 	if len(c.options.Proto) == 0 {
 		c.Error(errors.New("invalid argument"))
