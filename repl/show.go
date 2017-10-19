@@ -3,7 +3,7 @@ package repl
 import (
 	"strings"
 
-	"github.com/lycoris0731/evans/env"
+	"github.com/ktr0731/evans/env"
 	"github.com/pkg/errors"
 )
 

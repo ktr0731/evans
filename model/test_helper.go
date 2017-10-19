@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/jhump/protoreflect/desc"
-	"github.com/lycoris0731/evans/parser"
+	"github.com/ktr0731/evans/parser"
 	"github.com/stretchr/testify/require"
 )
 

@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	arg "github.com/alexflint/go-arg"
-	"github.com/lycoris0731/evans/env"
-	"github.com/lycoris0731/evans/parser"
-	"github.com/lycoris0731/evans/repl"
+	"github.com/ktr0731/evans/env"
+	"github.com/ktr0731/evans/parser"
+	"github.com/ktr0731/evans/repl"
 	"github.com/pkg/errors"
 
 	"io"

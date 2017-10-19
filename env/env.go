@@ -3,8 +3,8 @@ package env
 import (
 	"strings"
 
-	"github.com/lycoris0731/evans/model"
-	"github.com/lycoris0731/evans/parser"
+	"github.com/ktr0731/evans/model"
+	"github.com/ktr0731/evans/parser"
 	"github.com/pkg/errors"
 )
 

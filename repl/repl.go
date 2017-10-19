@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/lycoris0731/evans/env"
+	"github.com/ktr0731/evans/env"
 	"github.com/peterh/liner"
 	"github.com/pkg/errors"
 )
