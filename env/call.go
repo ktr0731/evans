@@ -46,8 +46,7 @@ func (e *Env) Call(name string) (string, error) {
 	}
 
 	res := dynamic.NewMessage(rpc.ResponseType)
-	// TODO: other than localhost
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", e.config.port), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", e.config.Server.Host, e.config.Server.Port), grpc.WithInsecure())
 	if err != nil {
 		return "", err
 	}

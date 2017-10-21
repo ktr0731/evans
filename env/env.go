@@ -3,6 +3,7 @@ package env
 import (
 	"strings"
 
+	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/model"
 	"github.com/ktr0731/evans/parser"
 	"github.com/pkg/errors"
@@ -32,25 +33,19 @@ type state struct {
 	currentService string
 }
 
-type config struct {
-	port int
-}
-
 type Env struct {
 	desc  *parser.FileDescriptorSet
 	state state
 
-	config *config
+	config *config.Env
 
 	cache cache
 }
 
-func New(desc *parser.FileDescriptorSet, port int) (*Env, error) {
+func New(desc *parser.FileDescriptorSet, config *config.Env) (*Env, error) {
 	return &Env{
-		desc: desc,
-		config: &config{
-			port: port,
-		},
+		desc:   desc,
+		config: config,
 		cache: cache{
 			pkg: map[string]*model.Package{},
 		},

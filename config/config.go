@@ -8,18 +8,32 @@ import (
 
 var mConfig *configure.Configure
 
-type Core struct {
+type Server struct {
+	Host string `default:"127.0.0.1" toml:"host"`
 	Port string `default:"50051" toml:"port"`
 }
 
+type REPL struct {
+	Server       *Server `toml:"-"`
+	PromptFormat string  `default:"{package}.{sevice}@{addr}:{port}" toml:"prompt"`
+	Reader       string  `default:"stdin" toml:"reader"`
+	Writer       string  `default:"stdout" toml:"writer"`
+	ErrWriter    string  `default:"stderr" toml:"err_writer"`
+}
+
+type Env struct {
+	Server *Server `toml:"-"`
+}
+
 type Meta struct {
-	Path         string `default:"~/.config/evans/config.toml" toml:"path"`
-	PromptFormat string `default:"{package}.{sevice}@{addr}:{port}" toml:"prompt"`
+	Path string `default:"~/.config/evans/config.toml" toml:"path"`
 }
 
 type Config struct {
-	Meta *Meta `toml:"meta"`
-	Core *Core `toml:"core"`
+	Meta   *Meta   `toml:"meta"`
+	REPL   *REPL   `toml:"repl"`
+	Env    *Env    `toml:"env"`
+	Server *Server `toml:"server"`
 }
 
 func init() {

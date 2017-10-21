@@ -20,7 +20,7 @@ type UI struct {
 	Writer, ErrWriter io.Writer
 }
 
-func NewUI() *UI {
+func newUI() *UI {
 	return &UI{
 		Reader:    os.Stdin,
 		Writer:    os.Stdout,
@@ -52,7 +52,7 @@ type CLI struct {
 
 func NewCLI(title, version string) *CLI {
 	return &CLI{
-		ui: NewUI(),
+		ui: newUI(),
 		options: &Options{
 			Port: 50051,
 		},
@@ -75,47 +75,25 @@ func (c *CLI) Run(args []string) int {
 	c.parser = arg.MustParse(c.options)
 
 	if c.options.EditConfig {
-		err := config.Edit()
-		if err != nil {
-			panic(err)
+		if err := config.Edit(); err != nil {
+			c.Error(err)
+			return 1
 		}
 		return 0
 	}
 
-	if len(c.options.Proto) == 0 {
-		c.Error(errors.New("invalid argument"))
+	if err := checkPrecondition(c.options); err != nil {
+		c.Error(err)
 		return 1
 	}
 
-	desc, err := parser.ParseFile(c.options.Proto, []string{})
+	env, err := setupEnv(c.config.Env, c.options)
 	if err != nil {
 		c.Error(err)
 		return 1
 	}
 
-	config := &repl.Config{
-		Port: c.options.Port,
-	}
-	env, err := env.New(desc, config.Port)
-	if err != nil {
-		c.Error(err)
-		return 1
-	}
-
-	if c.options.Package != "" {
-		if err := env.UsePackage(c.options.Package); err != nil {
-			c.Error(errors.Wrapf(err, "file %s", strings.Join(c.options.Proto, ", ")))
-			return 1
-		}
-	}
-	if c.options.Service != "" {
-		if err := env.UseService(c.options.Service); err != nil {
-			c.Error(errors.Wrapf(err, "file %s", strings.Join(c.options.Proto, ", ")))
-			return 1
-		}
-	}
-
-	r := repl.NewREPL(config, env, repl.NewUI())
+	r := repl.NewREPL(c.config.REPL, env, repl.NewBasicUI())
 	defer r.Close()
 
 	if err := r.Start(); err != nil {
@@ -124,4 +102,36 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	return 0
+}
+
+func checkPrecondition(opt *Options) error {
+	if len(opt.Proto) == 0 {
+		return errors.New("invalid argument")
+	}
+	return nil
+}
+
+func setupEnv(config *config.Env, opt *Options) (*env.Env, error) {
+	// TODO: 複数の path に対応する
+	desc, err := parser.ParseFile(opt.Proto, []string{})
+	if err != nil {
+		return nil, err
+	}
+
+	env, err := env.New(desc, config)
+	if err != nil {
+		return nil, err
+	}
+
+	if opt.Package != "" {
+		if err := env.UsePackage(opt.Package); err != nil {
+			return nil, errors.Wrapf(err, "file %s", strings.Join(opt.Proto, ", "))
+		}
+	}
+	if opt.Service != "" {
+		if err := env.UseService(opt.Service); err != nil {
+			return nil, errors.Wrapf(err, "file %s", strings.Join(opt.Proto, ", "))
+		}
+	}
+	return env, nil
 }
