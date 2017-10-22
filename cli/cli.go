@@ -56,6 +56,7 @@ func NewCLI(title, version string) *CLI {
 		options: &Options{
 			Port: 50051,
 		},
+		config: config.Get(),
 	}
 }
 

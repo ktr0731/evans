@@ -62,7 +62,7 @@ func NewREPL(config *config.REPL, env *env.Env, ui *UI) *REPL {
 }
 
 func (r *REPL) Read() (string, error) {
-	prompt := fmt.Sprintf("%s:%d> ", r.config.Server.Host, r.config.Server.Port)
+	prompt := fmt.Sprintf("%s:%s> ", r.config.Server.Host, r.config.Server.Port)
 	if dsn := r.env.GetDSN(); dsn != "" {
 		prompt = fmt.Sprintf("%s@%s", dsn, prompt)
 	}

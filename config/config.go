@@ -15,14 +15,15 @@ type Server struct {
 
 type REPL struct {
 	Server       *Server `toml:"-"`
-	PromptFormat string  `default:"{package}.{sevice}@{addr}:{port}" toml:"prompt"`
+	PromptFormat string  `default:"{package}.{sevice}@{addr}:{port}" toml:"promptFormat"`
 	Reader       string  `default:"stdin" toml:"reader"`
 	Writer       string  `default:"stdout" toml:"writer"`
-	ErrWriter    string  `default:"stderr" toml:"err_writer"`
+	ErrWriter    string  `default:"stderr" toml:"errWriter"`
 }
 
 type Env struct {
-	Server *Server `toml:"-"`
+	Server            *Server `toml:"-"`
+	InputPromptFormat string  `default:"{name} ({type}) => " toml:"inputPromptFormat"`
 }
 
 type Meta struct {
@@ -42,6 +43,11 @@ func init() {
 	if err := envconfig.Process("evans", &conf); err != nil {
 		panic(err)
 	}
+
+	// TODO: use more better method
+	conf.REPL.Server = conf.Server
+	conf.Env.Server = conf.Server
+
 	mConfig, err = configure.NewConfigure(conf.Meta.Path, conf, nil)
 	if err != nil {
 		panic(err)
@@ -54,6 +60,11 @@ func Get() *Config {
 	if err != nil {
 		panic(err)
 	}
+
+	// TODO: use more better method
+	config.REPL.Server = config.Server
+	config.Env.Server = config.Server
+
 	return &config
 }
 

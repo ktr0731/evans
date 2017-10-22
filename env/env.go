@@ -21,8 +21,8 @@ var (
 	ErrServiceCachingFailed = errors.New("service caching failed")
 )
 
-// packages is used by showing all packages
-// mapPackages is used by extract a package by package name
+// pkgList is used by showing all packages
+// pkg is used by extract a package by package name
 type cache struct {
 	pkgList model.Packages
 	pkg     map[string]*model.Package
@@ -190,9 +190,9 @@ func (e *Env) GetDSN() string {
 
 // loadPackage loads all services and messages in itself
 func (e *Env) loadPackage(name string) error {
+	// prevent duplicated loading
 	_, ok := e.cache.pkg[name]
 	if ok {
-		// prevent duplicated loading
 		return nil
 	}
 
