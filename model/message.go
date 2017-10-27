@@ -15,10 +15,10 @@ type Message struct {
 }
 
 func NewMessage(message *desc.MessageDescriptor) *Message {
-	var msg Message
-	msg.Name = message.GetName()
-	msg.Desc = message
-	return &msg
+	return &Message{
+		Name: message.GetName(),
+		Desc: message,
+	}
 }
 
 func (m *Message) String() string {

@@ -29,7 +29,7 @@ func NewFields(getMessage func(msgName string) (*Message, error), msg *Message) 
 			f.IsMessage = true
 
 			// TODO: 別パッケージの msg が取得できない
-			msg, err := getMessage(field.GetName())
+			msg, err := getMessage(field.GetMessageType().GetName())
 			if err != nil {
 				return nil, err
 			}

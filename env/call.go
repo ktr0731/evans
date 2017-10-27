@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 
 	"google.golang.org/grpc"
 
@@ -27,13 +28,15 @@ type field struct {
 	desc        *desc.FieldDescriptor
 }
 
+// Call calls a RPC which is selected
+// RPC is called after inputting field values interactively
 func (e *Env) Call(name string) (string, error) {
 	rpc, err := e.GetRPC(name)
 	if err != nil {
 		return "", err
 	}
 
-	input, err := inputFields(rpc.RequestType.GetFields())
+	input, err := e.inputFields(rpc.RequestType.GetFields())
 	if errors.Cause(err) == io.EOF {
 		return "", nil
 	} else if err != nil {
@@ -46,8 +49,7 @@ func (e *Env) Call(name string) (string, error) {
 	}
 
 	res := dynamic.NewMessage(rpc.ResponseType)
-	// TODO: other than localhost
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", e.config.port), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", e.config.Server.Host, e.config.Server.Port), grpc.WithInsecure())
 	if err != nil {
 		return "", err
 	}
@@ -158,14 +160,12 @@ func (e *Env) setInput(req *dynamic.Message, fields []*field) error {
 	return nil
 }
 
-func inputFields(fields []*desc.FieldDescriptor) ([]*field, error) {
-	const format = "%s (%s) = "
-
+func (e *Env) inputFields(fields []*desc.FieldDescriptor) ([]*field, error) {
 	liner := liner.NewLiner()
 	defer liner.Close()
 
 	input := make([]*field, len(fields))
-	max := maxLen(fields, format)
+	max := maxLen(fields, e.config.InputPromptFormat)
 	for i, f := range fields {
 		input[i] = &field{
 			name:     f.GetName(),
@@ -174,14 +174,22 @@ func inputFields(fields []*desc.FieldDescriptor) ([]*field, error) {
 		}
 
 		if isMessageType(f.GetType()) {
-			fields, err := inputFields(f.GetMessageType().GetFields())
+			fields, err := e.inputFields(f.GetMessageType().GetFields())
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read inputs")
 			}
 
 			input[i].mVal = fields
 		} else {
-			l, err := liner.Prompt(fmt.Sprintf("%"+strconv.Itoa(max)+"s", fmt.Sprintf(format, f.GetName(), f.GetType())))
+			prompt := e.config.InputPromptFormat
+			elems := map[string]string{
+				"name": f.GetName(),
+				"type": f.GetType().String(),
+			}
+			for k, v := range elems {
+				prompt = strings.Replace(prompt, "{"+k+"}", v, -1)
+			}
+			l, err := liner.Prompt(fmt.Sprintf("%"+strconv.Itoa(max)+"s", prompt))
 			if err != nil {
 				return nil, err
 			}
@@ -199,7 +207,15 @@ func maxLen(fields []*desc.FieldDescriptor, format string) int {
 		if isMessageType(f.GetType()) {
 			continue
 		}
-		l := len(fmt.Sprintf(format, f.GetName(), f.GetType()))
+		prompt := format
+		elems := map[string]string{
+			"name": f.GetName(),
+			"type": f.GetType().String(),
+		}
+		for k, v := range elems {
+			prompt = strings.Replace(prompt, "{"+k+"}", v, -1)
+		}
+		l := len(format)
 		if l > max {
 			max = l
 		}

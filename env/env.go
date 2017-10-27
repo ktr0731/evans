@@ -3,8 +3,9 @@ package env
 import (
 	"strings"
 
-	"github.com/lycoris0731/evans/model"
-	"github.com/lycoris0731/evans/parser"
+	"github.com/ktr0731/evans/config"
+	"github.com/ktr0731/evans/model"
+	"github.com/ktr0731/evans/parser"
 	"github.com/pkg/errors"
 )
 
@@ -20,8 +21,8 @@ var (
 	ErrServiceCachingFailed = errors.New("service caching failed")
 )
 
-// packages is used by showing all packages
-// mapPackages is used by extract a package by package name
+// pkgList is used by showing all packages
+// pkg is used by extract a package by package name
 type cache struct {
 	pkgList model.Packages
 	pkg     map[string]*model.Package
@@ -32,25 +33,19 @@ type state struct {
 	currentService string
 }
 
-type config struct {
-	port int
-}
-
 type Env struct {
 	desc  *parser.FileDescriptorSet
 	state state
 
-	config *config
+	config *config.Env
 
 	cache cache
 }
 
-func New(desc *parser.FileDescriptorSet, port int) (*Env, error) {
+func New(desc *parser.FileDescriptorSet, config *config.Env) (*Env, error) {
 	return &Env{
-		desc: desc,
-		config: &config{
-			port: port,
-		},
+		desc:   desc,
+		config: config,
 		cache: cache{
 			pkg: map[string]*model.Package{},
 		},
@@ -85,6 +80,7 @@ func (e *Env) GetServices() (model.Services, error) {
 }
 
 func (e *Env) GetMessages() (model.Messages, error) {
+	// TODO: current package 以外からも取得したい
 	name := e.state.currentPackage
 	if name == "" {
 		return nil, ErrPackageUnselected
@@ -194,9 +190,9 @@ func (e *Env) GetDSN() string {
 
 // loadPackage loads all services and messages in itself
 func (e *Env) loadPackage(name string) error {
+	// prevent duplicated loading
 	_, ok := e.cache.pkg[name]
 	if ok {
-		// prevent duplicated loading
 		return nil
 	}
 

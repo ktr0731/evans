@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/lycoris0731/evans/env"
+	"github.com/ktr0731/evans/config"
+	"github.com/ktr0731/evans/env"
 	"github.com/peterh/liner"
 	"github.com/pkg/errors"
 )
@@ -28,7 +29,7 @@ func newUI() *UI {
 
 type REPL struct {
 	ui     *UI
-	config *Config
+	config *config.REPL
 	env    *env.Env
 	liner  *liner.State
 }
@@ -39,7 +40,7 @@ type UI struct {
 	prompt            string
 }
 
-func NewUI() *UI {
+func NewBasicUI() *UI {
 	return &UI{
 		Reader:    os.Stdin,
 		Writer:    os.Stdout,
@@ -47,11 +48,7 @@ func NewUI() *UI {
 	}
 }
 
-type Config struct {
-	Port int
-}
-
-func NewREPL(config *Config, env *env.Env, ui *UI) *REPL {
+func NewREPL(config *config.REPL, env *env.Env, ui *UI) *REPL {
 	repl := &REPL{
 		ui:     ui,
 		config: config,
@@ -65,7 +62,7 @@ func NewREPL(config *Config, env *env.Env, ui *UI) *REPL {
 }
 
 func (r *REPL) Read() (string, error) {
-	prompt := fmt.Sprintf("127.0.0.1:%d> ", r.config.Port)
+	prompt := fmt.Sprintf("%s:%s> ", r.config.Server.Host, r.config.Server.Port)
 	if dsn := r.env.GetDSN(); dsn != "" {
 		prompt = fmt.Sprintf("%s@%s", dsn, prompt)
 	}
@@ -180,5 +177,5 @@ func (r *REPL) Start() error {
 
 func (r *REPL) Close() error {
 	r.Print("Good Bye :)")
-	return nil
+	return r.liner.Close()
 }

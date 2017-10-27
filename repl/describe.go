@@ -1,7 +1,7 @@
 package repl
 
 import (
-	"github.com/lycoris0731/evans/env"
+	"github.com/ktr0731/evans/env"
 )
 
 func describe(env *env.Env, msgName string) (string, error) {
