@@ -7,27 +7,45 @@ import (
 	"github.com/pkg/errors"
 )
 
-func show(env *env.Env, target string) (string, error) {
+type ShowCommand struct {
+	env *env.Env
+}
+
+func (c *ShowCommand) Help() string {
+	return `Show package, service or RPC names
+	Usage: show <package | service | message | rpc>`
+}
+
+func (c *ShowCommand) Validate(args []string) error {
+	if len(args) < 1 {
+		return errors.Wrap(ErrArgumentRequired, "target type (package, service, message)")
+	}
+	return nil
+}
+
+func (c *ShowCommand) Run(args []string) (string, error) {
+	target := args[0]
+
 	switch strings.ToLower(target) {
 	case "p", "package", "packages":
-		return env.GetPackages().String(), nil
+		return c.env.GetPackages().String(), nil
 
 	case "s", "svc", "service", "services":
-		svc, err := env.GetServices()
+		svc, err := c.env.GetServices()
 		if err != nil {
 			return "", err
 		}
 		return svc.String(), nil
 
 	case "m", "msg", "message", "messages":
-		msg, err := env.GetMessages()
+		msg, err := c.env.GetMessages()
 		if err != nil {
 			return "", err
 		}
 		return msg.String(), nil
 
 	case "a", "r", "rpc", "api":
-		rpcs, err := env.GetRPCs()
+		rpcs, err := c.env.GetRPCs()
 		if err != nil {
 			return "", err
 		}

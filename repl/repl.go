@@ -32,6 +32,7 @@ type REPL struct {
 	config *config.REPL
 	env    *env.Env
 	liner  *liner.State
+	cmds   map[string]Commander
 }
 
 type UI struct {
@@ -49,10 +50,31 @@ func NewBasicUI() *UI {
 }
 
 func NewREPL(config *config.REPL, env *env.Env, ui *UI) *REPL {
+	call := &CallCommand{env}
+	desc := &DescCommand{env}
+	pkg := &PackageCommand{env}
+	svc := &ServiceCommand{env}
 	repl := &REPL{
 		ui:     ui,
 		config: config,
 		env:    env,
+		cmds: map[string]Commander{
+			"show": &ShowCommand{env},
+
+			"c":    call,
+			"call": call,
+
+			"d":        desc,
+			"desc":     desc,
+			"describe": desc,
+
+			"p":       pkg,
+			"package": pkg,
+
+			"s":       svc,
+			"svc":     svc,
+			"service": svc,
+		},
 	}
 	l := liner.NewLiner()
 	l.SetCompleter(repl.GetCompletion)
@@ -78,66 +100,20 @@ func (r *REPL) Read() (string, error) {
 func (r *REPL) Eval(l string) (string, error) {
 	part := strings.Split(l, " ")
 
-	// TODO: 型定義して条件分岐を殺す
-	switch part[0] {
-	case "show":
-		if len(part) < 2 || len(part[1]) == 0 {
-			return "", errors.Wrap(ErrArgumentRequired, "target type (package, service, message)")
-		}
-		if part[1] == "-h" || part[1] == "--help" {
-			return "Usage: show <package | service | message | rpc>", nil
-		}
-		return show(r.env, part[1])
-
-	case "c", "call":
-		if len(part) < 2 || len(part[1]) == 0 {
-			return "", errors.Wrap(ErrArgumentRequired, "service or RPC name")
-		}
-		if part[1] == "-h" || part[1] == "--help" {
-			return "Usage: call <RPC name>", nil
-		}
-		return r.env.Call(part[1])
-
-	case "d", "desc", "describe":
-		if len(part) < 2 || len(part[1]) == 0 {
-			return "", errors.Wrap(ErrArgumentRequired, "message name")
-		}
-		if part[1] == "-h" || part[1] == "--help" {
-			return "Usage: desc <message name>", nil
-		}
-		return describe(r.env, part[1])
-
-	case "p", "package":
-		if len(part) < 2 || len(part[1]) == 0 {
-			return "", errors.Wrap(ErrArgumentRequired, "package name")
-		}
-
-		if part[1] == "-h" || part[1] == "--help" {
-			return "Usage: package <package name>", nil
-		}
-
-		if err := r.env.UsePackage(part[1]); err != nil {
-			return "", errors.Wrapf(err, "file %s", part[1])
-		}
-
-	case "s", "svc", "service":
-		if len(part) < 2 || len(part[1]) == 0 {
-			return "", errors.Wrap(ErrArgumentRequired, "service name")
-		}
-
-		if part[1] == "-h" || part[1] == "--help" {
-			return "Usage: service <service name>", nil
-		}
-
-		if err := r.env.UseService(part[1]); err != nil {
-			return "", err
-		}
-
-	default:
-		return "", errors.Wrap(ErrUnknownCommand, part[0])
-
+	cmd, ok := r.cmds[part[0]]
+	if !ok {
+		return "", ErrUnknownCommand
 	}
-	return "", nil
+
+	var args []string
+	if len(part) != 1 {
+		if part[1] == "-h" || part[1] == "--help" {
+			return cmd.Help(), nil
+		}
+		args = part
+	}
+
+	return exec(cmd, args)
 }
 
 func (r *REPL) Print(text string) {
@@ -178,4 +154,11 @@ func (r *REPL) Start() error {
 func (r *REPL) Close() error {
 	r.Print("Good Bye :)")
 	return r.liner.Close()
+}
+
+func exec(cmd Commander, args []string) (string, error) {
+	if err := cmd.Validate(args); err != nil {
+		return "", err
+	}
+	return cmd.Run(args)
 }
