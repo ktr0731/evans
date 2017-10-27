@@ -50,30 +50,16 @@ func NewBasicUI() *UI {
 }
 
 func NewREPL(config *config.REPL, env *env.Env, ui *UI) *REPL {
-	call := &CallCommand{env}
-	desc := &DescCommand{env}
-	pkg := &PackageCommand{env}
-	svc := &ServiceCommand{env}
 	repl := &REPL{
 		ui:     ui,
 		config: config,
 		env:    env,
 		cmds: map[string]Commander{
-			"show": &ShowCommand{env},
-
-			"c":    call,
-			"call": call,
-
-			"d":        desc,
-			"desc":     desc,
-			"describe": desc,
-
-			"p":       pkg,
-			"package": pkg,
-
-			"s":       svc,
-			"svc":     svc,
-			"service": svc,
+			"show":    &ShowCommand{env},
+			"call":    &CallCommand{env},
+			"desc":    &DescCommand{env},
+			"package": &PackageCommand{env},
+			"service": &ServiceCommand{env},
 		},
 	}
 	l := liner.NewLiner()
@@ -98,7 +84,15 @@ func (r *REPL) Read() (string, error) {
 }
 
 func (r *REPL) Eval(l string) (string, error) {
+	return "", nil
 	part := strings.Split(l, " ")
+
+	if part[0] == "help" {
+		for name, cmd := range r.cmds {
+			r.Print(fmt.Sprintf("%s\n%s\n", name, cmd.Help()))
+		}
+		return "", nil
+	}
 
 	cmd, ok := r.cmds[part[0]]
 	if !ok {
