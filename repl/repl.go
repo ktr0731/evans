@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
@@ -84,13 +85,10 @@ func (r *REPL) Read() (string, error) {
 }
 
 func (r *REPL) Eval(l string) (string, error) {
-	return "", nil
 	part := strings.Split(l, " ")
 
 	if part[0] == "help" {
-		for name, cmd := range r.cmds {
-			r.Print(fmt.Sprintf("%s\n%s\n", name, cmd.Help()))
-		}
+		r.showHelp(r.cmds)
 		return "", nil
 	}
 
@@ -148,6 +146,24 @@ func (r *REPL) Start() error {
 func (r *REPL) Close() error {
 	r.Print("Good Bye :)")
 	return r.liner.Close()
+}
+
+func (r *REPL) showHelp(cmds map[string]Commander) {
+	var maxLen int
+	// slice of [name, synopsis]
+	text := make([][]string, len(cmds))
+	for name, cmd := range cmds {
+		text = append(text, []string{name, cmd.Synopsis()})
+		if len(name) > maxLen {
+			maxLen = len(name)
+		}
+	}
+
+	msg := "\nAvailable commands:\n"
+	for name, cmd := range cmds {
+		msg += fmt.Sprintf("  %-"+strconv.Itoa(maxLen)+"s    %s\n", name, cmd.Synopsis())
+	}
+	r.Print(strings.TrimRight(msg, "\n"))
 }
 
 func exec(cmd Commander, args []string) (string, error) {

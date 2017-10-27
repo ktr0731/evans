@@ -9,6 +9,10 @@ type DescCommand struct {
 	env *env.Env
 }
 
+func (c *DescCommand) Synopsis() string {
+	return "Describe the structure of selected message"
+}
+
 func (c *DescCommand) Help() string {
 	return "Usage: desc <message name>"
 }

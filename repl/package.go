@@ -9,6 +9,10 @@ type PackageCommand struct {
 	env *env.Env
 }
 
+func (c *PackageCommand) Synopsis() string {
+	return "Set the package as the current selected package"
+}
+
 func (c *PackageCommand) Help() string {
 	return "Usage: package <package name>"
 }

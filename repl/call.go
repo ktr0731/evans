@@ -9,6 +9,10 @@ type CallCommand struct {
 	env *env.Env
 }
 
+func (c *CallCommand) Synopsis() string {
+	return "Call a RPC with interactively input"
+}
+
 func (c *CallCommand) Help() string {
 	return "Usage: call <RPC name>"
 }

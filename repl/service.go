@@ -9,6 +9,10 @@ type ServiceCommand struct {
 	env *env.Env
 }
 
+func (c *ServiceCommand) Synopsis() string {
+	return "Set the service as the current selected service"
+}
+
 func (c *ServiceCommand) Help() string {
 	return "Usage: service <service name>"
 }
