@@ -56,11 +56,11 @@ func NewREPL(config *config.REPL, env *env.Env, ui *UI) *REPL {
 		config: config,
 		env:    env,
 		cmds: map[string]Commander{
-			"show":    &showCommand{env},
 			"call":    &callCommand{env},
 			"desc":    &descCommand{env},
 			"package": &packageCommand{env},
 			"service": &serviceCommand{env},
+			"show":    &showCommand{env},
 		},
 	}
 

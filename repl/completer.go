@@ -1,12 +1,39 @@
 package repl
 
-import prompt "github.com/c-bata/go-prompt"
+import (
+	"strings"
+
+	prompt "github.com/c-bata/go-prompt"
+)
 
 func completer(d prompt.Document) []prompt.Suggest {
-	s := []prompt.Suggest{
-		{Text: "users", Description: "Store the username and age"},
-		{Text: "articles", Description: "Store the article text posted by user"},
-		{Text: "comments", Description: "Store the text commented to articles"},
+	bc := d.TextBeforeCursor()
+	if bc == "" {
+		return nil
+	}
+
+	args := strings.Split(bc, " ")
+	var s []prompt.Suggest
+	switch args[0] {
+	case "show":
+		s = []prompt.Suggest{
+			{Text: "package"},
+			{Text: "service"},
+			{Text: "message"},
+			{Text: "rpc"},
+		}
+	default:
+		// return all commands if current input is first command name
+		if len(args) == 1 {
+			s = []prompt.Suggest{
+				{Text: "call"},
+				{Text: "desc"},
+				{Text: "package"},
+				{Text: "service"},
+				{Text: "show"},
+			}
+		}
+
 	}
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
