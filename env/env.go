@@ -52,51 +52,56 @@ func New(desc *parser.FileDescriptorSet, config *config.Env) (*Env, error) {
 	}, nil
 }
 
+func (e *Env) HasCurrentPackage() bool {
+	return e.state.currentPackage != ""
+}
+
+func (e *Env) HasCurrentService() bool {
+	return e.state.currentService != ""
+}
+
 func (e *Env) GetPackages() model.Packages {
 	if e.cache.pkgList != nil {
 		return e.cache.pkgList
 	}
 
-	packNames := e.desc.GetPackages()
-	packages := make(model.Packages, len(packNames))
-	for i, name := range packNames {
-		packages[i] = &model.Package{Name: name}
+	pkgNames := e.desc.GetPackages()
+	pkgs := make(model.Packages, len(pkgNames))
+	for i, name := range pkgNames {
+		pkgs[i] = &model.Package{Name: name}
 	}
 
-	e.cache.pkgList = packages
+	e.cache.pkgList = pkgs
 
-	return packages
+	return pkgs
 }
 
 func (e *Env) GetServices() (model.Services, error) {
-	name := e.state.currentPackage
-	if name == "" {
+	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
 	}
 
 	// services, messages and rpc are cached to e.cache when called UsePackage()
 	// if messages isn't cached, it occurred panic
-	return e.cache.pkg[name].Services, nil
+	return e.cache.pkg[e.state.currentPackage].Services, nil
 }
 
 func (e *Env) GetMessages() (model.Messages, error) {
 	// TODO: current package 以外からも取得したい
-	name := e.state.currentPackage
-	if name == "" {
+	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
 	}
 
 	// same as GetServices()
-	return e.cache.pkg[name].Messages, nil
+	return e.cache.pkg[e.state.currentPackage].Messages, nil
 }
 
 func (e *Env) GetRPCs() (model.RPCs, error) {
-	name := e.state.currentService
-	if name == "" {
+	if !e.HasCurrentService() {
 		return nil, ErrServiceUnselected
 	}
 
-	svc, err := e.GetService(name)
+	svc, err := e.GetService(e.state.currentService)
 	if err != nil {
 		return nil, err
 	}

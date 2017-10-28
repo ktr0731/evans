@@ -65,22 +65,19 @@ func NewREPL(config *config.REPL, env *env.Env, ui *UI) *REPL {
 		cmds:   cmds,
 	}
 
-	defaultPrompt := fmt.Sprintf("%s:%s> ", config.Server.Host, config.Server.Port)
-	if dsn := repl.env.GetDSN(); dsn != "" {
-		defaultPrompt = fmt.Sprintf("%s@%s", dsn, defaultPrompt)
-	}
-
 	executor := &executor{repl: repl}
 	completer := &completer{cmds: cmds, env: env}
 
 	repl.prompt = prompt.New(
 		executor.execute,
 		completer.complete,
-		prompt.OptionPrefix(defaultPrompt),
+		prompt.OptionPrefix(repl.getPrompt()),
+
 		prompt.OptionSuggestionBGColor(prompt.LightGray),
 		prompt.OptionSuggestionTextColor(prompt.Black),
 		prompt.OptionDescriptionBGColor(prompt.White),
 		prompt.OptionDescriptionTextColor(prompt.Black),
+
 		prompt.OptionSelectedSuggestionBGColor(prompt.DarkBlue),
 		prompt.OptionSelectedSuggestionTextColor(prompt.Black),
 		prompt.OptionSelectedDescriptionBGColor(prompt.Blue),
@@ -158,4 +155,12 @@ Show more details:
   <command> --help
 `, cmdText)
 	r.wrappedPrint(strings.TrimRight(msg, "\n"))
+}
+
+func (r *REPL) getPrompt() string {
+	p := fmt.Sprintf("%s:%s> ", r.config.Server.Host, r.config.Server.Port)
+	if dsn := r.env.GetDSN(); dsn != "" {
+		p = fmt.Sprintf("%s@%s", dsn, p)
+	}
+	return p
 }

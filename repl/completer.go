@@ -31,6 +31,34 @@ func (c *completer) complete(d prompt.Document) []prompt.Suggest {
 				{Text: "rpc"},
 			}
 		}
+
+	case "package":
+		pkgs := c.env.GetPackages()
+		s = make([]prompt.Suggest, len(pkgs))
+		for i, pkg := range pkgs {
+			s[i] = prompt.Suggest{Text: pkg.Name}
+		}
+
+	case "service":
+		svcs, err := c.env.GetServices()
+		if err != nil {
+			return nil
+		}
+		s = make([]prompt.Suggest, len(svcs))
+		for i, svc := range svcs {
+			s[i] = prompt.Suggest{Text: svc.Name}
+		}
+
+	case "call":
+		rpcs, err := c.env.GetRPCs()
+		if err != nil {
+			return nil
+		}
+		s = make([]prompt.Suggest, len(rpcs))
+		for i, rpc := range rpcs {
+			s[i] = prompt.Suggest{Text: rpc.Name}
+		}
+
 	default:
 		// return all commands if current input is first command name
 		if len(args) == 1 {
