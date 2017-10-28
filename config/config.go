@@ -19,6 +19,8 @@ type REPL struct {
 	Reader       string  `default:"stdin" toml:"reader"`
 	Writer       string  `default:"stdout" toml:"writer"`
 	ErrWriter    string  `default:"stderr" toml:"errWriter"`
+
+	SplashTextPath string `default:"" toml:"splashTextPath"`
 }
 
 type Env struct {

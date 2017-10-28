@@ -3,7 +3,9 @@ package repl
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/env"
+	homedir "github.com/minio/go-homedir"
 	"github.com/pkg/errors"
 )
 
@@ -123,6 +126,7 @@ func (r *REPL) wrappedError(err error) {
 }
 
 func (r *REPL) Start() error {
+	r.printSplash(r.config.SplashTextPath)
 	r.prompt.Run()
 	return nil
 }
@@ -163,4 +167,27 @@ func (r *REPL) getPrompt() string {
 		p = fmt.Sprintf("%s@%s", dsn, p)
 	}
 	return p
+}
+
+func (r *REPL) printSplash(p string) {
+	if p != "" {
+		var abs string
+		if strings.HasPrefix(p, "~/") {
+			home, err := homedir.Dir()
+			if err == nil {
+				abs = filepath.Join(home, strings.TrimPrefix(p, "~/"))
+			}
+		} else {
+			abs, _ = filepath.Abs(p)
+		}
+		if abs != "" {
+			_, err := os.Stat(abs)
+			if !os.IsNotExist(err) {
+				b, err := ioutil.ReadFile(abs)
+				if err == nil {
+					fmt.Fprintln(r.ui.Writer, string(b))
+				}
+			}
+		}
+	}
 }

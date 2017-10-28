@@ -1,7 +1,6 @@
 package env
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/ktr0731/evans/config"
@@ -93,11 +92,7 @@ func (e *Env) GetMessages() (model.Messages, error) {
 		return nil, ErrPackageUnselected
 	}
 
-	fmt.Printf("%#v\n", e.cache.pkg["test"])
-
 	// same as GetServices()
-	// 現在はすべて読み込んでから突っ込んでいるが、それだと依存関係があったときに死ぬ
-	// 一つずつ読み込むようにする
 	return e.cache.pkg[e.state.currentPackage].Messages, nil
 }
 
@@ -210,10 +205,12 @@ func (e *Env) loadPackage(name string) error {
 	dSvc := e.desc.GetServices(name)
 	dMsg := e.desc.GetMessages(name)
 
+	// Messages: actual message size is greater than or equal to len(dMsg)
+	//           because message can be contain other messages as a field
 	e.cache.pkg[name] = &model.Package{
 		Name:     name,
 		Services: make(model.Services, len(dSvc)),
-		Messages: make(model.Messages, 0, len(dMsg)), // actual message size is greater than or equal to len(dMsg)
+		Messages: make(model.Messages, 0, len(dMsg)),
 	}
 
 	services := make(model.Services, len(dSvc))
@@ -232,7 +229,7 @@ func (e *Env) loadPackage(name string) error {
 		}
 		messages[i].Fields = fields
 
-		// cache each result because some messages depends on some messages
+		// cache each result by each time because some messages depends on some messages
 		e.cache.pkg[name].Messages = append(e.cache.pkg[name].Messages, messages[i])
 	}
 
@@ -250,7 +247,6 @@ func (e *Env) getNameFromFQN(fqn string) string {
 // it is passed by model.NewField() for get message from current package
 func (e *Env) getMessage() func(typeName string) (*model.Message, error) {
 	return func(msgName string) (*model.Message, error) {
-		// TODO: キャッシュする必要がある？
 		return e.GetMessage(msgName)
 	}
 }
