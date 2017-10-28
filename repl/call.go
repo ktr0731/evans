@@ -5,25 +5,25 @@ import (
 	"github.com/pkg/errors"
 )
 
-type CallCommand struct {
+type callCommand struct {
 	env *env.Env
 }
 
-func (c *CallCommand) Synopsis() string {
+func (c *callCommand) Synopsis() string {
 	return "Call a RPC with interactively input"
 }
 
-func (c *CallCommand) Help() string {
+func (c *callCommand) Help() string {
 	return "Usage: call <RPC name>"
 }
 
-func (c *CallCommand) Validate(args []string) error {
+func (c *callCommand) Validate(args []string) error {
 	if len(args) < 1 {
 		return errors.Wrap(ErrArgumentRequired, "service or RPC name")
 	}
 	return nil
 }
 
-func (c *CallCommand) Run(args []string) (string, error) {
+func (c *callCommand) Run(args []string) (string, error) {
 	return c.env.Call(args[0])
 }

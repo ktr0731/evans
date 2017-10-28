@@ -7,26 +7,26 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ShowCommand struct {
+type showCommand struct {
 	env *env.Env
 }
 
-func (c *ShowCommand) Synopsis() string {
+func (c *showCommand) Synopsis() string {
 	return "Show package, service or RPC names"
 }
 
-func (c *ShowCommand) Help() string {
+func (c *showCommand) Help() string {
 	return "Usage: show <package | service | message | rpc>"
 }
 
-func (c *ShowCommand) Validate(args []string) error {
+func (c *showCommand) Validate(args []string) error {
 	if len(args) < 1 {
 		return errors.Wrap(ErrArgumentRequired, "target type (package, service, message)")
 	}
 	return nil
 }
 
-func (c *ShowCommand) Run(args []string) (string, error) {
+func (c *showCommand) Run(args []string) (string, error) {
 	target := args[0]
 
 	switch strings.ToLower(target) {

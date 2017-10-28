@@ -14,7 +14,7 @@ import (
 
 func ParseFile(filename []string, paths []string) (*FileDescriptorSet, error) {
 	args := []string{
-		fmt.Sprintln("--proto_path=%s", strings.Join(paths, ":")),
+		fmt.Sprintf("--proto_path=%s", strings.Join(paths, ":")),
 		"--proto_path=.",
 		"--include_source_info",
 		"--include_imports",
@@ -54,7 +54,7 @@ func runProtoc(args []string) ([]byte, error) {
 	cmd.Stderr = errBuf
 	if err := cmd.Run(); err != nil {
 		if errBuf.Len() != 0 {
-			return nil, errors.Wrap(err, errBuf.String())
+			return nil, errors.New(errBuf.String())
 		}
 		return nil, err
 	}
