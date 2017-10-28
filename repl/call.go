@@ -10,11 +10,11 @@ type callCommand struct {
 }
 
 func (c *callCommand) Synopsis() string {
-	return "Call a RPC with interactively input"
+	return "call a RPC with interactively input"
 }
 
 func (c *callCommand) Help() string {
-	return "Usage: call <RPC name>"
+	return "usage: call <RPC name>"
 }
 
 func (c *callCommand) Validate(args []string) error {

@@ -10,11 +10,11 @@ type descCommand struct {
 }
 
 func (c *descCommand) Synopsis() string {
-	return "Describe the structure of selected message"
+	return "describe the structure of selected message"
 }
 
 func (c *descCommand) Help() string {
-	return "Usage: desc <message name>"
+	return "usage: desc <message name>"
 }
 
 func (c *descCommand) Validate(args []string) error {

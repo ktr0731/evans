@@ -51,17 +51,18 @@ func NewBasicUI() *UI {
 }
 
 func NewREPL(config *config.REPL, env *env.Env, ui *UI) *REPL {
+	cmds := map[string]Commander{
+		"call":    &callCommand{env},
+		"desc":    &descCommand{env},
+		"package": &packageCommand{env},
+		"service": &serviceCommand{env},
+		"show":    &showCommand{env},
+	}
 	repl := &REPL{
 		ui:     ui,
 		config: config,
 		env:    env,
-		cmds: map[string]Commander{
-			"call":    &callCommand{env},
-			"desc":    &descCommand{env},
-			"package": &packageCommand{env},
-			"service": &serviceCommand{env},
-			"show":    &showCommand{env},
-		},
+		cmds:   cmds,
 	}
 
 	defaultPrompt := fmt.Sprintf("%s:%s> ", config.Server.Host, config.Server.Port)
@@ -69,10 +70,21 @@ func NewREPL(config *config.REPL, env *env.Env, ui *UI) *REPL {
 		defaultPrompt = fmt.Sprintf("%s@%s", dsn, defaultPrompt)
 	}
 
+	executor := &executor{repl: repl}
+	completer := &completer{cmds: cmds, env: env}
+
 	repl.prompt = prompt.New(
-		executor(repl),
-		completer,
+		executor.execute,
+		completer.complete,
 		prompt.OptionPrefix(defaultPrompt),
+		prompt.OptionSuggestionBGColor(prompt.LightGray),
+		prompt.OptionSuggestionTextColor(prompt.Black),
+		prompt.OptionDescriptionBGColor(prompt.White),
+		prompt.OptionDescriptionTextColor(prompt.Black),
+		prompt.OptionSelectedSuggestionBGColor(prompt.DarkBlue),
+		prompt.OptionSelectedSuggestionTextColor(prompt.Black),
+		prompt.OptionSelectedDescriptionBGColor(prompt.Blue),
+		prompt.OptionSelectedDescriptionTextColor(prompt.Black),
 	)
 
 	return repl

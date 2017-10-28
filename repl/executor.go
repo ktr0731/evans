@@ -5,23 +5,25 @@ import (
 	"strings"
 )
 
-func executor(r *REPL) func(string) {
-	return func(l string) {
-		if l == "quit" || l == "exit" {
-			os.Exit(0)
-			return
-		}
+type executor struct {
+	repl *REPL
+}
 
-		// Ignroe spaces
-		if len(strings.TrimSpace(l)) == 0 {
-			return
-		}
+func (e *executor) execute(l string) {
+	if l == "quit" || l == "exit" {
+		os.Exit(0)
+		return
+	}
 
-		result, err := r.eval(l)
-		if err != nil {
-			r.wrappedError(err)
-		} else {
-			r.wrappedPrint(result)
-		}
+	// Ignroe spaces
+	if len(strings.TrimSpace(l)) == 0 {
+		return
+	}
+
+	result, err := e.repl.eval(l)
+	if err != nil {
+		e.repl.wrappedError(err)
+	} else {
+		e.repl.wrappedPrint(result)
 	}
 }

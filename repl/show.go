@@ -12,11 +12,11 @@ type showCommand struct {
 }
 
 func (c *showCommand) Synopsis() string {
-	return "Show package, service or RPC names"
+	return "show package, service or RPC names"
 }
 
 func (c *showCommand) Help() string {
-	return "Usage: show <package | service | message | rpc>"
+	return "usage: show <package | service | message | rpc>"
 }
 
 func (c *showCommand) Validate(args []string) error {

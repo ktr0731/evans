@@ -10,11 +10,11 @@ type serviceCommand struct {
 }
 
 func (c *serviceCommand) Synopsis() string {
-	return "Set the service as the current selected service"
+	return "set the service as the current selected service"
 }
 
 func (c *serviceCommand) Help() string {
-	return "Usage: service <service name>"
+	return "usage: service <service name>"
 }
 
 func (c *serviceCommand) Validate(args []string) error {

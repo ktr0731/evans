@@ -10,11 +10,11 @@ type packageCommand struct {
 }
 
 func (c *packageCommand) Synopsis() string {
-	return "Set the package as the current selected package"
+	return "set the package as the current selected package"
 }
 
 func (c *packageCommand) Help() string {
-	return "Usage: package <package name>"
+	return "usage: package <package name>"
 }
 
 func (c *packageCommand) Validate(args []string) error {
