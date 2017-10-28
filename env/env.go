@@ -1,6 +1,7 @@
 package env
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/ktr0731/evans/config"
@@ -92,7 +93,11 @@ func (e *Env) GetMessages() (model.Messages, error) {
 		return nil, ErrPackageUnselected
 	}
 
+	fmt.Printf("%#v\n", e.cache.pkg["test"])
+
 	// same as GetServices()
+	// 現在はすべて読み込んでから突っ込んでいるが、それだと依存関係があったときに死ぬ
+	// 一つずつ読み込むようにする
 	return e.cache.pkg[e.state.currentPackage].Messages, nil
 }
 
@@ -122,6 +127,7 @@ func (e *Env) GetService(name string) (*model.Service, error) {
 }
 
 func (e *Env) GetMessage(name string) (*model.Message, error) {
+	// Person2 で panic
 	msg, err := e.GetMessages()
 	if err != nil {
 		return nil, err
@@ -204,11 +210,18 @@ func (e *Env) loadPackage(name string) error {
 	dSvc := e.desc.GetServices(name)
 	dMsg := e.desc.GetMessages(name)
 
+	e.cache.pkg[name] = &model.Package{
+		Name:     name,
+		Services: make(model.Services, len(dSvc)),
+		Messages: make(model.Messages, 0, len(dMsg)), // actual message size is greater than or equal to len(dMsg)
+	}
+
 	services := make(model.Services, len(dSvc))
 	for i, svc := range dSvc {
 		services[i] = model.NewService(svc)
 		services[i].RPCs = model.NewRPCs(svc)
 	}
+	e.cache.pkg[name].Services = services
 
 	messages := make(model.Messages, len(dMsg))
 	for i, msg := range dMsg {
@@ -218,12 +231,9 @@ func (e *Env) loadPackage(name string) error {
 			return errors.Wrapf(err, "failed to get field of %s", msg.GetName())
 		}
 		messages[i].Fields = fields
-	}
 
-	e.cache.pkg[name] = &model.Package{
-		Name:     name,
-		Services: services,
-		Messages: messages,
+		// cache each result because some messages depends on some messages
+		e.cache.pkg[name].Messages = append(e.cache.pkg[name].Messages, messages[i])
 	}
 
 	return nil
@@ -240,6 +250,7 @@ func (e *Env) getNameFromFQN(fqn string) string {
 // it is passed by model.NewField() for get message from current package
 func (e *Env) getMessage() func(typeName string) (*model.Message, error) {
 	return func(msgName string) (*model.Message, error) {
+		// TODO: キャッシュする必要がある？
 		return e.GetMessage(msgName)
 	}
 }

@@ -18,7 +18,7 @@ func (c *descCommand) Help() string {
 }
 
 func (c *descCommand) Validate(args []string) error {
-	if len(args) < 2 {
+	if len(args) < 1 {
 		return errors.Wrap(ErrArgumentRequired, "message name")
 	}
 	return nil

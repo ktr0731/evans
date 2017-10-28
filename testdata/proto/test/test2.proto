@@ -17,5 +17,5 @@ message HelloRequest2 {
 }
 
 message HelloReply2 {
-  string message = 1;
+  string msg = 1;
 }

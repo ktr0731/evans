@@ -59,6 +59,16 @@ func (c *completer) complete(d prompt.Document) []prompt.Suggest {
 			s[i] = prompt.Suggest{Text: rpc.Name}
 		}
 
+	case "desc":
+		msgs, err := c.env.GetMessages()
+		if err != nil {
+			return nil
+		}
+		s = make([]prompt.Suggest, len(msgs))
+		for i, msg := range msgs {
+			s[i] = prompt.Suggest{Text: msg.Name}
+		}
+
 	default:
 		// return all commands if current input is first command name
 		if len(args) == 1 {
