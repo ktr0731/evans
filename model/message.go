@@ -12,13 +12,26 @@ type Message struct {
 	Fields []*Field
 
 	Desc *desc.MessageDescriptor
+
+	Childlen []*Message
 }
 
 func NewMessage(message *desc.MessageDescriptor) *Message {
-	return &Message{
+	// fields, err := NewFields()
+	msg := Message{
 		Name: message.GetName(),
 		Desc: message,
 	}
+
+	nested := message.GetNestedMessageTypes()
+	if len(nested) != 0 {
+		childlen := make([]*Message, len(nested))
+		for i, d := range nested {
+			childlen[i] = NewMessage(d)
+		}
+		msg.Childlen = childlen
+	}
+	return &msg
 }
 
 func (m *Message) String() string {

@@ -16,8 +16,18 @@ type Field struct {
 	Fields    []*Field
 }
 
-func NewFields(getMessage func(msgName string) (*Message, error), msg *Message) ([]*Field, error) {
+func NewFields(pkg *Package, msg *Message) ([]*Field, error) {
 	var fields []*Field
+
+	// inner message definitions
+	localMessageCache := map[string]*Message{}
+	for _, d := range msg.Desc.GetNestedMessageTypes() {
+		localMessageCache[d.GetName()] = &Message{
+			Name: d.GetName(),
+			Desc: d,
+		}
+	}
+
 	for _, field := range msg.Desc.GetFields() {
 		f := &Field{
 			Name: field.GetName(),
@@ -28,13 +38,19 @@ func NewFields(getMessage func(msgName string) (*Message, error), msg *Message) 
 		if field.GetType() == descriptor.FieldDescriptorProto_TYPE_MESSAGE {
 			f.IsMessage = true
 
-			// TODO: 別パッケージの msg が取得できない
-			msg, err := getMessage(field.GetMessageType().GetName())
-			if err != nil {
-				return nil, err
+			var msg *Message
+			var ok bool
+			var err error
+			msg, ok = localMessageCache[field.GetMessageType().GetName()]
+			if !ok {
+				// TODO: 別パッケージの msg が取得できない
+				msg, err = pkg.GetMessage(field.GetMessageType().GetName())
+				if err != nil {
+					return nil, err
+				}
 			}
 
-			f.Fields, err = NewFields(getMessage, msg)
+			f.Fields, err = NewFields(pkg, msg)
 		}
 
 		fields = append(fields, f)

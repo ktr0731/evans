@@ -2,14 +2,30 @@ package model
 
 import (
 	"bytes"
+	"errors"
 
 	"github.com/olekukonko/tablewriter"
+)
+
+var (
+	ErrInvalidMessageName = errors.New("invalid message name")
 )
 
 type Package struct {
 	Name     string
 	Services Services
 	Messages Messages
+}
+
+// GetMessage is only used to get a root message
+func (p *Package) GetMessage(name string) (*Message, error) {
+	// nested message は辿る必要がない
+	for _, msg := range p.Messages {
+		if msg.Name == name {
+			return msg, nil
+		}
+	}
+	return nil, ErrInvalidMessageName
 }
 
 type Packages []*Package
