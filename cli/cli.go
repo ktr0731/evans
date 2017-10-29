@@ -32,11 +32,12 @@ func newUI() *UI {
 type Options struct {
 	Proto []string `arg:"positional,help:.proto files"`
 
-	Interactive bool   `arg:"-i,help:use interactive mode"`
-	EditConfig  bool   `arg:"-e,help:edit config file by $EDITOR"`
-	Port        int    `arg:"-p,help:gRPC port"`
-	Package     string `arg:"help:default package"`
-	Service     string `arg:"help:default service. evans parse package from this if --package is nothing."`
+	Interactive bool     `arg:"-i,help:use interactive mode"`
+	EditConfig  bool     `arg:"-e,help:edit config file by $EDITOR"`
+	Port        int      `arg:"-p,help:gRPC port"`
+	Package     string   `arg:"help:default package"`
+	Service     string   `arg:"help:default service. evans parse package from this if --package is nothing."`
+	Path        []string `arg:"separate,help:proto file path"`
 }
 
 func (o *Options) Version() string {
@@ -115,8 +116,12 @@ func checkPrecondition(opt *Options) error {
 
 func setupEnv(config *config.Env, opt *Options) (*env.Env, error) {
 	// find all proto paths
-	var paths []string
+	paths := make([]string, 0, len(opt.Path))
 	encountered := map[string]bool{}
+	for _, p := range opt.Path {
+		encountered[p] = true
+		paths = append(paths, p)
+	}
 	for _, proto := range opt.Proto {
 		p := filepath.Dir(proto)
 		if !encountered[p] {
