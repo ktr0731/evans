@@ -13,7 +13,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/env"
-	homedir "github.com/minio/go-homedir"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 )
 

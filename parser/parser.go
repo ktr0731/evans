@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"sort"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
@@ -21,9 +22,7 @@ func ParseFile(filename []string, paths []string) (*FileDescriptorSet, error) {
 		"--descriptor_set_out=/dev/stdout",
 	}
 
-	for _, file := range filename {
-		args = append(args, file)
-	}
+	args = append(args, filename...)
 
 	code, err := runProtoc(args)
 	if err != nil {
@@ -36,12 +35,27 @@ func ParseFile(filename []string, paths []string) (*FileDescriptorSet, error) {
 	}
 
 	set := make([]*desc.FileDescriptor, len(ds.GetFile()))
-	for i, d := range ds.GetFile() {
+	files := ds.GetFile()
+	// sort files by number of dependencies
+	sort.Slice(files, func(i, j int) bool {
+		return len(files[i].GetDependency()) < len(files[j].GetDependency())
+	})
+
+	depsCache := map[string]*desc.FileDescriptor{}
+	for i, d := range files {
 		var err error
-		set[i], err = desc.CreateFileDescriptor(d)
+
+		// collect dependencies
+		deps := make([]*desc.FileDescriptor, len(d.GetDependency()))
+		for i, depName := range d.GetDependency() {
+			deps[i] = depsCache[depName]
+		}
+
+		set[i], err = desc.CreateFileDescriptor(d, deps...)
 		if err != nil {
 			return nil, err
 		}
+		depsCache[d.GetName()] = set[i]
 	}
 
 	return &FileDescriptorSet{set}, nil

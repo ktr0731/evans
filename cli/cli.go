@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	arg "github.com/alexflint/go-arg"
@@ -113,8 +114,18 @@ func checkPrecondition(opt *Options) error {
 }
 
 func setupEnv(config *config.Env, opt *Options) (*env.Env, error) {
-	// TODO: 複数の path に対応する
-	desc, err := parser.ParseFile(opt.Proto, []string{})
+	// find all proto paths
+	var paths []string
+	encountered := map[string]bool{}
+	for _, proto := range opt.Proto {
+		p := filepath.Dir(proto)
+		if !encountered[p] {
+			paths = append(paths, p)
+			encountered[p] = true
+		}
+	}
+
+	desc, err := parser.ParseFile(opt.Proto, paths)
 	if err != nil {
 		return nil, err
 	}
