@@ -9,11 +9,11 @@ import (
 
 	"google.golang.org/grpc"
 
+	prompt "github.com/c-bata/go-prompt"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic"
-	"github.com/peterh/liner"
 	"github.com/pkg/errors"
 )
 
@@ -36,7 +36,7 @@ func (e *Env) Call(name string) (string, error) {
 		return "", err
 	}
 
-	input, err := e.inputFields(rpc.RequestType.GetFields())
+	input, err := e.inputFields([]string{}, rpc.RequestType.GetFields(), prompt.DarkGreen)
 	if errors.Cause(err) == io.EOF {
 		return "", nil
 	} else if err != nil {
@@ -160,10 +160,7 @@ func (e *Env) setInput(req *dynamic.Message, fields []*field) error {
 	return nil
 }
 
-func (e *Env) inputFields(fields []*desc.FieldDescriptor) ([]*field, error) {
-	liner := liner.NewLiner()
-	defer liner.Close()
-
+func (e *Env) inputFields(ancestor []string, fields []*desc.FieldDescriptor, color prompt.Color) ([]*field, error) {
 	input := make([]*field, len(fields))
 	max := maxLen(fields, e.config.InputPromptFormat)
 	for i, f := range fields {
@@ -173,30 +170,32 @@ func (e *Env) inputFields(fields []*desc.FieldDescriptor) ([]*field, error) {
 			descType: f.GetType(),
 		}
 
+		// message field or primitive field
 		if isMessageType(f.GetType()) {
-			fields, err := e.inputFields(f.GetMessageType().GetFields())
+			fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType().GetFields(), color)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read inputs")
 			}
-
 			input[i].mVal = fields
+			color++
 		} else {
-			prompt := e.config.InputPromptFormat
-			elems := map[string]string{
-				"name": f.GetName(),
-				"type": f.GetType().String(),
+			promptFormat := e.config.InputPromptFormat
+			ancestor := strings.Join(ancestor, e.config.AncestorDelimiter)
+			if ancestor != "" {
+				ancestor = "@" + ancestor
 			}
-			for k, v := range elems {
-				prompt = strings.Replace(prompt, "{"+k+"}", v, -1)
-			}
-			l, err := liner.Prompt(fmt.Sprintf("%"+strconv.Itoa(max)+"s", prompt))
-			if err != nil {
-				return nil, err
-			}
+			promptFormat = strings.Replace(promptFormat, "{ancestor}", ancestor, -1)
+			promptFormat = strings.Replace(promptFormat, "{name}", f.GetName(), -1)
+			promptFormat = strings.Replace(promptFormat, "{type}", f.GetType().String(), -1)
+
+			l := prompt.Input(
+				fmt.Sprintf("%"+strconv.Itoa(max)+"s", promptFormat),
+				inputCompleter,
+				prompt.OptionPrefixTextColor(color),
+			)
 			input[i].isPrimitive = true
 			input[i].pVal = &l
 		}
-
 	}
 	return input, nil
 }
@@ -225,4 +224,8 @@ func maxLen(fields []*desc.FieldDescriptor, format string) int {
 
 func isMessageType(typeName descriptor.FieldDescriptorProto_Type) bool {
 	return typeName == descriptor.FieldDescriptorProto_TYPE_MESSAGE
+}
+
+func inputCompleter(d prompt.Document) []prompt.Suggest {
+	return nil
 }

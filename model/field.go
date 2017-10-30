@@ -1,8 +1,6 @@
 package model
 
 import (
-	"fmt"
-
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 )
@@ -25,8 +23,6 @@ func NewFields(pkg *Package, msg *Message) ([]*Field, error) {
 	// key is FQN of message, so it can extract by field.GetMessageType().GetFullyQualifiedName()
 	localMessageCache := map[string]*Message{}
 	resolveLocalMessage(localMessageCache, msg.Desc)
-
-	fmt.Printf("%#v\n", localMessageCache)
 
 	for _, field := range msg.Desc.GetFields() {
 		f := &Field{
@@ -51,7 +47,6 @@ func NewFields(pkg *Package, msg *Message) ([]*Field, error) {
 			}
 			f.Fields, err = NewFields(pkg, msg)
 		}
-
 		fields = append(fields, f)
 	}
 	return fields, nil
