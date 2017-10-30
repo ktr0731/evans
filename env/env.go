@@ -223,7 +223,7 @@ func (e *Env) loadPackage(name string) error {
 	messages := make(model.Messages, len(dMsg))
 	for i, msg := range dMsg {
 		messages[i] = model.NewMessage(msg)
-		// TODO: NewMessage でやりたい
+
 		fields, err := model.NewFields(e.cache.pkg[name], messages[i])
 		if err != nil {
 			return errors.Wrapf(err, "failed to get field of %s", msg.GetName())

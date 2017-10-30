@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 )
@@ -20,13 +22,11 @@ func NewFields(pkg *Package, msg *Message) ([]*Field, error) {
 	var fields []*Field
 
 	// inner message definitions
+	// key is FQN of message, so it can extract by field.GetMessageType().GetFullyQualifiedName()
 	localMessageCache := map[string]*Message{}
-	for _, d := range msg.Desc.GetNestedMessageTypes() {
-		localMessageCache[d.GetName()] = &Message{
-			Name: d.GetName(),
-			Desc: d,
-		}
-	}
+	resolveLocalMessage(localMessageCache, msg.Desc)
+
+	fmt.Printf("%#v\n", localMessageCache)
 
 	for _, field := range msg.Desc.GetFields() {
 		f := &Field{
@@ -41,7 +41,7 @@ func NewFields(pkg *Package, msg *Message) ([]*Field, error) {
 			var msg *Message
 			var ok bool
 			var err error
-			msg, ok = localMessageCache[field.GetMessageType().GetName()]
+			msg, ok = localMessageCache[field.GetMessageType().GetFullyQualifiedName()]
 			if !ok {
 				// TODO: 別パッケージの msg が取得できない
 				msg, err = pkg.GetMessage(field.GetMessageType().GetName())
@@ -49,11 +49,26 @@ func NewFields(pkg *Package, msg *Message) ([]*Field, error) {
 					return nil, err
 				}
 			}
-
 			f.Fields, err = NewFields(pkg, msg)
 		}
 
 		fields = append(fields, f)
 	}
 	return fields, nil
+}
+
+func resolveLocalMessage(cache map[string]*Message, msg *desc.MessageDescriptor) {
+	nested := msg.GetNestedMessageTypes()
+	if len(nested) == 0 {
+		cache[msg.GetFullyQualifiedName()] = &Message{
+			Name: msg.GetName(),
+			Desc: msg,
+		}
+		return
+	}
+
+	// 効率悪そう
+	for _, d := range nested {
+		resolveLocalMessage(cache, d)
+	}
 }
