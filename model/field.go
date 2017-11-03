@@ -37,6 +37,7 @@ func NewFields(pkg *Package, msg *Message) ([]*Field, error) {
 			var msg *Message
 			var ok bool
 			var err error
+
 			msg, ok = localMessageCache[field.GetMessageType().GetFullyQualifiedName()]
 			if !ok {
 				// TODO: 別パッケージの msg が取得できない

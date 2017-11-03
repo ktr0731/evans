@@ -36,7 +36,8 @@ func (e *Env) Call(name string) (string, error) {
 		return "", err
 	}
 
-	input, err := e.inputFields([]string{}, rpc.RequestType.GetFields(), prompt.DarkGreen)
+	// TODO: GetFields は OneOf の要素まで取得してしまう
+	input, err := e.inputFields([]string{}, rpc.RequestType, prompt.DarkGreen)
 	if errors.Cause(err) == io.EOF {
 		return "", nil
 	} else if err != nil {
@@ -160,7 +161,23 @@ func (e *Env) setInput(req *dynamic.Message, fields []*field) error {
 	return nil
 }
 
-func (e *Env) inputFields(ancestor []string, fields []*desc.FieldDescriptor, color prompt.Color) ([]*field, error) {
+func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color prompt.Color) ([]*field, error) {
+	encountered := map[string]bool{}
+
+	// TODO: OneOf, Enum, ..., Fields の順に処理していく必要がある
+	// TODO: proto に記述されている順番に入力していきたい
+	for _, d := range msg.GetOneOfs() {
+		choices := make([]string, len(d.GetChoices()))
+		for i, c := range d.GetChoices() {
+			// GetFields で除外するため
+			encountered[c.GetFullyQualifiedName()] = true
+			choices[i] = c.GetName()
+		}
+		fmt.Println(strings.Join(choices, ":"))
+	}
+
+	fields := msg.GetFields()
+
 	input := make([]*field, len(fields))
 	max := maxLen(fields, e.config.InputPromptFormat)
 	for i, f := range fields {
@@ -172,7 +189,7 @@ func (e *Env) inputFields(ancestor []string, fields []*desc.FieldDescriptor, col
 
 		// message field or primitive field
 		if isMessageType(f.GetType()) {
-			fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType().GetFields(), color)
+			fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType(), color)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read inputs")
 			}

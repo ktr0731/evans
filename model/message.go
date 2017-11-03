@@ -17,7 +17,6 @@ type Message struct {
 }
 
 func NewMessage(message *desc.MessageDescriptor) *Message {
-	// fields, err := NewFields()
 	msg := Message{
 		Name: message.GetName(),
 		Desc: message,
