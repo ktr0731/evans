@@ -15,6 +15,7 @@ import (
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic"
+	"github.com/k0kubun/pp"
 	"github.com/pkg/errors"
 )
 
@@ -51,7 +52,7 @@ func (e *Env) Call(name string) (string, error) {
 	}
 
 	res := dynamic.NewMessage(rpc.ResponseType)
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", e.config.Server.Host, e.config.Server.Port), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", e.config.Server.Host, e.config.Server.Port), grpc.WithInsecure())
 	if err != nil {
 		return "", err
 	}
@@ -168,6 +169,7 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 	input := make([]*field, 0, len(fields))
 	max := maxLen(fields, e.config.InputPromptFormat)
 	encounteredOneOf := map[string]bool{}
+	encounteredEnum := map[string]bool{}
 	for _, f := range fields {
 		if oneOf := f.GetOneOf(); oneOf != nil {
 			if encounteredOneOf[oneOf.GetFullyQualifiedName()] {
@@ -193,6 +195,32 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 			}
 
 			f = optMap[choice]
+		} else if enum := f.GetEnumType(); enum != nil {
+			if encounteredEnum[enum.GetFullyQualifiedName()] {
+				continue
+			}
+
+			encounteredEnum[enum.GetFullyQualifiedName()] = true
+
+			opts := make([]string, len(enum.GetValues()))
+			optMap := map[string]*desc.EnumValueDescriptor{}
+			for i, o := range enum.GetValues() {
+				opts[i] = o.GetName()
+				optMap[o.GetFullyQualifiedName()] = o
+			}
+
+			var choice string
+			err := survey.AskOne(&survey.Select{
+				Message: enum.GetName(),
+				Options: opts,
+			}, &choice, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			pp.Println(choice)
+			// TODO: enum は input がない
+			// f = optMap[choice].GetNumber
 		}
 
 		in := &field{
@@ -231,10 +259,6 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 		input = append(input, in)
 	}
 	return input, nil
-}
-
-func inputPrimitiveField(field *desc.FieldDescriptor) {
-	return
 }
 
 func maxLen(fields []*desc.FieldDescriptor, format string) int {
