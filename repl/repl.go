@@ -122,7 +122,7 @@ func (r *REPL) wrappedPrint(text string) {
 }
 
 func (r *REPL) wrappedError(err error) {
-	fmt.Fprintln(r.ui.ErrWriter, color.RedString(err.Error()))
+	fmt.Fprintln(r.ui.ErrWriter, color.RedString("%s\n", err.Error()))
 }
 
 func (r *REPL) Start() error {

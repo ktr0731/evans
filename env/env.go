@@ -180,7 +180,7 @@ func (e *Env) UseService(name string) error {
 			return nil
 		}
 	}
-	return errors.Wrapf(ErrUnknownService, "%s not fould", name)
+	return errors.Wrapf(ErrUnknownService, "%s not found", name)
 }
 
 func (e *Env) GetDSN() string {

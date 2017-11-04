@@ -9,6 +9,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	"github.com/AlecAivazis/survey"
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -162,26 +163,39 @@ func (e *Env) setInput(req *dynamic.Message, fields []*field) error {
 }
 
 func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color prompt.Color) ([]*field, error) {
-	encountered := map[string]bool{}
-
-	// TODO: OneOf, Enum, ..., Fields の順に処理していく必要がある
-	// TODO: proto に記述されている順番に入力していきたい
-	for _, d := range msg.GetOneOfs() {
-		choices := make([]string, len(d.GetChoices()))
-		for i, c := range d.GetChoices() {
-			// GetFields で除外するため
-			encountered[c.GetFullyQualifiedName()] = true
-			choices[i] = c.GetName()
-		}
-		fmt.Println(strings.Join(choices, ":"))
-	}
-
 	fields := msg.GetFields()
 
-	input := make([]*field, len(fields))
+	input := make([]*field, 0, len(fields))
 	max := maxLen(fields, e.config.InputPromptFormat)
-	for i, f := range fields {
-		input[i] = &field{
+	encounteredOneOf := map[string]bool{}
+	for _, f := range fields {
+		if oneOf := f.GetOneOf(); oneOf != nil {
+			if encounteredOneOf[oneOf.GetFullyQualifiedName()] {
+				continue
+			}
+
+			encounteredOneOf[oneOf.GetFullyQualifiedName()] = true
+
+			opts := make([]string, len(oneOf.GetChoices()))
+			optMap := map[string]*desc.FieldDescriptor{}
+			for i, c := range oneOf.GetChoices() {
+				opts[i] = c.GetName()
+				optMap[c.GetName()] = c
+			}
+
+			var choice string
+			err := survey.AskOne(&survey.Select{
+				Message: oneOf.GetName(),
+				Options: opts,
+			}, &choice, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			f = optMap[choice]
+		}
+
+		in := &field{
 			name:     f.GetName(),
 			desc:     f,
 			descType: f.GetType(),
@@ -193,8 +207,8 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read inputs")
 			}
-			input[i].mVal = fields
-			color++
+			in.mVal = fields
+			color = prompt.DarkGreen + (color+1)%16
 		} else {
 			promptFormat := e.config.InputPromptFormat
 			ancestor := strings.Join(ancestor, e.config.AncestorDelimiter)
@@ -210,11 +224,17 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 				inputCompleter,
 				prompt.OptionPrefixTextColor(color),
 			)
-			input[i].isPrimitive = true
-			input[i].pVal = &l
+			in.isPrimitive = true
+			in.pVal = &l
 		}
+
+		input = append(input, in)
 	}
 	return input, nil
+}
+
+func inputPrimitiveField(field *desc.FieldDescriptor) {
+	return
 }
 
 func maxLen(fields []*desc.FieldDescriptor, format string) int {
