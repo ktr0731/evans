@@ -16,6 +16,7 @@ import (
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/k0kubun/pp"
+	"github.com/ktr0731/evans/config"
 	"github.com/pkg/errors"
 )
 
@@ -187,15 +188,20 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 	input := make([]fieldable, 0, len(fields))
 	max := maxLen(fields, e.config.InputPromptFormat)
 	promptFormat := fmt.Sprintf("%"+strconv.Itoa(max)+"s", e.config.InputPromptFormat)
-	encounteredOneOf := map[string]bool{}
-	encounteredEnum := map[string]bool{}
+
+	inputField := fieldInputer(e.config, ancestor, promptFormat, color)
+
+	encountered := map[string]map[string]bool{
+		"oneof": map[string]bool{},
+		"enum":  map[string]bool{},
+	}
 	for _, f := range fields {
 		if oneOf := f.GetOneOf(); oneOf != nil {
-			if encounteredOneOf[oneOf.GetFullyQualifiedName()] {
+			if encountered["oneof"][oneOf.GetFullyQualifiedName()] {
 				continue
 			}
 
-			encounteredOneOf[oneOf.GetFullyQualifiedName()] = true
+			encountered["oneof"][oneOf.GetFullyQualifiedName()] = true
 
 			opts := make([]string, len(oneOf.GetChoices()))
 			optMap := map[string]*desc.FieldDescriptor{}
@@ -215,11 +221,11 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 
 			f = optMap[choice]
 		} else if enum := f.GetEnumType(); enum != nil {
-			if encounteredEnum[enum.GetFullyQualifiedName()] {
+			if encountered["enum"][enum.GetFullyQualifiedName()] {
 				continue
 			}
 
-			encounteredEnum[enum.GetFullyQualifiedName()] = true
+			encountered["enum"][enum.GetFullyQualifiedName()] = true
 
 			opts := make([]string, len(enum.GetValues()))
 			optMap := map[string]*desc.EnumValueDescriptor{}
@@ -261,22 +267,9 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 			}
 			color = prompt.DarkGreen + (color+1)%16
 		} else {
-			ancestor := strings.Join(ancestor, e.config.AncestorDelimiter)
-			if ancestor != "" {
-				ancestor = "@" + ancestor
-			}
-			promptFormat = strings.Replace(promptFormat, "{ancestor}", ancestor, -1)
-			promptFormat = strings.Replace(promptFormat, "{name}", f.GetName(), -1)
-			promptFormat = strings.Replace(promptFormat, "{type}", f.GetType().String(), -1)
-
-			l := prompt.Input(
-				promptFormat,
-				inputCompleter,
-				prompt.OptionPrefixTextColor(color),
-			)
 			in = &primitiveField{
 				baseField: base,
-				val:       l,
+				val:       inputField(f),
 			}
 		}
 
@@ -285,27 +278,25 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 	return input, nil
 }
 
-// func fieldInputer(config *config.Env, ancestor []string, inputPrompt string, color prompt.Color) func(*desc.FieldDescriptor) *field {
-// 	promptFormat := config.InputPromptFormat
-//
-// 	return func(f *desc.FieldDescriptor) *field {
-// 		ancestor := strings.Join(ancestor, config.AncestorDelimiter)
-// 		if ancestor != "" {
-// 			ancestor = "@" + ancestor
-// 		}
-// 		promptFormat = strings.Replace(promptFormat, "{ancestor}", ancestor, -1)
-// 		promptFormat = strings.Replace(promptFormat, "{name}", f.GetName(), -1)
-// 		promptFormat = strings.Replace(promptFormat, "{type}", f.GetType().String(), -1)
-//
-// 		l := prompt.Input(
-// 			inputPrompt,
-// 			inputCompleter,
-// 			prompt.OptionPrefixTextColor(color),
-// 		)
-// 		in.isPrimitive = true
-// 		in.pVal = &l
-// 	}
-// }
+func fieldInputer(config *config.Env, ancestor []string, promptFormat string, color prompt.Color) func(*desc.FieldDescriptor) string {
+	return func(f *desc.FieldDescriptor) string {
+		promptStr := promptFormat
+		ancestor := strings.Join(ancestor, config.AncestorDelimiter)
+		if ancestor != "" {
+			ancestor = "@" + ancestor
+		}
+		promptStr = strings.Replace(promptStr, "{ancestor}", ancestor, -1)
+		promptStr = strings.Replace(promptStr, "{name}", f.GetName(), -1)
+		promptStr = strings.Replace(promptStr, "{type}", f.GetType().String(), -1)
+
+		return prompt.Input(
+			promptStr,
+			inputCompleter,
+			prompt.OptionPrefixTextColor(color),
+		)
+
+	}
+}
 
 func maxLen(fields []*desc.FieldDescriptor, format string) int {
 	var max int
