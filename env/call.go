@@ -19,15 +19,32 @@ import (
 	"github.com/pkg/errors"
 )
 
-// field is used to read and store input for each field
-// if field type is message, this struct is recursive
-type field struct {
-	isPrimitive bool
-	name        string
-	pVal        *string
-	mVal        []*field
-	descType    descriptor.FieldDescriptorProto_Type
-	desc        *desc.FieldDescriptor
+// fieldable is only used to set primitive, enum, oneof fields.
+type fieldable interface {
+	fieldable()
+}
+
+type baseField struct {
+	name     string
+	descType descriptor.FieldDescriptorProto_Type
+	desc     *desc.FieldDescriptor
+}
+
+func (f *baseField) fieldable() {}
+
+// primitiveField is used to read and store input for each primitiveField
+type primitiveField struct {
+	*baseField
+	val string
+}
+
+type messageField struct {
+	*baseField
+	val []fieldable
+}
+
+type oneOfField struct {
+	*baseField
 }
 
 // Call calls a RPC which is selected
@@ -77,17 +94,11 @@ func (e *Env) genEndpoint(rpcName string) string {
 	return ep
 }
 
-func (e *Env) setInput(req *dynamic.Message, fields []*field) error {
-	for _, f := range fields {
-		if !f.isPrimitive {
-			// TODO
-			msg := dynamic.NewMessage(f.desc.GetMessageType())
-			if err := e.setInput(msg, f.mVal); err != nil {
-				return err
-			}
-			req.SetField(f.desc, msg)
-		} else {
-			pv := *f.pVal
+func (e *Env) setInput(req *dynamic.Message, fields []fieldable) error {
+	for _, field := range fields {
+		switch f := field.(type) {
+		case *primitiveField:
+			pv := f.val
 
 			// it holds value and error of conversion
 			// each cast (Parse*) returns falsy value when failed to parse argument
@@ -109,7 +120,7 @@ func (e *Env) setInput(req *dynamic.Message, fields []*field) error {
 				v, err = strconv.ParseUint(pv, 10, 64)
 
 			case descriptor.FieldDescriptorProto_TYPE_INT32:
-				v, err = strconv.ParseInt(*f.pVal, 10, 32)
+				v, err = strconv.ParseInt(f.val, 10, 32)
 				v = int32(v.(int64))
 
 			case descriptor.FieldDescriptorProto_TYPE_UINT32:
@@ -158,16 +169,24 @@ func (e *Env) setInput(req *dynamic.Message, fields []*field) error {
 				return err
 			}
 
+		case *messageField:
+			// TODO
+			msg := dynamic.NewMessage(f.desc.GetMessageType())
+			if err := e.setInput(msg, f.val); err != nil {
+				return err
+			}
+			req.SetField(f.desc, msg)
 		}
 	}
 	return nil
 }
 
-func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color prompt.Color) ([]*field, error) {
+func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color prompt.Color) ([]fieldable, error) {
 	fields := msg.GetFields()
 
-	input := make([]*field, 0, len(fields))
+	input := make([]fieldable, 0, len(fields))
 	max := maxLen(fields, e.config.InputPromptFormat)
+	promptFormat := fmt.Sprintf("%"+strconv.Itoa(max)+"s", e.config.InputPromptFormat)
 	encounteredOneOf := map[string]bool{}
 	encounteredEnum := map[string]bool{}
 	for _, f := range fields {
@@ -223,22 +242,25 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 			// f = optMap[choice].GetNumber
 		}
 
-		in := &field{
+		var in fieldable
+		base := &baseField{
 			name:     f.GetName(),
 			desc:     f,
 			descType: f.GetType(),
 		}
 
-		// message field or primitive field
+		// message field, enum field or primitive field
 		if isMessageType(f.GetType()) {
 			fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType(), color)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read inputs")
 			}
-			in.mVal = fields
+			in = &messageField{
+				baseField: base,
+				val:       fields,
+			}
 			color = prompt.DarkGreen + (color+1)%16
 		} else {
-			promptFormat := e.config.InputPromptFormat
 			ancestor := strings.Join(ancestor, e.config.AncestorDelimiter)
 			if ancestor != "" {
 				ancestor = "@" + ancestor
@@ -248,18 +270,42 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 			promptFormat = strings.Replace(promptFormat, "{type}", f.GetType().String(), -1)
 
 			l := prompt.Input(
-				fmt.Sprintf("%"+strconv.Itoa(max)+"s", promptFormat),
+				promptFormat,
 				inputCompleter,
 				prompt.OptionPrefixTextColor(color),
 			)
-			in.isPrimitive = true
-			in.pVal = &l
+			in = &primitiveField{
+				baseField: base,
+				val:       l,
+			}
 		}
 
 		input = append(input, in)
 	}
 	return input, nil
 }
+
+// func fieldInputer(config *config.Env, ancestor []string, inputPrompt string, color prompt.Color) func(*desc.FieldDescriptor) *field {
+// 	promptFormat := config.InputPromptFormat
+//
+// 	return func(f *desc.FieldDescriptor) *field {
+// 		ancestor := strings.Join(ancestor, config.AncestorDelimiter)
+// 		if ancestor != "" {
+// 			ancestor = "@" + ancestor
+// 		}
+// 		promptFormat = strings.Replace(promptFormat, "{ancestor}", ancestor, -1)
+// 		promptFormat = strings.Replace(promptFormat, "{name}", f.GetName(), -1)
+// 		promptFormat = strings.Replace(promptFormat, "{type}", f.GetType().String(), -1)
+//
+// 		l := prompt.Input(
+// 			inputPrompt,
+// 			inputCompleter,
+// 			prompt.OptionPrefixTextColor(color),
+// 		)
+// 		in.isPrimitive = true
+// 		in.pVal = &l
+// 	}
+// }
 
 func maxLen(fields []*desc.FieldDescriptor, format string) int {
 	var max int
