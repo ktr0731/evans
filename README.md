@@ -1,6 +1,16 @@
-# Evans
+```
+  ______
+ |  ____|
+ | |__    __   __   __ _   _ __    ___
+ |  __|   \ \ / /  / _. | | '_ \  / __|
+ | |____   \ V /  | (_| | | | | | \__ \
+ |______|   \_/    \__,_| |_| |_| |___/
+
+ more expressive universal gRPC client
+```
+--- 
+
 [![wercker status](https://app.wercker.com/status/1b1e3a40c102c07ad4f61630fea6c7bf/s/master "wercker status")](https://app.wercker.com/project/byKey/1b1e3a40c102c07ad4f61630fea6c7bf)  
-more expressive universal gRPC client  
 
 ## Usage
 Evans consistents of some commands in REPL.  
