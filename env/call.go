@@ -15,7 +15,6 @@ import (
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic"
-	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/config"
 	"github.com/pkg/errors"
 )
@@ -31,6 +30,14 @@ type baseField struct {
 	desc     *desc.FieldDescriptor
 }
 
+func newBaseField(f *desc.FieldDescriptor) *baseField {
+	return &baseField{
+		name:     f.GetName(),
+		desc:     f,
+		descType: f.GetType(),
+	}
+}
+
 func (f *baseField) fieldable() {}
 
 // primitiveField is used to read and store input for each primitiveField
@@ -44,8 +51,9 @@ type messageField struct {
 	val []fieldable
 }
 
-type oneOfField struct {
+type enumField struct {
 	*baseField
+	val *desc.EnumValueDescriptor
 }
 
 // Call calls a RPC which is selected
@@ -196,7 +204,22 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 		"enum":  map[string]bool{},
 	}
 	for _, f := range fields {
-		if oneOf := f.GetOneOf(); oneOf != nil {
+		var in fieldable
+		// message field, enum field or primitive field
+		switch {
+		case isMessageType(f.GetType()):
+			fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType(), color)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read inputs")
+			}
+			in = &messageField{
+				baseField: newBaseField(f),
+				val:       fields,
+			}
+			color = prompt.DarkGreen + (color+1)%16
+		case isOneOf(f):
+			oneOf := f.GetOneOf()
+
 			if encountered["oneof"][oneOf.GetFullyQualifiedName()] {
 				continue
 			}
@@ -219,8 +242,12 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 				return nil, err
 			}
 
-			f = optMap[choice]
-		} else if enum := f.GetEnumType(); enum != nil {
+			in = &primitiveField{
+				baseField: newBaseField(f),
+				val:       inputField(f),
+			}
+		case isEnumType(f):
+			enum := f.GetEnumType()
 			if encountered["enum"][enum.GetFullyQualifiedName()] {
 				continue
 			}
@@ -243,32 +270,13 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 				return nil, err
 			}
 
-			pp.Println(choice)
-			// TODO: enum は input がない
-			// f = optMap[choice].GetNumber
-		}
-
-		var in fieldable
-		base := &baseField{
-			name:     f.GetName(),
-			desc:     f,
-			descType: f.GetType(),
-		}
-
-		// message field, enum field or primitive field
-		if isMessageType(f.GetType()) {
-			fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType(), color)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to read inputs")
+			in = &enumField{
+				baseField: newBaseField(f),
+				val:       optMap[choice],
 			}
-			in = &messageField{
-				baseField: base,
-				val:       fields,
-			}
-			color = prompt.DarkGreen + (color+1)%16
-		} else {
+		default:
 			in = &primitiveField{
-				baseField: base,
+				baseField: newBaseField(f),
 				val:       inputField(f),
 			}
 		}
@@ -285,6 +293,7 @@ func fieldInputer(config *config.Env, ancestor []string, promptFormat string, co
 		if ancestor != "" {
 			ancestor = "@" + ancestor
 		}
+		// TODO: text template
 		promptStr = strings.Replace(promptStr, "{ancestor}", ancestor, -1)
 		promptStr = strings.Replace(promptStr, "{name}", f.GetName(), -1)
 		promptStr = strings.Replace(promptStr, "{type}", f.GetType().String(), -1)
@@ -322,6 +331,14 @@ func maxLen(fields []*desc.FieldDescriptor, format string) int {
 
 func isMessageType(typeName descriptor.FieldDescriptorProto_Type) bool {
 	return typeName == descriptor.FieldDescriptorProto_TYPE_MESSAGE
+}
+
+func isOneOf(f *desc.FieldDescriptor) bool {
+	return f.GetOneOf() != nil
+}
+
+func isEnumType(f *desc.FieldDescriptor) bool {
+	return f.GetEnumType() != nil
 }
 
 func inputCompleter(d prompt.Document) []prompt.Suggest {

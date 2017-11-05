@@ -1,0 +1,32 @@
+syntax = "proto3";
+package library;
+
+service Library {
+  rpc Borrow(BorrowRequest) returns (BorrowResponse) {}
+}
+
+message Person {
+  string name = 1;
+}
+
+message Book {
+  string title = 1;
+  string author = 2;
+}
+
+enum BookType {
+  EARLY = 0;
+  PHILOSOPHY = 1;
+  HISTORY = 2;
+  SCIENCE = 3;
+}
+
+message BorrowRequest {
+  Person person = 1;
+  Book book = 2;
+  BookType type = 3;
+}
+
+message BorrowResponse {
+  string message = 1;
+}
