@@ -40,6 +40,7 @@ type Options struct {
 	Package     string   `arg:"help:default package"`
 	Service     string   `arg:"help:default service. evans parse package from this if --package is nothing."`
 	Call        string   `arg:"-c,help:call specified RPC"`
+	File        string   `arg:"-f,help:the script file which will be executed (used only command-line mode)"`
 	Path        []string `arg:"separate,help:proto file path"`
 }
 
@@ -99,8 +100,21 @@ func (c *CLI) Run(args []string) int {
 		return 1
 	}
 
-	if isStandaloneMode() {
-		if err := env.CallWithScript(os.Stdin, c.options.Call); err != nil {
+	if isCommandLineMode(c.options) {
+		var in io.Reader
+		if c.options.File != "" {
+			f, err := os.Open(c.options.File)
+			if err != nil {
+				c.Error(err)
+				return 1
+			}
+			defer f.Close()
+			in = f
+		} else {
+			in = os.Stdin
+		}
+
+		if err := env.CallWithScript(in, c.options.Call); err != nil {
 			c.Error(err)
 			return 1
 		}
@@ -152,8 +166,8 @@ func isCallable(opt *Options) error {
 	return nil
 }
 
-func isStandaloneMode() bool {
-	return !isatty.IsTerminal(os.Stdin.Fd())
+func isCommandLineMode(opt *Options) bool {
+	return !isatty.IsTerminal(os.Stdin.Fd()) || opt.File != ""
 }
 
 func setupEnv(config *config.Env, opt *Options) (*env.Env, error) {
