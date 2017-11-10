@@ -6,10 +6,12 @@ import (
 	"strings"
 
 	arg "github.com/alexflint/go-arg"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/env"
 	"github.com/ktr0731/evans/parser"
 	"github.com/ktr0731/evans/repl"
+	isatty "github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
 
 	"io"
@@ -37,6 +39,7 @@ type Options struct {
 	Port        int      `arg:"-p,help:gRPC port"`
 	Package     string   `arg:"help:default package"`
 	Service     string   `arg:"help:default service. evans parse package from this if --package is nothing."`
+	Call        string   `arg:"-c,help:call specified RPC"`
 	Path        []string `arg:"separate,help:proto file path"`
 }
 
@@ -90,20 +93,24 @@ func (c *CLI) Run(args []string) int {
 		return 1
 	}
 
-	env, err := setupEnv(c.config.Env, c.options)
-	if err != nil {
-		c.Error(err)
-		return 1
+	if isStandaloneMode() {
+		fmt.Println("STANDALONE MODE STARTED")
+	} else {
+		env, err := setupEnv(c.config.Env, c.options)
+		if err != nil {
+			c.Error(err)
+			return 1
+		}
+
+		r := repl.NewREPL(c.config.REPL, env, repl.NewBasicUI())
+		defer r.Close()
+
+		if err := r.Start(); err != nil {
+			c.Error(err)
+			return 1
+		}
+
 	}
-
-	r := repl.NewREPL(c.config.REPL, env, repl.NewBasicUI())
-	defer r.Close()
-
-	if err := r.Start(); err != nil {
-		c.Error(err)
-		return 1
-	}
-
 	return 0
 }
 
@@ -111,7 +118,39 @@ func checkPrecondition(opt *Options) error {
 	if len(opt.Proto) == 0 {
 		return errors.New("invalid argument")
 	}
+	if err := isCallable(opt); err != nil {
+		return err
+	}
 	return nil
+}
+
+func isCallable(opt *Options) error {
+	if opt.Call == "" {
+		return nil
+	}
+
+	var result *multierror.Error
+	if opt.Service == "" {
+		result = multierror.Append(result, errors.New("--service flag unselected"))
+	}
+	if opt.Package == "" {
+		result = multierror.Append(result, errors.New("--package flag unselected"))
+	}
+	if result != nil {
+		result.ErrorFormat = func(errs []error) string {
+			var txt string
+			for _, e := range errs {
+				txt += fmt.Sprintf("  %s\n", e)
+			}
+			return fmt.Sprintf("--call option needs to  options below also:\n\n%s", txt)
+		}
+		return result
+	}
+	return nil
+}
+
+func isStandaloneMode() bool {
+	return !isatty.IsTerminal(os.Stdin.Fd())
 }
 
 func setupEnv(config *config.Env, opt *Options) (*env.Env, error) {

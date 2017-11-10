@@ -195,6 +195,7 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 
 	input := make([]fieldable, 0, len(fields))
 	max := maxLen(fields, e.config.InputPromptFormat)
+	// TODO: ずれてる
 	promptFormat := fmt.Sprintf("%"+strconv.Itoa(max)+"s", e.config.InputPromptFormat)
 
 	inputField := fieldInputer(e.config, ancestor, promptFormat, color)
