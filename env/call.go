@@ -239,16 +239,6 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 		var in fieldable
 		// message field, enum field or primitive field
 		switch {
-		case isMessageType(f.GetType()):
-			fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType(), color)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to read inputs")
-			}
-			in = &messageField{
-				baseField: newBaseField(f),
-				val:       fields,
-			}
-			color = prompt.DarkGreen + (color+1)%16
 		case isOneOf(f):
 			oneOf := f.GetOneOf()
 
@@ -274,10 +264,7 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 				return nil, err
 			}
 
-			in = &primitiveField{
-				baseField: newBaseField(f),
-				val:       inputField(f),
-			}
+			f = optMap[choice]
 		case isEnumType(f):
 			enum := f.GetEnumType()
 			if encountered["enum"][enum.GetFullyQualifiedName()] {
@@ -306,7 +293,19 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 				baseField: newBaseField(f),
 				val:       optMap[choice],
 			}
-		default:
+		}
+
+		if isMessageType(f.GetType()) {
+			fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType(), color)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read inputs")
+			}
+			in = &messageField{
+				baseField: newBaseField(f),
+				val:       fields,
+			}
+			color = prompt.DarkGreen + (color+1)%16
+		} else if in == nil { // primitive
 			in = &primitiveField{
 				baseField: newBaseField(f),
 				val:       inputField(f),
@@ -349,7 +348,6 @@ func fieldInputer(config *config.Env, ancestor []string, promptFormat string, co
 			inputCompleter,
 			prompt.OptionPrefixTextColor(color),
 		)
-
 	}
 }
 
