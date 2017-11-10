@@ -24,6 +24,7 @@ import (
 // fieldable is only used to set primitive, enum, oneof fields.
 type fieldable interface {
 	fieldable()
+	isNil() bool
 }
 
 type baseField struct {
@@ -48,14 +49,35 @@ type primitiveField struct {
 	val string
 }
 
+func (f *primitiveField) isNil() bool {
+	return f.val == ""
+}
+
 type messageField struct {
 	*baseField
 	val []fieldable
 }
 
+func (f *messageField) isNil() bool {
+	return f.val == nil
+}
+
+type repeatedField struct {
+	*baseField
+	val []fieldable
+}
+
+func (f *repeatedField) isNil() bool {
+	return len(f.val) == 0
+}
+
 type enumField struct {
 	*baseField
 	val *desc.EnumValueDescriptor
+}
+
+func (f *enumField) isNil() bool {
+	return f.val == nil
 }
 
 // Call calls a RPC which is selected
@@ -140,68 +162,7 @@ func (e *Env) setInput(req *dynamic.Message, fields []fieldable) error {
 		case *primitiveField:
 			pv := f.val
 
-			// it holds value and error of conversion
-			// each cast (Parse*) returns falsy value when failed to parse argument
-			var v interface{}
-			var err error
-
-			switch f.descType {
-			case descriptor.FieldDescriptorProto_TYPE_DOUBLE:
-				v, err = strconv.ParseFloat(pv, 64)
-
-			case descriptor.FieldDescriptorProto_TYPE_FLOAT:
-				v, err = strconv.ParseFloat(pv, 32)
-				v = float32(v.(float64))
-
-			case descriptor.FieldDescriptorProto_TYPE_INT64:
-				v, err = strconv.ParseInt(pv, 10, 64)
-
-			case descriptor.FieldDescriptorProto_TYPE_UINT64:
-				v, err = strconv.ParseUint(pv, 10, 64)
-
-			case descriptor.FieldDescriptorProto_TYPE_INT32:
-				v, err = strconv.ParseInt(f.val, 10, 32)
-				v = int32(v.(int64))
-
-			case descriptor.FieldDescriptorProto_TYPE_UINT32:
-				v, err = strconv.ParseUint(pv, 10, 32)
-				v = uint32(v.(uint64))
-
-			case descriptor.FieldDescriptorProto_TYPE_FIXED64:
-				v, err = strconv.ParseUint(pv, 10, 64)
-
-			case descriptor.FieldDescriptorProto_TYPE_FIXED32:
-				v, err = strconv.ParseUint(pv, 10, 32)
-				v = uint32(v.(uint64))
-
-			case descriptor.FieldDescriptorProto_TYPE_BOOL:
-				v, err = strconv.ParseBool(pv)
-
-			case descriptor.FieldDescriptorProto_TYPE_STRING:
-				// already string
-				v = pv
-
-			case descriptor.FieldDescriptorProto_TYPE_BYTES:
-				v = []byte(pv)
-
-			case descriptor.FieldDescriptorProto_TYPE_SFIXED64:
-				v, err = strconv.ParseUint(pv, 10, 64)
-
-			case descriptor.FieldDescriptorProto_TYPE_SFIXED32:
-				v, err = strconv.ParseUint(pv, 10, 32)
-				v = int32(v.(int64))
-
-			case descriptor.FieldDescriptorProto_TYPE_SINT64:
-				v, err = strconv.ParseInt(pv, 10, 64)
-
-			case descriptor.FieldDescriptorProto_TYPE_SINT32:
-				v, err = strconv.ParseInt(pv, 10, 32)
-				v = int32(v.(int64))
-
-			default:
-				return fmt.Errorf("invalid type: %#v", f.descType)
-			}
-
+			v, err := castPrimitiveType(f, pv)
 			if err != nil {
 				return err
 			}
@@ -216,6 +177,27 @@ func (e *Env) setInput(req *dynamic.Message, fields []fieldable) error {
 				return err
 			}
 			req.SetField(f.desc, msg)
+		case *repeatedField:
+			// ここの f.desc に Add する
+
+			if f.desc.GetMessageType() != nil {
+				msg := dynamic.NewMessage(f.desc.GetMessageType())
+				if err := e.setInput(msg, f.val); err != nil {
+					return err
+				}
+				req.TryAddRepeatedField(f.desc, msg)
+			} else { // primitive type
+				for _, field := range f.val {
+					f2 := field.(*primitiveField)
+					v, err := castPrimitiveType(f2, f2.val)
+					if err != nil {
+						return err
+					}
+					if err := req.TryAddRepeatedField(f.desc, v); err != nil {
+						return err
+					}
+				}
+			}
 		}
 	}
 	return nil
@@ -229,7 +211,7 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 	// TODO: ずれてる
 	promptFormat := fmt.Sprintf("%"+strconv.Itoa(max)+"s", e.config.InputPromptFormat)
 
-	inputField := fieldInputer(e.config, ancestor, promptFormat, color)
+	inputField := e.fieldInputer(ancestor, promptFormat, color)
 
 	encountered := map[string]map[string]bool{
 		"oneof": map[string]bool{},
@@ -295,22 +277,45 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 			}
 		}
 
-		if isMessageType(f.GetType()) {
-			fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType(), color)
+		if f.IsRepeated() {
+			var repeated []fieldable
+			for {
+				s, err := inputField(f)
+				if err != nil {
+					return nil, err
+				}
+				if s.isNil() {
+					break
+				}
+				repeated = append(repeated, s)
+			}
+			in = &repeatedField{
+				baseField: newBaseField(f),
+				val:       repeated,
+			}
+		} else {
+			var err error
+			in, err = inputField(f)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to read inputs")
-			}
-			in = &messageField{
-				baseField: newBaseField(f),
-				val:       fields,
-			}
-			color = prompt.DarkGreen + (color+1)%16
-		} else if in == nil { // primitive
-			in = &primitiveField{
-				baseField: newBaseField(f),
-				val:       inputField(f),
+				return nil, err
 			}
 		}
+		// if isMessageType(f.GetType()) {
+		// 	fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType(), color)
+		// 	if err != nil {
+		// 		return nil, errors.Wrap(err, "failed to read inputs")
+		// 	}
+		// 	in = &messageField{
+		// 		baseField: newBaseField(f),
+		// 		val:       fields,
+		// 	}
+		// 	color = prompt.DarkGreen + (color+1)%16
+		// } else if in == nil { // primitive
+		// 	in = &primitiveField{
+		// 		baseField: newBaseField(f),
+		// 		val:       inputField(f),
+		// 	}
+		// }
 
 		input = append(input, in)
 	}
@@ -331,24 +336,107 @@ func formatOutput(input proto.Message) (string, error) {
 	return out + "\n", nil
 }
 
-func fieldInputer(config *config.Env, ancestor []string, promptFormat string, color prompt.Color) func(*desc.FieldDescriptor) string {
-	return func(f *desc.FieldDescriptor) string {
-		promptStr := promptFormat
-		ancestor := strings.Join(ancestor, config.AncestorDelimiter)
-		if ancestor != "" {
-			ancestor = "@" + ancestor
-		}
-		// TODO: text template
-		promptStr = strings.Replace(promptStr, "{ancestor}", ancestor, -1)
-		promptStr = strings.Replace(promptStr, "{name}", f.GetName(), -1)
-		promptStr = strings.Replace(promptStr, "{type}", f.GetType().String(), -1)
+// fieldInputer let us enter primitive or message field.
+func (e *Env) fieldInputer(ancestor []string, promptFormat string, color prompt.Color) func(*desc.FieldDescriptor) (fieldable, error) {
+	return func(f *desc.FieldDescriptor) (fieldable, error) {
+		if isMessageType(f.GetType()) {
+			fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType(), color)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read inputs")
+			}
+			return &messageField{
+				baseField: newBaseField(f),
+				val:       fields,
+			}, nil
+			// color = prompt.DarkGreen + (color+1)%16
+		} else { // primitive
+			promptStr := promptFormat
+			ancestor := strings.Join(ancestor, e.config.AncestorDelimiter)
+			if ancestor != "" {
+				ancestor = "@" + ancestor
+			}
+			// TODO: text template
+			promptStr = strings.Replace(promptStr, "{ancestor}", ancestor, -1)
+			promptStr = strings.Replace(promptStr, "{name}", f.GetName(), -1)
+			promptStr = strings.Replace(promptStr, "{type}", f.GetType().String(), -1)
 
-		return prompt.Input(
-			promptStr,
-			inputCompleter,
-			prompt.OptionPrefixTextColor(color),
-		)
+			in := prompt.Input(
+				promptStr,
+				inputCompleter,
+				prompt.OptionPrefixTextColor(color),
+			)
+
+			return &primitiveField{
+				baseField: newBaseField(f),
+				val:       in,
+			}, nil
+		}
 	}
+}
+
+func castPrimitiveType(f *primitiveField, pv string) (interface{}, error) {
+	// it holds value and error of conversion
+	// each cast (Parse*) returns falsy value when failed to parse argument
+	var v interface{}
+	var err error
+
+	switch f.descType {
+	case descriptor.FieldDescriptorProto_TYPE_DOUBLE:
+		v, err = strconv.ParseFloat(pv, 64)
+
+	case descriptor.FieldDescriptorProto_TYPE_FLOAT:
+		v, err = strconv.ParseFloat(pv, 32)
+		v = float32(v.(float64))
+
+	case descriptor.FieldDescriptorProto_TYPE_INT64:
+		v, err = strconv.ParseInt(pv, 10, 64)
+
+	case descriptor.FieldDescriptorProto_TYPE_UINT64:
+		v, err = strconv.ParseUint(pv, 10, 64)
+
+	case descriptor.FieldDescriptorProto_TYPE_INT32:
+		v, err = strconv.ParseInt(f.val, 10, 32)
+		v = int32(v.(int64))
+
+	case descriptor.FieldDescriptorProto_TYPE_UINT32:
+		v, err = strconv.ParseUint(pv, 10, 32)
+		v = uint32(v.(uint64))
+
+	case descriptor.FieldDescriptorProto_TYPE_FIXED64:
+		v, err = strconv.ParseUint(pv, 10, 64)
+
+	case descriptor.FieldDescriptorProto_TYPE_FIXED32:
+		v, err = strconv.ParseUint(pv, 10, 32)
+		v = uint32(v.(uint64))
+
+	case descriptor.FieldDescriptorProto_TYPE_BOOL:
+		v, err = strconv.ParseBool(pv)
+
+	case descriptor.FieldDescriptorProto_TYPE_STRING:
+		// already string
+		v = pv
+
+	case descriptor.FieldDescriptorProto_TYPE_BYTES:
+		v = []byte(pv)
+
+	case descriptor.FieldDescriptorProto_TYPE_SFIXED64:
+		v, err = strconv.ParseUint(pv, 10, 64)
+
+	case descriptor.FieldDescriptorProto_TYPE_SFIXED32:
+		v, err = strconv.ParseUint(pv, 10, 32)
+		v = int32(v.(int64))
+
+	case descriptor.FieldDescriptorProto_TYPE_SINT64:
+		v, err = strconv.ParseInt(pv, 10, 64)
+
+	case descriptor.FieldDescriptorProto_TYPE_SINT32:
+		v, err = strconv.ParseInt(pv, 10, 32)
+		v = int32(v.(int64))
+
+	default:
+		return nil, fmt.Errorf("invalid type: %#v", f.descType)
+	}
+	return v, err
 }
 
 func maxLen(fields []*desc.FieldDescriptor, format string) int {
