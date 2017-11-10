@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/AlecAivazis/survey"
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic"
@@ -78,7 +80,7 @@ func (e *Env) Call(name string) (string, error) {
 	}
 
 	res := dynamic.NewMessage(rpc.ResponseType)
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", e.config.Server.Host, e.config.Server.Port), grpc.WithInsecure())
+	conn, err := connect(e.config.Server)
 	if err != nil {
 		return "", err
 	}
@@ -89,13 +91,42 @@ func (e *Env) Call(name string) (string, error) {
 		return "", err
 	}
 
-	m := jsonpb.Marshaler{Indent: "  "}
-	json, err := m.MarshalToString(res)
+	out, err := formatOutput(res)
 	if err != nil {
 		return "", err
 	}
 
-	return json + "\n", nil
+	return out, nil
+}
+
+func (e *Env) CallWithScript(input io.Reader, rpcName string) error {
+	rpc, err := e.GetRPC(rpcName)
+	if err != nil {
+		return err
+	}
+	req := dynamic.NewMessage(rpc.RequestType)
+	if err := jsonpb.Unmarshal(input, req); err != nil {
+		return err
+	}
+	res := dynamic.NewMessage(rpc.ResponseType)
+	conn, err := connect(e.config.Server)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	if err := grpc.Invoke(context.Background(), e.genEndpoint(rpcName), req, res, conn); err != nil {
+		return err
+	}
+
+	out, err := formatOutput(res)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(os.Stdout, out)
+
+	return nil
 }
 
 func (e *Env) genEndpoint(rpcName string) string {
@@ -285,6 +316,20 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 		input = append(input, in)
 	}
 	return input, nil
+}
+
+func connect(config *config.Server) (*grpc.ClientConn, error) {
+	// TODO: connection を使いまわしたい
+	return grpc.Dial(fmt.Sprintf("%s:%s", config.Host, config.Port), grpc.WithInsecure())
+}
+
+func formatOutput(input proto.Message) (string, error) {
+	m := jsonpb.Marshaler{Indent: "  "}
+	out, err := m.MarshalToString(input)
+	if err != nil {
+		return "", err
+	}
+	return out + "\n", nil
 }
 
 func fieldInputer(config *config.Env, ancestor []string, promptFormat string, color prompt.Color) func(*desc.FieldDescriptor) string {

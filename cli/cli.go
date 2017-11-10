@@ -93,15 +93,18 @@ func (c *CLI) Run(args []string) int {
 		return 1
 	}
 
+	env, err := setupEnv(c.config.Env, c.options)
+	if err != nil {
+		c.Error(err)
+		return 1
+	}
+
 	if isStandaloneMode() {
-		fmt.Println("STANDALONE MODE STARTED")
-	} else {
-		env, err := setupEnv(c.config.Env, c.options)
-		if err != nil {
+		if err := env.CallWithScript(os.Stdin, c.options.Call); err != nil {
 			c.Error(err)
 			return 1
 		}
-
+	} else {
 		r := repl.NewREPL(c.config.REPL, env, repl.NewBasicUI())
 		defer r.Close()
 
