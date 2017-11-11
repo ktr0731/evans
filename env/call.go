@@ -198,6 +198,9 @@ func (e *Env) setInput(req *dynamic.Message, fields []fieldable) error {
 					}
 				}
 			}
+		case *enumField:
+			// TODO
+			req.SetField(f.desc, f.val.GetNumber())
 		}
 	}
 	return nil
@@ -259,7 +262,7 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 			optMap := map[string]*desc.EnumValueDescriptor{}
 			for i, o := range enum.GetValues() {
 				opts[i] = o.GetName()
-				optMap[o.GetFullyQualifiedName()] = o
+				optMap[o.GetName()] = o
 			}
 
 			var choice string
@@ -270,7 +273,6 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 			if err != nil {
 				return nil, err
 			}
-
 			in = &enumField{
 				baseField: newBaseField(f),
 				val:       optMap[choice],
@@ -279,6 +281,7 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 
 		if f.IsRepeated() {
 			var repeated []fieldable
+			// TODO: repeated であることを prompt に出したい
 			for {
 				s, err := inputField(f)
 				if err != nil {
@@ -293,29 +296,13 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 				baseField: newBaseField(f),
 				val:       repeated,
 			}
-		} else {
+		} else if !isEnumType(f) {
 			var err error
 			in, err = inputField(f)
 			if err != nil {
 				return nil, err
 			}
 		}
-		// if isMessageType(f.GetType()) {
-		// 	fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType(), color)
-		// 	if err != nil {
-		// 		return nil, errors.Wrap(err, "failed to read inputs")
-		// 	}
-		// 	in = &messageField{
-		// 		baseField: newBaseField(f),
-		// 		val:       fields,
-		// 	}
-		// 	color = prompt.DarkGreen + (color+1)%16
-		// } else if in == nil { // primitive
-		// 	in = &primitiveField{
-		// 		baseField: newBaseField(f),
-		// 		val:       inputField(f),
-		// 	}
-		// }
 
 		input = append(input, in)
 	}
@@ -344,11 +331,11 @@ func (e *Env) fieldInputer(ancestor []string, promptFormat string, color prompt.
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read inputs")
 			}
+			color = prompt.DarkGreen + (color+1)%16
 			return &messageField{
 				baseField: newBaseField(f),
 				val:       fields,
 			}, nil
-			// color = prompt.DarkGreen + (color+1)%16
 		} else { // primitive
 			promptStr := promptFormat
 			ancestor := strings.Join(ancestor, e.config.AncestorDelimiter)
