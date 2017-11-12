@@ -12,6 +12,8 @@
 
 [![wercker status](https://app.wercker.com/status/1b1e3a40c102c07ad4f61630fea6c7bf/s/master "wercker status")](https://app.wercker.com/project/byKey/1b1e3a40c102c07ad4f61630fea6c7bf)  
 
+![Evans](./evans.gif)  
+
 ## Usage
 Evans consists of some commands in REPL.  
 
