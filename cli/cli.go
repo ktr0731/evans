@@ -94,7 +94,7 @@ func (c *CLI) Run(args []string) int {
 		return 1
 	}
 
-	env, err := setupEnv(c.config.Env, c.options)
+	env, err := setupEnv(c.config, c.options)
 	if err != nil {
 		c.Error(err)
 		return 1
@@ -170,7 +170,7 @@ func isCommandLineMode(opt *Options) bool {
 	return !isatty.IsTerminal(os.Stdin.Fd()) || opt.File != ""
 }
 
-func setupEnv(config *config.Env, opt *Options) (*env.Env, error) {
+func setupEnv(config *config.Config, opt *Options) (*env.Env, error) {
 	// find all proto paths
 	paths := make([]string, 0, len(opt.Path))
 	encountered := map[string]bool{}
@@ -191,18 +191,30 @@ func setupEnv(config *config.Env, opt *Options) (*env.Env, error) {
 		return nil, err
 	}
 
-	env, err := env.New(desc, config)
+	env, err := env.New(desc, config.Env)
 	if err != nil {
 		return nil, err
 	}
 
-	if opt.Package != "" {
-		if err := env.UsePackage(opt.Package); err != nil {
+	// option is higher priority than config file
+	pkg := opt.Package
+	if pkg == "" && config.Default.Package != "" {
+		pkg = config.Default.Package
+	}
+
+	if pkg != "" {
+		if err := env.UsePackage(pkg); err != nil {
 			return nil, errors.Wrapf(err, "file %s", strings.Join(opt.Proto, ", "))
 		}
 	}
-	if opt.Service != "" {
-		if err := env.UseService(opt.Service); err != nil {
+
+	svc := opt.Service
+	if svc == "" && config.Default.Service != "" {
+		svc = config.Default.Service
+	}
+
+	if svc != "" {
+		if err := env.UseService(svc); err != nil {
 			return nil, errors.Wrapf(err, "file %s", strings.Join(opt.Proto, ", "))
 		}
 	}

@@ -30,3 +30,4 @@ coverage.out
 vendor/
 .wercker/
 *.pb.go
+.evans.toml
