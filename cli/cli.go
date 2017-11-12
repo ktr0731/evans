@@ -89,7 +89,7 @@ func (c *CLI) Run(args []string) int {
 		return 0
 	}
 
-	if err := checkPrecondition(c.options); err != nil {
+	if err := checkPrecondition(c.config, c.options); err != nil {
 		c.Error(err)
 		return 1
 	}
@@ -131,26 +131,26 @@ func (c *CLI) Run(args []string) int {
 	return 0
 }
 
-func checkPrecondition(opt *Options) error {
+func checkPrecondition(config *config.Config, opt *Options) error {
 	if len(opt.Proto) == 0 {
 		return errors.New("invalid argument")
 	}
-	if err := isCallable(opt); err != nil {
+	if err := isCallable(config, opt); err != nil {
 		return err
 	}
 	return nil
 }
 
-func isCallable(opt *Options) error {
+func isCallable(config *config.Config, opt *Options) error {
 	if opt.Call == "" {
 		return nil
 	}
 
 	var result *multierror.Error
-	if opt.Service == "" {
+	if config.Default.Service == "" && opt.Service == "" {
 		result = multierror.Append(result, errors.New("--service flag unselected"))
 	}
-	if opt.Package == "" {
+	if config.Default.Package == "" && opt.Package == "" {
 		result = multierror.Append(result, errors.New("--package flag unselected"))
 	}
 	if result != nil {
