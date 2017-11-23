@@ -36,12 +36,14 @@ type Options struct {
 
 	Interactive bool     `arg:"-i,help:use interactive mode"`
 	EditConfig  bool     `arg:"-e,help:edit config file by $EDITOR"`
+	Host        string   `arg:"-h,help:gRPC host"`
 	Port        int      `arg:"-p,help:gRPC port"`
 	Package     string   `arg:"help:default package"`
 	Service     string   `arg:"help:default service. evans parse package from this if --package is nothing."`
 	Call        string   `arg:"-c,help:call specified RPC"`
 	File        string   `arg:"-f,help:the script file which will be executed (used only command-line mode)"`
 	Path        []string `arg:"separate,help:proto file path"`
+	Header      []string `arg:"separate,help:headers set to each requests"`
 }
 
 func (o *Options) Version() string {
@@ -170,7 +172,24 @@ func isCommandLineMode(opt *Options) bool {
 	return !isatty.IsTerminal(os.Stdin.Fd()) || opt.File != ""
 }
 
-func setupEnv(config *config.Config, opt *Options) (*env.Env, error) {
+func setupEnv(conf *config.Config, opt *Options) (*env.Env, error) {
+	if len(opt.Header) > 0 {
+		for _, h := range opt.Header {
+			s := strings.SplitN(h, "=", 2)
+			if len(s) != 2 {
+				return nil, errors.New(`header must be specified "key=val" format`)
+			}
+			key, val := s[0], s[1]
+			conf.Env.Request.Header = append(conf.Env.Request.Header, config.Header{key, val})
+		}
+	}
+	if opt.Host != "" {
+		conf.Server.Host = opt.Host
+	}
+	if opt.Port != 50051 {
+		conf.Server.Port = string(opt.Port)
+	}
+
 	// find all proto paths
 	paths := make([]string, 0, len(opt.Path))
 	encountered := map[string]bool{}
@@ -191,15 +210,15 @@ func setupEnv(config *config.Config, opt *Options) (*env.Env, error) {
 		return nil, err
 	}
 
-	env, err := env.New(desc, config.Env)
+	env, err := env.New(desc, conf.Env)
 	if err != nil {
 		return nil, err
 	}
 
 	// option is higher priority than config file
 	pkg := opt.Package
-	if pkg == "" && config.Default.Package != "" {
-		pkg = config.Default.Package
+	if pkg == "" && conf.Default.Package != "" {
+		pkg = conf.Default.Package
 	}
 
 	if pkg != "" {
@@ -209,8 +228,8 @@ func setupEnv(config *config.Config, opt *Options) (*env.Env, error) {
 	}
 
 	svc := opt.Service
-	if svc == "" && config.Default.Service != "" {
-		svc = config.Default.Service
+	if svc == "" && conf.Default.Service != "" {
+		svc = conf.Default.Service
 	}
 
 	if svc != "" {

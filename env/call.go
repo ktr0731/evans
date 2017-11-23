@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/AlecAivazis/survey"
 	prompt "github.com/c-bata/go-prompt"
@@ -109,7 +110,12 @@ func (e *Env) Call(name string) (string, error) {
 	defer conn.Close()
 
 	ep := e.genEndpoint(name)
-	if err := grpc.Invoke(context.Background(), ep, req, res, conn); err != nil {
+	md := metadata.MD{}
+	for _, h := range e.config.Request.Header {
+		md[h.Key] = []string{h.Value}
+	}
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+	if err := grpc.Invoke(ctx, ep, req, res, conn); err != nil {
 		return "", err
 	}
 

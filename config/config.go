@@ -25,6 +25,15 @@ type Server struct {
 	Port string `default:"50051" toml:"port"`
 }
 
+type Header struct {
+	Key   string `toml:"key"`
+	Value string `toml:"value"`
+}
+
+type Request struct {
+	Header []Header `toml:"header"`
+}
+
 type REPL struct {
 	Server       *Server `toml:"-"`
 	PromptFormat string  `default:"{package}.{sevice}@{addr}:{port}" toml:"promptFormat"`
@@ -36,9 +45,10 @@ type REPL struct {
 }
 
 type Env struct {
-	Server            *Server `toml:"-"`
-	AncestorDelimiter string  `default:":"`
-	InputPromptFormat string  `default:"{name}{ancestor} ({type}) => " toml:"inputPromptFormat"`
+	Server            *Server  `toml:"-"`
+	AncestorDelimiter string   `default:":"`
+	InputPromptFormat string   `default:"{name}{ancestor} ({type}) => " toml:"inputPromptFormat"`
+	Request           *Request `toml:"request"`
 }
 
 type Meta struct {
