@@ -11,6 +11,7 @@ import (
 	"github.com/ktr0731/evans/env"
 	"github.com/ktr0731/evans/parser"
 	"github.com/ktr0731/evans/repl"
+	"github.com/ktr0731/evans/usecase/port"
 	isatty "github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
 
@@ -56,15 +57,18 @@ type CLI struct {
 
 	parser  *arg.Parser
 	options *Options
+
+	interactor port.InputPort
 }
 
-func NewCLI(title, version string) *CLI {
+func NewCLI(title, version string, interactor port.InputPort) *CLI {
 	return &CLI{
 		ui: newUI(),
 		options: &Options{
 			Port: 50051,
 		},
-		config: config.Get(),
+		config:     config.Get(),
+		interactor: interactor,
 	}
 }
 
@@ -121,7 +125,7 @@ func (c *CLI) Run(args []string) int {
 			return 1
 		}
 	} else {
-		r := repl.NewREPL(c.config.REPL, env, repl.NewBasicUI())
+		r := repl.NewREPL(c.config.REPL, env, repl.NewBasicUI(), c.interactor)
 		defer r.Close()
 
 		if err := r.Start(); err != nil {
