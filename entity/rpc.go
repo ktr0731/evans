@@ -1,4 +1,4 @@
-package model
+package entity
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ type RPCs []*RPC
 
 // NewRPCs collects RPCs in ServiceDescriptor.
 // Only NewRPCs receive a raw descriptor because it is called by NewService.
-// So, NewRPCs needs to receive a raw descriptor instead of model.Service.
+// So, NewRPCs needs to receive a raw descriptor instead of entity.Service.
 func NewRPCs(svc *desc.ServiceDescriptor) RPCs {
 	rpcs := make(RPCs, len(svc.GetMethods()))
 	for i, rpc := range svc.GetMethods() {

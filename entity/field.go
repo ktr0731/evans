@@ -1,4 +1,4 @@
-package model
+package entity
 
 import (
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"

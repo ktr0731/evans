@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/ktr0731/evans/config"
-	"github.com/ktr0731/evans/model"
+	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/parser"
 	"github.com/pkg/errors"
 )
@@ -24,8 +24,8 @@ var (
 // pkgList is used by showing all packages
 // pkg is used by extract a package by package name
 type cache struct {
-	pkgList model.Packages
-	pkg     map[string]*model.Package
+	pkgList entity.Packages
+	pkg     map[string]*entity.Package
 }
 
 type state struct {
@@ -47,7 +47,7 @@ func New(desc *parser.FileDescriptorSet, config *config.Env) (*Env, error) {
 		desc:   desc,
 		config: config,
 		cache: cache{
-			pkg: map[string]*model.Package{},
+			pkg: map[string]*entity.Package{},
 		},
 	}, nil
 }
@@ -60,15 +60,15 @@ func (e *Env) HasCurrentService() bool {
 	return e.state.currentService != ""
 }
 
-func (e *Env) GetPackages() model.Packages {
+func (e *Env) GetPackages() entity.Packages {
 	if e.cache.pkgList != nil {
 		return e.cache.pkgList
 	}
 
 	pkgNames := e.desc.GetPackages()
-	pkgs := make(model.Packages, len(pkgNames))
+	pkgs := make(entity.Packages, len(pkgNames))
 	for i, name := range pkgNames {
-		pkgs[i] = &model.Package{Name: name}
+		pkgs[i] = &entity.Package{Name: name}
 	}
 
 	e.cache.pkgList = pkgs
@@ -76,7 +76,7 @@ func (e *Env) GetPackages() model.Packages {
 	return pkgs
 }
 
-func (e *Env) GetServices() (model.Services, error) {
+func (e *Env) GetServices() (entity.Services, error) {
 	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
 	}
@@ -86,7 +86,7 @@ func (e *Env) GetServices() (model.Services, error) {
 	return e.cache.pkg[e.state.currentPackage].Services, nil
 }
 
-func (e *Env) GetMessages() (model.Messages, error) {
+func (e *Env) GetMessages() (entity.Messages, error) {
 	// TODO: current package 以外からも取得したい
 	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
@@ -96,7 +96,7 @@ func (e *Env) GetMessages() (model.Messages, error) {
 	return e.cache.pkg[e.state.currentPackage].Messages, nil
 }
 
-func (e *Env) GetRPCs() (model.RPCs, error) {
+func (e *Env) GetRPCs() (entity.RPCs, error) {
 	if !e.HasCurrentService() {
 		return nil, ErrServiceUnselected
 	}
@@ -108,7 +108,7 @@ func (e *Env) GetRPCs() (model.RPCs, error) {
 	return svc.RPCs, nil
 }
 
-func (e *Env) GetService(name string) (*model.Service, error) {
+func (e *Env) GetService(name string) (*entity.Service, error) {
 	svc, err := e.GetServices()
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (e *Env) GetService(name string) (*model.Service, error) {
 	return nil, errors.Wrapf(ErrInvalidServiceName, "%s not found", name)
 }
 
-func (e *Env) GetMessage(name string) (*model.Message, error) {
+func (e *Env) GetMessage(name string) (*entity.Message, error) {
 	// Person2 で panic
 	msg, err := e.GetMessages()
 	if err != nil {
@@ -136,7 +136,7 @@ func (e *Env) GetMessage(name string) (*model.Message, error) {
 	return nil, errors.Wrapf(ErrInvalidMessageName, "%s not found", name)
 }
 
-func (e *Env) GetRPC(name string) (*model.RPC, error) {
+func (e *Env) GetRPC(name string) (*entity.RPC, error) {
 	rpcs, err := e.GetRPCs()
 	if err != nil {
 		return nil, err
@@ -207,24 +207,24 @@ func (e *Env) loadPackage(name string) error {
 
 	// Messages: actual message size is greater than or equal to len(dMsg)
 	//           because message can be contain other messages as a field
-	e.cache.pkg[name] = &model.Package{
+	e.cache.pkg[name] = &entity.Package{
 		Name:     name,
-		Services: make(model.Services, len(dSvc)),
-		Messages: make(model.Messages, 0, len(dMsg)),
+		Services: make(entity.Services, len(dSvc)),
+		Messages: make(entity.Messages, 0, len(dMsg)),
 	}
 
-	services := make(model.Services, len(dSvc))
+	services := make(entity.Services, len(dSvc))
 	for i, svc := range dSvc {
-		services[i] = model.NewService(svc)
-		services[i].RPCs = model.NewRPCs(svc)
+		services[i] = entity.NewService(svc)
+		services[i].RPCs = entity.NewRPCs(svc)
 	}
 	e.cache.pkg[name].Services = services
 
-	messages := make(model.Messages, len(dMsg))
+	messages := make(entity.Messages, len(dMsg))
 	for i, msg := range dMsg {
-		messages[i] = model.NewMessage(msg)
+		messages[i] = entity.NewMessage(msg)
 
-		fields, err := model.NewFields(e.cache.pkg[name], messages[i])
+		fields, err := entity.NewFields(e.cache.pkg[name], messages[i])
 		if err != nil {
 			return errors.Wrapf(err, "failed to get field of %s", msg.GetName())
 		}
@@ -245,15 +245,15 @@ func (e *Env) getNameFromFQN(fqn string) string {
 }
 
 // getMessage is a closure which has current states
-// it is passed by model.NewField() for get message from current package
-func (e *Env) getMessage() func(typeName string) (*model.Message, error) {
-	return func(msgName string) (*model.Message, error) {
+// it is passed by entity.NewField() for get message from current package
+func (e *Env) getMessage() func(typeName string) (*entity.Message, error) {
+	return func(msgName string) (*entity.Message, error) {
 		return e.GetMessage(msgName)
 	}
 }
 
-func (e *Env) getService() func(typeName string) (*model.Service, error) {
-	return func(svcName string) (*model.Service, error) {
+func (e *Env) getService() func(typeName string) (*entity.Service, error) {
+	return func(svcName string) (*entity.Service, error) {
 		return e.GetService(svcName)
 	}
 }
