@@ -1,5 +1,12 @@
 package port
 
 type InputPort interface {
-	Run(args []string) int
+	Call(*CallParams) (*CallResponse, error)
 }
+
+type CallParams struct {
+	SvcName string
+	RPCName string
+}
+
+type CallResponse struct{}
