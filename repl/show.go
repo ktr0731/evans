@@ -3,12 +3,12 @@ package repl
 import (
 	"strings"
 
-	"github.com/ktr0731/evans/env"
+	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
 )
 
 type showCommand struct {
-	env *env.Env
+	inputPort port.InputPort
 }
 
 func (c *showCommand) Synopsis() string {
@@ -29,32 +29,26 @@ func (c *showCommand) Validate(args []string) error {
 func (c *showCommand) Run(args []string) (string, error) {
 	target := args[0]
 
+	params := &port.ShowParams{}
 	switch strings.ToLower(target) {
 	case "p", "package", "packages":
-		return c.env.GetPackages().String(), nil
+		// params.Showable =
 
 	case "s", "svc", "service", "services":
-		svc, err := c.env.GetServices()
-		if err != nil {
-			return "", err
-		}
-		return svc.String(), nil
+		// params.Showable =
 
 	case "m", "msg", "message", "messages":
-		msg, err := c.env.GetMessages()
-		if err != nil {
-			return "", err
-		}
-		return msg.String(), nil
+		// params.Showable =
 
 	case "a", "r", "rpc", "api":
-		rpcs, err := c.env.GetRPCs()
-		if err != nil {
-			return "", err
-		}
-		return rpcs.String(), nil
+		// params.Showable =
 
 	default:
 		return "", errors.Wrap(ErrUnknownTarget, target)
 	}
+	_, err := c.inputPort.Show(params)
+	if err != nil {
+		return "", err
+	}
+	return "", nil
 }

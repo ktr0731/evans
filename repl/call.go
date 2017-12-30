@@ -1,12 +1,12 @@
 package repl
 
 import (
-	"github.com/ktr0731/evans/env"
+	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
 )
 
 type callCommand struct {
-	env *env.Env
+	inputPort port.InputPort
 }
 
 func (c *callCommand) Synopsis() string {
@@ -25,5 +25,10 @@ func (c *callCommand) Validate(args []string) error {
 }
 
 func (c *callCommand) Run(args []string) (string, error) {
-	return c.env.Call(args[0])
+	params := &port.CallParams{args[0]}
+	_, err := c.inputPort.Call(params)
+	if err != nil {
+		return "", err
+	}
+	return "", nil
 }

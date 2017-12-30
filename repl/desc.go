@@ -1,12 +1,12 @@
 package repl
 
 import (
-	"github.com/ktr0731/evans/env"
+	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
 )
 
 type descCommand struct {
-	env *env.Env
+	inputPort port.InputPort
 }
 
 func (c *descCommand) Synopsis() string {
@@ -25,9 +25,10 @@ func (c *descCommand) Validate(args []string) error {
 }
 
 func (c *descCommand) Run(args []string) (string, error) {
-	msg, err := c.env.GetMessage(args[0])
+	params := &port.DescribeParams{args[0]}
+	_, err := c.inputPort.Describe(params)
 	if err != nil {
 		return "", err
 	}
-	return msg.String(), nil
+	return "", nil
 }

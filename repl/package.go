@@ -1,12 +1,12 @@
 package repl
 
 import (
-	"github.com/ktr0731/evans/env"
+	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
 )
 
 type packageCommand struct {
-	env *env.Env
+	inputPort port.InputPort
 }
 
 func (c *packageCommand) Synopsis() string {
@@ -25,8 +25,10 @@ func (c *packageCommand) Validate(args []string) error {
 }
 
 func (c *packageCommand) Run(args []string) (string, error) {
-	if err := c.env.UsePackage(args[0]); err != nil {
-		return "", errors.Wrapf(err, "file %s", args[0])
+	params := &port.PackageParams{args[0]}
+	_, err := c.inputPort.Package(params)
+	if err != nil {
+		return "", errors.Wrapf(err, "package: %s", args[0])
 	}
 	return "", nil
 }

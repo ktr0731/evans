@@ -13,15 +13,12 @@ type InputPort interface {
 }
 
 type CallParams struct {
-	PkgName string
-	SvcName string
 	RPCName string
 }
 
 type CallResponse struct{}
 
 type DescribeParams struct {
-	PkgName string
 	MsgName string
 }
 

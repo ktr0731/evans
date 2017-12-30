@@ -1,13 +1,11 @@
 package repl
 
 import (
-	"github.com/ktr0731/evans/env"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
 )
 
 type serviceCommand struct {
-	env       *env.Env
 	inputPort port.InputPort
 }
 
@@ -31,10 +29,5 @@ func (c *serviceCommand) Run(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// convert res to string
-
-	// if err := c.env.UseService(args[0]); err != nil {
-	// 	return "", err
-	// }
 	return "", nil
 }
