@@ -54,12 +54,12 @@ func NewBasicUI() *UI {
 	}
 }
 
-func NewREPL(config *config.REPL, env *env.Env, ui *UI, interactor port.InputPort) *REPL {
+func NewREPL(config *config.REPL, env *env.Env, ui *UI, inputPort port.InputPort) *REPL {
 	cmds := map[string]Commander{
 		"call":    &callCommand{env},
 		"desc":    &descCommand{env},
 		"package": &packageCommand{env},
-		"service": &serviceCommand{env},
+		"service": &serviceCommand{env, inputPort},
 		"show":    &showCommand{env},
 	}
 	repl := &REPL{

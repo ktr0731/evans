@@ -11,7 +11,6 @@ func NewInteractor() *Interactor {
 }
 
 func (i *Interactor) Package(params *port.PackageParams) (*port.PackageResponse, error) {
-	// return i.presenter.Package(foo), nil
 	return nil, nil
 }
 
@@ -32,5 +31,6 @@ func (i *Interactor) Header(params *port.HeaderParams) (*port.HeaderResponse, er
 }
 
 func (i *Interactor) Call(params *port.CallParams) (*port.CallResponse, error) {
+	// return i.presenter.Package(foo), nil
 	return nil, nil
 }
