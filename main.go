@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/ktr0731/evans/adapter/controller"
-	"github.com/ktr0731/evans/usecase"
+	"github.com/ktr0732/evans/usecase"
 )
 
 func main() {
