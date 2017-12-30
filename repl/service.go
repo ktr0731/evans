@@ -31,6 +31,8 @@ func (c *serviceCommand) Run(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	// convert res to string
+
 	// if err := c.env.UseService(args[0]); err != nil {
 	// 	return "", err
 	// }
