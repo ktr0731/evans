@@ -404,13 +404,8 @@ func (e *Env) CallWithScript(input io.Reader, rpcName string) error {
 		return err
 	}
 	res := dynamic.NewMessage(rpc.ResponseType)
-	conn, err := connect(e.config.Server)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
 
-	if err := grpc.Invoke(context.Background(), e.genEndpoint(rpcName), req, res, conn); err != nil {
+	if err := e.call(e.genEndpoint(rpcName), req, res); err != nil {
 		return err
 	}
 
@@ -422,6 +417,16 @@ func (e *Env) CallWithScript(input io.Reader, rpcName string) error {
 	fmt.Fprintf(os.Stdout, out)
 
 	return nil
+}
+
+func (e *Env) call(endpoint string, req, res proto.Message) error {
+	conn, err := connect(e.config.Server)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	return grpc.Invoke(context.Background(), endpoint, req, res, conn)
 }
 
 func (e *Env) genEndpoint(rpcName string) string {
