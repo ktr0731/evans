@@ -35,6 +35,19 @@ var (
 	ErrServiceCachingFailed = errors.New("service caching failed")
 )
 
+type Environment interface {
+	Packages() Packages
+	Services() Services
+	Messages() (Messages, error)
+	RPCs() (RPCs, error)
+	Service(name string) (*Service, error)
+	Message(name string) (*Message, error)
+	RPC(name string) (*RPC, error)
+
+	UsePackage(name string) error
+	UseService(name string) error
+}
+
 // pkgList is used by showing all packages
 // pkg is used by extract a package by package name
 type cache struct {
