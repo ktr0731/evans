@@ -503,7 +503,7 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 		var in fieldable
 		// message field, enum field or primitive field
 		switch {
-		case isOneOf(f):
+		case IsOneOf(f):
 			oneOf := f.GetOneOf()
 
 			if encountered["oneof"][oneOf.GetFullyQualifiedName()] {
@@ -529,7 +529,7 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 			}
 
 			f = optMap[choice]
-		case isEnumType(f):
+		case IsEnumType(f):
 			enum := f.GetEnumType()
 			if encountered["enum"][enum.GetFullyQualifiedName()] {
 				continue
@@ -575,7 +575,7 @@ func (e *Env) inputFields(ancestor []string, msg *desc.MessageDescriptor, color 
 				baseField: newBaseField(f),
 				val:       repeated,
 			}
-		} else if !isEnumType(f) {
+		} else if !IsEnumType(f) {
 			var err error
 			in, err = inputField(f)
 			if err != nil {
@@ -605,7 +605,7 @@ func formatOutput(input proto.Message) (string, error) {
 // fieldInputer let us enter primitive or message field.
 func (e *Env) fieldInputer(ancestor []string, promptFormat string, color prompt.Color) func(*desc.FieldDescriptor) (fieldable, error) {
 	return func(f *desc.FieldDescriptor) (fieldable, error) {
-		if isMessageType(f.GetType()) {
+		if IsMessageType(f.GetType()) {
 			fields, err := e.inputFields(append(ancestor, f.GetName()), f.GetMessageType(), color)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read inputs")
@@ -708,7 +708,7 @@ func castPrimitiveType(f *primitiveField, pv string) (interface{}, error) {
 func maxLen(fields []*desc.FieldDescriptor, format string) int {
 	var max int
 	for _, f := range fields {
-		if isMessageType(f.GetType()) {
+		if IsMessageType(f.GetType()) {
 			continue
 		}
 		prompt := format
@@ -727,15 +727,15 @@ func maxLen(fields []*desc.FieldDescriptor, format string) int {
 	return max
 }
 
-func isMessageType(typeName descriptor.FieldDescriptorProto_Type) bool {
+func IsMessageType(typeName descriptor.FieldDescriptorProto_Type) bool {
 	return typeName == descriptor.FieldDescriptorProto_TYPE_MESSAGE
 }
 
-func isOneOf(f *desc.FieldDescriptor) bool {
+func IsOneOf(f *desc.FieldDescriptor) bool {
 	return f.GetOneOf() != nil
 }
 
-func isEnumType(f *desc.FieldDescriptor) bool {
+func IsEnumType(f *desc.FieldDescriptor) bool {
 	return f.GetEnumType() != nil
 }
 
