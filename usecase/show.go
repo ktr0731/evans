@@ -12,7 +12,11 @@ func Show(params *port.ShowParams, outputPort port.OutputPort, env entity.Enviro
 	case port.ShowTypePackage:
 		showable = port.Packages(env.Packages())
 	case port.ShowTypeService:
-		showable = port.Services(env.Services())
+		svcs, err := env.Services()
+		if err != nil {
+			return nil, err
+		}
+		showable = port.Services(svcs)
 	case port.ShowTypeMessage:
 		msgs, err := env.Messages()
 		if err != nil {

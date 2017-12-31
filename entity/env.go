@@ -37,7 +37,7 @@ var (
 
 type Environment interface {
 	Packages() Packages
-	Services() Services
+	Services() (Services, error)
 	Messages() (Messages, error)
 	RPCs() (RPCs, error)
 	Service(name string) (*Service, error)
@@ -87,7 +87,7 @@ func (e *Env) HasCurrentService() bool {
 	return e.state.currentService != ""
 }
 
-func (e *Env) GetPackages() Packages {
+func (e *Env) Packages() Packages {
 	if e.cache.pkgList != nil {
 		return e.cache.pkgList
 	}
@@ -103,7 +103,7 @@ func (e *Env) GetPackages() Packages {
 	return pkgs
 }
 
-func (e *Env) GetServices() (Services, error) {
+func (e *Env) Services() (Services, error) {
 	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
 	}
@@ -113,7 +113,7 @@ func (e *Env) GetServices() (Services, error) {
 	return e.cache.pkg[e.state.currentPackage].Services, nil
 }
 
-func (e *Env) GetMessages() (Messages, error) {
+func (e *Env) Messages() (Messages, error) {
 	// TODO: current package 以外からも取得したい
 	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
@@ -123,20 +123,20 @@ func (e *Env) GetMessages() (Messages, error) {
 	return e.cache.pkg[e.state.currentPackage].Messages, nil
 }
 
-func (e *Env) GetRPCs() (RPCs, error) {
+func (e *Env) RPCs() (RPCs, error) {
 	if !e.HasCurrentService() {
 		return nil, ErrServiceUnselected
 	}
 
-	svc, err := e.GetService(e.state.currentService)
+	svc, err := e.Service(e.state.currentService)
 	if err != nil {
 		return nil, err
 	}
 	return svc.RPCs, nil
 }
 
-func (e *Env) GetService(name string) (*Service, error) {
-	svc, err := e.GetServices()
+func (e *Env) Service(name string) (*Service, error) {
+	svc, err := e.Services()
 	if err != nil {
 		return nil, err
 	}
@@ -148,9 +148,9 @@ func (e *Env) GetService(name string) (*Service, error) {
 	return nil, errors.Wrapf(ErrInvalidServiceName, "%s not found", name)
 }
 
-func (e *Env) GetMessage(name string) (*Message, error) {
+func (e *Env) Message(name string) (*Message, error) {
 	// Person2 で panic
-	msg, err := e.GetMessages()
+	msg, err := e.Messages()
 	if err != nil {
 		return nil, err
 	}
@@ -163,8 +163,8 @@ func (e *Env) GetMessage(name string) (*Message, error) {
 	return nil, errors.Wrapf(ErrInvalidMessageName, "%s not found", name)
 }
 
-func (e *Env) GetRPC(name string) (*RPC, error) {
-	rpcs, err := e.GetRPCs()
+func (e *Env) RPC(name string) (*RPC, error) {
+	rpcs, err := e.RPCs()
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +197,7 @@ func (e *Env) UseService(name string) error {
 			return errors.Wrapf(err, name)
 		}
 	}
-	services, err := e.GetServices()
+	services, err := e.Services()
 	if err != nil {
 		return errors.Wrapf(err, "failed to get services")
 	}
@@ -275,13 +275,13 @@ func (e *Env) getNameFromFQN(fqn string) string {
 // it is passed by entity.NewField() for get message from current package
 func (e *Env) getMessage() func(typeName string) (*Message, error) {
 	return func(msgName string) (*Message, error) {
-		return e.GetMessage(msgName)
+		return e.Message(msgName)
 	}
 }
 
 func (e *Env) getService() func(typeName string) (*Service, error) {
 	return func(svcName string) (*Service, error) {
-		return e.GetService(svcName)
+		return e.Service(svcName)
 	}
 }
 
@@ -351,7 +351,7 @@ func (f *enumField) isNil() bool {
 // Call calls a RPC which is selected
 // RPC is called after inputting field values interactively
 func (e *Env) Call(name string) (string, error) {
-	rpc, err := e.GetRPC(name)
+	rpc, err := e.RPC(name)
 	if err != nil {
 		return "", err
 	}
@@ -395,7 +395,7 @@ func (e *Env) Call(name string) (string, error) {
 }
 
 func (e *Env) CallWithScript(input io.Reader, rpcName string) error {
-	rpc, err := e.GetRPC(rpcName)
+	rpc, err := e.RPC(rpcName)
 	if err != nil {
 		return err
 	}

@@ -8,11 +8,20 @@ import (
 type Interactor struct {
 	env *entity.Env
 
-	outputPort port.OutputPort
+	outputPort   port.OutputPort
+	inputterPort port.Inputter
 }
 
-func NewInteractor(outputPort port.OutputPort) *Interactor {
-	return &Interactor{}
+type InteractorParams struct {
+	OutputPort   port.OutputPort
+	InputterPort port.Inputter
+}
+
+func NewInteractor(params *InteractorParams) *Interactor {
+	return &Interactor{
+		outputPort:   params.OutputPort,
+		inputterPort: params.InputterPort,
+	}
 }
 
 func (i *Interactor) Package(params *port.PackageParams) (*port.PackageResponse, error) {

@@ -11,5 +11,10 @@ func Call(
 	env entity.Environment,
 	inputter port.Inputter,
 ) (*port.CallResponse, error) {
+	rpc, err := env.RPC(params.RPCName)
+	if err != nil {
+		return nil, err
+	}
+	inputter.Input(rpc.RequestType)
 	return nil, nil
 }

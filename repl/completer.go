@@ -33,14 +33,14 @@ func (c *completer) complete(d prompt.Document) []prompt.Suggest {
 		}
 
 	case "package":
-		pkgs := c.env.GetPackages()
+		pkgs := c.env.Packages()
 		s = make([]prompt.Suggest, len(pkgs))
 		for i, pkg := range pkgs {
 			s[i] = prompt.Suggest{Text: pkg.Name}
 		}
 
 	case "service":
-		svcs, err := c.env.GetServices()
+		svcs, err := c.env.Services()
 		if err != nil {
 			return nil
 		}
@@ -50,7 +50,7 @@ func (c *completer) complete(d prompt.Document) []prompt.Suggest {
 		}
 
 	case "call":
-		rpcs, err := c.env.GetRPCs()
+		rpcs, err := c.env.RPCs()
 		if err != nil {
 			return nil
 		}
@@ -60,7 +60,7 @@ func (c *completer) complete(d prompt.Document) []prompt.Suggest {
 		}
 
 	case "desc":
-		msgs, err := c.env.GetMessages()
+		msgs, err := c.env.Messages()
 		if err != nil {
 			return nil
 		}

@@ -7,11 +7,13 @@ import (
 
 	arg "github.com/alexflint/go-arg"
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/ktr0731/evans/adapter/gateway"
+	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/parser"
 	"github.com/ktr0731/evans/repl"
-	"github.com/ktr0731/evans/usecase/port"
+	"github.com/ktr0731/evans/usecase"
 	isatty "github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
 
@@ -57,18 +59,15 @@ type CLI struct {
 
 	parser  *arg.Parser
 	options *Options
-
-	interactor port.InputPort
 }
 
-func NewCLI(title, version string, interactor port.InputPort) *CLI {
+func NewCLI(title, version string) *CLI {
 	return &CLI{
 		ui: newUI(),
 		options: &Options{
 			Port: 50051,
 		},
-		config:     config.Get(),
-		interactor: interactor,
+		config: config.Get(),
 	}
 }
 
@@ -85,6 +84,10 @@ func (c *CLI) Usage() {
 }
 
 func (c *CLI) Run(args []string) int {
+	params := &usecase.InteractorParams{
+		OutputPort: presenter.NewCLIPresenter(),
+	}
+
 	c.parser = arg.MustParse(c.options)
 
 	if c.options.EditConfig {
@@ -120,12 +123,19 @@ func (c *CLI) Run(args []string) int {
 			in = os.Stdin
 		}
 
+		params.InputterPort = gateway.NewJSONFileInputter(in)
+		usecase.NewInteractor(params)
+
+		panic("cli mode is not implemented yet")
+
 		if err := env.CallWithScript(in, c.options.Call); err != nil {
 			c.Error(err)
 			return 1
 		}
 	} else {
-		r := repl.NewREPL(c.config.REPL, env, repl.NewBasicUI(), c.interactor)
+		params.InputterPort = gateway.NewPromptInputter(env)
+		interactor := usecase.NewInteractor(params)
+		r := repl.NewREPL(c.config.REPL, env, repl.NewBasicUI(), interactor)
 		defer r.Close()
 
 		if err := r.Start(); err != nil {
