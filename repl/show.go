@@ -32,17 +32,13 @@ func (c *showCommand) Run(args []string) (string, error) {
 	params := &port.ShowParams{}
 	switch strings.ToLower(target) {
 	case "p", "package", "packages":
-		// params.Showable =
-
+		params.Type = port.ShowTypePackage
 	case "s", "svc", "service", "services":
-		// params.Showable =
-
+		params.Type = port.ShowTypeService
 	case "m", "msg", "message", "messages":
-		// params.Showable =
-
+		params.Type = port.ShowTypeMessage
 	case "a", "r", "rpc", "api":
-		// params.Showable =
-
+		params.Type = port.ShowTypeRPC
 	default:
 		return "", errors.Wrap(ErrUnknownTarget, target)
 	}
