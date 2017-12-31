@@ -4,12 +4,12 @@ import (
 	"strings"
 
 	prompt "github.com/c-bata/go-prompt"
-	"github.com/ktr0731/evans/env"
+	"github.com/ktr0731/evans/entity"
 )
 
 type completer struct {
 	cmds map[string]Commander
-	env  *env.Env
+	env  *entity.Env
 }
 
 func (c *completer) complete(d prompt.Document) []prompt.Suggest {

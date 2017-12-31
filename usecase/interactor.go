@@ -1,12 +1,12 @@
 package usecase
 
 import (
-	"github.com/ktr0731/evans/env"
+	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 )
 
 type Interactor struct {
-	env *env.Env
+	env *entity.Env
 
 	outputPort port.OutputPort
 }

@@ -8,7 +8,7 @@ import (
 	arg "github.com/alexflint/go-arg"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/config"
-	"github.com/ktr0731/evans/env"
+	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/parser"
 	"github.com/ktr0731/evans/repl"
 	"github.com/ktr0731/evans/usecase/port"
@@ -176,7 +176,7 @@ func isCommandLineMode(opt *Options) bool {
 	return !isatty.IsTerminal(os.Stdin.Fd()) || opt.File != ""
 }
 
-func setupEnv(conf *config.Config, opt *Options) (*env.Env, error) {
+func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 	if len(opt.Header) > 0 {
 		for _, h := range opt.Header {
 			s := strings.SplitN(h, "=", 2)
@@ -214,7 +214,7 @@ func setupEnv(conf *config.Config, opt *Options) (*env.Env, error) {
 		return nil, err
 	}
 
-	env, err := env.New(desc, conf.Env)
+	env, err := entity.New(desc, conf.Env)
 	if err != nil {
 		return nil, err
 	}

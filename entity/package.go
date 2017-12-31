@@ -2,13 +2,8 @@ package entity
 
 import (
 	"bytes"
-	"errors"
 
 	"github.com/olekukonko/tablewriter"
-)
-
-var (
-	ErrInvalidMessageName = errors.New("invalid message name")
 )
 
 type Package struct {

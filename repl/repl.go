@@ -12,7 +12,7 @@ import (
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/fatih/color"
 	"github.com/ktr0731/evans/config"
-	"github.com/ktr0731/evans/env"
+	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
@@ -35,7 +35,7 @@ func newUI() *UI {
 type REPL struct {
 	ui     *UI
 	config *config.REPL
-	env    *env.Env
+	env    *entity.Env
 	prompt *prompt.Prompt
 	cmds   map[string]Commander
 }
@@ -54,7 +54,7 @@ func NewBasicUI() *UI {
 	}
 }
 
-func NewREPL(config *config.REPL, env *env.Env, ui *UI, inputPort port.InputPort) *REPL {
+func NewREPL(config *config.REPL, env *entity.Env, ui *UI, inputPort port.InputPort) *REPL {
 	cmds := map[string]Commander{
 		"call":    &callCommand{inputPort},
 		"desc":    &descCommand{inputPort},
