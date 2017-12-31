@@ -419,6 +419,7 @@ func (e *Env) CallWithScript(input io.Reader, rpcName string) error {
 	return nil
 }
 
+// req, res は既に値が入っている前提
 func (e *Env) call(endpoint string, req, res proto.Message) error {
 	conn, err := connect(e.config.Server)
 	if err != nil {
