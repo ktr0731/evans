@@ -21,12 +21,11 @@ func NewPromptInputter(env entity.Environment) *PromptInputter {
 	return &PromptInputter{env}
 }
 
-// TODO: 対象メッセージが依存しているメッセージも含めて与えてやる
 func (i *PromptInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, error) {
 	req := dynamic.NewMessage(reqType)
 	fields := reqType.GetFields()
 
-	if err := newFieldInputter(req, fields).Input(); err != nil {
+	if err := newFieldInputter(req, reqType, fields).Input(); err != nil {
 		return nil, err
 	}
 	return req, nil
@@ -49,9 +48,24 @@ type fieldInputter struct {
 	encountered map[string]map[string]bool
 	req         *dynamic.Message
 	fields      []*desc.FieldDescriptor
+	dep         messageDependency
 }
 
-func newFieldInputter(req *dynamic.Message, fields []*desc.FieldDescriptor) *fieldInputter {
+type messageDependency map[string]*desc.MessageDescriptor
+
+// reqType is used only first newFieldInputter
+func newFieldInputter(req *dynamic.Message, reqType *desc.MessageDescriptor, fields []*desc.FieldDescriptor) *fieldInputter {
+	dep := messageDependency{}
+	msgs := reqType.GetNestedMessageTypes()
+
+	// resolve dependencies of reqType
+	for _, msg := range msgs {
+		dep[msg.GetFullyQualifiedName()] = msg
+		if len(msg.GetNestedMessageTypes()) > 0 {
+			msgs = append(msgs, msg.GetNestedMessageTypes()...)
+		}
+	}
+
 	return &fieldInputter{
 		encountered: map[string]map[string]bool{
 			"oneof": map[string]bool{},
@@ -59,6 +73,7 @@ func newFieldInputter(req *dynamic.Message, fields []*desc.FieldDescriptor) *fie
 		},
 		req:    req,
 		fields: fields,
+		dep:    dep,
 	}
 }
 
@@ -86,8 +101,15 @@ func (i *fieldInputter) Input() error {
 			}
 			i.req.SetField(field, v.GetNumber())
 		case entity.IsMessageType(field.GetType()):
-			// message を解決する必要がある
-			// newFieldInputter(i.req, field).Input()
+			nestedFields := i.dep[field.GetFullyQualifiedName()].GetFields()
+			if err := newFieldInputter(i.req, nil, nestedFields).Input(); err != nil {
+				return err
+			}
+		default:
+			// primitive type
+			if err := i.inputField(i.req, field); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
