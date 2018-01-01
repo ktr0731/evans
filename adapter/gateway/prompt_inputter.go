@@ -191,12 +191,7 @@ func (i *fieldInputter) chooseEnum(enum *desc.EnumDescriptor) (*desc.EnumValueDe
 }
 
 func (i *fieldInputter) inputField(req *dynamic.Message, field *desc.FieldDescriptor) error {
-	// TODO:
-	in := prompt.Input(
-		"test>",
-		nil,
-		nil,
-	)
+	in := i.prompt.Input()
 
 	v, err := i.convertValue(in, field)
 	if err != nil {
