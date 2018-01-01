@@ -13,19 +13,42 @@ import (
 	"github.com/ktr0731/evans/entity"
 )
 
+type prompter interface {
+	Input() string
+}
+
 type PromptInputter struct {
-	env entity.Environment
+	*promptInputter
 }
 
+// mixin go-prompt
 func NewPromptInputter(env entity.Environment) *PromptInputter {
-	return &PromptInputter{env}
+	executor := func(in string) {
+		return
+	}
+	completer := func(d prompt.Document) []prompt.Suggest {
+		return nil
+	}
+	return &PromptInputter{newPromptInputter(prompt.New(executor, completer), env)}
 }
 
-func (i *PromptInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, error) {
+type promptInputter struct {
+	prompt prompter
+	env    entity.Environment
+}
+
+func newPromptInputter(prompt prompter, env entity.Environment) *promptInputter {
+	return &promptInputter{
+		prompt: prompt,
+		env:    env,
+	}
+}
+
+func (i *promptInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, error) {
 	req := dynamic.NewMessage(reqType)
 	fields := reqType.GetFields()
 
-	if err := newFieldInputter(req, reqType).Input(fields); err != nil {
+	if err := newFieldInputter(i.prompt, req, reqType).Input(fields); err != nil {
 		return nil, err
 	}
 	return req, nil
@@ -34,6 +57,8 @@ func (i *PromptInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, 
 // fieldInputter inputs each fields of req in interactively
 // first fieldInputter is instantiated per one request
 type fieldInputter struct {
+	prompt prompter
+
 	encountered map[string]map[string]bool
 	req         *dynamic.Message
 	fields      []*desc.FieldDescriptor
@@ -42,7 +67,7 @@ type fieldInputter struct {
 
 type messageDependency map[string]*desc.MessageDescriptor
 
-func newFieldInputter(req *dynamic.Message, reqType *desc.MessageDescriptor) *fieldInputter {
+func newFieldInputter(prompt prompter, req *dynamic.Message, reqType *desc.MessageDescriptor) *fieldInputter {
 	dep := messageDependency{}
 	msgs := reqType.GetNestedMessageTypes()
 
@@ -55,6 +80,7 @@ func newFieldInputter(req *dynamic.Message, reqType *desc.MessageDescriptor) *fi
 	}
 
 	return &fieldInputter{
+		prompt: prompt,
 		encountered: map[string]map[string]bool{
 			"oneof": map[string]bool{},
 			"enum":  map[string]bool{},
