@@ -25,7 +25,7 @@ func (i *PromptInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, 
 	req := dynamic.NewMessage(reqType)
 	fields := reqType.GetFields()
 
-	if err := newFieldInputter(req, reqType, fields).Input(); err != nil {
+	if err := newFieldInputter(req, reqType).Input(fields); err != nil {
 		return nil, err
 	}
 	return req, nil
@@ -33,17 +33,6 @@ func (i *PromptInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, 
 
 // fieldInputter inputs each fields of req in interactively
 // first fieldInputter is instantiated per one request
-// fieldInputter will instantiate another fieldInputter instance for nested messages
-//
-// e.g.
-// message Foo {
-// 	Bar bar = 1;
-//	string baz = 2;
-// }
-//
-// it generate two fieldInputter
-// one is used for Foo's primitive fields
-// another one is used for bar's primitive fields
 type fieldInputter struct {
 	encountered map[string]map[string]bool
 	req         *dynamic.Message
@@ -53,8 +42,7 @@ type fieldInputter struct {
 
 type messageDependency map[string]*desc.MessageDescriptor
 
-// reqType is used only first newFieldInputter
-func newFieldInputter(req *dynamic.Message, reqType *desc.MessageDescriptor, fields []*desc.FieldDescriptor) *fieldInputter {
+func newFieldInputter(req *dynamic.Message, reqType *desc.MessageDescriptor) *fieldInputter {
 	dep := messageDependency{}
 	msgs := reqType.GetNestedMessageTypes()
 
@@ -71,14 +59,24 @@ func newFieldInputter(req *dynamic.Message, reqType *desc.MessageDescriptor, fie
 			"oneof": map[string]bool{},
 			"enum":  map[string]bool{},
 		},
-		req:    req,
-		fields: fields,
-		dep:    dep,
+		req: req,
+		dep: dep,
 	}
 }
 
-func (i *fieldInputter) Input() error {
-	for _, field := range i.fields {
+// Input will call itself for nested messages
+//
+// e.g.
+// message Foo {
+// 	Bar bar = 1;
+//	string baz = 2;
+// }
+//
+// Input is called two times
+// one for Foo's primitive fields
+// another one for bar's primitive fields
+func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) error {
+	for _, field := range fields {
 		switch {
 		case entity.IsOneOf(field):
 			oneof := field.GetOneOf()
@@ -102,11 +100,10 @@ func (i *fieldInputter) Input() error {
 			i.req.SetField(field, v.GetNumber())
 		case entity.IsMessageType(field.GetType()):
 			nestedFields := i.dep[field.GetFullyQualifiedName()].GetFields()
-			if err := newFieldInputter(i.req, nil, nestedFields).Input(); err != nil {
+			if err := i.Input(nestedFields); err != nil {
 				return err
 			}
-		default:
-			// primitive type
+		default: // primitive type
 			if err := i.inputField(i.req, field); err != nil {
 				return err
 			}
