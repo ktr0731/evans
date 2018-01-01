@@ -21,50 +21,76 @@ func NewPromptInputter(env entity.Environment) *PromptInputter {
 	return &PromptInputter{env}
 }
 
+// TODO: 対象メッセージが依存しているメッセージも含めて与えてやる
 func (i *PromptInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, error) {
-	inputter := newFieldInputter()
-
 	req := dynamic.NewMessage(reqType)
-
 	fields := reqType.GetFields()
-	for _, field := range fields {
-		switch {
-		case entity.IsOneOf(field):
-			oneof := field.GetOneOf()
-			if inputter.encounteredOneof(oneof) {
-				continue
-			}
-			v, err := inputter.chooseOneof(oneof)
-			if err != nil {
-				return nil, err
-			}
-			req.TrySetField(field, v)
-		case entity.IsEnumType(field):
-			enum := field.GetEnumType()
-			if inputter.encounteredEnum(enum) {
-				continue
-			}
-			v, err := inputter.chooseEnum(enum)
-			if err != nil {
-				return nil, err
-			}
-			req.SetField(field, v.GetNumber())
-		}
+
+	if err := newFieldInputter(req, fields).Input(); err != nil {
+		return nil, err
 	}
-	return nil, nil
+	return req, nil
 }
 
+// fieldInputter inputs each fields of req in interactively
+// first fieldInputter is instantiated per one request
+// fieldInputter will instantiate another fieldInputter instance for nested messages
+//
+// e.g.
+// message Foo {
+// 	Bar bar = 1;
+//	string baz = 2;
+// }
+//
+// it generate two fieldInputter
+// one is used for Foo's primitive fields
+// another one is used for bar's primitive fields
 type fieldInputter struct {
 	encountered map[string]map[string]bool
+	req         *dynamic.Message
+	fields      []*desc.FieldDescriptor
 }
 
-func newFieldInputter() *fieldInputter {
+func newFieldInputter(req *dynamic.Message, fields []*desc.FieldDescriptor) *fieldInputter {
 	return &fieldInputter{
 		encountered: map[string]map[string]bool{
 			"oneof": map[string]bool{},
 			"enum":  map[string]bool{},
 		},
+		req:    req,
+		fields: fields,
 	}
+}
+
+func (i *fieldInputter) Input() error {
+	for _, field := range i.fields {
+		switch {
+		case entity.IsOneOf(field):
+			oneof := field.GetOneOf()
+			if i.encounteredOneof(oneof) {
+				continue
+			}
+			v, err := i.chooseOneof(oneof)
+			if err != nil {
+				return err
+			}
+			i.req.TrySetField(field, v)
+		case entity.IsEnumType(field):
+			enum := field.GetEnumType()
+			if i.encounteredEnum(enum) {
+				continue
+			}
+			v, err := i.chooseEnum(enum)
+			if err != nil {
+				return err
+			}
+			i.req.SetField(field, v.GetNumber())
+		case entity.IsMessageType(field.GetType()):
+			// message を解決する必要がある
+			// newFieldInputter(i.req, field).Input()
+		}
+	}
+	return nil
 }
 
 func (i *fieldInputter) encounteredOneof(oneof *desc.OneOfDescriptor) bool {
