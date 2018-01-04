@@ -67,18 +67,23 @@ type fieldInputter struct {
 
 type messageDependency map[string]*desc.MessageDescriptor
 
-func newFieldInputter(prompt prompter, req *dynamic.Message, reqType *desc.MessageDescriptor) *fieldInputter {
-	dep := messageDependency{}
-	msgs := reqType.GetNestedMessageTypes()
-
-	// resolve dependencies of reqType
-	for _, msg := range msgs {
-		dep[msg.GetFullyQualifiedName()] = msg
-		if len(msg.GetNestedMessageTypes()) > 0 {
-			msgs = append(msgs, msg.GetNestedMessageTypes()...)
-		}
+// resolve dependencies of reqType
+func resolveMessageDependency(msg *desc.MessageDescriptor, dep messageDependency, encountered map[string]bool) {
+	if encountered[msg.GetFullyQualifiedName()] {
+		return
 	}
 
+	dep[msg.GetFullyQualifiedName()] = msg
+	for _, f := range msg.GetFields() {
+		if entity.IsMessageType(f.GetType()) {
+			resolveMessageDependency(f.GetMessageType(), dep, encountered)
+		}
+	}
+}
+
+func newFieldInputter(prompt prompter, req *dynamic.Message, reqType *desc.MessageDescriptor) *fieldInputter {
+	dep := messageDependency{}
+	resolveMessageDependency(reqType, dep, map[string]bool{})
 	return &fieldInputter{
 		prompt: prompt,
 		encountered: map[string]map[string]bool{

@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/jhump/protoreflect/dynamic"
+	"github.com/k0kubun/pp"
+	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,26 +19,63 @@ func (p *mockPrompt) Input() string {
 }
 
 func TestPromptInputter_Input(t *testing.T) {
-	set := helper.ReadProto(t, []string{filepath.Join("helloworld/helloworld.proto")})
-	env := helper.NewEnv(t, set, helper.TestConfig().Env)
+	setup := func(t *testing.T, fpath, pkgName, svcName string) *entity.Env {
+		set := helper.ReadProto(t, []string{fpath})
 
-	inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, env)}
+		env := helper.NewEnv(t, set, helper.TestConfig().Env)
 
-	err := env.UsePackage("helloworld")
-	require.NoError(t, err)
+		err := env.UsePackage(pkgName)
+		require.NoError(t, err)
 
-	err = env.UseService("Greeter")
-	require.NoError(t, err)
+		err = env.UseService(svcName)
+		require.NoError(t, err)
 
-	rpc, err := env.RPC("SayHello")
-	require.NoError(t, err)
+		return env
+	}
 
-	dmsg, err := inputter.Input(rpc.RequestType)
-	require.NoError(t, err)
+	t.Run("normal/simple", func(t *testing.T) {
+		env := setup(t, filepath.Join("helloworld", "helloworld.proto"), "helloworld", "Greeter")
 
-	msg, ok := dmsg.(*dynamic.Message)
-	require.True(t, ok)
+		inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, env)}
 
-	assert.Equal(t, `name:"foo" message:"foo"`, msg.String())
+		rpc, err := env.RPC("SayHello")
+		require.NoError(t, err)
 
+		dmsg, err := inputter.Input(rpc.RequestType)
+		require.NoError(t, err)
+
+		msg, ok := dmsg.(*dynamic.Message)
+		require.True(t, ok)
+
+		assert.Equal(t, `name:"foo" message:"foo"`, msg.String())
+	})
+
+	// t.Run("normal/nested_message", func(t *testing.T) {
+	// 	env := setup(t, filepath.Join("nested_message", "library.proto"), "library", "Library")
+	//
+	// 	inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, env)}
+	//
+	// 	rpc, err := env.RPC("BorrowBook")
+	// 	require.NoError(t, err)
+	//
+	// 	dmsg, err := inputter.Input(rpc.RequestType)
+	// 	require.NoError(t, err)
+	//
+	// 	msg, ok := dmsg.(*dynamic.Message)
+	// 	require.True(t, ok)
+	//
+	// 	assert.Equal(t, `name:"foo" message:"foo"`, msg.String())
+	// })
+
+	t.Run("foo", func(t *testing.T) {
+		env := setup(t, filepath.Join("nested_message", "library.proto"), "library", "Library")
+
+		rpc, err := env.RPC("BorrowBook")
+		require.NoError(t, err)
+
+		for _, f := range rpc.RequestType.GetFields() {
+			pp.Println(f.GetName())
+			pp.Println(f.GetMessageType().GetFullyQualifiedName())
+		}
+	})
 }
