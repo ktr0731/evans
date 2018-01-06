@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 )
@@ -15,6 +16,13 @@ func Call(
 	if err != nil {
 		return nil, err
 	}
-	inputter.Input(rpc.RequestType)
+	req, err := inputter.Input(rpc.RequestType)
+	if err != nil {
+		return nil, err
+	}
+
+	// 知るべきではない？
+	res := dynamic.NewMessage(rpc.ResponseType)
+
 	return nil, nil
 }

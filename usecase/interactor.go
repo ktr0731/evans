@@ -25,19 +25,19 @@ func NewInteractor(params *InteractorParams) *Interactor {
 }
 
 func (i *Interactor) Package(params *port.PackageParams) (*port.PackageResponse, error) {
-	return i.outputPort.Package()
+	return Package(params, i.outputPort, i.env)
 }
 
 func (i *Interactor) Service(params *port.ServiceParams) (*port.ServiceResponse, error) {
-	return i.outputPort.Service()
+	return Service(params, i.outputPort, i.env)
 }
 
 func (i *Interactor) Describe(params *port.DescribeParams) (*port.DescribeResponse, error) {
-	return i.outputPort.Describe()
+	return Describe(params, i.outputPort, i.env)
 }
 
 func (i *Interactor) Show(params *port.ShowParams) (*port.ShowResponse, error) {
-	return i.outputPort.Show()
+	return Show(params, i.outputPort, i.env)
 }
 
 func (i *Interactor) Header(params *port.HeaderParams) (*port.HeaderResponse, error) {
