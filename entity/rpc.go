@@ -9,6 +9,7 @@ import (
 
 type RPC struct {
 	Name         string
+	FQRN         string
 	RequestType  *desc.MessageDescriptor
 	ResponseType *desc.MessageDescriptor
 }
@@ -23,6 +24,7 @@ func NewRPCs(svc *desc.ServiceDescriptor) RPCs {
 	for i, rpc := range svc.GetMethods() {
 		r := &RPC{
 			Name:         rpc.GetName(),
+			FQRN:         rpc.GetFullyQualifiedName(),
 			RequestType:  rpc.GetInputType(),
 			ResponseType: rpc.GetOutputType(),
 		}

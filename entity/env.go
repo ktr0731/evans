@@ -44,8 +44,14 @@ type Environment interface {
 	Message(name string) (*Message, error)
 	RPC(name string) (*RPC, error)
 
+	Headers() []*Header
+
 	UsePackage(name string) error
 	UseService(name string) error
+}
+
+type Header struct {
+	Key, Val string
 }
 
 // pkgList is used by showing all packages

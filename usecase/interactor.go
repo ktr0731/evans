@@ -10,6 +10,7 @@ type Interactor struct {
 
 	outputPort   port.OutputPort
 	inputterPort port.Inputter
+	grpcPort     port.GRPCPort
 }
 
 type InteractorParams struct {
@@ -45,5 +46,5 @@ func (i *Interactor) Header(params *port.HeaderParams) (*port.HeaderResponse, er
 }
 
 func (i *Interactor) Call(params *port.CallParams) (*port.CallResponse, error) {
-	return i.outputPort.Call()
+	return Call(params, i.outputPort, i.inputterPort, i.grpcPort, i.env)
 }
