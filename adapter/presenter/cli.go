@@ -1,6 +1,7 @@
 package presenter
 
 import (
+	"bytes"
 	"io"
 
 	"github.com/jhump/protoreflect/dynamic"
@@ -30,7 +31,11 @@ func (p *CLIPresenter) Header() (*port.HeaderResponse, error) {
 }
 
 func (p *CLIPresenter) Call(res *dynamic.Message) (io.Reader, error) {
-	return nil, nil
+	b, err := res.MarshalJSONIndent()
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(b), nil
 }
 
 func NewCLIPresenter() *CLIPresenter {

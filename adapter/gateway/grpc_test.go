@@ -4,13 +4,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/ktr0731/evans/adapter/internal/testhelper"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_fqrnToEndpoint(t *testing.T) {
-	env := setupEnv(t, filepath.Join("helloworld", "helloworld.proto"), "helloworld", "Greeter")
+	env := testhelper.SetupEnv(t, filepath.Join("helloworld", "helloworld.proto"), "helloworld", "Greeter")
 	rpc, err := env.RPC("SayHello")
 	require.NoError(t, err)
 

@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/jhump/protoreflect/dynamic"
+	"github.com/ktr0731/evans/adapter/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestJSONFileInputter(t *testing.T) {
-	env := setupEnv(t, filepath.Join("helloworld", "helloworld.proto"), "helloworld", "Greeter")
+	env := testhelper.SetupEnv(t, filepath.Join("helloworld", "helloworld.proto"), "helloworld", "Greeter")
 
 	envMsg, err := env.Message("HelloRequest")
 	require.NoError(t, err)
