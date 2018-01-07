@@ -182,6 +182,11 @@ func (e *Env) RPC(name string) (*RPC, error) {
 	return nil, errors.Wrapf(ErrInvalidRPCName, "%s not found", name)
 }
 
+func (e *Env) Headers() []*Header {
+	panic("not implemented yet")
+	return nil
+}
+
 func (e *Env) UsePackage(name string) error {
 	for _, p := range e.desc.GetPackages() {
 		if name == p {

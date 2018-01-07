@@ -48,10 +48,7 @@ func (i *promptInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, 
 	req := dynamic.NewMessage(reqType)
 	fields := reqType.GetFields()
 
-	if err := newFieldInputter(i.prompt, req, reqType).Input(fields); err != nil {
-		return nil, err
-	}
-	return req, nil
+	return newFieldInputter(i.prompt, req, reqType).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively
@@ -60,7 +57,7 @@ type fieldInputter struct {
 	prompt prompter
 
 	encountered map[string]map[string]bool
-	req         *dynamic.Message
+	msg         *dynamic.Message
 	fields      []*desc.FieldDescriptor
 	dep         messageDependency
 }
@@ -81,16 +78,16 @@ func resolveMessageDependency(msg *desc.MessageDescriptor, dep messageDependency
 	}
 }
 
-func newFieldInputter(prompt prompter, req *dynamic.Message, reqType *desc.MessageDescriptor) *fieldInputter {
+func newFieldInputter(prompt prompter, msg *dynamic.Message, msgType *desc.MessageDescriptor) *fieldInputter {
 	dep := messageDependency{}
-	resolveMessageDependency(reqType, dep, map[string]bool{})
+	resolveMessageDependency(msgType, dep, map[string]bool{})
 	return &fieldInputter{
 		prompt: prompt,
 		encountered: map[string]map[string]bool{
 			"oneof": map[string]bool{},
 			"enum":  map[string]bool{},
 		},
-		req: req,
+		msg: msg,
 		dep: dep,
 	}
 }
@@ -106,7 +103,7 @@ func newFieldInputter(prompt prompter, req *dynamic.Message, reqType *desc.Messa
 // Input is called two times
 // one for Foo's primitive fields
 // another one for bar's primitive fields
-func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) error {
+func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) (proto.Message, error) {
 	for _, field := range fields {
 		switch {
 		case entity.IsOneOf(field):
@@ -116,9 +113,11 @@ func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) error {
 			}
 			v, err := i.chooseOneof(oneof)
 			if err != nil {
-				return err
+				return nil, err
 			}
-			i.req.TrySetField(field, v)
+			if err := i.msg.TrySetField(field, v); err != nil {
+				return nil, err
+			}
 		case entity.IsEnumType(field):
 			enum := field.GetEnumType()
 			if i.encounteredEnum(enum) {
@@ -126,21 +125,28 @@ func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) error {
 			}
 			v, err := i.chooseEnum(enum)
 			if err != nil {
-				return err
+				return nil, err
 			}
-			i.req.SetField(field, v.GetNumber())
+			if err := i.msg.TrySetField(field, v.GetNumber()); err != nil {
+				return nil, err
+			}
 		case entity.IsMessageType(field.GetType()):
-			nestedFields := i.dep[field.GetFullyQualifiedName()].GetFields()
-			if err := i.Input(nestedFields); err != nil {
-				return err
+			nestedFields := i.dep[field.GetMessageType().GetFullyQualifiedName()].GetFields()
+			msgType := field.GetMessageType()
+			msg, err := newFieldInputter(i.prompt, dynamic.NewMessage(msgType), msgType).Input(nestedFields)
+			if err != nil {
+				return nil, err
+			}
+			if err := i.msg.TrySetField(field, msg); err != nil {
+				return nil, err
 			}
 		default: // primitive type
-			if err := i.inputField(i.req, field); err != nil {
-				return err
+			if err := i.inputField(i.msg, field); err != nil {
+				return nil, err
 			}
 		}
 	}
-	return nil
+	return i.msg, nil
 }
 
 func (i *fieldInputter) encounteredOneof(oneof *desc.OneOfDescriptor) bool {
