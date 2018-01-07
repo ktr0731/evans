@@ -38,5 +38,5 @@ func Call(
 		return nil, err
 	}
 
-	return outputPort.Call(res)
+	return outputPort.Call(nil)
 }

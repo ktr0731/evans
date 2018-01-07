@@ -85,7 +85,7 @@ func (c *CLI) Usage() {
 
 func (c *CLI) Run(args []string) int {
 	params := &usecase.InteractorParams{
-		OutputPort: presenter.NewCLIPresenter(),
+		OutputPort: presenter.NewJSONCLIPresenter(),
 	}
 
 	c.parser = arg.MustParse(c.options)

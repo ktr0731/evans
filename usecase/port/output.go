@@ -3,7 +3,7 @@ package port
 import (
 	"io"
 
-	"github.com/jhump/protoreflect/dynamic"
+	"github.com/golang/protobuf/proto"
 )
 
 type OutputPort interface {
@@ -12,5 +12,5 @@ type OutputPort interface {
 	Describe() (*DescribeResponse, error)
 	Show() (*ShowResponse, error)
 	Header() (*HeaderResponse, error)
-	Call(res *dynamic.Message) (io.Reader, error)
+	Call(res proto.Message) (io.Reader, error)
 }

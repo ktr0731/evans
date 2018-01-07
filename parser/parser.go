@@ -58,7 +58,7 @@ func ParseFile(filename []string, paths []string) (*FileDescriptorSet, error) {
 		depsCache[d.GetName()] = set[i]
 	}
 
-	return &FileDescriptorSet{set}, nil
+	return &FileDescriptorSet{set: set, orig: files}, nil
 }
 
 func runProtoc(args []string) ([]byte, error) {

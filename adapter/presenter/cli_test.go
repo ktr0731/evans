@@ -11,7 +11,7 @@ import (
 )
 
 func TestCLIPresenter(t *testing.T) {
-	presenter := NewCLIPresenter()
+	presenter := NewJSONCLIPresenter()
 
 	t.Run("Call", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
@@ -29,9 +29,6 @@ func TestCLIPresenter(t *testing.T) {
 		b, err := ioutil.ReadAll(out)
 		require.NoError(t, err)
 
-		assert.Equal(t, string(b), `{
-  "name": "makise",
-  "message": "kurisu"
-}`)
+		assert.Equal(t, `{"name":"makise","message":"kurisu"}`, string(b))
 	})
 }

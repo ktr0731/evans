@@ -1,16 +1,18 @@
 package parser
 
 import (
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 )
 
 type fileDescriptorSet []*desc.FileDescriptor
 type FileDescriptorSet struct {
-	fileDescriptorSet
+	set  fileDescriptorSet
+	orig []*descriptor.FileDescriptorProto
 }
 
 func (d *FileDescriptorSet) GetFile() []*desc.FileDescriptor {
-	return d.fileDescriptorSet
+	return d.set
 }
 
 func (d *FileDescriptorSet) GetPackages() []string {
