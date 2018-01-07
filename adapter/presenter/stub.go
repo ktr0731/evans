@@ -1,6 +1,12 @@
 package presenter
 
-import "github.com/ktr0731/evans/usecase/port"
+import (
+	"bytes"
+	"io"
+
+	"github.com/jhump/protoreflect/dynamic"
+	"github.com/ktr0731/evans/usecase/port"
+)
 
 type StubPresenter struct{}
 
@@ -24,8 +30,12 @@ func (p *StubPresenter) Header() (*port.HeaderResponse, error) {
 	return nil, nil
 }
 
-func (p *StubPresenter) Call() (*port.CallResponse, error) {
-	return nil, nil
+func (p *StubPresenter) Call(res *dynamic.Message) (io.Reader, error) {
+	b, err := res.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(b), nil
 }
 
 func NewStubPresenter() *StubPresenter {

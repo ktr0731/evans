@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"io"
+
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 )
@@ -45,6 +47,6 @@ func (i *Interactor) Header(params *port.HeaderParams) (*port.HeaderResponse, er
 	return i.outputPort.Header()
 }
 
-func (i *Interactor) Call(params *port.CallParams) (*port.CallResponse, error) {
+func (i *Interactor) Call(params *port.CallParams) (io.Reader, error) {
 	return Call(params, i.outputPort, i.inputterPort, i.grpcPort, i.env)
 }

@@ -2,6 +2,7 @@ package port
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/ktr0731/evans/entity"
 )
@@ -15,7 +16,7 @@ type InputPort interface {
 
 	Header(*HeaderParams) (*HeaderResponse, error)
 
-	Call(*CallParams) (*CallResponse, error)
+	Call(*CallParams) (io.Reader, error)
 }
 
 type CallParams struct {

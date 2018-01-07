@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"io"
 
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/entity"
@@ -15,7 +16,7 @@ func Call(
 	inputter port.Inputter,
 	grpcPort port.GRPCPort,
 	env entity.Environment,
-) (*port.CallResponse, error) {
+) (io.Reader, error) {
 	rpc, err := env.RPC(params.RPCName)
 	if err != nil {
 		return nil, err
@@ -37,5 +38,5 @@ func Call(
 		return nil, err
 	}
 
-	return outputPort.Call()
+	return outputPort.Call(res)
 }

@@ -1,6 +1,11 @@
 package presenter
 
-import "github.com/ktr0731/evans/usecase/port"
+import (
+	"io"
+
+	"github.com/jhump/protoreflect/dynamic"
+	"github.com/ktr0731/evans/usecase/port"
+)
 
 type CLIPresenter struct{}
 
@@ -24,7 +29,7 @@ func (p *CLIPresenter) Header() (*port.HeaderResponse, error) {
 	return nil, nil
 }
 
-func (p *CLIPresenter) Call() (*port.CallResponse, error) {
+func (p *CLIPresenter) Call(res *dynamic.Message) (io.Reader, error) {
 	return nil, nil
 }
 
