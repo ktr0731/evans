@@ -11,7 +11,7 @@ import (
 )
 
 func TestJSONFileInputter(t *testing.T) {
-	env := setup(t, filepath.Join("helloworld", "helloworld.proto"), "helloworld", "Greeter")
+	env := setupEnv(t, filepath.Join("helloworld", "helloworld.proto"), "helloworld", "Greeter")
 
 	envMsg, err := env.Message("HelloRequest")
 	require.NoError(t, err)

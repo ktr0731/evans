@@ -17,7 +17,7 @@ func (p *mockPrompt) Input() string {
 	return "foo"
 }
 
-func setup(t *testing.T, fpath, pkgName, svcName string) *entity.Env {
+func setupEnv(t *testing.T, fpath, pkgName, svcName string) *entity.Env {
 	set := helper.ReadProto(t, []string{fpath})
 
 	env := helper.NewEnv(t, set, helper.TestConfig().Env)
@@ -33,7 +33,7 @@ func setup(t *testing.T, fpath, pkgName, svcName string) *entity.Env {
 
 func TestPromptInputter_Input(t *testing.T) {
 	t.Run("normal/simple", func(t *testing.T) {
-		env := setup(t, filepath.Join("helloworld", "helloworld.proto"), "helloworld", "Greeter")
+		env := setupEnv(t, filepath.Join("helloworld", "helloworld.proto"), "helloworld", "Greeter")
 
 		inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, env)}
 
@@ -50,7 +50,7 @@ func TestPromptInputter_Input(t *testing.T) {
 	})
 
 	t.Run("normal/nested_message", func(t *testing.T) {
-		env := setup(t, filepath.Join("nested_message", "library.proto"), "library", "Library")
+		env := setupEnv(t, filepath.Join("nested_message", "library.proto"), "library", "Library")
 
 		inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, env)}
 
@@ -68,7 +68,7 @@ func TestPromptInputter_Input(t *testing.T) {
 }
 
 func Test_resolveMessageDependency(t *testing.T) {
-	env := setup(t, filepath.Join("nested_message", "library.proto"), "library", "Library")
+	env := setupEnv(t, filepath.Join("nested_message", "library.proto"), "library", "Library")
 
 	msg, err := env.Message("Book")
 	require.NoError(t, err)
