@@ -11,6 +11,7 @@ type Interactor struct {
 	env *entity.Env
 
 	outputPort     port.OutputPort
+	logger         port.Logger
 	inputterPort   port.Inputter
 	grpcPort       port.GRPCPort
 	dynamicBuilder port.DynamicBuilder
@@ -19,6 +20,7 @@ type Interactor struct {
 type InteractorParams struct {
 	OutputPort   port.OutputPort
 	InputterPort port.Inputter
+	Logger       port.Logger
 }
 
 func NewInteractor(params *InteractorParams) *Interactor {
@@ -29,7 +31,7 @@ func NewInteractor(params *InteractorParams) *Interactor {
 }
 
 func (i *Interactor) Package(params *port.PackageParams) (*port.PackageResponse, error) {
-	return Package(params, i.outputPort, i.env)
+	return Package(params, i.outputPort, i.logger, i.env)
 }
 
 func (i *Interactor) Service(params *port.ServiceParams) (*port.ServiceResponse, error) {

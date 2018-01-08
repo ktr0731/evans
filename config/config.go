@@ -61,11 +61,16 @@ type Config struct {
 	REPL    *REPL    `toml:"repl"`
 	Env     *Env     `toml:"env"`
 	Server  *Server  `toml:"server"`
+	Log     *Log     `toml:"log"`
 }
 
 type Default struct {
 	Package string `toml:"package"`
 	Service string `toml:"service"`
+}
+
+type Log struct {
+	Prefix string `default:"[evans] " toml:"prefix"`
 }
 
 type localConfig struct {

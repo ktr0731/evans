@@ -46,6 +46,30 @@ type UI struct {
 	prompt            string
 }
 
+func (u *UI) Println(s string) {
+	fmt.Fprintln(u.Writer, s)
+}
+
+func (u *UI) InfoPrintln(s string) {
+	fmt.Fprintln(u.Writer, s)
+}
+
+func (u *UI) ErrPrintln(s string) {
+	fmt.Fprintln(u.ErrWriter, s)
+}
+
+type ColoredUI struct {
+	UI
+}
+
+func (u *ColoredUI) InfoPrintln(s string) {
+	u.Println(color.BlueString(s))
+}
+
+func (u *ColoredUI) ErrPrintln(s string) {
+	u.ErrPrintln(color.RedString(s))
+}
+
 func NewBasicUI() *UI {
 	return &UI{
 		Reader:    os.Stdin,
