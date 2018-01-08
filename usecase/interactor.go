@@ -36,7 +36,7 @@ func (i *Interactor) Service(params *port.ServiceParams) (*port.ServiceResponse,
 	return Service(params, i.outputPort, i.env)
 }
 
-func (i *Interactor) Describe(params *port.DescribeParams) (*port.DescribeResponse, error) {
+func (i *Interactor) Describe(params *port.DescribeParams) (io.Reader, error) {
 	return Describe(params, i.outputPort, i.env)
 }
 

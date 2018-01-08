@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/jhump/protoreflect/dynamic"
+	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 )
 
@@ -20,7 +21,7 @@ func (p *StubPresenter) Service() (*port.ServiceResponse, error) {
 	return nil, nil
 }
 
-func (p *StubPresenter) Describe() (*port.DescribeResponse, error) {
+func (p *StubPresenter) Describe(msg *entity.Message) (io.Reader, error) {
 	return nil, nil
 }
 

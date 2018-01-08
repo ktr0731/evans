@@ -3,10 +3,12 @@ package presenter
 import (
 	"bytes"
 	"io"
+	"strings"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/jhump/protoreflect/dynamic"
+	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 )
 
@@ -26,8 +28,8 @@ func (p *CLIPresenter) Service() (*port.ServiceResponse, error) {
 	return nil, nil
 }
 
-func (p *CLIPresenter) Describe() (*port.DescribeResponse, error) {
-	return nil, nil
+func (p *CLIPresenter) Describe(msg *entity.Message) (io.Reader, error) {
+	return strings.NewReader(msg.String()), nil
 }
 
 func (p *CLIPresenter) Show() (*port.ShowResponse, error) {

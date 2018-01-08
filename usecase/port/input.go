@@ -11,7 +11,7 @@ type InputPort interface {
 	Package(*PackageParams) (*PackageResponse, error)
 	Service(*ServiceParams) (*ServiceResponse, error)
 
-	Describe(*DescribeParams) (*DescribeResponse, error)
+	Describe(*DescribeParams) (io.Reader, error)
 	Show(*ShowParams) (*ShowResponse, error)
 
 	Header(*HeaderParams) (*HeaderResponse, error)
