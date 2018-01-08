@@ -8,7 +8,6 @@ import (
 	arg "github.com/alexflint/go-arg"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/adapter/gateway"
-	"github.com/ktr0731/evans/adapter/logger"
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
@@ -87,7 +86,6 @@ func (c *CLI) Usage() {
 func (c *CLI) Run(args []string) int {
 	params := &usecase.InteractorParams{
 		OutputPort: presenter.NewJSONCLIPresenter(),
-		Logger:     logger.NewStdLogger(config.Get()),
 	}
 
 	c.parser = arg.MustParse(c.options)
@@ -136,7 +134,6 @@ func (c *CLI) Run(args []string) int {
 		}
 	} else {
 		params.InputterPort = gateway.NewPromptInputter(env)
-		params.Logger = logger.NewPromptLogger()
 
 		interactor := usecase.NewInteractor(params)
 		r := repl.NewREPL(c.config.REPL, env, repl.NewBasicUI(), interactor)
