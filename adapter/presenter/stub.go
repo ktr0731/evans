@@ -21,14 +21,17 @@ func (p *StubPresenter) Service() (io.Reader, error) {
 }
 
 func (p *StubPresenter) Describe(msg *entity.Message) (io.Reader, error) {
+	panic("not supported yet")
 	return nil, nil
 }
 
 func (p *StubPresenter) Show() (io.Reader, error) {
+	panic("not supported yet")
 	return nil, nil
 }
 
 func (p *StubPresenter) Header() (io.Reader, error) {
+	panic("not supported yet")
 	return nil, nil
 }
 
