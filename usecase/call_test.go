@@ -11,6 +11,7 @@ import (
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/ktr0731/evans/usecase/port"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,6 +23,10 @@ type callEnv struct {
 
 func (e *callEnv) RPC(rpcName string) (*entity.RPC, error) {
 	return e.rpc, nil
+}
+
+func (e *callEnv) Headers() []*entity.Header {
+	return []*entity.Header{}
 }
 
 type callInputter struct{}
@@ -46,13 +51,23 @@ func dummyRPC(t *testing.T) *entity.RPC {
 	return rpc
 }
 
+type callDynamicBuilder struct{}
+
+func (b *callDynamicBuilder) NewMessage(md *desc.MessageDescriptor) proto.Message {
+	return nil
+}
+
 func TestCall(t *testing.T) {
 	params := &port.CallParams{"SayHello"}
-	presenter := presenter.NewJSONCLIPresenter()
+	presenter := &presenter.StubPresenter{}
 
-	env := &callEnv{rpc: dummyRPC(t)}
+	env := &callEnv{rpc: &entity.RPC{}}
 	inputter := &callInputter{}
 	grpcClient := &callGRPCClient{}
+	builder := &callDynamicBuilder{}
 
-	Call(params, presenter, inputter, grpcClient, env)
+	res, err := Call(params, presenter, inputter, grpcClient, builder, env)
+	require.NoError(t, err)
+
+	assert.Equal(t, nil, res)
 }

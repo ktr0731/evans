@@ -10,9 +10,10 @@ import (
 type Interactor struct {
 	env *entity.Env
 
-	outputPort   port.OutputPort
-	inputterPort port.Inputter
-	grpcPort     port.GRPCPort
+	outputPort     port.OutputPort
+	inputterPort   port.Inputter
+	grpcPort       port.GRPCPort
+	dynamicBuilder port.DynamicBuilder
 }
 
 type InteractorParams struct {
@@ -48,5 +49,5 @@ func (i *Interactor) Header(params *port.HeaderParams) (*port.HeaderResponse, er
 }
 
 func (i *Interactor) Call(params *port.CallParams) (io.Reader, error) {
-	return Call(params, i.outputPort, i.inputterPort, i.grpcPort, i.env)
+	return Call(params, i.outputPort, i.inputterPort, i.grpcPort, i.dynamicBuilder, i.env)
 }

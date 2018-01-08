@@ -14,8 +14,8 @@ func Call(
 	outputPort port.OutputPort,
 	inputter port.Inputter,
 	grpcPort port.GRPCPort,
-	env entity.Environment,
 	builder port.DynamicBuilder,
+	env entity.Environment,
 ) (io.Reader, error) {
 	rpc, err := env.RPC(params.RPCName)
 	if err != nil {
