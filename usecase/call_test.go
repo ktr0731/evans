@@ -48,7 +48,7 @@ func dummyRPC(t *testing.T) *entity.RPC {
 
 func TestCall(t *testing.T) {
 	params := &port.CallParams{"SayHello"}
-	presenter := &presenter.StubPresenter{}
+	presenter := presenter.NewJSONCLIPresenter()
 
 	env := &callEnv{rpc: dummyRPC(t)}
 	inputter := &callInputter{}

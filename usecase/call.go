@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 
-	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 	"google.golang.org/grpc/metadata"
@@ -16,6 +15,7 @@ func Call(
 	inputter port.Inputter,
 	grpcPort port.GRPCPort,
 	env entity.Environment,
+	builder port.DynamicBuilder,
 ) (io.Reader, error) {
 	rpc, err := env.RPC(params.RPCName)
 	if err != nil {
@@ -26,7 +26,7 @@ func Call(
 		return nil, err
 	}
 
-	res := dynamic.NewMessage(rpc.ResponseType)
+	res := builder.NewMessage(rpc.ResponseType)
 
 	md := metadata.MD{}
 	for _, h := range env.Headers() {
@@ -38,5 +38,5 @@ func Call(
 		return nil, err
 	}
 
-	return outputPort.Call(nil)
+	return outputPort.Call(res)
 }
