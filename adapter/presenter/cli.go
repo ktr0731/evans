@@ -9,6 +9,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/usecase/port"
 )
 
 type marshaler interface {
@@ -31,8 +32,8 @@ func (p *CLIPresenter) Describe(msg *entity.Message) (io.Reader, error) {
 	return strings.NewReader(msg.String()), nil
 }
 
-func (p *CLIPresenter) Show() (io.Reader, error) {
-	return nil, nil
+func (p *CLIPresenter) Show(showable port.Showable) (io.Reader, error) {
+	return strings.NewReader(showable.String()), nil
 }
 
 func (p *CLIPresenter) Header() (io.Reader, error) {

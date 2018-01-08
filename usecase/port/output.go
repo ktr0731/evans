@@ -11,7 +11,7 @@ type OutputPort interface {
 	Package() (io.Reader, error)
 	Service() (io.Reader, error)
 	Describe(msg *entity.Message) (io.Reader, error)
-	Show() (io.Reader, error)
+	Show(showable Showable) (io.Reader, error)
 	Header() (io.Reader, error)
 	Call(res proto.Message) (io.Reader, error)
 }

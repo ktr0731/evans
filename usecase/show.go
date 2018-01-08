@@ -1,9 +1,9 @@
 package usecase
 
 import (
+	"errors"
 	"io"
 
-	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 )
@@ -31,9 +31,9 @@ func Show(params *port.ShowParams, outputPort port.OutputPort, env entity.Enviro
 			return nil, err
 		}
 		showable = port.RPCs(rpcs)
+	default:
+		return nil, errors.New("unknown showable type")
 	}
 
-	pp.Println(showable)
-
-	return outputPort.Show()
+	return outputPort.Show(showable)
 }

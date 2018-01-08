@@ -8,6 +8,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/usecase/port"
 )
 
 type StubPresenter struct{}
@@ -25,7 +26,7 @@ func (p *StubPresenter) Describe(msg *entity.Message) (io.Reader, error) {
 	return nil, nil
 }
 
-func (p *StubPresenter) Show() (io.Reader, error) {
+func (p *StubPresenter) Show(showable port.Showable) (io.Reader, error) {
 	panic("not supported yet")
 	return nil, nil
 }
