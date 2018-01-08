@@ -1,12 +1,14 @@
 package usecase
 
 import (
+	"io"
+
 	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 )
 
-func Show(params *port.ShowParams, outputPort port.OutputPort, env entity.Environment) (*port.ShowResponse, error) {
+func Show(params *port.ShowParams, outputPort port.OutputPort, env entity.Environment) (io.Reader, error) {
 	var showable port.Showable
 	switch params.Type {
 	case port.ShowTypePackage:

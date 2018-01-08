@@ -8,10 +8,10 @@ import (
 )
 
 type OutputPort interface {
-	Package() (*PackageResponse, error)
-	Service() (*ServiceResponse, error)
+	Package() (io.Reader, error)
+	Service() (io.Reader, error)
 	Describe(msg *entity.Message) (io.Reader, error)
-	Show() (*ShowResponse, error)
-	Header() (*HeaderResponse, error)
+	Show() (io.Reader, error)
+	Header() (io.Reader, error)
 	Call(res proto.Message) (io.Reader, error)
 }

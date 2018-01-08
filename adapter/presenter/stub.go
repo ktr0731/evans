@@ -8,16 +8,15 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/entity"
-	"github.com/ktr0731/evans/usecase/port"
 )
 
 type StubPresenter struct{}
 
-func (p *StubPresenter) Package() (*port.PackageResponse, error) {
+func (p *StubPresenter) Package() (io.Reader, error) {
 	return nil, nil
 }
 
-func (p *StubPresenter) Service() (*port.ServiceResponse, error) {
+func (p *StubPresenter) Service() (io.Reader, error) {
 	return nil, nil
 }
 
@@ -25,11 +24,11 @@ func (p *StubPresenter) Describe(msg *entity.Message) (io.Reader, error) {
 	return nil, nil
 }
 
-func (p *StubPresenter) Show() (*port.ShowResponse, error) {
+func (p *StubPresenter) Show() (io.Reader, error) {
 	return nil, nil
 }
 
-func (p *StubPresenter) Header() (*port.HeaderResponse, error) {
+func (p *StubPresenter) Header() (io.Reader, error) {
 	return nil, nil
 }
 

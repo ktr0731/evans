@@ -28,11 +28,11 @@ func NewInteractor(params *InteractorParams) *Interactor {
 	}
 }
 
-func (i *Interactor) Package(params *port.PackageParams) (*port.PackageResponse, error) {
+func (i *Interactor) Package(params *port.PackageParams) (io.Reader, error) {
 	return Package(params, i.outputPort, i.env)
 }
 
-func (i *Interactor) Service(params *port.ServiceParams) (*port.ServiceResponse, error) {
+func (i *Interactor) Service(params *port.ServiceParams) (io.Reader, error) {
 	return Service(params, i.outputPort, i.env)
 }
 
@@ -40,11 +40,11 @@ func (i *Interactor) Describe(params *port.DescribeParams) (io.Reader, error) {
 	return Describe(params, i.outputPort, i.env)
 }
 
-func (i *Interactor) Show(params *port.ShowParams) (*port.ShowResponse, error) {
+func (i *Interactor) Show(params *port.ShowParams) (io.Reader, error) {
 	return Show(params, i.outputPort, i.env)
 }
 
-func (i *Interactor) Header(params *port.HeaderParams) (*port.HeaderResponse, error) {
+func (i *Interactor) Header(params *port.HeaderParams) (io.Reader, error) {
 	return i.outputPort.Header()
 }
 

@@ -9,7 +9,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/entity"
-	"github.com/ktr0731/evans/usecase/port"
 )
 
 type marshaler interface {
@@ -20,11 +19,11 @@ type CLIPresenter struct {
 	marshaler marshaler
 }
 
-func (p *CLIPresenter) Package() (*port.PackageResponse, error) {
+func (p *CLIPresenter) Package() (io.Reader, error) {
 	return nil, nil
 }
 
-func (p *CLIPresenter) Service() (*port.ServiceResponse, error) {
+func (p *CLIPresenter) Service() (io.Reader, error) {
 	return nil, nil
 }
 
@@ -32,11 +31,11 @@ func (p *CLIPresenter) Describe(msg *entity.Message) (io.Reader, error) {
 	return strings.NewReader(msg.String()), nil
 }
 
-func (p *CLIPresenter) Show() (*port.ShowResponse, error) {
+func (p *CLIPresenter) Show() (io.Reader, error) {
 	return nil, nil
 }
 
-func (p *CLIPresenter) Header() (*port.HeaderResponse, error) {
+func (p *CLIPresenter) Header() (io.Reader, error) {
 	return nil, nil
 }
 

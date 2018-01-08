@@ -8,13 +8,13 @@ import (
 )
 
 type InputPort interface {
-	Package(*PackageParams) (*PackageResponse, error)
-	Service(*ServiceParams) (*ServiceResponse, error)
+	Package(*PackageParams) (io.Reader, error)
+	Service(*ServiceParams) (io.Reader, error)
 
 	Describe(*DescribeParams) (io.Reader, error)
-	Show(*ShowParams) (*ShowResponse, error)
+	Show(*ShowParams) (io.Reader, error)
 
-	Header(*HeaderParams) (*HeaderResponse, error)
+	Header(*HeaderParams) (io.Reader, error)
 
 	Call(*CallParams) (io.Reader, error)
 }
@@ -23,25 +23,17 @@ type CallParams struct {
 	RPCName string
 }
 
-type CallResponse struct{}
-
 type DescribeParams struct {
 	MsgName string
 }
-
-type DescribeResponse struct{}
 
 type PackageParams struct {
 	PkgName string
 }
 
-type PackageResponse struct{}
-
 type ServiceParams struct {
 	SvcName string
 }
-
-type ServiceResponse struct{}
 
 type ShowType int
 
@@ -106,11 +98,7 @@ type ShowParams struct {
 	Type ShowType
 }
 
-type ShowResponse struct{}
-
 type HeaderParams struct {
 	Key string
 	Val string
 }
-
-type HeaderResponse struct{}
