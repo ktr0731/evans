@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func ParseFile(filename []string, paths []string) (*FileDescriptorSet, error) {
+func ParseFile(filename []string, paths []string) (entity.Packages, error) {
 	args := []string{
 		fmt.Sprintf("--proto_path=%s", strings.Join(paths, ":")),
 		"--proto_path=.",

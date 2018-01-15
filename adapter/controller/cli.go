@@ -11,7 +11,6 @@ import (
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
-	"github.com/ktr0731/evans/parser"
 	"github.com/ktr0731/evans/repl"
 	"github.com/ktr0731/evans/usecase"
 	isatty "github.com/mattn/go-isatty"
@@ -220,7 +219,7 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 		}
 	}
 
-	desc, err := parser.ParseFile(opt.Proto, paths)
+	desc, err := entity.ParseFile(opt.Proto, paths)
 	if err != nil {
 		return nil, err
 	}

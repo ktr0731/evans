@@ -1,21 +1,20 @@
-package parser
+package entity
 
 import (
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 )
 
-type fileDescriptorSet []*desc.FileDescriptor
-type FileDescriptorSet struct {
-	set  fileDescriptorSet
-	orig []*descriptor.FileDescriptorProto
+type fileDescriptorSet struct {
+	set     []*desc.FileDescriptor
+	origSet []*descriptor.FileDescriptorProto
 }
 
-func (d *FileDescriptorSet) GetFile() []*desc.FileDescriptor {
+func (d *fileDescriptorSet) GetFile() []*desc.FileDescriptor {
 	return d.set
 }
 
-func (d *FileDescriptorSet) GetPackages() []string {
+func (d *fileDescriptorSet) GetPackages() []string {
 	packages := make([]string, 0, len(d.GetFile()))
 	isEncountered := make(map[string]bool, len(d.GetFile()))
 
@@ -29,7 +28,7 @@ func (d *FileDescriptorSet) GetPackages() []string {
 	return packages
 }
 
-func (d *FileDescriptorSet) GetServices(pkg string) []*desc.ServiceDescriptor {
+func (d *fileDescriptorSet) GetServices(pkg string) []*desc.ServiceDescriptor {
 	svc := []*desc.ServiceDescriptor{}
 	for _, f := range d.GetFile() {
 		if f.GetPackage() != pkg {
@@ -41,7 +40,7 @@ func (d *FileDescriptorSet) GetServices(pkg string) []*desc.ServiceDescriptor {
 	return svc
 }
 
-func (d *FileDescriptorSet) GetMessages(pkg string) []*desc.MessageDescriptor {
+func (d *fileDescriptorSet) GetMessages(pkg string) []*desc.MessageDescriptor {
 	msg := []*desc.MessageDescriptor{}
 	for _, f := range d.GetFile() {
 		if f.GetPackage() != pkg {
