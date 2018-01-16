@@ -22,9 +22,9 @@ func NewFields(pkg *Package, msg *Message) ([]*Field, error) {
 	// inner message definitions
 	// key is FQN of message, so it can extract by field.GetMessageType().GetFullyQualifiedName()
 	localMessageCache := map[string]*Message{}
-	resolveLocalMessage(localMessageCache, msg.Desc)
+	resolveLocalMessage(localMessageCache, msg.desc)
 
-	for _, field := range msg.Desc.GetFields() {
+	for _, field := range msg.desc.GetFields() {
 		f := &Field{
 			Name: field.GetName(),
 			Type: field.GetType(),
@@ -58,7 +58,7 @@ func resolveLocalMessage(cache map[string]*Message, msg *desc.MessageDescriptor)
 	if len(nested) == 0 {
 		cache[msg.GetFullyQualifiedName()] = &Message{
 			Name: msg.GetName(),
-			Desc: msg,
+			desc: msg,
 		}
 		return
 	}

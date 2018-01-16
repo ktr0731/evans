@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"go/parser"
 	"strings"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -64,7 +63,6 @@ type Env struct {
 }
 
 func New(pkgs Packages, config *config.Env) (*Env, error) {
-	parser.ParseFile()
 	return &Env{
 		pkgs:   pkgs,
 		config: config,

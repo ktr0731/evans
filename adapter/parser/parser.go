@@ -10,6 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
+	"github.com/ktr0731/evans/entity"
 	"github.com/pkg/errors"
 )
 
@@ -58,7 +59,41 @@ func ParseFile(filename []string, paths []string) (entity.Packages, error) {
 		depsCache[d.GetName()] = set[i]
 	}
 
-	return &FileDescriptorSet{set: set, orig: files}, nil
+	return toEntitiesFrom(set)
+}
+
+// toEntitiesFrom normalizes descriptors to entities
+//
+// package
+// ├ messages
+// ├ enums
+// └ services
+//   └ rpcs
+//
+func toEntitiesFrom(files []*desc.FileDescriptor) (entity.Packages, error) {
+	// TODO: file -> packages へ正規化する
+	var pkgNames []string
+	msgMap := map[string][]*entity.Message{}
+	svcMap := map[string][]*entity.Service{}
+	for _, f := range files {
+		pkgName := f.GetPackage()
+
+		pkgNames = append(pkgNames, pkgName)
+
+		for _, msg := range f.GetMessageTypes() {
+			msgMap[pkgName] = append(msgMap[pkgName], entity.NewMessage(msg))
+		}
+		for _, svc := range f.GetServices() {
+			svcMap[pkgName] = append(svcMap[pkgName], entity.NewService(svc))
+		}
+	}
+
+	var pkgs entity.Packages
+	for _, pkgName := range pkgNames {
+		pkgs = append(pkgs, entity.NewPackage(pkgName, msgMap[pkgName], svcMap[pkgName]))
+	}
+
+	return pkgs, nil
 }
 
 func runProtoc(args []string) ([]byte, error) {

@@ -12,6 +12,14 @@ type Package struct {
 	Messages Messages
 }
 
+func NewPackage(name string, msgs Messages, svcs Services) *Package {
+	return &Package{
+		Name:     name,
+		Services: svcs,
+		Messages: msgs,
+	}
+}
+
 // GetMessage is only used to get a root message
 func (p *Package) GetMessage(name string) (*Message, error) {
 	// nested message は辿る必要がない

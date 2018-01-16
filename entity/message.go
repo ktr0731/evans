@@ -11,7 +11,7 @@ type Message struct {
 	Name   string
 	Fields []*Field
 
-	Desc *desc.MessageDescriptor
+	desc *desc.MessageDescriptor
 
 	Childlen []*Message
 }
@@ -19,7 +19,7 @@ type Message struct {
 func NewMessage(message *desc.MessageDescriptor) *Message {
 	msg := Message{
 		Name: message.GetName(),
-		Desc: message,
+		desc: message,
 	}
 
 	nested := message.GetNestedMessageTypes()

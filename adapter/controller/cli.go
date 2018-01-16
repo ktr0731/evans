@@ -8,6 +8,7 @@ import (
 	arg "github.com/alexflint/go-arg"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/adapter/gateway"
+	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
@@ -127,10 +128,10 @@ func (c *CLI) Run(args []string) int {
 
 		panic("cli mode is not implemented yet")
 
-		if err := env.CallWithScript(in, c.options.Call); err != nil {
-			c.Error(err)
-			return 1
-		}
+		// if err := env.CallWithScript(in, c.options.Call); err != nil {
+		// 	c.Error(err)
+		// 	return 1
+		// }
 	} else {
 		params.InputterPort = gateway.NewPromptInputter(env)
 
@@ -219,7 +220,7 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 		}
 	}
 
-	desc, err := entity.ParseFile(opt.Proto, paths)
+	desc, err := parser.ParseFile(opt.Proto, paths)
 	if err != nil {
 		return nil, err
 	}
