@@ -228,6 +228,7 @@ func (e *Env) getService() func(typeName string) (*Service, error) {
 	}
 }
 
+// TODO: unxport
 func IsMessageType(typeName descriptor.FieldDescriptorProto_Type) bool {
 	return typeName == descriptor.FieldDescriptorProto_TYPE_MESSAGE
 }

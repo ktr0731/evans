@@ -9,27 +9,43 @@ import (
 
 type Message struct {
 	Name   string
-	Fields []*Field
+	Fields []field
+	OneOfs []*OneOf
+	Nested Messages
 
 	desc *desc.MessageDescriptor
-
-	Childlen []*Message
 }
 
-func NewMessage(message *desc.MessageDescriptor) *Message {
+func NewMessage(m *desc.MessageDescriptor) *Message {
 	msg := Message{
-		Name: message.GetName(),
-		desc: message,
+		Name: m.GetName(),
+		desc: m,
 	}
 
-	nested := message.GetNestedMessageTypes()
-	if len(nested) != 0 {
-		childlen := make([]*Message, len(nested))
-		for i, d := range nested {
-			childlen[i] = NewMessage(d)
-		}
-		msg.Childlen = childlen
+	nested := m.GetNestedMessageTypes()
+	nestedMsgs := make(Messages, len(nested))
+	for i, d := range nested {
+		nestedMsgs[i] = NewMessage(d)
 	}
+	msg.Nested = nestedMsgs
+
+	// TODO: label, map, options
+	fields := make([]field, len(m.GetFields()))
+	for i, f := range m.GetFields() {
+		fields[i] = newField(f)
+	}
+	msg.Fields = fields
+
+	oneOfs := make([]*OneOf, len(m.GetOneOfs()))
+	for i, o := range m.GetOneOfs() {
+		choices := make([]field, len(o.GetChoices()))
+		for j, c := range o.GetChoices() {
+			choices[j] = newField(c)
+		}
+		oneOfs[i] = newOneOf(o.GetName(), choices, o)
+	}
+	msg.OneOfs = oneOfs
+
 	return &msg
 }
 

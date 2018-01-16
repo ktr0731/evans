@@ -1,20 +1,55 @@
 package entity
 
 import (
+	"fmt"
+
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 )
 
-// TODO: モデルの設計が冗長
-type Field struct {
-	Name    string
-	Type    descriptor.FieldDescriptorProto_Type
-	Default string
-	Desc    *desc.FieldDescriptor
-
-	IsMessage bool
-	Fields    []*Field
+type field interface {
+	isField()
 }
+
+type MessageField struct {
+}
+
+func (m *MessageField) isField() {}
+
+type EnumField struct {
+}
+
+func (e *EnumField) isField() {}
+
+type OneOfField struct {
+}
+
+func (o *OneOfField) isField() {}
+
+func newField(desc *desc.FieldDescriptor) field {
+	var f field
+	switch {
+	case IsMessageType(desc.AsFieldDescriptorProto().GetType()):
+		f = &MessageField{}
+	case IsEnumType(desc):
+		f = &EnumField{}
+	case IsOneOf(desc):
+		f = &OneOfField{}
+	default:
+		panic(fmt.Sprintf("unsupported type: %s", desc.GetFullyQualifiedJSONName()))
+	}
+	return f
+}
+
+// type Field struct {
+// 	Name    string
+// 	Type    descriptor.FieldDescriptorProto_Type
+// 	Default string
+// 	Desc    *desc.FieldDescriptor
+//
+// 	IsMessage bool
+// 	Fields    []*Field
+// }
 
 func NewFields(pkg *Package, msg *Message) ([]*Field, error) {
 	var fields []*Field
