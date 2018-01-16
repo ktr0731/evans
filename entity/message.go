@@ -8,12 +8,14 @@ import (
 )
 
 type Message struct {
-	Name   string
-	Fields []field
-	OneOfs []*OneOf
-	Nested Messages
+	Name           string
+	Fields         []field
+	OneOfs         []*OneOf
+	NestedMessages Messages
+	NestedEnums    []*Enum
 
-	desc *desc.MessageDescriptor
+	desc      *desc.MessageDescriptor
+	fieldDesc *desc.FieldDescriptor // fieldDesc is nil if this message is not used as a field
 }
 
 func NewMessage(m *desc.MessageDescriptor) *Message {
@@ -22,12 +24,17 @@ func NewMessage(m *desc.MessageDescriptor) *Message {
 		desc: m,
 	}
 
-	nested := m.GetNestedMessageTypes()
-	nestedMsgs := make(Messages, len(nested))
-	for i, d := range nested {
-		nestedMsgs[i] = NewMessage(d)
+	msgs := make(Messages, len(m.GetNestedMessageTypes()))
+	for i, d := range m.GetNestedMessageTypes() {
+		msgs[i] = NewMessage(d)
 	}
-	msg.Nested = nestedMsgs
+	msg.NestedMessages = msgs
+
+	enums := make([]*Enum, len(m.GetNestedEnumTypes()))
+	for i, d := range m.GetNestedEnumTypes() {
+		enums[i] = newEnum(d)
+	}
+	msg.NestedEnums = enums
 
 	// TODO: label, map, options
 	fields := make([]field, len(m.GetFields()))
@@ -38,15 +45,30 @@ func NewMessage(m *desc.MessageDescriptor) *Message {
 
 	oneOfs := make([]*OneOf, len(m.GetOneOfs()))
 	for i, o := range m.GetOneOfs() {
-		choices := make([]field, len(o.GetChoices()))
-		for j, c := range o.GetChoices() {
-			choices[j] = newField(c)
-		}
-		oneOfs[i] = newOneOf(o.GetName(), choices, o)
+		oneOfs[i] = newOneOf(o)
 	}
 	msg.OneOfs = oneOfs
 
 	return &msg
+}
+
+func newMessageAsField(f *desc.FieldDescriptor) *Message {
+	msg := NewMessage(f.GetMessageType())
+	msg.fieldDesc = f
+	return msg
+}
+
+func (m *Message) isField() {}
+
+func (m *Message) name() string {
+	return m.Name
+}
+
+func (m *Message) typ() string {
+	if m.fieldDesc == nil {
+		return ""
+	}
+	return m.fieldDesc.GetType().String()
 }
 
 func (m *Message) String() string {
@@ -54,9 +76,8 @@ func (m *Message) String() string {
 	table := tablewriter.NewWriter(buf)
 	table.SetHeader([]string{"field", "type"})
 	rows := [][]string{}
-	for _, field := range m.Fields {
-		fType := field.Type.String()
-		row := []string{field.Name, fType}
+	for _, f := range m.Fields {
+		row := []string{f.name(), f.typ()}
 		rows = append(rows, row)
 	}
 	table.AppendBulk(rows)
