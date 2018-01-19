@@ -3,7 +3,6 @@ package entity
 import "github.com/jhump/protoreflect/desc"
 
 type Enum struct {
-	Name   string
 	Values []*EnumValue
 
 	desc      *desc.EnumDescriptor
@@ -37,15 +36,22 @@ func newEnumAsField(f *desc.FieldDescriptor) *Enum {
 
 func (e *Enum) isField() {}
 
-func (e *Enum) name() string {
+func (e *Enum) Name() string {
 	return e.desc.GetName()
 }
 
-func (e *Enum) typ() string {
+func (e *Enum) Type() string {
 	if e.fieldDesc == nil {
 		return ""
 	}
 	return e.fieldDesc.GetType().String()
+}
+
+func (e *Enum) Number() int32 {
+	if e.fieldDesc == nil {
+		return NON_FIELD
+	}
+	return e.fieldDesc.GetNumber()
 }
 
 func newEnumValue(v *desc.EnumValueDescriptor) *EnumValue {

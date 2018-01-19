@@ -1,9 +1,11 @@
 package entity
 
 import (
-	"fmt"
-
 	"github.com/jhump/protoreflect/desc"
+)
+
+const (
+	NON_FIELD = 0
 )
 
 // fieldable types:
@@ -11,8 +13,9 @@ import (
 type field interface {
 	isField()
 
-	name() string
-	typ() string
+	Name() string
+	Number() int32
+	Type() string
 }
 
 func newField(desc *desc.FieldDescriptor) field {
@@ -22,10 +25,8 @@ func newField(desc *desc.FieldDescriptor) field {
 		f = newMessageAsField(desc)
 	case IsEnumType(desc):
 		f = newEnumAsField(desc)
-	case IsOneOf(desc):
-		f = newOneOfAsField(desc)
-	default:
-		panic(fmt.Sprintf("unsupported type: %s", desc.GetFullyQualifiedJSONName()))
+	default: // primitive field
+		f = newPrimitiveField(desc)
 	}
 	return f
 }

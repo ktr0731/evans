@@ -8,7 +8,6 @@ import (
 )
 
 type Message struct {
-	Name           string
 	Fields         []field
 	OneOfs         []*OneOf
 	NestedMessages Messages
@@ -18,15 +17,14 @@ type Message struct {
 	fieldDesc *desc.FieldDescriptor // fieldDesc is nil if this message is not used as a field
 }
 
-func NewMessage(m *desc.MessageDescriptor) *Message {
+func newMessage(m *desc.MessageDescriptor) *Message {
 	msg := Message{
-		Name: m.GetName(),
 		desc: m,
 	}
 
 	msgs := make(Messages, len(m.GetNestedMessageTypes()))
 	for i, d := range m.GetNestedMessageTypes() {
-		msgs[i] = NewMessage(d)
+		msgs[i] = newMessage(d)
 	}
 	msg.NestedMessages = msgs
 
@@ -53,22 +51,29 @@ func NewMessage(m *desc.MessageDescriptor) *Message {
 }
 
 func newMessageAsField(f *desc.FieldDescriptor) *Message {
-	msg := NewMessage(f.GetMessageType())
+	msg := newMessage(f.GetMessageType())
 	msg.fieldDesc = f
 	return msg
 }
 
 func (m *Message) isField() {}
 
-func (m *Message) name() string {
-	return m.Name
+func (m *Message) Name() string {
+	return m.desc.GetName()
 }
 
-func (m *Message) typ() string {
+func (m *Message) Type() string {
 	if m.fieldDesc == nil {
 		return ""
 	}
 	return m.fieldDesc.GetType().String()
+}
+
+func (m *Message) Number() int32 {
+	if m.fieldDesc == nil {
+		return NON_FIELD
+	}
+	return m.fieldDesc.GetNumber()
 }
 
 func (m *Message) String() string {
@@ -77,7 +82,7 @@ func (m *Message) String() string {
 	table.SetHeader([]string{"field", "type"})
 	rows := [][]string{}
 	for _, f := range m.Fields {
-		row := []string{f.name(), f.typ()}
+		row := []string{f.Name(), f.Type()}
 		rows = append(rows, row)
 	}
 	table.AppendBulk(rows)
