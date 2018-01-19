@@ -18,6 +18,11 @@ import (
 
 // for prevent cycle import, don't use adapter/parser
 func parseFile(t *testing.T, fname string, paths ...string) *desc.FileDescriptor {
+	return parseDependFiles(t, fname, paths...)[0]
+}
+
+// parseDependFiles is used to marshal importing proto file
+func parseDependFiles(t *testing.T, fname string, paths ...string) []*desc.FileDescriptor {
 	args := []string{
 		fmt.Sprintf("--proto_path=%s", strings.Join(paths, ":")),
 		"--proto_path=testdata",
@@ -57,7 +62,7 @@ func parseFile(t *testing.T, fname string, paths ...string) *desc.FileDescriptor
 		depsCache[d.GetName()] = set[i]
 	}
 
-	return set[0]
+	return set
 }
 
 func runProtoc(args []string) ([]byte, error) {
