@@ -11,13 +11,14 @@ type Service struct {
 	Name string
 	RPCs RPCs
 
-	Desc *desc.ServiceDescriptor
+	desc *desc.ServiceDescriptor
 }
 
-func NewService(service *desc.ServiceDescriptor) *Service {
+func newService(d *desc.ServiceDescriptor) *Service {
 	return &Service{
-		Name: service.GetName(),
-		RPCs: NewRPCs(service),
+		Name: d.GetName(),
+		RPCs: newRPCs(d),
+		desc: d,
 	}
 }
 
