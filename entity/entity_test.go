@@ -1,39 +1,38 @@
-package parser
+package entity
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
+	"testing"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
-	"github.com/ktr0731/evans/entity"
-	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 )
 
-func ParseFile(filename []string, paths []string) (entity.Packages, error) {
+// for prevent cycle import, don't use adapter/parser
+func parseFile(t *testing.T, fname string, paths ...string) *desc.FileDescriptor {
 	args := []string{
 		fmt.Sprintf("--proto_path=%s", strings.Join(paths, ":")),
-		"--proto_path=.",
+		"--proto_path=testdata",
 		"--include_source_info",
 		"--include_imports",
 		"--descriptor_set_out=/dev/stdout",
+		filepath.Join("testdata", fname),
 	}
-
-	args = append(args, filename...)
 
 	code, err := runProtoc(args)
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	ds := descriptor.FileDescriptorSet{}
-	if err := proto.Unmarshal(code, &ds); err != nil {
-		return nil, err
-	}
+	err = proto.Unmarshal(code, &ds)
+	require.NoError(t, err)
 
 	set := make([]*desc.FileDescriptor, len(ds.GetFile()))
 	files := ds.GetFile()
@@ -53,46 +52,12 @@ func ParseFile(filename []string, paths []string) (entity.Packages, error) {
 		}
 
 		set[i], err = desc.CreateFileDescriptor(d, deps...)
-		if err != nil {
-			return nil, err
-		}
+		require.NoError(t, err)
+
 		depsCache[d.GetName()] = set[i]
 	}
 
-	return toEntitiesFrom(set)
-}
-
-// toEntitiesFrom normalizes descriptors to entities
-//
-// package
-// ├ messages
-// ├ enums
-// └ services
-//   └ rpcs
-//
-func toEntitiesFrom(files []*desc.FileDescriptor) (entity.Packages, error) {
-	var pkgNames []string
-	msgMap := map[string][]*entity.Message{}
-	svcMap := map[string][]*entity.Service{}
-	for _, f := range files {
-		pkgName := f.GetPackage()
-
-		pkgNames = append(pkgNames, pkgName)
-
-		for _, msg := range f.GetMessageTypes() {
-			msgMap[pkgName] = append(msgMap[pkgName], entity.NewMessage(msg))
-		}
-		for _, svc := range f.GetServices() {
-			svcMap[pkgName] = append(svcMap[pkgName], entity.NewService(svc))
-		}
-	}
-
-	var pkgs entity.Packages
-	for _, pkgName := range pkgNames {
-		pkgs = append(pkgs, entity.NewPackage(pkgName, msgMap[pkgName], svcMap[pkgName]))
-	}
-
-	return pkgs, nil
+	return set[0]
 }
 
 func runProtoc(args []string) ([]byte, error) {

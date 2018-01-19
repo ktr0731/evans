@@ -4,17 +4,23 @@ import "github.com/jhump/protoreflect/desc"
 
 type Enum struct {
 	Name   string
-	Values []*Enum
+	Values []*EnumValue
 
 	desc      *desc.EnumDescriptor
 	fieldDesc *desc.FieldDescriptor
 }
 
+type EnumValue struct {
+	Name   string
+	Number int32
+
+	desc *desc.EnumValueDescriptor
+}
+
 func newEnum(d *desc.EnumDescriptor) *Enum {
-	// TODO: 間違ってそう
-	values := make([]*Enum, len(d.GetValues()))
+	values := make([]*EnumValue, len(d.GetValues()))
 	for i, v := range d.GetValues() {
-		values[i] = newEnum(v.GetEnum())
+		values[i] = newEnumValue(v)
 	}
 	return &Enum{
 		Name:   d.GetName(),
@@ -32,7 +38,7 @@ func newEnumAsField(f *desc.FieldDescriptor) *Enum {
 func (e *Enum) isField() {}
 
 func (e *Enum) name() string {
-	return e.fieldDesc.GetType().String()
+	return e.desc.GetName()
 }
 
 func (e *Enum) typ() string {
@@ -40,4 +46,12 @@ func (e *Enum) typ() string {
 		return ""
 	}
 	return e.fieldDesc.GetType().String()
+}
+
+func newEnumValue(v *desc.EnumValueDescriptor) *EnumValue {
+	return &EnumValue{
+		Name:   v.GetName(),
+		Number: v.GetNumber(),
+		desc:   v,
+	}
 }

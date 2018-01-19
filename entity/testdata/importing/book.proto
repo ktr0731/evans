@@ -1,0 +1,7 @@
+syntax = "proto3";
+package library;
+
+message Book {
+  string title = 1;
+  string author = 2;
+}

@@ -44,7 +44,7 @@ func (c *callGRPCClient) Invoke(ctx context.Context, fqrn string, req, res inter
 }
 
 func dummyRPC(t *testing.T) *entity.RPC {
-	set := helper.ReadProto(t, []string{filepath.Join("helloworld/helloworld.proto")})
+	set := helper.ReadProto(t, filepath.Join("helloworld/helloworld.proto"))
 	env := helper.NewEnv(t, set, helper.TestConfig().Env)
 	rpc, err := env.RPC("SayHello")
 	require.NoError(t, err)
