@@ -16,6 +16,7 @@ type field interface {
 	Name() string
 	Number() int32
 	Type() string
+	IsRepeated() bool
 }
 
 func newField(desc *desc.FieldDescriptor) field {

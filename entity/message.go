@@ -79,6 +79,13 @@ func (m *Message) Number() int32 {
 	return m.fieldDesc.GetNumber()
 }
 
+func (m *Message) IsRepeated() bool {
+	if m.fieldDesc == nil {
+		return false
+	}
+	return m.fieldDesc.IsRepeated()
+}
+
 func (m *Message) String() string {
 	buf := new(bytes.Buffer)
 	table := tablewriter.NewWriter(buf)

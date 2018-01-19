@@ -25,3 +25,7 @@ func (f *primitiveField) Type() string {
 func (f *primitiveField) Number() int32 {
 	return f.desc.GetNumber()
 }
+
+func (f *primitiveField) IsRepeated() bool {
+	return f.desc.IsRepeated()
+}

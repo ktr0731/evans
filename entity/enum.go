@@ -50,6 +50,13 @@ func (e *Enum) Number() int32 {
 	return e.fieldDesc.GetNumber()
 }
 
+func (e *Enum) IsRepeated() bool {
+	if e.fieldDesc == nil {
+		return false
+	}
+	return e.fieldDesc.IsRepeated()
+}
+
 func newEnumValue(v *desc.EnumValueDescriptor) *EnumValue {
 	return &EnumValue{
 		desc: v,
