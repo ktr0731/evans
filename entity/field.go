@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	NON_FIELD = 0
+	NON_FIELD = int32(0)
 )
 
 // fieldable types:

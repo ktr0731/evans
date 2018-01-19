@@ -59,6 +59,9 @@ func newMessageAsField(f *desc.FieldDescriptor) *Message {
 func (m *Message) isField() {}
 
 func (m *Message) Name() string {
+	if m.fieldDesc != nil {
+		return m.fieldDesc.GetName()
+	}
 	return m.desc.GetName()
 }
 
