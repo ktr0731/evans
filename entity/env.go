@@ -10,15 +10,13 @@ import (
 )
 
 var (
-	ErrPackageUnselected    = errors.New("package unselected")
-	ErrServiceUnselected    = errors.New("service unselected")
-	ErrUnknownTarget        = errors.New("unknown target")
-	ErrUnknownPackage       = errors.New("unknown package")
-	ErrUnknownService       = errors.New("unknown service")
-	ErrInvalidServiceName   = errors.New("invalid service name")
-	ErrInvalidMessageName   = errors.New("invalid message name")
-	ErrInvalidRPCName       = errors.New("invalid RPC name")
-	ErrServiceCachingFailed = errors.New("service caching failed")
+	ErrPackageUnselected  = errors.New("package unselected")
+	ErrServiceUnselected  = errors.New("service unselected")
+	ErrUnknownPackage     = errors.New("unknown package")
+	ErrUnknownService     = errors.New("unknown service")
+	ErrInvalidServiceName = errors.New("invalid service name")
+	ErrInvalidMessageName = errors.New("invalid message name")
+	ErrInvalidRPCName     = errors.New("invalid RPC name")
 )
 
 type Environment interface {
@@ -95,12 +93,10 @@ func (e *Env) Services() (Services, error) {
 }
 
 func (e *Env) Messages() (Messages, error) {
-	// TODO: current package 以外からも取得したい
 	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
 	}
 
-	// same as GetServices()
 	return e.cache.pkg[e.state.currentPackage].Messages, nil
 }
 
@@ -130,14 +126,12 @@ func (e *Env) Service(name string) (*Service, error) {
 }
 
 func (e *Env) Message(name string) (*Message, error) {
-	// Person2 で panic
 	msg, err := e.Messages()
 	if err != nil {
 		return nil, err
 	}
 	for _, msg := range msg {
-		msgName := e.getNameFromFQN(name)
-		if msgName == msg.Name() {
+		if name == msg.Name() {
 			return msg, nil
 		}
 	}
@@ -166,6 +160,7 @@ func (e *Env) UsePackage(name string) error {
 	for _, p := range e.Packages() {
 		if name == p.Name {
 			e.state.currentPackage = name
+			e.cache.pkg[name] = p
 			return nil
 		}
 	}
@@ -194,38 +189,6 @@ func (e *Env) UseService(name string) error {
 		}
 	}
 	return errors.Wrapf(ErrUnknownService, "%s not found", name)
-}
-
-func (e *Env) GetDSN() string {
-	if e.state.currentPackage == "" {
-		return ""
-	}
-	dsn := e.state.currentPackage
-	if e.state.currentService != "" {
-		dsn += "." + e.state.currentService
-	}
-	return dsn
-}
-
-// Full Qualified Name
-// It contains message or service with package name
-// e.g.: .test.Person -> Person
-func (e *Env) getNameFromFQN(fqn string) string {
-	return strings.TrimLeft(fqn, "."+e.state.currentPackage+".")
-}
-
-// getMessage is a closure which has current states
-// it is passed by entity.NewField() for get message from current package
-func (e *Env) getMessage() func(typeName string) (*Message, error) {
-	return func(msgName string) (*Message, error) {
-		return e.Message(msgName)
-	}
-}
-
-func (e *Env) getService() func(typeName string) (*Service, error) {
-	return func(svcName string) (*Service, error) {
-		return e.Service(svcName)
-	}
 }
 
 // TODO: unxport

@@ -7,6 +7,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+// TODO: MessageImpl と Message インターフェースを定義して、余計なメソッドを公開しないようにする
 type Message struct {
 	Fields         []field
 	OneOfs         []*OneOf

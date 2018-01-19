@@ -65,6 +65,31 @@ func parseDependFiles(t *testing.T, fname string, paths ...string) []*desc.FileD
 	return set
 }
 
+func toEntitiesFrom(files []*desc.FileDescriptor) (Packages, error) {
+	var pkgNames []string
+	msgMap := map[string][]*Message{}
+	svcMap := map[string][]*Service{}
+	for _, f := range files {
+		pkgName := f.GetPackage()
+
+		pkgNames = append(pkgNames, pkgName)
+
+		for _, msg := range f.GetMessageTypes() {
+			msgMap[pkgName] = append(msgMap[pkgName], newMessage(msg))
+		}
+		for _, svc := range f.GetServices() {
+			svcMap[pkgName] = append(svcMap[pkgName], newService(svc))
+		}
+	}
+
+	var pkgs Packages
+	for _, pkgName := range pkgNames {
+		pkgs = append(pkgs, NewPackage(pkgName, msgMap[pkgName], svcMap[pkgName]))
+	}
+
+	return pkgs, nil
+}
+
 func runProtoc(args []string) ([]byte, error) {
 	buf, errBuf := new(bytes.Buffer), new(bytes.Buffer)
 	cmd := exec.Command("protoc", args...)
