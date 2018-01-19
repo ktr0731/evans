@@ -24,7 +24,7 @@ func NewPackage(name string, msgs Messages, svcs Services) *Package {
 func (p *Package) GetMessage(name string) (*Message, error) {
 	// nested message は辿る必要がない
 	for _, msg := range p.Messages {
-		if msg.Name == name {
+		if msg.Name() == name {
 			return msg, nil
 		}
 	}

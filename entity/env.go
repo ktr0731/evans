@@ -137,7 +137,7 @@ func (e *Env) Message(name string) (*Message, error) {
 	}
 	for _, msg := range msg {
 		msgName := e.getNameFromFQN(name)
-		if msgName == msg.Name {
+		if msgName == msg.Name() {
 			return msg, nil
 		}
 	}

@@ -12,11 +12,11 @@ func TestEnum(t *testing.T) {
 	assert.Len(t, enum, 1)
 
 	e := newEnum(enum[0])
-	assert.Equal(t, e.name(), "BookType")
+	assert.Equal(t, e.Name(), "BookType")
 
 	expected := []string{"EARLY", "PHILOSOPHY", "HISTORY", "SCIENCE"}
 	for i, v := range e.Values {
-		assert.Equal(t, expected[i], v.Name)
-		assert.Equal(t, int32(i), v.Number)
+		assert.Equal(t, expected[i], v.Name())
+		assert.Equal(t, int32(i), v.Number())
 	}
 }

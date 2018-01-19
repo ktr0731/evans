@@ -10,9 +10,6 @@ type Enum struct {
 }
 
 type EnumValue struct {
-	Name   string
-	Number int32
-
 	desc *desc.EnumValueDescriptor
 }
 
@@ -22,7 +19,6 @@ func newEnum(d *desc.EnumDescriptor) *Enum {
 		values[i] = newEnumValue(v)
 	}
 	return &Enum{
-		Name:   d.GetName(),
 		Values: values,
 		desc:   d,
 	}
@@ -56,8 +52,14 @@ func (e *Enum) Number() int32 {
 
 func newEnumValue(v *desc.EnumValueDescriptor) *EnumValue {
 	return &EnumValue{
-		Name:   v.GetName(),
-		Number: v.GetNumber(),
-		desc:   v,
+		desc: v,
 	}
+}
+
+func (e *EnumValue) Name() string {
+	return e.desc.GetName()
+}
+
+func (e *EnumValue) Number() int32 {
+	return e.desc.GetNumber()
 }
