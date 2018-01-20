@@ -132,7 +132,7 @@ Show more details:
 
 func (r *REPL) getPrompt() string {
 	p := fmt.Sprintf("%s:%s> ", r.config.Server.Host, r.config.Server.Port)
-	if dsn := r.env.GetDSN(); dsn != "" {
+	if dsn := r.env.DSN(); dsn != "" {
 		p = fmt.Sprintf("%s@%s", dsn, p)
 	}
 	return p

@@ -32,6 +32,8 @@ type Environment interface {
 
 	UsePackage(name string) error
 	UseService(name string) error
+
+	DSN() string
 }
 
 type Header struct {
@@ -191,7 +193,7 @@ func (e *Env) UseService(name string) error {
 	return errors.Wrapf(ErrUnknownService, "%s not found", name)
 }
 
-func (e *Env) GetDSN() string {
+func (e *Env) DSN() string {
 	if e.state.currentPackage == "" {
 		return ""
 	}

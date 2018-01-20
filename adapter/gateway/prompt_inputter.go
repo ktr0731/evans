@@ -3,6 +3,7 @@ package gateway
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/AlecAivazis/survey"
 	prompt "github.com/c-bata/go-prompt"
@@ -10,11 +11,27 @@ import (
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic"
+	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 )
 
+// for mocking
 type prompter interface {
 	Input() string
+	SetPrefix(prefix string) error
+}
+
+type RealPrompter struct {
+	*prompt.Prompt
+}
+
+func (p *RealPrompter) Input() string {
+	return p.Prompt.Input()
+}
+
+func (p *RealPrompter) SetPrefix(prefix string) error {
+	// return p.Prompt.OptionPrefix(e.repl.getPrompt())(e.repl.prompt)
+	return prompt.OptionPrefix(prefix)(p.Prompt)
 }
 
 type PromptInputter struct {
@@ -22,24 +39,26 @@ type PromptInputter struct {
 }
 
 // mixin go-prompt
-func NewPromptInputter(env entity.Environment) *PromptInputter {
+func NewPromptInputter(config *config.Config, env entity.Environment) *PromptInputter {
 	executor := func(in string) {
 		return
 	}
 	completer := func(d prompt.Document) []prompt.Suggest {
 		return nil
 	}
-	return &PromptInputter{newPromptInputter(prompt.New(executor, completer), env)}
+	return &PromptInputter{newPromptInputter(&RealPrompter{prompt.New(executor, completer)}, config, env)}
 }
 
 type promptInputter struct {
 	prompt prompter
+	config *config.Config
 	env    entity.Environment
 }
 
-func newPromptInputter(prompt prompter, env entity.Environment) *promptInputter {
+func newPromptInputter(prompt prompter, config *config.Config, env entity.Environment) *promptInputter {
 	return &promptInputter{
 		prompt: prompt,
+		config: config,
 		env:    env,
 	}
 }
@@ -48,13 +67,15 @@ func (i *promptInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, 
 	req := dynamic.NewMessage(reqType)
 	fields := reqType.GetFields()
 
-	return newFieldInputter(i.prompt, req, reqType).Input(fields)
+	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, req, reqType).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively
 // first fieldInputter is instantiated per one request
 type fieldInputter struct {
 	prompt prompter
+
+	prefixFormat string
 
 	encountered map[string]map[string]bool
 	msg         *dynamic.Message
@@ -78,11 +99,12 @@ func resolveMessageDependency(msg *desc.MessageDescriptor, dep messageDependency
 	}
 }
 
-func newFieldInputter(prompt prompter, msg *dynamic.Message, msgType *desc.MessageDescriptor) *fieldInputter {
+func newFieldInputter(prompt prompter, prefixFormat string, msg *dynamic.Message, msgType *desc.MessageDescriptor) *fieldInputter {
 	dep := messageDependency{}
 	resolveMessageDependency(msgType, dep, map[string]bool{})
 	return &fieldInputter{
-		prompt: prompt,
+		prompt:       prompt,
+		prefixFormat: prefixFormat,
 		encountered: map[string]map[string]bool{
 			"oneof": map[string]bool{},
 			"enum":  map[string]bool{},
@@ -133,7 +155,7 @@ func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) (proto.Message, er
 		case entity.IsMessageType(field.GetType()):
 			nestedFields := i.dep[field.GetMessageType().GetFullyQualifiedName()].GetFields()
 			msgType := field.GetMessageType()
-			msg, err := newFieldInputter(i.prompt, dynamic.NewMessage(msgType), msgType).Input(nestedFields)
+			msg, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType).Input(nestedFields)
 			if err != nil {
 				return nil, err
 			}
@@ -141,6 +163,11 @@ func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) (proto.Message, er
 				return nil, err
 			}
 		default: // primitive type
+			prefix := i.prefixFormat
+			prefix = strings.Replace(prefix, "{ancestor}", "", -1)
+			prefix = strings.Replace(prefix, "{name}", field.GetName(), -1)
+			prefix = strings.Replace(prefix, "{type}", field.GetType().String(), -1)
+			i.prompt.SetPrefix(prefix)
 			if err := i.inputField(i.msg, field); err != nil {
 				return nil, err
 			}

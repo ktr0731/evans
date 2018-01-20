@@ -127,7 +127,7 @@ func (c *CLI) Run(args []string) int {
 		// 	return 1
 		// }
 	} else {
-		params.InputterPort = gateway.NewPromptInputter(env)
+		params.InputterPort = gateway.NewPromptInputter(c.config, env)
 
 		interactor := usecase.NewInteractor(params)
 		r := NewREPL(c.config.REPL, env, newColoredREPLUI("foo"), interactor)
