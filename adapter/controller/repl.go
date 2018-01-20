@@ -1,8 +1,7 @@
-package repl
+package controller
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -10,7 +9,6 @@ import (
 	"strings"
 
 	prompt "github.com/c-bata/go-prompt"
-	"github.com/fatih/color"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
@@ -24,61 +22,15 @@ var (
 	ErrUnknownTarget    = errors.New("unknown target")
 )
 
-func newUI() *UI {
-	return &UI{
-		Reader:    os.Stdin,
-		Writer:    os.Stdout,
-		ErrWriter: os.Stderr,
-	}
-}
-
 type REPL struct {
-	ui     *UI
+	ui     ui
 	config *config.REPL
 	env    *entity.Env
 	prompt *prompt.Prompt
 	cmds   map[string]Commander
 }
 
-type UI struct {
-	Reader            io.Reader
-	Writer, ErrWriter io.Writer
-	prompt            string
-}
-
-func (u *UI) Println(s string) {
-	fmt.Fprintln(u.Writer, s)
-}
-
-func (u *UI) InfoPrintln(s string) {
-	fmt.Fprintln(u.Writer, s)
-}
-
-func (u *UI) ErrPrintln(s string) {
-	fmt.Fprintln(u.ErrWriter, s)
-}
-
-type ColoredUI struct {
-	UI
-}
-
-func (u *ColoredUI) InfoPrintln(s string) {
-	u.Println(color.BlueString(s))
-}
-
-func (u *ColoredUI) ErrPrintln(s string) {
-	u.ErrPrintln(color.RedString(s))
-}
-
-func NewBasicUI() *UI {
-	return &UI{
-		Reader:    os.Stdin,
-		Writer:    os.Stdout,
-		ErrWriter: os.Stderr,
-	}
-}
-
-func NewREPL(config *config.REPL, env *entity.Env, ui *UI, inputPort port.InputPort) *REPL {
+func NewREPL(config *config.REPL, env *entity.Env, ui ui, inputPort port.InputPort) *REPL {
 	cmds := map[string]Commander{
 		"call":    &callCommand{inputPort},
 		"desc":    &descCommand{inputPort},
@@ -142,14 +94,6 @@ func (r *REPL) eval(l string) (string, error) {
 	return cmd.Run(args)
 }
 
-func (r *REPL) wrappedPrint(text string) {
-	fmt.Fprintf(r.ui.Writer, "%s\n", text)
-}
-
-func (r *REPL) wrappedError(err error) {
-	fmt.Fprintln(r.ui.ErrWriter, color.RedString("%s\n", err.Error()))
-}
-
 func (r *REPL) Start() error {
 	r.printSplash(r.config.SplashTextPath)
 	r.prompt.Run()
@@ -157,7 +101,7 @@ func (r *REPL) Start() error {
 }
 
 func (r *REPL) Close() error {
-	r.wrappedPrint("Good Bye :)")
+	r.ui.InfoPrintln("Good Bye :)")
 	return nil
 }
 
@@ -210,7 +154,7 @@ func (r *REPL) printSplash(p string) {
 			if !os.IsNotExist(err) {
 				b, err := ioutil.ReadFile(abs)
 				if err == nil {
-					fmt.Fprintln(r.ui.Writer, string(b))
+					r.ui.Println(string(b))
 				}
 			}
 		}

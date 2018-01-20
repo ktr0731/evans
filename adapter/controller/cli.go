@@ -12,7 +12,6 @@ import (
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
-	"github.com/ktr0731/evans/repl"
 	"github.com/ktr0731/evans/usecase"
 	isatty "github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
@@ -20,19 +19,6 @@ import (
 	"io"
 	"os"
 )
-
-type UI struct {
-	Reader            io.Reader
-	Writer, ErrWriter io.Writer
-}
-
-func newUI() *UI {
-	return &UI{
-		Reader:    os.Stdin,
-		Writer:    os.Stdout,
-		ErrWriter: os.Stderr,
-	}
-}
 
 type Options struct {
 	Proto []string `arg:"positional,help:.proto files"`
@@ -54,7 +40,7 @@ func (o *Options) Version() string {
 }
 
 type CLI struct {
-	ui     *UI
+	ui     ui
 	config *config.Config
 
 	parser  *arg.Parser
@@ -72,15 +58,15 @@ func NewCLI(title, version string) *CLI {
 }
 
 func (c *CLI) Error(err error) {
-	fmt.Fprintln(c.ui.ErrWriter, err)
+	c.ui.ErrPrintln(err.Error())
 }
 
 func (c *CLI) Help() {
-	c.parser.WriteHelp(c.ui.Writer)
+	c.parser.WriteHelp(c.ui.Writer())
 }
 
 func (c *CLI) Usage() {
-	c.parser.WriteUsage(c.ui.Writer)
+	c.parser.WriteUsage(c.ui.Writer())
 }
 
 func (c *CLI) Run(args []string) int {
@@ -136,7 +122,7 @@ func (c *CLI) Run(args []string) int {
 		params.InputterPort = gateway.NewPromptInputter(env)
 
 		interactor := usecase.NewInteractor(params)
-		r := repl.NewREPL(c.config.REPL, env, repl.NewBasicUI(), interactor)
+		r := NewREPL(c.config.REPL, env, newUI(), interactor)
 		defer r.Close()
 
 		if err := r.Start(); err != nil {
