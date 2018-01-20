@@ -66,7 +66,7 @@ func (c *completer) complete(d prompt.Document) []prompt.Suggest {
 		}
 		s = make([]prompt.Suggest, len(msgs))
 		for i, msg := range msgs {
-			s[i] = prompt.Suggest{Text: msg.Name}
+			s[i] = prompt.Suggest{Text: msg.Name()}
 		}
 
 	default:

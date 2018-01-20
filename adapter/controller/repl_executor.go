@@ -24,12 +24,13 @@ func (e *executor) execute(l string) {
 
 	result, err := e.repl.eval(l)
 	if err != nil {
-		e.repl.wrappedError(err)
-	} else {
-		e.repl.wrappedPrint(result)
-		err := prompt.OptionPrefix(e.repl.getPrompt())(e.repl.prompt)
-		if err != nil {
-			e.repl.wrappedError(err)
-		}
+		e.repl.ui.ErrPrintln(err.Error())
+		return
+	}
+
+	e.repl.ui.Println(result)
+	err = prompt.OptionPrefix(e.repl.getPrompt())(e.repl.prompt)
+	if err != nil {
+		e.repl.ui.ErrPrintln(err.Error())
 	}
 }

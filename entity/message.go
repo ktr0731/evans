@@ -14,13 +14,14 @@ type Message struct {
 	NestedMessages Messages
 	NestedEnums    []*Enum
 
-	desc      *desc.MessageDescriptor
+	// TODO: I wanna change to unexported
+	Desc      *desc.MessageDescriptor
 	fieldDesc *desc.FieldDescriptor // fieldDesc is nil if this message is not used as a field
 }
 
 func newMessage(m *desc.MessageDescriptor) *Message {
 	msg := Message{
-		desc: m,
+		Desc: m,
 	}
 
 	msgs := make(Messages, len(m.GetNestedMessageTypes()))
@@ -63,7 +64,7 @@ func (m *Message) Name() string {
 	if m.fieldDesc != nil {
 		return m.fieldDesc.GetName()
 	}
-	return m.desc.GetName()
+	return m.Desc.GetName()
 }
 
 func (m *Message) Type() string {

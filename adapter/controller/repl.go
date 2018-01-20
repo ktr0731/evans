@@ -127,7 +127,7 @@ Available commands:
 Show more details:
   <command> --help
 `, cmdText)
-	r.wrappedPrint(strings.TrimRight(msg, "\n"))
+	r.ui.InfoPrintln(strings.TrimRight(msg, "\n"))
 }
 
 func (r *REPL) getPrompt() string {

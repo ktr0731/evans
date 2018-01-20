@@ -191,6 +191,17 @@ func (e *Env) UseService(name string) error {
 	return errors.Wrapf(ErrUnknownService, "%s not found", name)
 }
 
+func (e *Env) GetDSN() string {
+	if e.state.currentPackage == "" {
+		return ""
+	}
+	dsn := e.state.currentPackage
+	if e.state.currentService != "" {
+		dsn += "." + e.state.currentService
+	}
+	return dsn
+}
+
 // TODO: unxport
 func IsMessageType(typeName descriptor.FieldDescriptorProto_Type) bool {
 	return typeName == descriptor.FieldDescriptorProto_TYPE_MESSAGE

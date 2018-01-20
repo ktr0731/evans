@@ -9,7 +9,7 @@ import (
 )
 
 func SetupEnv(t *testing.T, fpath, pkgName, svcName string) *entity.Env {
-	set := helper.ReadProto(t, []string{fpath})
+	set := helper.ReadProto(t, fpath)
 
 	env := helper.NewEnv(t, set, helper.TestConfig().Env)
 
