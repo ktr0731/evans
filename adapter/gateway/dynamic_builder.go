@@ -8,6 +8,10 @@ import (
 
 type DynamicBuilder struct{}
 
+func NewDynamicBuilder() *DynamicBuilder {
+	return &DynamicBuilder{}
+}
+
 func (b *DynamicBuilder) NewMessage(md *desc.MessageDescriptor) proto.Message {
 	return dynamic.NewMessage(md)
 }

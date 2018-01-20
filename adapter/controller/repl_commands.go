@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"bytes"
+	"io"
 	"strings"
 
 	"github.com/ktr0731/evans/usecase/port"
@@ -35,11 +37,11 @@ func (c *descCommand) Validate(args []string) error {
 
 func (c *descCommand) Run(args []string) (string, error) {
 	params := &port.DescribeParams{args[0]}
-	_, err := c.inputPort.Describe(params)
+	res, err := c.inputPort.Describe(params)
 	if err != nil {
 		return "", err
 	}
-	return "", nil
+	return read(res)
 }
 
 type packageCommand struct {
@@ -63,11 +65,11 @@ func (c *packageCommand) Validate(args []string) error {
 
 func (c *packageCommand) Run(args []string) (string, error) {
 	params := &port.PackageParams{args[0]}
-	_, err := c.inputPort.Package(params)
+	res, err := c.inputPort.Package(params)
 	if err != nil {
 		return "", errors.Wrapf(err, "package: %s", args[0])
 	}
-	return "", nil
+	return read(res)
 }
 
 type serviceCommand struct {
@@ -90,11 +92,11 @@ func (c *serviceCommand) Validate(args []string) error {
 }
 
 func (c *serviceCommand) Run(args []string) (string, error) {
-	_, err := c.inputPort.Call(nil)
+	res, err := c.inputPort.Call(nil)
 	if err != nil {
 		return "", err
 	}
-	return "", nil
+	return read(res)
 }
 
 type showCommand struct {
@@ -132,11 +134,11 @@ func (c *showCommand) Run(args []string) (string, error) {
 	default:
 		return "", errors.Wrap(ErrUnknownTarget, target)
 	}
-	_, err := c.inputPort.Show(params)
+	res, err := c.inputPort.Show(params)
 	if err != nil {
 		return "", err
 	}
-	return "", nil
+	return read(res)
 }
 
 type callCommand struct {
@@ -160,9 +162,18 @@ func (c *callCommand) Validate(args []string) error {
 
 func (c *callCommand) Run(args []string) (string, error) {
 	params := &port.CallParams{args[0]}
-	_, err := c.inputPort.Call(params)
+	res, err := c.inputPort.Call(params)
 	if err != nil {
 		return "", err
 	}
-	return "", nil
+	return read(res)
+}
+
+func read(r io.Reader) (string, error) {
+	b := new(bytes.Buffer)
+	_, err := b.ReadFrom(r)
+	if err != nil {
+		return "", err
+	}
+	return b.String(), nil
 }

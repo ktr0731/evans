@@ -22,7 +22,7 @@ type UI struct {
 	writer, errWriter io.Writer
 }
 
-func newUI() ui {
+func newUI() *UI {
 	return &UI{
 		reader:    os.Stdin,
 		writer:    os.Stdout,
@@ -55,26 +55,57 @@ type REPLUI struct {
 	prompt string
 }
 
+func newREPLUI(prompt string) *REPLUI {
+	return &REPLUI{
+		ui:     newUI(),
+		prompt: prompt,
+	}
+}
+
 func (u *REPLUI) Println(s string) {
-	u.Println(s)
+	u.ui.Println(s)
 }
 
 func (u *REPLUI) InfoPrintln(s string) {
-	u.InfoPrintln(s)
+	u.ui.InfoPrintln(s)
 }
 
 func (u *REPLUI) ErrPrintln(s string) {
-	u.ErrPrintln(s)
+	u.ui.ErrPrintln(s)
 }
 
 type ColoredUI struct {
 	ui
 }
 
+func newColoredUI() *ColoredUI {
+	return &ColoredUI{
+		newUI(),
+	}
+}
+
 func (u *ColoredUI) InfoPrintln(s string) {
-	u.InfoPrintln(color.BlueString(s))
+	u.ui.InfoPrintln(color.BlueString(s))
 }
 
 func (u *ColoredUI) ErrPrintln(s string) {
-	u.ErrPrintln(color.RedString(s))
+	u.ui.ErrPrintln(color.RedString(s))
+}
+
+type ColoredREPLUI struct {
+	*REPLUI
+}
+
+func newColoredREPLUI(prompt string) *ColoredREPLUI {
+	return &ColoredREPLUI{
+		newREPLUI(prompt),
+	}
+}
+
+func (u *ColoredREPLUI) InfoPrintln(s string) {
+	u.ui.InfoPrintln(color.BlueString(s))
+}
+
+func (u *ColoredREPLUI) ErrPrintln(s string) {
+	u.ui.ErrPrintln(color.RedString(s))
 }

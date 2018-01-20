@@ -70,10 +70,6 @@ func (c *CLI) Usage() {
 }
 
 func (c *CLI) Run(args []string) int {
-	params := &usecase.InteractorParams{
-		OutputPort: presenter.NewJSONCLIPresenter(),
-	}
-
 	c.parser = arg.MustParse(c.options)
 
 	if c.options.EditConfig {
@@ -93,6 +89,18 @@ func (c *CLI) Run(args []string) int {
 	if err != nil {
 		c.Error(err)
 		return 1
+	}
+
+	grpcAdapter, err := gateway.NewGRPCClient(c.config)
+	if err != nil {
+		c.Error(err)
+		return 1
+	}
+	params := &usecase.InteractorParams{
+		Env:            env,
+		OutputPort:     presenter.NewJSONCLIPresenter(),
+		GRPCPort:       grpcAdapter,
+		DynamicBuilder: gateway.NewDynamicBuilder(),
 	}
 
 	if isCommandLineMode(c.options) {
@@ -122,7 +130,7 @@ func (c *CLI) Run(args []string) int {
 		params.InputterPort = gateway.NewPromptInputter(env)
 
 		interactor := usecase.NewInteractor(params)
-		r := NewREPL(c.config.REPL, env, newUI(), interactor)
+		r := NewREPL(c.config.REPL, env, newColoredREPLUI("foo"), interactor)
 		defer r.Close()
 
 		if err := r.Start(); err != nil {

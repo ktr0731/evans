@@ -17,14 +17,21 @@ type Interactor struct {
 }
 
 type InteractorParams struct {
-	OutputPort   port.OutputPort
-	InputterPort port.Inputter
+	Env *entity.Env
+
+	OutputPort     port.OutputPort
+	InputterPort   port.Inputter
+	GRPCPort       port.GRPCPort
+	DynamicBuilder port.DynamicBuilder
 }
 
 func NewInteractor(params *InteractorParams) *Interactor {
 	return &Interactor{
-		outputPort:   params.OutputPort,
-		inputterPort: params.InputterPort,
+		env:            params.Env,
+		outputPort:     params.OutputPort,
+		inputterPort:   params.InputterPort,
+		grpcPort:       params.GRPCPort,
+		dynamicBuilder: params.DynamicBuilder,
 	}
 }
 
