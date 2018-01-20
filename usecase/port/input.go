@@ -113,7 +113,7 @@ func (m Messages) String() string {
 	table.SetHeader([]string{"message"})
 	rows := [][]string{}
 	for _, message := range m {
-		row := []string{message.Name}
+		row := []string{message.Name()}
 		rows = append(rows, row)
 	}
 	table.AppendBulk(rows)
