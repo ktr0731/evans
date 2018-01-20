@@ -92,7 +92,8 @@ func (c *serviceCommand) Validate(args []string) error {
 }
 
 func (c *serviceCommand) Run(args []string) (string, error) {
-	res, err := c.inputPort.Call(nil)
+	params := &port.ServiceParams{args[0]}
+	res, err := c.inputPort.Service(params)
 	if err != nil {
 		return "", err
 	}
@@ -170,6 +171,10 @@ func (c *callCommand) Run(args []string) (string, error) {
 }
 
 func read(r io.Reader) (string, error) {
+	if r == nil {
+		return "", nil
+	}
+
 	b := new(bytes.Buffer)
 	_, err := b.ReadFrom(r)
 	if err != nil {
