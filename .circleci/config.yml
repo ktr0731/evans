@@ -3,7 +3,7 @@ jobs:
   build:
     working_directory: /go/src/github.com/ktr0731/evans
     docker:
-      - image: circleci/golang:1.8
+      - image: ktr0731/circleci-evans
 
     steps:
       - checkout
