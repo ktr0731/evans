@@ -69,7 +69,7 @@ $ evans -f hello.json --call SayHello hello.proto
 REPL mode is the solution for second usecase.  
 You can use it without thinking like package name, service name, RPC name, command usage, and so on because REPL mode has powerful completion!  
 
-Actually demonstration:
+Actual demonstration:
 ![demo](./evans.gif)  
 
 proto file which read in demonstration is:  
@@ -144,22 +144,21 @@ func main() {
 }
 ```
 
-very useful :)  
-
 ## Installation
 ### from binary
 please see [GitHub Releases](https://github.com/ktr0731/evans/releases).  
-
-### go get
-``` sh
-$ go get github.com/ktr0731/evans
-```
 
 ### macOS
 ``` sh
 $ brew tap ktr0731/evans
 $ brew install evans
 ```
+
+### go get
+``` sh
+$ go get github.com/ktr0731/evans
+```
+
 
 ## Usage
 Evans consists of some commands in REPL.  
