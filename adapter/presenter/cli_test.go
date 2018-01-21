@@ -29,6 +29,6 @@ func TestCLIPresenter(t *testing.T) {
 		b, err := ioutil.ReadAll(out)
 		require.NoError(t, err)
 
-		assert.Equal(t, `{"name":"makise","message":"kurisu"}`, string(b))
+		assert.Equal(t, `{"name":"makise","message":"kurisu"}`+"\n", string(b))
 	})
 }

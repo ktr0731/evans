@@ -3,6 +3,7 @@ package gateway
 import (
 	"testing"
 
+	prompt "github.com/c-bata/go-prompt"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
 	"github.com/ktr0731/evans/tests/helper"
@@ -16,7 +17,11 @@ func (p *mockPrompt) Input() string {
 	return "foo"
 }
 
-func (p *mockPrompt) SetPrefix(s string) error {
+func (p *mockPrompt) SetPrefix(_ string) error {
+	return nil
+}
+
+func (p *mockPrompt) SetPrefixColor(_ prompt.Color) error {
 	return nil
 }
 
