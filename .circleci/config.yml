@@ -1,12 +1,17 @@
 version: 2
 jobs:
   build:
+    working_directory: /go/src/github.com/ktr0731/evans
     docker:
-      - image: circleci/golang:1.8
+      - image: ktr0731/circleci-evans
 
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     steps:
       - checkout
 
-      - run: make build
-      - run: make test
+      - run:
+          name: build
+          command: make build
+
+      - run:
+          name: test
+          command: make test
