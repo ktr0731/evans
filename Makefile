@@ -16,7 +16,7 @@ build: deps
 
 .PHONY: test
 test:
-	@go test -race -v ./...
+	@go test -race -v $(shell glide novendor)
 
 .PHONY: coverage
 coverage: 
