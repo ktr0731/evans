@@ -10,6 +10,8 @@
 ```
 --- 
 
+[![CircleCI](https://circleci.com/gh/ktr0731/evans/tree/master.svg?style=svg)](https://circleci.com/gh/ktr0731/evans/tree/master)  
+
 ![Evans](./evans.gif)  
 
 ## Motivation

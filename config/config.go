@@ -47,7 +47,7 @@ type REPL struct {
 type Env struct {
 	Server            *Server  `toml:"-"`
 	AncestorDelimiter string   `default:":"`
-	InputPromptFormat string   `default:"{name}{ancestor} ({type}) => " toml:"inputPromptFormat"`
+	InputPromptFormat string   `default:"{ancestor}{name} ({type}) => " toml:"inputPromptFormat"`
 	Request           *Request `toml:"request"`
 }
 
@@ -61,11 +61,16 @@ type Config struct {
 	REPL    *REPL    `toml:"repl"`
 	Env     *Env     `toml:"env"`
 	Server  *Server  `toml:"server"`
+	Log     *Log     `toml:"log"`
 }
 
 type Default struct {
 	Package string `toml:"package"`
 	Service string `toml:"service"`
+}
+
+type Log struct {
+	Prefix string `default:"[evans] " toml:"prefix"`
 }
 
 type localConfig struct {

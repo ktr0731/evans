@@ -16,7 +16,7 @@ build: deps
 
 .PHONY: test
 test:
-	@for p in $(shell go list $(shell glide novendor)); do go test -v -race -coverprofile=coverage.out $p; done
+	@go test -race -v ./...
 
 .PHONY: coverage
 coverage: 

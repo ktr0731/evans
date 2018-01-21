@@ -1,0 +1,10 @@
+syntax = "proto3";
+package library;
+
+message Person {
+  string name = 1;
+}
+
+message Nested {
+  Person person = 1;
+}
