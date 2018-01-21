@@ -19,6 +19,7 @@ import (
 type prompter interface {
 	Input() string
 	SetPrefix(prefix string) error
+	SetPrefixColor(color prompt.Color) error
 }
 
 type RealPrompter struct {
@@ -31,6 +32,10 @@ func (p *RealPrompter) Input() string {
 
 func (p *RealPrompter) SetPrefix(prefix string) error {
 	return prompt.OptionPrefix(prefix)(p.Prompt)
+}
+
+func (p *RealPrompter) SetPrefixColor(color prompt.Color) error {
+	return prompt.OptionPrefixTextColor(color)(p.Prompt)
 }
 
 type PromptInputter struct {
@@ -66,7 +71,8 @@ func (i *promptInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, 
 	req := dynamic.NewMessage(reqType)
 	fields := reqType.GetFields()
 
-	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, req, reqType, true).Input(fields)
+	// DarkGreen is the initial color
+	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, req, reqType, true, prompt.DarkGreen).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively
@@ -80,6 +86,8 @@ type fieldInputter struct {
 	msg         *dynamic.Message
 	fields      []*desc.FieldDescriptor
 	dep         messageDependency
+
+	color prompt.Color
 
 	isTopLevelMessage bool
 }
@@ -100,11 +108,11 @@ func resolveMessageDependency(msg *desc.MessageDescriptor, dep messageDependency
 	}
 }
 
-func newFieldInputter(prompt prompter, prefixFormat string, msg *dynamic.Message, msgType *desc.MessageDescriptor, isTopLevelMessage bool) *fieldInputter {
+func newFieldInputter(prompter prompter, prefixFormat string, msg *dynamic.Message, msgType *desc.MessageDescriptor, isTopLevelMessage bool, color prompt.Color) *fieldInputter {
 	dep := messageDependency{}
 	resolveMessageDependency(msgType, dep, map[string]bool{})
 	return &fieldInputter{
-		prompt:       prompt,
+		prompt:       prompter,
 		prefixFormat: prefixFormat,
 		encountered: map[string]map[string]bool{
 			"oneof": map[string]bool{},
@@ -113,6 +121,7 @@ func newFieldInputter(prompt prompter, prefixFormat string, msg *dynamic.Message
 		msg:               msg,
 		dep:               dep,
 		isTopLevelMessage: isTopLevelMessage,
+		color:             color,
 	}
 }
 
@@ -128,6 +137,10 @@ func newFieldInputter(prompt prompter, prefixFormat string, msg *dynamic.Message
 // one for Foo's primitive fields
 // another one for bar's primitive fields
 func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) (proto.Message, error) {
+	if err := i.prompt.SetPrefixColor(i.color); err != nil {
+		return nil, err
+	}
+
 	for _, field := range fields {
 		switch {
 		case entity.IsOneOf(field):
@@ -157,13 +170,16 @@ func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) (proto.Message, er
 		case entity.IsMessageType(field.GetType()):
 			nestedFields := i.dep[field.GetMessageType().GetFullyQualifiedName()].GetFields()
 			msgType := field.GetMessageType()
-			msg, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType, false).Input(nestedFields)
+			msg, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType, false, i.color).Input(nestedFields)
 			if err != nil {
 				return nil, err
 			}
 			if err := i.msg.TrySetField(field, msg); err != nil {
 				return nil, err
 			}
+
+			// increment prompt color to next one
+			i.color = (i.color + 1) % 16
 		default: // primitive type
 			if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.isTopLevelMessage)); err != nil {
 				return nil, err
