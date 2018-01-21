@@ -1,5 +1,5 @@
 hash: 9b110fe65e53714f2e18f00a7d9b8e97181867975e8dc9fc06129dc7e64cdc4b
-updated: 2018-01-01T15:43:03.397522725+09:00
+updated: 2018-01-21T15:08:49.482810541+09:00
 imports:
 - name: github.com/AlecAivazis/survey
   version: f051d0d636f1be0261d8d320a4b2365e7ccd9888
@@ -39,8 +39,6 @@ imports:
   - desc/internal
   - dynamic
   - internal
-- name: github.com/k0kubun/pp
-  version: e057ee7a28277be4d2af303443b6da377768181f
 - name: github.com/kelseyhightower/envconfig
   version: 462fda1f11d8cad3660e52737b8beefd27acfb3f
 - name: github.com/ktr0731/go-configure
@@ -51,7 +49,8 @@ imports:
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
   repo: https://github.com/mattn/go-colorable
 - name: github.com/mattn/go-isatty
-  version: 6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c
+  version: 57fdcb988a5c543893cc61bce354a6e24ab70022
+  repo: https://github.com/mattn/go-isatty
 - name: github.com/mattn/go-runewidth
   version: 97311d9f7767e3d6f422ea06661bc2c7a19e8a5d
 - name: github.com/mgutz/ansi
@@ -59,9 +58,9 @@ imports:
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mitchellh/mapstructure
-  version: 06020f85339e21b2478f756a78e295255ffa4d6a
+  version: b4575eea38cca1123ec2dc90c26529b5c5acfcff
 - name: github.com/olekukonko/tablewriter
-  version: 65fec0d89a572b4367094e2058d3ebe667de3b60
+  version: 96aac992fc8b1a4c83841a6c3e7178d20d989625
 - name: github.com/peterh/liner
   version: 3681c2a912330352991ecdd642f257efe5b85518
 - name: github.com/pkg/errors
@@ -82,7 +81,7 @@ imports:
   - vendor/github.com/davecgh/go-spew/spew
   - vendor/github.com/pmezard/go-difflib/difflib
 - name: golang.org/x/net
-  version: d866cfc389cec985d6fda2859936a575a55a3ab6
+  version: 5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec
   subpackages:
   - context
   - http2
@@ -92,7 +91,8 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: 83801418e1b59fb1880e363299581ee543af32ca
+  version: e24f485414aeafb646f6fca458b0bf869c0880a1
+  repo: https://go.googlesource.com/sys
   subpackages:
   - unix
 - name: golang.org/x/text
@@ -107,7 +107,7 @@ imports:
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: 65c901e45820d9c7555afc14337b82cf53ea3e42
+  version: b71aced4a2a1ee80a1cbbd26b85a57623790d7f4
   subpackages:
   - balancer
   - balancer/base
@@ -136,5 +136,5 @@ imports:
   - core
   - terminal
 - name: gopkg.in/yaml.v2
-  version: 287cf08546ab5e7e37d55a84f7ed3fd1db036de5
+  version: d670f9405373e636a5a2765eea47fac0c9bc91a4
 testImports: []
