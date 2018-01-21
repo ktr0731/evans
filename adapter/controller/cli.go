@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase"
+	"github.com/ktr0731/evans/usecase/port"
 	isatty "github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
 
@@ -118,18 +120,25 @@ func (c *CLI) Run(args []string) int {
 		}
 
 		params.InputterPort = gateway.NewJSONFileInputter(in)
-		usecase.NewInteractor(params)
+		interactor := usecase.NewInteractor(params)
 
-		panic("cli mode is not implemented yet")
+		res, err := interactor.Call(&port.CallParams{c.options.Call})
+		if err != nil {
+			c.Error(err)
+			return 1
+		}
 
-		// if err := env.CallWithScript(in, c.options.Call); err != nil {
-		// 	c.Error(err)
-		// 	return 1
-		// }
+		b := new(bytes.Buffer)
+		if _, err := b.ReadFrom(res); err != nil {
+			c.Error(err)
+			return 1
+		}
+
+		c.ui.Println(b.String())
 	} else {
 		params.InputterPort = gateway.NewPromptInputter(c.config, env)
-
 		interactor := usecase.NewInteractor(params)
+
 		r := NewREPL(c.config.REPL, env, newColoredREPLUI("foo"), interactor)
 		defer r.Close()
 
