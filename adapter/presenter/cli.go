@@ -45,6 +45,9 @@ func (p *CLIPresenter) Call(res proto.Message) (io.Reader, error) {
 	if err := p.marshaler.Marshal(buf, res); err != nil {
 		return nil, err
 	}
+	if _, err := buf.WriteRune('\n'); err != nil {
+		return nil, err
+	}
 	return buf, nil
 }
 

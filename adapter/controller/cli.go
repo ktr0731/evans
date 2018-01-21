@@ -98,7 +98,7 @@ func (c *CLI) Run(args []string) int {
 	}
 	params := &usecase.InteractorParams{
 		Env:            env,
-		OutputPort:     presenter.NewJSONCLIPresenter(),
+		OutputPort:     presenter.NewJSONCLIPresenterWithIndent(),
 		GRPCPort:       grpcAdapter,
 		DynamicBuilder: gateway.NewDynamicBuilder(),
 	}

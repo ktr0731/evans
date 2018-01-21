@@ -154,7 +154,7 @@ func (e *Env) RPC(name string) (*RPC, error) {
 }
 
 func (e *Env) Headers() []*Header {
-	panic("not implemented yet")
+	// TODO: Headers is not implemented yet
 	return nil
 }
 
