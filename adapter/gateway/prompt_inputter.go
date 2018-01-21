@@ -30,7 +30,6 @@ func (p *RealPrompter) Input() string {
 }
 
 func (p *RealPrompter) SetPrefix(prefix string) error {
-	// return p.Prompt.OptionPrefix(e.repl.getPrompt())(e.repl.prompt)
 	return prompt.OptionPrefix(prefix)(p.Prompt)
 }
 
@@ -67,7 +66,7 @@ func (i *promptInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, 
 	req := dynamic.NewMessage(reqType)
 	fields := reqType.GetFields()
 
-	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, req, reqType).Input(fields)
+	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, req, reqType, true).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively
@@ -81,6 +80,8 @@ type fieldInputter struct {
 	msg         *dynamic.Message
 	fields      []*desc.FieldDescriptor
 	dep         messageDependency
+
+	isTopLevelMessage bool
 }
 
 type messageDependency map[string]*desc.MessageDescriptor
@@ -99,7 +100,7 @@ func resolveMessageDependency(msg *desc.MessageDescriptor, dep messageDependency
 	}
 }
 
-func newFieldInputter(prompt prompter, prefixFormat string, msg *dynamic.Message, msgType *desc.MessageDescriptor) *fieldInputter {
+func newFieldInputter(prompt prompter, prefixFormat string, msg *dynamic.Message, msgType *desc.MessageDescriptor, isTopLevelMessage bool) *fieldInputter {
 	dep := messageDependency{}
 	resolveMessageDependency(msgType, dep, map[string]bool{})
 	return &fieldInputter{
@@ -109,8 +110,9 @@ func newFieldInputter(prompt prompter, prefixFormat string, msg *dynamic.Message
 			"oneof": map[string]bool{},
 			"enum":  map[string]bool{},
 		},
-		msg: msg,
-		dep: dep,
+		msg:               msg,
+		dep:               dep,
+		isTopLevelMessage: isTopLevelMessage,
 	}
 }
 
@@ -155,7 +157,7 @@ func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) (proto.Message, er
 		case entity.IsMessageType(field.GetType()):
 			nestedFields := i.dep[field.GetMessageType().GetFullyQualifiedName()].GetFields()
 			msgType := field.GetMessageType()
-			msg, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType).Input(nestedFields)
+			msg, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType, false).Input(nestedFields)
 			if err != nil {
 				return nil, err
 			}
@@ -163,11 +165,9 @@ func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) (proto.Message, er
 				return nil, err
 			}
 		default: // primitive type
-			prefix := i.prefixFormat
-			prefix = strings.Replace(prefix, "{ancestor}", "", -1)
-			prefix = strings.Replace(prefix, "{name}", field.GetName(), -1)
-			prefix = strings.Replace(prefix, "{type}", field.GetType().String(), -1)
-			i.prompt.SetPrefix(prefix)
+			if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.isTopLevelMessage)); err != nil {
+				return nil, err
+			}
 			if err := i.inputField(i.msg, field); err != nil {
 				return nil, err
 			}
@@ -302,4 +302,40 @@ func (i *fieldInputter) convertValue(pv string, f *desc.FieldDescriptor) (interf
 		return nil, fmt.Errorf("invalid type: %#v", f.GetType())
 	}
 	return v, err
+}
+
+// makePrefix makes prefix for field f.
+// isTopLevelMessage is used to show passed f is a message and it is top-level message.
+// for example, person field is a message, Person. and a part of BorrowBookRequest.
+// also BorrowBookRequest is a top-level message.
+//
+// message BorrowBookRequest {
+//  Person person = 1;
+//   Book book = 2;
+// }
+//
+func makePrefix(s string, f *desc.FieldDescriptor, isTopLevelMessage bool) string {
+	ancestor := []string{}
+	var d desc.Descriptor = f.GetParent()
+
+	// if f is a top-level, message, exclude name of top-level message.
+	if isTopLevelMessage {
+		d = d.GetParent()
+	}
+
+	for d != nil {
+		ancestor = append([]string{d.GetName()}, ancestor...)
+		d = d.GetParent()
+	}
+	// remove file name
+	ancestor = ancestor[1:]
+
+	joinedAncestor := strings.Join(ancestor, "::")
+	if joinedAncestor != "" {
+		joinedAncestor += "::"
+	}
+	s = strings.Replace(s, "{ancestor}", joinedAncestor, -1)
+	s = strings.Replace(s, "{name}", f.GetName(), -1)
+	s = strings.Replace(s, "{type}", f.GetType().String(), -1)
+	return s
 }

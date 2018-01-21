@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"bytes"
-	"path/filepath"
 	"testing"
 
 	"github.com/jhump/protoreflect/dynamic"
@@ -12,7 +11,7 @@ import (
 )
 
 func TestJSONFileInputter(t *testing.T) {
-	env := testhelper.SetupEnv(t, filepath.Join("helloworld", "helloworld.proto"), "helloworld", "Greeter")
+	env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
 
 	envMsg, err := env.Message("HelloRequest")
 	require.NoError(t, err)

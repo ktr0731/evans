@@ -1,11 +1,11 @@
 package gateway
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
+	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,11 +16,15 @@ func (p *mockPrompt) Input() string {
 	return "foo"
 }
 
+func (p *mockPrompt) SetPrefix(s string) error {
+	return nil
+}
+
 func TestPromptInputter_Input(t *testing.T) {
 	t.Run("normal/simple", func(t *testing.T) {
-		env := testhelper.SetupEnv(t, filepath.Join("helloworld", "helloworld.proto"), "helloworld", "Greeter")
+		env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
 
-		inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, env)}
+		inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, helper.TestConfig(), env)}
 
 		rpc, err := env.RPC("SayHello")
 		require.NoError(t, err)
@@ -35,9 +39,9 @@ func TestPromptInputter_Input(t *testing.T) {
 	})
 
 	t.Run("normal/nested_message", func(t *testing.T) {
-		env := testhelper.SetupEnv(t, filepath.Join("nested_message", "library.proto"), "library", "Library")
+		env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
 
-		inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, env)}
+		inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, helper.TestConfig(), env)}
 
 		rpc, err := env.RPC("BorrowBook")
 		require.NoError(t, err)
@@ -53,7 +57,7 @@ func TestPromptInputter_Input(t *testing.T) {
 }
 
 func Test_resolveMessageDependency(t *testing.T) {
-	env := testhelper.SetupEnv(t, filepath.Join("nested_message", "library.proto"), "library", "Library")
+	env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
 
 	msg, err := env.Message("Book")
 	require.NoError(t, err)
@@ -62,4 +66,41 @@ func Test_resolveMessageDependency(t *testing.T) {
 	resolveMessageDependency(msg.Desc, dep, map[string]bool{})
 
 	assert.Len(t, dep, 1)
+}
+
+func Test_makePrefix(t *testing.T) {
+	env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
+
+	prefix := "{ancestor}{name} ({type})"
+
+	t.Run("primitive", func(t *testing.T) {
+		msg, err := env.Message("Person")
+		require.NoError(t, err)
+
+		name := msg.Desc.GetFields()[0]
+
+		expected := "name (TYPE_STRING)"
+		actual := makePrefix(prefix, name, true)
+
+		assert.Equal(t, expected, actual)
+	})
+
+	t.Run("nested", func(t *testing.T) {
+		msg, err := env.Message("BorrowBookRequest")
+		require.NoError(t, err)
+
+		expected := []string{
+			"Person::name (TYPE_STRING)",
+			"Book::title (TYPE_STRING)",
+			"Book::author (TYPE_STRING)",
+		}
+
+		personMsg := msg.Desc.GetFields()
+		for i, m := range personMsg {
+			for j, f := range m.GetMessageType().GetFields() {
+				actual := makePrefix(prefix, f, false)
+				assert.Equal(t, expected[i+j], actual)
+			}
+		}
+	})
 }

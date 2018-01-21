@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
@@ -11,7 +10,7 @@ import (
 )
 
 func Test_fqrnToEndpoint(t *testing.T) {
-	env := testhelper.SetupEnv(t, filepath.Join("helloworld", "helloworld.proto"), "helloworld", "Greeter")
+	env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
 	rpc, err := env.RPC("SayHello")
 	require.NoError(t, err)
 
