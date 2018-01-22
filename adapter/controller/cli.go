@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	arg "github.com/alexflint/go-arg"
@@ -205,7 +206,7 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 		conf.Server.Host = opt.Host
 	}
 	if opt.Port != 50051 {
-		conf.Server.Port = string(opt.Port)
+		conf.Server.Port = strconv.Itoa(opt.Port)
 	}
 
 	// find all proto paths
