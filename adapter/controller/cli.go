@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"strconv"
 
 	arg "github.com/alexflint/go-arg"
 	multierror "github.com/hashicorp/go-multierror"
@@ -28,7 +29,7 @@ type Options struct {
 	Interactive bool     `arg:"-i,help:use interactive mode"`
 	EditConfig  bool     `arg:"-e,help:edit config file by $EDITOR"`
 	Host        string   `arg:"-h,help:gRPC host"`
-	Port        string      `arg:"-p,help:gRPC port"`
+	Port        string   `arg:"-p,help:gRPC port"`
 	Package     string   `arg:"help:default package"`
 	Service     string   `arg:"help:default service. evans parse package from this if --package is nothing."`
 	Call        string   `arg:"-c,help:call specified RPC"`
@@ -203,6 +204,9 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 	}
 	if opt.Host != "" {
 		conf.Server.Host = opt.Host
+	}
+	if _, err := strconv.Atoi(opt.Port); err != nil {
+		return nil, errors.New(`port must be integer`)
 	}
 	if opt.Port != "50051" {
 		conf.Server.Port = opt.Port
