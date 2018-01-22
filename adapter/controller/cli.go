@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	arg "github.com/alexflint/go-arg"
@@ -29,7 +28,7 @@ type Options struct {
 	Interactive bool     `arg:"-i,help:use interactive mode"`
 	EditConfig  bool     `arg:"-e,help:edit config file by $EDITOR"`
 	Host        string   `arg:"-h,help:gRPC host"`
-	Port        int      `arg:"-p,help:gRPC port"`
+	Port        string      `arg:"-p,help:gRPC port"`
 	Package     string   `arg:"help:default package"`
 	Service     string   `arg:"help:default service. evans parse package from this if --package is nothing."`
 	Call        string   `arg:"-c,help:call specified RPC"`
@@ -54,7 +53,7 @@ func NewCLI(title, version string) *CLI {
 	return &CLI{
 		ui: newUI(),
 		options: &Options{
-			Port: 50051,
+			Port: "50051",
 		},
 		config: config.Get(),
 	}
@@ -205,8 +204,8 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 	if opt.Host != "" {
 		conf.Server.Host = opt.Host
 	}
-	if opt.Port != 50051 {
-		conf.Server.Port = strconv.Itoa(opt.Port)
+	if opt.Port != "50051" {
+		conf.Server.Port = opt.Port
 	}
 
 	// find all proto paths
