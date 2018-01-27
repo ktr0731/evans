@@ -39,7 +39,12 @@ func newMessage(m *desc.MessageDescriptor) *Message {
 	// TODO: label, map, options
 	fields := make([]field, len(m.GetFields()))
 	for i, f := range m.GetFields() {
-		fields[i] = newField(f)
+		// self-referenced field
+		if IsMessageType(f.GetType()) && f.GetMessageType().GetName() == m.GetName() {
+			fields[i] = &msg
+		} else {
+			fields[i] = newField(f)
+		}
 	}
 	msg.Fields = fields
 
