@@ -61,4 +61,13 @@ func TestMessage(t *testing.T) {
 
 		require.Equal(t, len(bookMsgs)+len(libraryMsgs), 4)
 	})
+
+	t.Run("self", func(t *testing.T) {
+		d := parseFile(t, "self.proto")
+		msgs := d.GetMessageTypes()
+		require.Len(t, msgs, 1)
+
+		msg := newMessage(msgs[0])
+		assert.Equal(t, "Foo", msg.Name())
+	})
 }
