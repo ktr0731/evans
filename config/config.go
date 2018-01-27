@@ -41,6 +41,9 @@ type REPL struct {
 	Writer       string  `default:"stdout" toml:"writer"`
 	ErrWriter    string  `default:"stderr" toml:"errWriter"`
 
+	ColoredOutput bool `default:"true" toml:"coloredOutput"`
+
+	ShowSplashText bool   `default:"true" toml:"showSplashText"`
 	SplashTextPath string `default:"" toml:"splashTextPath"`
 }
 
