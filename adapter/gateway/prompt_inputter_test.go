@@ -59,6 +59,23 @@ func TestPromptInputter_Input(t *testing.T) {
 
 		assert.Equal(t, `person:<name:"foo"> book:<title:"foo" author:"foo">`, msg.String())
 	})
+
+	t.Run("normal/enum", func(t *testing.T) {
+		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
+
+		inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, helper.TestConfig(), env)}
+
+		m, err := env.Message("Book")
+		require.NoError(t, err)
+
+		dmsg, err := inputter.Input(m.Desc)
+		require.NoError(t, err)
+
+		msg, ok := dmsg.(*dynamic.Message)
+		require.True(t, ok)
+
+		assert.Equal(t, `person:<name:"foo"> book:<title:"foo" author:"foo">`, msg.String())
+	})
 }
 
 func Test_resolveMessageDependency(t *testing.T) {
