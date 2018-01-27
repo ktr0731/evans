@@ -9,6 +9,8 @@ import (
 )
 
 func SetupEnv(t *testing.T, fpath, pkgName, svcName string) *entity.Env {
+	t.Helper()
+
 	set := helper.ReadProto(t, fpath)
 
 	env := helper.NewEnv(t, set, helper.TestConfig().Env)
@@ -16,8 +18,10 @@ func SetupEnv(t *testing.T, fpath, pkgName, svcName string) *entity.Env {
 	err := env.UsePackage(pkgName)
 	require.NoError(t, err)
 
-	err = env.UseService(svcName)
-	require.NoError(t, err)
+	if svcName != "" {
+		err = env.UseService(svcName)
+		require.NoError(t, err)
+	}
 
 	return env
 }
