@@ -18,24 +18,34 @@ import (
 // for mocking
 type prompter interface {
 	Input() string
+	Select(msg string, opts []string) (string, error)
 	SetPrefix(prefix string) error
 	SetPrefixColor(color prompt.Color) error
 }
 
 type RealPrompter struct {
-	*prompt.Prompt
+	fieldPrompter *prompt.Prompt
 }
 
 func (p *RealPrompter) Input() string {
-	return p.Prompt.Input()
+	return p.fieldPrompter.Input()
+}
+
+func (p *RealPrompter) Select(msg string, opts []string) (string, error) {
+	var choice string
+	err := survey.AskOne(&survey.Select{
+		Message: msg,
+		Options: opts,
+	}, &choice, nil)
+	return choice, err
 }
 
 func (p *RealPrompter) SetPrefix(prefix string) error {
-	return prompt.OptionPrefix(prefix)(p.Prompt)
+	return prompt.OptionPrefix(prefix)(p.fieldPrompter)
 }
 
 func (p *RealPrompter) SetPrefixColor(color prompt.Color) error {
-	return prompt.OptionPrefixTextColor(color)(p.Prompt)
+	return prompt.OptionPrefixTextColor(color)(p.fieldPrompter)
 }
 
 // mixin go-prompt
@@ -202,11 +212,7 @@ func (i *fieldInputter) chooseOneof(oneof *desc.OneOfDescriptor) (*desc.FieldDes
 		descOf[choice.GetName()] = choice
 	}
 
-	var choice string
-	err := survey.AskOne(&survey.Select{
-		Message: oneof.GetName(),
-		Options: options,
-	}, &choice, nil)
+	choice, err := i.prompt.Select(oneof.GetName(), options)
 	if err != nil {
 		return nil, err
 	}
@@ -228,11 +234,7 @@ func (i *fieldInputter) chooseEnum(enum *desc.EnumDescriptor) (*desc.EnumValueDe
 		descOf[v.GetName()] = v
 	}
 
-	var choice string
-	err := survey.AskOne(&survey.Select{
-		Message: enum.GetName(),
-		Options: options,
-	}, &choice, nil)
+	choice, err := i.prompt.Select(enum.GetName(), options)
 	if err != nil {
 		return nil, err
 	}
