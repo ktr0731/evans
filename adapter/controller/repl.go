@@ -165,13 +165,15 @@ func (r *REPL) printSplash(p string) {
 	} else {
 		abs, _ = filepath.Abs(p)
 	}
-	if abs != "" {
-		_, err := os.Stat(abs)
-		if !os.IsNotExist(err) {
-			b, err := ioutil.ReadFile(abs)
-			if err == nil {
-				r.ui.Println(string(b))
-			}
+	if abs == "" {
+		return
+	}
+
+	_, err := os.Stat(abs)
+	if !os.IsNotExist(err) {
+		b, err := ioutil.ReadFile(abs)
+		if err == nil {
+			r.ui.Println(string(b))
 		}
 	}
 }
