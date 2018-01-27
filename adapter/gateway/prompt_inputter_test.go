@@ -29,7 +29,7 @@ func TestPromptInputter_Input(t *testing.T) {
 	t.Run("normal/simple", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
 
-		inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, helper.TestConfig(), env)}
+		inputter := newPromptInputter(&mockPrompt{}, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("SayHello")
 		require.NoError(t, err)
@@ -46,7 +46,7 @@ func TestPromptInputter_Input(t *testing.T) {
 	t.Run("normal/nested_message", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
 
-		inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, helper.TestConfig(), env)}
+		inputter := newPromptInputter(&mockPrompt{}, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("BorrowBook")
 		require.NoError(t, err)
@@ -63,7 +63,7 @@ func TestPromptInputter_Input(t *testing.T) {
 	t.Run("normal/enum", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 
-		inputter := &PromptInputter{newPromptInputter(&mockPrompt{}, helper.TestConfig(), env)}
+		inputter := newPromptInputter(&mockPrompt{}, helper.TestConfig(), env)
 
 		m, err := env.Message("Book")
 		require.NoError(t, err)
