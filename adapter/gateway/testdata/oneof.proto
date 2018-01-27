@@ -1,10 +1,6 @@
 syntax = "proto3";
 package shop;
 
-service TSUTAYA {
-  rpc Borrow(BorrowRequest) returns (BorrowResponse) {}
-}
-
 message Book {
   string title = 1;
   string author = 2;
@@ -20,8 +16,4 @@ message BorrowRequest {
     Book book = 1;
     CD cd = 2;
   }
-}
-
-message BorrowResponse {
-  string message = 1;
 }

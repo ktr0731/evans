@@ -7,6 +7,7 @@ import (
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
 	"github.com/ktr0731/evans/tests/helper"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -58,6 +59,81 @@ func TestPromptInputter_Input(t *testing.T) {
 		require.True(t, ok)
 
 		assert.Equal(t, `person:<name:"foo"> book:<title:"foo" author:"foo">`, msg.String())
+	})
+
+	t.Run("normal/enum", func(t *testing.T) {
+		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
+
+		prompt := &mockPrompt{}
+		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+
+		m, err := env.Message("Book")
+		require.NoError(t, err)
+
+		prompt.setExpectedSelect("PHILOSOPHY", nil)
+
+		dmsg, err := inputter.Input(m.Desc)
+		require.NoError(t, err)
+
+		msg, ok := dmsg.(*dynamic.Message)
+		require.True(t, ok)
+
+		assert.Equal(t, `type:PHILOSOPHY`, msg.String())
+	})
+
+	t.Run("error/enum:invalid enum name", func(t *testing.T) {
+		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
+
+		prompt := &mockPrompt{}
+		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+
+		m, err := env.Message("Book")
+		require.NoError(t, err)
+
+		prompt.setExpectedSelect("kumiko", nil)
+
+		_, err = inputter.Input(m.Desc)
+		e := errors.Cause(err)
+		assert.Equal(t, ErrUnknownEnumName, e)
+	})
+
+	t.Run("normal/oneof", func(t *testing.T) {
+		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
+
+		prompt := &mockPrompt{}
+		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+
+		m, err := env.Message("BorrowRequest")
+		require.NoError(t, err)
+
+		prompt.setExpectedInput("bar")
+		prompt.setExpectedSelect("book", nil)
+
+		dmsg, err := inputter.Input(m.Desc)
+		require.NoError(t, err)
+
+		msg, ok := dmsg.(*dynamic.Message)
+		require.True(t, ok)
+
+		assert.Equal(t, `book:<title:"bar" author:"bar">`, msg.String())
+	})
+
+	t.Run("error/oneof:invalid oneof field name", func(t *testing.T) {
+		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
+
+		prompt := &mockPrompt{}
+		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+
+		m, err := env.Message("BorrowRequest")
+		require.NoError(t, err)
+
+		prompt.setExpectedInput("bar")
+		prompt.setExpectedSelect("Book", nil)
+
+		_, err = inputter.Input(m.Desc)
+
+		e := errors.Cause(err)
+		assert.Equal(t, ErrUnknownOneofFieldName, e)
 	})
 }
 

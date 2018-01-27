@@ -13,6 +13,12 @@ import (
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
+	"github.com/pkg/errors"
+)
+
+var (
+	ErrUnknownOneofFieldName = errors.New("unknown oneof field name")
+	ErrUnknownEnumName       = errors.New("unknown enum name")
 )
 
 // for mocking
@@ -148,11 +154,18 @@ func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) (proto.Message, er
 			if i.encounteredOneof(oneof) {
 				continue
 			}
-			v, err := i.chooseOneof(oneof)
+			f, err := i.chooseOneof(oneof)
 			if err != nil {
 				return nil, err
 			}
-			if err := i.msg.TrySetField(field, v); err != nil {
+
+			msgType := f.GetMessageType()
+			fields := msgType.GetFields()
+			v, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType, false, i.color).Input(fields)
+			if err != nil {
+				return nil, err
+			}
+			if err := i.msg.TrySetField(f, v); err != nil {
 				return nil, err
 			}
 		case entity.IsEnumType(field):
@@ -215,7 +228,12 @@ func (i *fieldInputter) chooseOneof(oneof *desc.OneOfDescriptor) (*desc.FieldDes
 		return nil, err
 	}
 
-	return descOf[choice], nil
+	d, ok := descOf[choice]
+	if !ok {
+		return nil, errors.Wrap(ErrUnknownOneofFieldName, choice)
+	}
+
+	return d, nil
 }
 
 func (i *fieldInputter) encounteredEnum(enum *desc.EnumDescriptor) bool {
@@ -241,7 +259,12 @@ func (i *fieldInputter) chooseEnum(enum *desc.EnumDescriptor) (*desc.EnumValueDe
 		return nil, err
 	}
 
-	return descOf[choice], nil
+	d, ok := descOf[choice]
+	if !ok {
+		return nil, errors.Wrap(ErrUnknownEnumName, choice)
+	}
+
+	return d, nil
 }
 
 func (i *fieldInputter) inputField(req *dynamic.Message, field *desc.FieldDescriptor) error {
