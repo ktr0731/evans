@@ -66,11 +66,13 @@ func TestPromptInputter_Input(t *testing.T) {
 	t.Run("normal/nested_message", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
 
-		inputter := newPromptInputter(&mockPrompt{}, helper.TestConfig(), env)
+		prompt := &mockPrompt{}
+		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("BorrowBook")
 		require.NoError(t, err)
 
+		prompt.setExpectedInput("foo")
 		dmsg, err := inputter.Input(rpc.RequestType)
 		require.NoError(t, err)
 
