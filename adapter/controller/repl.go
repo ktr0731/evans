@@ -151,6 +151,10 @@ const defaultSplashText = `
 `
 
 func (r *REPL) printSplash(p string) {
+	if !r.config.ShowSplashText {
+		return
+	}
+
 	if p == "" {
 		r.ui.Println(defaultSplashText)
 		return
