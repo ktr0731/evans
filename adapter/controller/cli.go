@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
-	"strings"
 	"strconv"
+	"strings"
 
 	arg "github.com/alexflint/go-arg"
 	multierror "github.com/hashicorp/go-multierror"
@@ -140,7 +140,13 @@ func (c *CLI) Run(args []string) int {
 		params.InputterPort = gateway.NewPromptInputter(c.config, env)
 		interactor := usecase.NewInteractor(params)
 
-		r := NewREPL(c.config.REPL, env, newColoredREPLUI("foo"), interactor)
+		var ui ui
+		if c.config.REPL.ColoredOutput {
+			ui = newColoredREPLUI("")
+		} else {
+			ui = newREPLUI("")
+		}
+		r := NewREPL(c.config.REPL, env, ui, interactor)
 		defer r.Close()
 
 		if err := r.Start(); err != nil {

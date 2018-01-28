@@ -138,25 +138,46 @@ func (r *REPL) getPrompt() string {
 	return p
 }
 
+const defaultSplashText = `
+  ______
+ |  ____|
+ | |__    __   __   __ _   _ __    ___
+ |  __|   \ \ / /  / _. | | '_ \  / __|
+ | |____   \ V /  | (_| | | | | | \__ \
+ |______|   \_/    \__,_| |_| |_| |___/
+
+ more expressive universal gRPC client
+
+`
+
 func (r *REPL) printSplash(p string) {
-	if p != "" {
-		var abs string
-		if strings.HasPrefix(p, "~/") {
-			home, err := homedir.Dir()
-			if err == nil {
-				abs = filepath.Join(home, strings.TrimPrefix(p, "~/"))
-			}
-		} else {
-			abs, _ = filepath.Abs(p)
+	if !r.config.ShowSplashText {
+		return
+	}
+
+	if p == "" {
+		r.ui.Println(defaultSplashText)
+		return
+	}
+
+	var abs string
+	if strings.HasPrefix(p, "~/") {
+		home, err := homedir.Dir()
+		if err == nil {
+			abs = filepath.Join(home, strings.TrimPrefix(p, "~/"))
 		}
-		if abs != "" {
-			_, err := os.Stat(abs)
-			if !os.IsNotExist(err) {
-				b, err := ioutil.ReadFile(abs)
-				if err == nil {
-					r.ui.Println(string(b))
-				}
-			}
+	} else {
+		abs, _ = filepath.Abs(p)
+	}
+	if abs == "" {
+		return
+	}
+
+	_, err := os.Stat(abs)
+	if !os.IsNotExist(err) {
+		b, err := ioutil.ReadFile(abs)
+		if err == nil {
+			r.ui.Println(string(b))
 		}
 	}
 }
