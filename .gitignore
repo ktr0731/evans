@@ -31,3 +31,5 @@ vendor/
 .wercker/
 *.pb.go
 .evans.toml
+
+pkg
