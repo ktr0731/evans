@@ -36,10 +36,13 @@ type Options struct {
 	File        string   `arg:"-f,help:the script file which will be executed (used only command-line mode)"`
 	Path        []string `arg:"separate,help:proto file path"`
 	Header      []string `arg:"separate,help:headers set to each requests"`
+
+	name    string `arg:"-"`
+	version string `arg:"-"`
 }
 
 func (o *Options) Version() string {
-	return "evans 0.1.0"
+	return fmt.Sprintf("%s %s", o.name, o.version)
 }
 
 type CLI struct {
@@ -50,11 +53,13 @@ type CLI struct {
 	options *Options
 }
 
-func NewCLI(title, version string) *CLI {
+func NewCLI(name, version string) *CLI {
 	return &CLI{
 		ui: newUI(),
 		options: &Options{
-			Port: "50051",
+			Port:    "50051",
+			name:    name,
+			version: version,
 		},
 		config: config.Get(),
 	}
