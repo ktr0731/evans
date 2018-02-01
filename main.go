@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	os.Exit(run(controller.NewCLI("evans", "0.1.1")))
+	os.Exit(run(controller.NewCLI("evans", "0.1.2")))
 }
 
 func run(runnable controller.Runnable) int {
