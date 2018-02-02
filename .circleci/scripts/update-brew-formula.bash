@@ -12,7 +12,7 @@ fi
 
 VERSION=$1
 
-git clone https://github.com/ktr0731/brew-evans brew
+git clone https://github.com/ktr0731/homebrew-evans brew
 
 cd brew
 
