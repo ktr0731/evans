@@ -133,11 +133,8 @@ func getLocalConfig() (*localConfig, error) {
 	if _, err := os.Stat(localConfigName); err != nil {
 		if os.IsNotExist(err) {
 			f, err = lookupProjectRoot()
-			if err != nil {
-				return nil, err
-			}
 			// local file not found
-			if f == nil {
+			if f == nil || err != nil {
 				return nil, nil
 			}
 			defer f.Close()
