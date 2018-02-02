@@ -11,6 +11,7 @@ if [ "$GITHUB_TOKEN" = "" ]; then
 fi
 
 LATEST_VERSION=$(curl -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/ktr0731/evans/releases | jq '.[0].tag_name')
+VERSION=$1
 
 if [ "$VERSION" = "$LATEST_VERSION" ]; then
   echo 'same version'
