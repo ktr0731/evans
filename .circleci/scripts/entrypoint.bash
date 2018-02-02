@@ -17,6 +17,9 @@ if [ "$VERSION" = "$LATEST_VERSION" ]; then
   exit
 fi
 
+git config --global user.email "$GIT_EMAIL"
+git config --global user.name "$GIT_NAME"
+
 bash .circleci/scripts/build-assets.bash "$VERSION"
 bash .circleci/scripts/create-new-release.bash "$VERSION"
 bash .circleci/scripts/update-brew-formula.bash "$VERSION"

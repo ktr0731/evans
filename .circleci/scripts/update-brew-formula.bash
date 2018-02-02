@@ -12,9 +12,6 @@ fi
 
 VERSION=$1
 
-git config --global user.email "$GIT_EMAIL"
-git config --global user.name "$GIT_NAME"
-
 git clone https://github.com/ktr0731/brew-evans brew
 
 cd brew
