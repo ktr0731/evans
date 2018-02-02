@@ -7,4 +7,7 @@ fi
 
 VERSION=$1
 
+git tag "$VERSION"
+git push origin "$VERSION"
+
 ghr "$VERSION" pkg

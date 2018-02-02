@@ -20,6 +20,6 @@ fi
 git config --global user.email "$GIT_EMAIL"
 git config --global user.name "$GIT_NAME"
 
-bash .circleci/scripts/build-assets.bash "$VERSION"
-bash .circleci/scripts/create-new-release.bash "$VERSION"
-bash .circleci/scripts/update-brew-formula.bash "$VERSION"
+bash .circleci/scripts/build-assets.bash "$VERSION" || exit 1
+bash .circleci/scripts/create-new-release.bash "$VERSION" || exit 1
+bash .circleci/scripts/update-brew-formula.bash "$VERSION" || exit 1
