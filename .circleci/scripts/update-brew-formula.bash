@@ -14,8 +14,8 @@ VERSION=$1
 
 git clone https://github.com/ktr0731/homebrew-evans brew
 
-SHA256_AMD64=$(shasum -a 256 evans_darwin_amd64.tar.gz | awk '{ print $1 }')
-SHA256_386=$(shasum -a 256 evans_darwin_386.tar.gz | awk '{ print $1 }')
+SHA256_AMD64=$(shasum -a 256 pkg/evans_darwin_amd64.tar.gz | awk '{ print $1 }')
+SHA256_386=$(shasum -a 256 pkg/evans_darwin_386.tar.gz | awk '{ print $1 }')
 
 cd brew
 
