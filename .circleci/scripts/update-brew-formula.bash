@@ -19,4 +19,4 @@ cd brew
 sed -i -r "s/[0-9]+\.[0-9]+\.[0-9]+/$VERSION/" evans.rb
 git add --all
 git commit -m "bump ${VERSION}"
-git push https://github.com/ktr0731/brew-evans master
+git push origin master
