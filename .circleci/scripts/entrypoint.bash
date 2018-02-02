@@ -19,7 +19,7 @@ VERSION=$1
 
 if [ "$LATEST_VERSION" = "" ] || [ "$VERSION" = "$LATEST_VERSION" ]; then
   echo 'same version'
-  exit 1
+  exit 0
 fi
 
 git config --global user.email "$GIT_EMAIL"
