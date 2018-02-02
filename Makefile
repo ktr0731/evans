@@ -30,4 +30,4 @@ coverage:
 
 .PHONY: brew-update
 brew-update:
-	bash .circleci/scripts/entrypoint.bash
+	bash .circleci/scripts/entrypoint.bash $(VERSION)
