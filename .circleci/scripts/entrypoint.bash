@@ -10,12 +10,12 @@ if [ "$GITHUB_TOKEN" = "" ]; then
   exit 1
 fi
 
-LATEST_VERSION=$(curl -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/ktr0731/evans/releases | jq '.[0].tag_name')
+LATEST_VERSION=$(curl -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/ktr0731/evans/releases | jq -r '.[0].tag_name')
 VERSION=$1
 
-if [ "$VERSION" = "$LATEST_VERSION" ]; then
+if [ "$LATEST_VERSION" = "" ] || [ "$VERSION" = "$LATEST_VERSION" ]; then
   echo 'same version'
-  exit
+  exit 1
 fi
 
 git config --global user.email "$GIT_EMAIL"
