@@ -15,3 +15,7 @@ jobs:
       - run:
           name: test
           command: make test
+
+      - run:
+          name: update GitHub releases and update brew formula
+          command: make brew-update

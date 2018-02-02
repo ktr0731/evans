@@ -1,4 +1,10 @@
 SHELL := /bin/bash
+VERSION := $(shell grep 'version = ' < main.go | sed -r 's/\sversion = "(.*)".*/\1/')
+
+.PHONY: version
+version:
+	@echo "evans: $(VERSION)"
+
 
 .PHONY: glide
 glide:
@@ -8,16 +14,20 @@ endif
 
 .PHONY: deps
 deps: glide
-	@glide install
+	glide install
 
 .PHONY: build
 build: deps
-	@go build 
+	go build 
 
 .PHONY: test
 test:
-	@go test -race -v $(shell glide novendor)
+	go test -race -v $(shell glide novendor)
 
 .PHONY: coverage
 coverage: 
-	@go tool cover -html=coverage.out
+	go tool cover -html=coverage.out
+
+.PHONY: brew-update
+brew-update:
+	bash .circleci/scripts/entrypoint.bash $(VERSION)
