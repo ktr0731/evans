@@ -29,7 +29,8 @@ type Environment interface {
 	RPC(name string) (*RPC, error)
 
 	Headers() []*Header
-	AddHeaders(...Header) error
+	AddHeader(*Header) error
+	RemoveHeader(*Header)
 
 	UsePackage(name string) error
 	UseService(name string) error
@@ -39,6 +40,9 @@ type Environment interface {
 
 type Header struct {
 	Key, Val string
+
+	// NeedToRemove is used only from REPL header command
+	NeedToRemove bool
 }
 
 // pkgList is used by showing all packages
@@ -155,12 +159,22 @@ func (e *Env) Headers() (headers []*Header) {
 	return headers
 }
 
-func (e *Env) AddHeaders(h ...*Header) error {
-	if len(h) == 0 {
-		return errors.New("rather than one header required")
-	}
-	e.option.headers = append(e.option.headers, h...)
+func (e *Env) AddHeader(h *Header) error {
+	e.option.headers = append(e.option.headers, h)
 	return nil
+}
+
+func (e *Env) RemoveHeader(key string) {
+	for i, pair := range e.option.headers {
+		if pair.Key == key {
+			if len(e.option.headers) == i+1 {
+				e.option.headers = e.option.headers[:i]
+			} else {
+				e.option.headers = append(e.option.headers[:i], e.option.headers[i+1:]...)
+			}
+		}
+	}
+	return
 }
 
 func (e *Env) RPC(name string) (*RPC, error) {
