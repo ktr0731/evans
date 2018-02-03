@@ -52,7 +52,7 @@ func (i *Interactor) Show(params *port.ShowParams) (io.Reader, error) {
 }
 
 func (i *Interactor) Header(params *port.HeaderParams) (io.Reader, error) {
-	return Header(params, i.outputPort)
+	return Header(params, i.outputPort, i.env)
 }
 
 func (i *Interactor) Call(params *port.CallParams) (io.Reader, error) {
