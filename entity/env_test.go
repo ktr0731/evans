@@ -76,18 +76,22 @@ func TestEnv(t *testing.T) {
 	})
 
 	t.Run("Headers", func(t *testing.T) {
+		env := setup(t, nil)
+		assert.Len(t, env.Headers(), 0)
+
 		expected := []config.Header{
 			{Key: "foo", Val: "bar"},
 			{Key: "hoge", Val: "fuga"},
 		}
-		cfg := &config.Config{
-			Env: &config.Env{
-				Request: &config.Request{
-					Header: expected,
-				},
+		cfg := &config.Env{
+			Request: &config.Request{
+				Header: expected,
 			},
 		}
-		env := setup(t)
-		h := env.Headers()
+		env = setup(t, cfg)
+		for i, h := range env.Headers() {
+			assert.Equal(t, expected[i].Key, h.Key)
+			assert.Equal(t, expected[i].Val, h.Val)
+		}
 	})
 }
