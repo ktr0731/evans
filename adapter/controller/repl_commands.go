@@ -112,7 +112,7 @@ func (c *showCommand) Synopsis() string {
 }
 
 func (c *showCommand) Help() string {
-	return "usage: show <package | service | message | rpc>"
+	return "usage: show <package | service | message | rpc | header>"
 }
 
 func (c *showCommand) Validate(args []string) error {
@@ -135,6 +135,8 @@ func (c *showCommand) Run(args []string) (string, error) {
 		params.Type = port.ShowTypeMessage
 	case "a", "r", "rpc", "api":
 		params.Type = port.ShowTypeRPC
+	case "h", "header", "headers":
+		params.Type = port.ShowTypeHeader
 	default:
 		return "", errors.Wrap(ErrUnknownTarget, target)
 	}

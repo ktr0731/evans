@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -153,21 +154,35 @@ func (e *Env) Headers() (headers []*Header) {
 }
 
 func (e *Env) AddHeader(h *Header) error {
+	_, header := e.findHeader(h.Key)
+	if header != nil {
+		return fmt.Errorf("already registered key: %s", h.Key)
+	}
 	e.option.headers = append(e.option.headers, h)
 	return nil
 }
 
 func (e *Env) RemoveHeader(key string) {
-	for i, pair := range e.option.headers {
-		if pair.Key == key {
-			if len(e.option.headers) == i+1 {
-				e.option.headers = e.option.headers[:i]
-			} else {
-				e.option.headers = append(e.option.headers[:i], e.option.headers[i+1:]...)
-			}
-		}
+	i, h := e.findHeader(key)
+	// not found
+	if h == nil {
+		return
+	}
+	if len(e.option.headers) == i+1 {
+		e.option.headers = e.option.headers[:i]
+	} else {
+		e.option.headers = append(e.option.headers[:i], e.option.headers[i+1:]...)
 	}
 	return
+}
+
+func (e *Env) findHeader(key string) (int, *Header) {
+	for i, pair := range e.option.headers {
+		if pair.Key == key {
+			return i, pair
+		}
+	}
+	return 0, nil
 }
 
 func (e *Env) RPC(name string) (*RPC, error) {
