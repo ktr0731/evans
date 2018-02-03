@@ -7,3 +7,13 @@ enum BookType {
   HISTORY = 2;
   SCIENCE = 3;
 }
+
+service Foo {
+  rpc Bar (Example) returns (ExampleResponse) {}
+}
+
+message Example {
+  BookType type = 1;
+}
+
+message ExampleResponse {}
