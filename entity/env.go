@@ -163,7 +163,11 @@ func (e *Env) AddHeader(h *Header) error {
 }
 
 func (e *Env) RemoveHeader(key string) {
-	i, _ := e.findHeader(key)
+	i, h := e.findHeader(key)
+	// not found
+	if h == nil {
+		return
+	}
 	if len(e.option.headers) == i+1 {
 		e.option.headers = e.option.headers[:i]
 	} else {
