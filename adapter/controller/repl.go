@@ -37,6 +37,7 @@ func NewREPL(config *config.REPL, env *entity.Env, ui ui, inputPort port.InputPo
 		"package": &packageCommand{inputPort},
 		"service": &serviceCommand{inputPort},
 		"show":    &showCommand{inputPort},
+		"header":  &headerCommand{inputPort},
 	}
 	repl := &REPL{
 		ui:     ui,

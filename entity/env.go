@@ -52,20 +52,25 @@ type state struct {
 	currentService string
 }
 
+type option struct {
+	headers []*Header
+}
+
 type Env struct {
-	pkgs Packages
-
-	state state
-
+	pkgs   Packages
+	state  state
+	option option
 	config *config.Env
-
-	cache cache
+	cache  cache
 }
 
 func New(pkgs Packages, config *config.Env) (*Env, error) {
 	return &Env{
 		pkgs:   pkgs,
 		config: config,
+		option: option{
+			headers: config.Request.Header,
+		},
 		cache: cache{
 			pkg: map[string]*Package{},
 		},

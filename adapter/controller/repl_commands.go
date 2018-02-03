@@ -2,9 +2,11 @@ package controller
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"strings"
 
+	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
 )
@@ -164,6 +166,42 @@ func (c *callCommand) Validate(args []string) error {
 func (c *callCommand) Run(args []string) (string, error) {
 	params := &port.CallParams{args[0]}
 	res, err := c.inputPort.Call(params)
+	if err != nil {
+		return "", err
+	}
+	return read(res)
+}
+
+type headerCommand struct {
+	inputPort port.InputPort
+}
+
+func (c *headerCommand) Synopsis() string {
+	return "set/unset headers to each request. if header value is empty, the header is removed."
+}
+
+func (c *headerCommand) Help() string {
+	return "usage: header <key>=<value>[, <key>=<value>...]"
+}
+
+func (c *headerCommand) Validate(args []string) error {
+	if len(args) < 1 {
+		return errors.Wrap(ErrArgumentRequired, "<key>=<value> or <key>")
+	}
+	return nil
+}
+
+func (c *headerCommand) Run(args []string) (string, error) {
+	headers := []*entity.Header{}
+	for _, h := range args {
+		fmt.Println(h)
+		headers = append(headers, &entity.Header{
+			Key: "",
+			Val: "",
+		})
+	}
+	params := &port.HeaderParams{headers}
+	res, err := c.inputPort.Header(params)
 	if err != nil {
 		return "", err
 	}

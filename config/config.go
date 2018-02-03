@@ -49,7 +49,6 @@ type REPL struct {
 
 type Env struct {
 	Server            *Server  `toml:"-"`
-	AncestorDelimiter string   `default:":"`
 	InputPromptFormat string   `default:"{ancestor}{name} ({type}) => " toml:"inputPromptFormat"`
 	Request           *Request `toml:"request"`
 }

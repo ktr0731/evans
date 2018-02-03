@@ -148,6 +148,5 @@ type ShowParams struct {
 }
 
 type HeaderParams struct {
-	Key string
-	Val string
+	Headers []*entity.Header
 }

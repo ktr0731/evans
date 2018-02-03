@@ -203,7 +203,6 @@ func isCommandLineMode(opt *Options) bool {
 }
 
 func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
-
 	if len(opt.Header) > 0 {
 		for _, h := range opt.Header {
 			s := strings.SplitN(h, "=", 2)
