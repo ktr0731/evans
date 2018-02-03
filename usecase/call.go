@@ -28,11 +28,11 @@ func Call(
 
 	res := builder.NewMessage(rpc.ResponseType)
 
-	md := metadata.MD{}
-	for _, h := range env.Headers() {
-		md[h.Key] = []string{h.Val}
+	data := map[string]string{}
+	for _, pair := range env.Headers() {
+		data[pair.Key] = pair.Val
 	}
-	ctx := metadata.NewOutgoingContext(context.Background(), md)
+	ctx := metadata.NewOutgoingContext(context.Background(), metadata.New(data))
 
 	if err := grpcPort.Invoke(ctx, rpc.FQRN, req, res); err != nil {
 		return nil, err

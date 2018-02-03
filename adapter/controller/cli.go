@@ -203,6 +203,7 @@ func isCommandLineMode(opt *Options) bool {
 }
 
 func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
+
 	if len(opt.Header) > 0 {
 		for _, h := range opt.Header {
 			s := strings.SplitN(h, "=", 2)
@@ -210,7 +211,7 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 				return nil, errors.New(`header must be specified "key=val" format`)
 			}
 			key, val := s[0], s[1]
-			conf.Env.Request.Header = append(conf.Env.Request.Header, config.Header{key, val})
+			conf.Env.Request.Header = append(conf.Env.Request.Header, config.Header{Key: key, Value: val})
 		}
 	}
 	if opt.Host != "" {

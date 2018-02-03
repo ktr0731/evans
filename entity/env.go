@@ -140,6 +140,15 @@ func (e *Env) Message(name string) (*Message, error) {
 	return nil, errors.Wrapf(ErrInvalidMessageName, "%s not found", name)
 }
 
+func (e *Env) Headers() (headers []*Header) {
+	headers = make([]*Header, 0, len(e.config.Request.Header))
+	for _, header := range e.config.Request.Header {
+		headers = append(headers, &Header{Key: header.Key, Val: header.Value})
+	}
+
+	return headers
+}
+
 func (e *Env) RPC(name string) (*RPC, error) {
 	rpcs, err := e.RPCs()
 	if err != nil {
@@ -151,11 +160,6 @@ func (e *Env) RPC(name string) (*RPC, error) {
 		}
 	}
 	return nil, errors.Wrapf(ErrInvalidRPCName, "%s not found", name)
-}
-
-func (e *Env) Headers() []*Header {
-	// TODO: Headers is not implemented yet
-	return nil
 }
 
 func (e *Env) UsePackage(name string) error {
