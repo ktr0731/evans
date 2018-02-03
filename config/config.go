@@ -67,8 +67,8 @@ type Config struct {
 }
 
 type Default struct {
-	Package string `toml:"package"`
-	Service string `toml:"service"`
+	Package string `toml:"package" default:""`
+	Service string `toml:"service" default:""`
 }
 
 type Log struct {
@@ -90,17 +90,17 @@ func init() {
 	conf.REPL.Server = conf.Server
 	conf.Env.Server = conf.Server
 
+	mConfig, err = configure.NewConfigure(conf.Meta.Path, conf, nil)
+	if err != nil {
+		panic(err)
+	}
+
 	local, err := getLocalConfig()
 	if err != nil {
 		panic(err)
 	}
 
 	applyLocalConfig(&conf, local)
-
-	mConfig, err = configure.NewConfigure(conf.Meta.Path, conf, nil)
-	if err != nil {
-		panic(err)
-	}
 }
 
 func Get() *Config {
