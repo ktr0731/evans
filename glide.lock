@@ -1,8 +1,8 @@
 hash: 9b110fe65e53714f2e18f00a7d9b8e97181867975e8dc9fc06129dc7e64cdc4b
-updated: 2018-02-03T21:26:42.193126051+09:00
+updated: 2018-01-21T15:08:49.482810541+09:00
 imports:
 - name: github.com/AlecAivazis/survey
-  version: 2763107b87c581cecfd126e21fec4405492f294c
+  version: f051d0d636f1be0261d8d320a4b2365e7ccd9888
 - name: github.com/alexflint/go-arg
   version: 59fccacb2679dde66e0b20ed65bd26178fcbf54e
 - name: github.com/alexflint/go-scalar
@@ -18,30 +18,31 @@ imports:
 - name: github.com/fatih/color
   version: 5df930a27be2502f99b292b7cc09ebad4d0891f4
 - name: github.com/golang/protobuf
-  version: 6e4cc92cc905d5f4a73041c1b8228ea08f4c6147
+  version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
   subpackages:
   - jsonpb
   - proto
   - protoc-gen-go/descriptor
+  - ptypes
   - ptypes/any
+  - ptypes/duration
   - ptypes/struct
+  - ptypes/timestamp
 - name: github.com/hashicorp/errwrap
   version: 7554cd9344cec97297fa6649b055a8c98c2a1e55
 - name: github.com/hashicorp/go-multierror
   version: b7773ae218740a7be65057fc60b366a49b538a44
 - name: github.com/jhump/protoreflect
-  version: 8ade26da11f9c95de1041aa2988530addc889153
+  version: f2305cc70c12115f2b3275209d60956e35c7f2d3
   subpackages:
   - desc
   - desc/internal
   - dynamic
   - internal
 - name: github.com/kelseyhightower/envconfig
-  version: b6fde1625d631a48340817849a547164f395d9eb
+  version: 462fda1f11d8cad3660e52737b8beefd27acfb3f
 - name: github.com/ktr0731/go-configure
   version: 37d89cb5546f3e3f28142a781ea345e42b32d50c
-- name: github.com/ktr0731/go-shellstring
-  version: 1ce8b8bf5b06ae1ff26aa02fa393084bcb2f4b62
 - name: github.com/ktr0731/toml
   version: a368813c5e648fee92e5f6c30e3944ff9d5e8895
 - name: github.com/mattn/go-colorable
@@ -57,13 +58,13 @@ imports:
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mitchellh/mapstructure
-  version: a4e142e9c047c904fa2f1e144d9a84e6133024bc
+  version: b4575eea38cca1123ec2dc90c26529b5c5acfcff
 - name: github.com/olekukonko/tablewriter
-  version: b8a9be070da40449e501c3c4730a889e42d87a9e
+  version: 96aac992fc8b1a4c83841a6c3e7178d20d989625
 - name: github.com/peterh/liner
   version: 3681c2a912330352991ecdd642f257efe5b85518
 - name: github.com/pkg/errors
-  version: c605e284fe17294bda444b34710735b29d1a9d90
+  version: e881fd58d78e04cf6d0de1217f8707c8cc2249bc
 - name: github.com/pkg/term
   version: b1f72af2d63057363398bec5873d16a98b453312
   subpackages:
@@ -80,7 +81,7 @@ imports:
   - vendor/github.com/davecgh/go-spew/spew
   - vendor/github.com/pmezard/go-difflib/difflib
 - name: golang.org/x/net
-  version: feeb485667d1fdabe727840fe00adc22431bc86e
+  version: 5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec
   subpackages:
   - context
   - http2
@@ -95,28 +96,36 @@ imports:
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 210eee5cf7323015d097341bcf7166130d001cd8
+  version: e19ae1496984b1c655b8044a65c0300a3c878dd3
   subpackages:
   - secure/bidirule
   - transform
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/genproto
-  version: aa2eb687b4d3e17154372564ad8d6bf11c3cf21f
+  version: a8101f21cf983e773d0c1133ebc5424792003214
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: d8960bd63c6743defa6d54926e5edfa8e4a28e43
+  version: b71aced4a2a1ee80a1cbbd26b85a57623790d7f4
   subpackages:
+  - balancer
+  - balancer/base
+  - balancer/roundrobin
   - codes
+  - connectivity
   - credentials
-  - grpclb/grpc_lb_v1
+  - encoding
+  - grpclb/grpc_lb_v1/messages
   - grpclog
   - internal
   - keepalive
   - metadata
   - naming
   - peer
+  - resolver
+  - resolver/dns
+  - resolver/passthrough
   - stats
   - status
   - tap
