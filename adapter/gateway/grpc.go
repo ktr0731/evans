@@ -42,8 +42,9 @@ func (c *GRPCClient) Invoke(ctx context.Context, fqrn string, req, res interface
 //	pkg_name.svc_name.rpc_name -> /pkg_name.svc_name/rpc_name
 func (c *GRPCClient) fqrnToEndpoint(fqrn string) (string, error) {
 	sp := strings.Split(fqrn, ".")
-	if len(sp) != 3 {
+	if len(sp) < 3 {
 		return "", errors.New("invalid FQRN format")
 	}
-	return fmt.Sprintf("/%s.%s/%s", sp[0], sp[1], sp[2]), nil
+
+	return fmt.Sprintf("/%s/%s", strings.Join(sp[:len(sp)-1], "."), sp[len(sp)-1]), nil
 }
