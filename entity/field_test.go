@@ -10,7 +10,7 @@ func TestField(t *testing.T) {
 	t.Run("repeated", func(t *testing.T) {
 		d := parseFile(t, "repeated.proto")
 		msgs := d.GetMessageTypes()
-		assert.Len(t, msgs, 2)
+		assert.Len(t, msgs, 4)
 
 		m := newMessage(msgs[0])
 
