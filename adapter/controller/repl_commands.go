@@ -204,9 +204,9 @@ func (c *headerCommand) Run(args []string) (string, error) {
 				return "", fmt.Errorf("invalid char in key: %c", r)
 			}
 		}
-		// delete the key
+		// remove the key
 		if len(sp) == 1 || sp[1] == "" {
-			header.NeedToDelete = true
+			header.NeedToRemove = true
 		} else {
 			header.Val = sp[1]
 		}

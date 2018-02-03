@@ -16,14 +16,17 @@ type headerEnv struct {
 	err error
 }
 
-func (e *headerEnv) AddHeaders(h ...*entity.Header) error {
+func (e *headerEnv) AddHeader(_ *entity.Header) error {
 	return e.err
 }
+
+func (e *headerEnv) RemoveHeader(_ string) {}
 
 func TestHeader(t *testing.T) {
 	params := &port.HeaderParams{
 		Headers: []*entity.Header{
 			{Key: "tsukasa", Val: "ayatsuji"},
+			{Key: "miya", Val: "tachibana", NeedToRemove: true},
 		},
 	}
 	presenter := presenter.NewStubPresenter()

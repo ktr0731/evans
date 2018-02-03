@@ -29,20 +29,13 @@ type Environment interface {
 	RPC(name string) (*RPC, error)
 
 	Headers() []*Header
-	AddHeader(*Header) error
-	RemoveHeader(*Header)
+	AddHeader(header *Header) error
+	RemoveHeader(key string)
 
 	UsePackage(name string) error
 	UseService(name string) error
 
 	DSN() string
-}
-
-type Header struct {
-	Key, Val string
-
-	// NeedToRemove is used only from REPL header command
-	NeedToRemove bool
 }
 
 // pkgList is used by showing all packages

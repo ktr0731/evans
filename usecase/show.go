@@ -31,6 +31,9 @@ func Show(params *port.ShowParams, outputPort port.OutputPort, env entity.Enviro
 			return nil, err
 		}
 		showable = port.RPCs(rpcs)
+	case port.ShowTypeHeader:
+		headers := env.Headers()
+		showable = port.Headers(headers)
 	default:
 		return nil, errors.New("unknown showable type")
 	}

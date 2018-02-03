@@ -44,6 +44,7 @@ const (
 	ShowTypeService
 	ShowTypeMessage
 	ShowTypeRPC
+	ShowTypeHeader
 )
 
 type Showable interface {
@@ -149,4 +150,25 @@ type ShowParams struct {
 
 type HeaderParams struct {
 	Headers []*entity.Header
+}
+
+type Headers []*entity.Header
+
+func (h Headers) canShow() bool {
+	return true
+}
+
+func (h Headers) String() string {
+	buf := new(bytes.Buffer)
+	table := tablewriter.NewWriter(buf)
+	table.SetHeader([]string{"key", "val"})
+	rows := [][]string{}
+	for _, header := range h {
+		row := []string{header.Key, header.Val}
+		rows = append(rows, row)
+	}
+	table.AppendBulk(rows)
+	table.Render()
+
+	return buf.String()
 }

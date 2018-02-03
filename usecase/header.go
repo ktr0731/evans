@@ -12,8 +12,14 @@ func Header(
 	outputPort port.OutputPort,
 	env entity.Environment,
 ) (io.Reader, error) {
-	if err := env.AddHeaders(params.Headers...); err != nil {
-		return nil, err
+	for _, h := range params.Headers {
+		if h.NeedToRemove {
+			env.RemoveHeader(h.Key)
+		} else {
+			if err := env.AddHeader(h); err != nil {
+				return nil, err
+			}
+		}
 	}
 	return outputPort.Header()
 }
