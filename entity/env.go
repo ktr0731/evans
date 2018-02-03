@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -29,15 +30,13 @@ type Environment interface {
 	RPC(name string) (*RPC, error)
 
 	Headers() []*Header
+	AddHeader(header *Header) error
+	RemoveHeader(key string)
 
 	UsePackage(name string) error
 	UseService(name string) error
 
 	DSN() string
-}
-
-type Header struct {
-	Key, Val string
 }
 
 // pkgList is used by showing all packages
@@ -52,20 +51,25 @@ type state struct {
 	currentService string
 }
 
+type option struct {
+	headers []*Header
+}
+
 type Env struct {
-	pkgs Packages
-
-	state state
-
+	pkgs   Packages
+	state  state
+	option option
 	config *config.Env
-
-	cache cache
+	cache  cache
 }
 
 func New(pkgs Packages, config *config.Env) (*Env, error) {
 	return &Env{
 		pkgs:   pkgs,
 		config: config,
+		option: option{
+		// headers: config.Request.Header,
+		},
 		cache: cache{
 			pkg: map[string]*Package{},
 		},
@@ -142,11 +146,43 @@ func (e *Env) Message(name string) (*Message, error) {
 
 func (e *Env) Headers() (headers []*Header) {
 	headers = make([]*Header, 0, len(e.config.Request.Header))
-	for _, header := range e.config.Request.Header {
-		headers = append(headers, &Header{Key: header.Key, Val: header.Value})
+	for _, header := range e.option.headers {
+		headers = append(headers, &Header{Key: header.Key, Val: header.Val})
 	}
 
 	return headers
+}
+
+func (e *Env) AddHeader(h *Header) error {
+	_, header := e.findHeader(h.Key)
+	if header != nil {
+		return fmt.Errorf("already registered key: %s", h.Key)
+	}
+	e.option.headers = append(e.option.headers, h)
+	return nil
+}
+
+func (e *Env) RemoveHeader(key string) {
+	i, h := e.findHeader(key)
+	// not found
+	if h == nil {
+		return
+	}
+	if len(e.option.headers) == i+1 {
+		e.option.headers = e.option.headers[:i]
+	} else {
+		e.option.headers = append(e.option.headers[:i], e.option.headers[i+1:]...)
+	}
+	return
+}
+
+func (e *Env) findHeader(key string) (int, *Header) {
+	for i, pair := range e.option.headers {
+		if pair.Key == key {
+			return i, pair
+		}
+	}
+	return 0, nil
 }
 
 func (e *Env) RPC(name string) (*RPC, error) {

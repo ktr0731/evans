@@ -2,9 +2,12 @@ package controller
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"strings"
+	"unicode"
 
+	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
 )
@@ -109,7 +112,7 @@ func (c *showCommand) Synopsis() string {
 }
 
 func (c *showCommand) Help() string {
-	return "usage: show <package | service | message | rpc>"
+	return "usage: show <package | service | message | rpc | header>"
 }
 
 func (c *showCommand) Validate(args []string) error {
@@ -132,6 +135,8 @@ func (c *showCommand) Run(args []string) (string, error) {
 		params.Type = port.ShowTypeMessage
 	case "a", "r", "rpc", "api":
 		params.Type = port.ShowTypeRPC
+	case "h", "header", "headers":
+		params.Type = port.ShowTypeHeader
 	default:
 		return "", errors.Wrap(ErrUnknownTarget, target)
 	}
@@ -164,6 +169,53 @@ func (c *callCommand) Validate(args []string) error {
 func (c *callCommand) Run(args []string) (string, error) {
 	params := &port.CallParams{args[0]}
 	res, err := c.inputPort.Call(params)
+	if err != nil {
+		return "", err
+	}
+	return read(res)
+}
+
+type headerCommand struct {
+	inputPort port.InputPort
+}
+
+func (c *headerCommand) Synopsis() string {
+	return "set/unset headers to each request. if header value is empty, the header is removed."
+}
+
+func (c *headerCommand) Help() string {
+	return "usage: header <key>=<value>[, <key>=<value>...]"
+}
+
+func (c *headerCommand) Validate(args []string) error {
+	if len(args) < 1 {
+		return errors.Wrap(ErrArgumentRequired, "<key>=<value> or <key>")
+	}
+	return nil
+}
+
+func (c *headerCommand) Run(args []string) (string, error) {
+	headers := []*entity.Header{}
+	for _, h := range args {
+		sp := strings.SplitN(h, "=", 2)
+		header := &entity.Header{
+			Key: sp[0],
+		}
+		for _, r := range sp[0] {
+			if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-' && r != '_' && r != '.' {
+				return "", fmt.Errorf("invalid char in key: %c", r)
+			}
+		}
+		// remove the key
+		if len(sp) == 1 || sp[1] == "" {
+			header.NeedToRemove = true
+		} else {
+			header.Val = sp[1]
+		}
+		headers = append(headers, header)
+	}
+	params := &port.HeaderParams{headers}
+	res, err := c.inputPort.Header(params)
 	if err != nil {
 		return "", err
 	}

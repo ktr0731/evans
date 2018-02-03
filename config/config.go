@@ -26,8 +26,8 @@ type Server struct {
 }
 
 type Header struct {
-	Key   string `toml:"key"`
-	Value string `toml:"value"`
+	Key string `toml:"key"`
+	Val string `toml:"value"`
 }
 
 type Request struct {
@@ -49,7 +49,6 @@ type REPL struct {
 
 type Env struct {
 	Server            *Server  `toml:"-"`
-	AncestorDelimiter string   `default:":"`
 	InputPromptFormat string   `default:"{ancestor}{name} ({type}) => " toml:"inputPromptFormat"`
 	Request           *Request `toml:"request"`
 }
@@ -68,8 +67,8 @@ type Config struct {
 }
 
 type Default struct {
-	Package string `toml:"package"`
-	Service string `toml:"service"`
+	Package string `toml:"package" default:""`
+	Service string `toml:"service" default:""`
 }
 
 type Log struct {
@@ -91,17 +90,17 @@ func init() {
 	conf.REPL.Server = conf.Server
 	conf.Env.Server = conf.Server
 
+	mConfig, err = configure.NewConfigure(conf.Meta.Path, conf, nil)
+	if err != nil {
+		panic(err)
+	}
+
 	local, err := getLocalConfig()
 	if err != nil {
 		panic(err)
 	}
 
 	applyLocalConfig(&conf, local)
-
-	mConfig, err = configure.NewConfigure(conf.Meta.Path, conf, nil)
-	if err != nil {
-		panic(err)
-	}
 }
 
 func Get() *Config {

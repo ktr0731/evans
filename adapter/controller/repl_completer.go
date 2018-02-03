@@ -29,6 +29,7 @@ func (c *completer) complete(d prompt.Document) []prompt.Suggest {
 				{Text: "service"},
 				{Text: "message"},
 				{Text: "rpc"},
+				{Text: "header"},
 			}
 		}
 
