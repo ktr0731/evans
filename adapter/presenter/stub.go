@@ -32,7 +32,6 @@ func (p *StubPresenter) Show(showable port.Showable) (io.Reader, error) {
 }
 
 func (p *StubPresenter) Header() (io.Reader, error) {
-	panic("not supported yet")
 	return nil, nil
 }
 
