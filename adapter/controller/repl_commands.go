@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"unicode"
 
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
@@ -194,11 +195,22 @@ func (c *headerCommand) Validate(args []string) error {
 func (c *headerCommand) Run(args []string) (string, error) {
 	headers := []*entity.Header{}
 	for _, h := range args {
-		fmt.Println(h)
-		headers = append(headers, &entity.Header{
-			Key: "",
-			Val: "",
-		})
+		sp := strings.SplitN(h, "=", 2)
+		header := &entity.Header{
+			Key: sp[0],
+		}
+		for _, r := range sp[0] {
+			if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-' && r != '_' && r != '.' {
+				return "", fmt.Errorf("invalid char in key: %c", r)
+			}
+		}
+		// delete the key
+		if len(sp) == 1 || sp[1] == "" {
+			header.NeedToDelete = true
+		} else {
+			header.Val = sp[1]
+		}
+		headers = append(headers, header)
 	}
 	params := &port.HeaderParams{headers}
 	res, err := c.inputPort.Header(params)
