@@ -4,20 +4,21 @@ import (
 	"testing"
 
 	"github.com/jhump/protoreflect/desc"
+	"github.com/ktr0731/evans/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestEnv(t *testing.T) {
-	setup := func(t *testing.T) *Env {
+	setup := func(t *testing.T, cfg *config.Env) *Env {
 		p, err := toEntitiesFrom([]*desc.FileDescriptor{parseFile(t, "helloworld.proto")})
 		require.NoError(t, err)
-		env, err := New(p, nil)
+		env, err := New(p, cfg)
 		require.NoError(t, err)
 		return env
 	}
 
-	env := setup(t)
+	env := setup(t, nil)
 
 	t.Run("HasCurrentPackage", func(t *testing.T) {
 		assert.False(t, env.HasCurrentPackage())
@@ -72,5 +73,21 @@ func TestEnv(t *testing.T) {
 		rpc, err := env.RPC("SayHello")
 		require.NoError(t, err)
 		assert.Equal(t, "SayHello", rpc.Name)
+	})
+
+	t.Run("Headers", func(t *testing.T) {
+		expected := []config.Header{
+			{Key: "foo", Val: "bar"},
+			{Key: "hoge", Val: "fuga"},
+		}
+		cfg := &config.Config{
+			Env: &config.Env{
+				Request: &config.Request{
+					Header: expected,
+				},
+			},
+		}
+		env := setup(t)
+		h := env.Headers()
 	})
 }

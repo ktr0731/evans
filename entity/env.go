@@ -69,7 +69,7 @@ func New(pkgs Packages, config *config.Env) (*Env, error) {
 		pkgs:   pkgs,
 		config: config,
 		option: option{
-			headers: config.Request.Header,
+		// headers: config.Request.Header,
 		},
 		cache: cache{
 			pkg: map[string]*Package{},
@@ -148,7 +148,7 @@ func (e *Env) Message(name string) (*Message, error) {
 func (e *Env) Headers() (headers []*Header) {
 	headers = make([]*Header, 0, len(e.config.Request.Header))
 	for _, header := range e.config.Request.Header {
-		headers = append(headers, &Header{Key: header.Key, Val: header.Value})
+		headers = append(headers, &Header{Key: header.Key, Val: header.Val})
 	}
 
 	return headers

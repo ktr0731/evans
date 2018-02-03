@@ -26,8 +26,8 @@ type Server struct {
 }
 
 type Header struct {
-	Key   string `toml:"key"`
-	Value string `toml:"value"`
+	Key string `toml:"key"`
+	Val string `toml:"value"`
 }
 
 type Request struct {
