@@ -29,6 +29,7 @@ type Environment interface {
 	RPC(name string) (*RPC, error)
 
 	Headers() []*Header
+	AddHeaders(...Header) error
 
 	UsePackage(name string) error
 	UseService(name string) error
@@ -147,11 +148,19 @@ func (e *Env) Message(name string) (*Message, error) {
 
 func (e *Env) Headers() (headers []*Header) {
 	headers = make([]*Header, 0, len(e.config.Request.Header))
-	for _, header := range e.config.Request.Header {
+	for _, header := range e.option.headers {
 		headers = append(headers, &Header{Key: header.Key, Val: header.Val})
 	}
 
 	return headers
+}
+
+func (e *Env) AddHeaders(h ...*Header) error {
+	if len(h) == 0 {
+		return errors.New("rather than one header required")
+	}
+	e.option.headers = append(e.option.headers, h...)
+	return nil
 }
 
 func (e *Env) RPC(name string) (*RPC, error) {

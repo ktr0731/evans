@@ -76,22 +76,36 @@ func TestEnv(t *testing.T) {
 	})
 
 	t.Run("Headers", func(t *testing.T) {
-		env := setup(t, nil)
+		cfg := &config.Env{
+			Request: &config.Request{},
+		}
+		env := setup(t, cfg)
 		assert.Len(t, env.Headers(), 0)
 
 		expected := []config.Header{
 			{Key: "foo", Val: "bar"},
 			{Key: "hoge", Val: "fuga"},
 		}
-		cfg := &config.Env{
-			Request: &config.Request{
-				Header: expected,
-			},
-		}
+		cfg.Request.Header = expected
 		env = setup(t, cfg)
 		for i, h := range env.Headers() {
 			assert.Equal(t, expected[i].Key, h.Key)
 			assert.Equal(t, expected[i].Val, h.Val)
 		}
+	})
+
+	t.Run("AddHeaders", func(t *testing.T) {
+		cfg := &config.Env{
+			Request: &config.Request{},
+		}
+		env := setup(t, cfg)
+		require.Len(t, env.Headers(), 0)
+
+		err := env.AddHeaders(&Header{"megumi", "kato"})
+		require.NoError(t, err)
+		assert.Len(t, env.Headers(), 1)
+
+		err = env.AddHeaders()
+		require.Error(t, err)
 	})
 }
