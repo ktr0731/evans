@@ -19,6 +19,7 @@ import (
 var (
 	ErrUnknownOneofFieldName = errors.New("unknown oneof field name")
 	ErrUnknownEnumName       = errors.New("unknown enum name")
+	EORF                     = errors.New("end of repeated field")
 )
 
 // for mocking
@@ -102,6 +103,10 @@ type fieldInputter struct {
 	color prompt.Color
 
 	isTopLevelMessage bool
+
+	// enteredEmptyInput is used to terminate repeated field inputting
+	// if input is empty and enteredEmptyInput is true, exit repeated input prompt
+	enteredEmptyInput bool
 }
 
 type messageDependency map[string]*desc.MessageDescriptor
@@ -154,60 +159,21 @@ func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) (proto.Message, er
 	}
 
 	for _, field := range fields {
-		switch {
-		case entity.IsOneOf(field):
-			oneof := field.GetOneOf()
-			if i.encounteredOneof(oneof) {
-				continue
-			}
-			f, err := i.chooseOneof(oneof)
-			if err != nil {
-				return nil, err
-			}
+		if err := i.inputField(field); err != nil {
+			return nil, err
+		}
 
-			msgType := f.GetMessageType()
-			fields := msgType.GetFields()
-			v, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType, false, i.color).Input(fields)
-			if err != nil {
-				return nil, err
-			}
-			if err := i.msg.TrySetField(f, v); err != nil {
-				return nil, err
-			}
-		case entity.IsEnumType(field):
-			enum := field.GetEnumType()
-			if i.encounteredEnum(enum) {
-				continue
-			}
-			v, err := i.chooseEnum(enum)
-			if err != nil {
-				return nil, err
-			}
-			if err := i.msg.TrySetField(field, v.GetNumber()); err != nil {
-				return nil, err
-			}
-		case entity.IsMessageType(field.GetType()):
-			nestedFields := i.dep[field.GetMessageType().GetFullyQualifiedName()].GetFields()
-			msgType := field.GetMessageType()
-			msg, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType, false, i.color).Input(nestedFields)
-			if err != nil {
-				return nil, err
-			}
-			if err := i.msg.TrySetField(field, msg); err != nil {
-				return nil, err
-			}
-
-			// increment prompt color to next one
-			i.color = (i.color + 1) % 16
-		default: // primitive type
-			if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.isTopLevelMessage)); err != nil {
-				return nil, err
-			}
-			if err := i.inputField(i.msg, field); err != nil {
-				return nil, err
+		if field.IsRepeated() {
+			for {
+				if err := i.inputField(field); err == EORF {
+					break
+				} else if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
+
 	return i.msg, nil
 }
 
@@ -265,12 +231,86 @@ func (i *fieldInputter) chooseEnum(enum *desc.EnumDescriptor) (*desc.EnumValueDe
 	return d, nil
 }
 
-func (i *fieldInputter) inputField(req *dynamic.Message, field *desc.FieldDescriptor) error {
+func (i *fieldInputter) inputField(field *desc.FieldDescriptor) error {
+	switch {
+	case entity.IsOneOf(field):
+		oneof := field.GetOneOf()
+		if i.encounteredOneof(oneof) {
+			return nil
+		}
+		f, err := i.chooseOneof(oneof)
+		if err != nil {
+			return err
+		}
+
+		msgType := f.GetMessageType()
+		fields := msgType.GetFields()
+		v, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType, false, i.color).Input(fields)
+		if err != nil {
+			return err
+		}
+		if err := i.setField(i.msg, field, v); err != nil {
+			return err
+		}
+	case entity.IsEnumType(field):
+		enum := field.GetEnumType()
+		if i.encounteredEnum(enum) {
+			return nil
+		}
+		v, err := i.chooseEnum(enum)
+		if err != nil {
+			return err
+		}
+		if err := i.setField(i.msg, field, v.GetNumber()); err != nil {
+			return err
+		}
+	case entity.IsMessageType(field.GetType()):
+		nestedFields := i.dep[field.GetMessageType().GetFullyQualifiedName()].GetFields()
+		msgType := field.GetMessageType()
+		msg, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType, false, i.color).Input(nestedFields)
+		if err != nil {
+			return err
+		}
+		if err := i.setField(i.msg, field, msg); err != nil {
+			return err
+		}
+
+		// increment prompt color to next one
+		i.color = (i.color + 1) % 16
+	default: // primitive type
+		if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.isTopLevelMessage)); err != nil {
+			return err
+		}
+		if err := i.inputPrimitiveField(i.msg, field); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (i *fieldInputter) inputPrimitiveField(req *dynamic.Message, field *desc.FieldDescriptor) error {
 	in := i.prompt.Input()
+
+	if in == "" {
+		if i.enteredEmptyInput {
+			i.enteredEmptyInput = false
+			return EORF
+		}
+		i.enteredEmptyInput = true
+		// ignore the input
+		return i.inputPrimitiveField(req, field)
+	}
 
 	v, err := i.convertValue(in, field)
 	if err != nil {
 		return err
+	}
+	return i.setField(req, field, v)
+}
+
+func (i *fieldInputter) setField(req *dynamic.Message, field *desc.FieldDescriptor, v interface{}) error {
+	if field.IsRepeated() {
+		return req.TryAddRepeatedField(field, v)
 	}
 
 	return req.TrySetField(field, v)
