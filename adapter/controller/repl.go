@@ -12,6 +12,7 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
+	shellstring "github.com/ktr0731/go-shellstring"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 )
@@ -69,7 +70,15 @@ func NewREPL(config *config.REPL, env *entity.Env, ui ui, inputPort port.InputPo
 }
 
 func (r *REPL) eval(l string) (string, error) {
-	part := strings.Split(l, " ")
+	// trim quote
+	// e.g. key='foo' is interpreted to `foo`
+	//      key='foo bar' is `foo bar`
+	//      key='"foo bar"' is `"foo bar"`
+	//      key=foo bar is also `foo bar`
+	part, err := shellstring.Parse(l)
+	if err != nil {
+		return "", err
+	}
 
 	if part[0] == "help" {
 		r.showHelp(r.cmds)
