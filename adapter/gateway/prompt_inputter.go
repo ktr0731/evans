@@ -232,26 +232,20 @@ func (i *fieldInputter) chooseEnum(enum *desc.EnumDescriptor) (*desc.EnumValueDe
 }
 
 func (i *fieldInputter) inputField(field *desc.FieldDescriptor) error {
-	switch {
-	case entity.IsOneOf(field):
+	// if oneof, choose one from selection
+	if entity.IsOneOf(field) {
 		oneof := field.GetOneOf()
 		if i.encounteredOneof(oneof) {
 			return nil
 		}
-		f, err := i.chooseOneof(oneof)
+		var err error
+		field, err = i.chooseOneof(oneof)
 		if err != nil {
 			return err
 		}
+	}
 
-		msgType := f.GetMessageType()
-		fields := msgType.GetFields()
-		v, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType, false, i.color).Input(fields)
-		if err != nil {
-			return err
-		}
-		if err := i.setField(i.msg, field, v); err != nil {
-			return err
-		}
+	switch {
 	case entity.IsEnumType(field):
 		enum := field.GetEnumType()
 		if i.encounteredEnum(enum) {
