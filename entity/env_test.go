@@ -104,6 +104,9 @@ func TestEnv(t *testing.T) {
 		err := env.AddHeader(&Header{"megumi", "kato", false})
 		require.NoError(t, err)
 		assert.Len(t, env.Headers(), 1)
+
+		err = env.AddHeader(&Header{"megumi", "kato", false})
+		require.Error(t, err)
 	})
 
 	t.Run("RemoveHeader", func(t *testing.T) {
