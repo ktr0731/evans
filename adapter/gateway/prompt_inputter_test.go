@@ -89,12 +89,12 @@ func TestPromptInputter_Input(t *testing.T) {
 		prompt := &mockPrompt{}
 		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
 
-		m, err := env.Message("Book")
-		require.NoError(t, err)
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "enum.proto")
+		m := testhelper.FindMessage(t, "Book", descs)
 
 		prompt.setExpectedSelect("PHILOSOPHY", nil)
 
-		dmsg, err := inputter.Input(m.Desc)
+		dmsg, err := inputter.Input(m)
 		require.NoError(t, err)
 
 		msg, ok := dmsg.(*dynamic.Message)
@@ -109,12 +109,12 @@ func TestPromptInputter_Input(t *testing.T) {
 		prompt := &mockPrompt{}
 		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
 
-		m, err := env.Message("Book")
-		require.NoError(t, err)
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "enum.proto")
+		m := testhelper.FindMessage(t, "Book", descs)
 
 		prompt.setExpectedSelect("kumiko", nil)
 
-		_, err = inputter.Input(m.Desc)
+		_, err := inputter.Input(m)
 		e := errors.Cause(err)
 		assert.Equal(t, ErrUnknownEnumName, e)
 	})
@@ -125,13 +125,13 @@ func TestPromptInputter_Input(t *testing.T) {
 		prompt := &mockPrompt{}
 		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
 
-		m, err := env.Message("BorrowRequest")
-		require.NoError(t, err)
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
+		m := testhelper.FindMessage(t, "BorrowRequest", descs)
 
 		prompt.setExpectedInput("bar")
 		prompt.setExpectedSelect("book", nil)
 
-		dmsg, err := inputter.Input(m.Desc)
+		dmsg, err := inputter.Input(m)
 		require.NoError(t, err)
 
 		msg, ok := dmsg.(*dynamic.Message)
@@ -146,13 +146,13 @@ func TestPromptInputter_Input(t *testing.T) {
 		prompt := &mockPrompt{}
 		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
 
-		m, err := env.Message("BorrowRequest")
-		require.NoError(t, err)
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
+		m := testhelper.FindMessage(t, "BorrowRequest", descs)
 
 		prompt.setExpectedInput("bar")
 		prompt.setExpectedSelect("Book", nil)
 
-		_, err = inputter.Input(m.Desc)
+		_, err := inputter.Input(m)
 
 		e := errors.Cause(err)
 		assert.Equal(t, ErrUnknownOneofFieldName, e)
@@ -160,27 +160,24 @@ func TestPromptInputter_Input(t *testing.T) {
 }
 
 func Test_resolveMessageDependency(t *testing.T) {
-	env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
-
-	msg, err := env.Message("Book")
-	require.NoError(t, err)
+	descs := testhelper.ReadProtoAsFileDescriptors(t, "nested.proto")
+	m := testhelper.FindMessage(t, "Book", descs)
 
 	dep := messageDependency{}
-	resolveMessageDependency(msg.Desc, dep, map[string]bool{})
+	resolveMessageDependency(m, dep, map[string]bool{})
 
 	assert.Len(t, dep, 1)
 }
 
 func Test_makePrefix(t *testing.T) {
-	env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
+	descs := testhelper.ReadProtoAsFileDescriptors(t, "nested.proto")
 
 	prefix := "{ancestor}{name} ({type})"
 
 	t.Run("primitive", func(t *testing.T) {
-		msg, err := env.Message("Person")
-		require.NoError(t, err)
+		m := testhelper.FindMessage(t, "Person", descs)
 
-		name := msg.Desc.GetFields()[0]
+		name := m.GetFields()[0]
 
 		expected := "name (TYPE_STRING)"
 		actual := makePrefix(prefix, name, true)
@@ -189,8 +186,7 @@ func Test_makePrefix(t *testing.T) {
 	})
 
 	t.Run("nested", func(t *testing.T) {
-		msg, err := env.Message("BorrowBookRequest")
-		require.NoError(t, err)
+		m := testhelper.FindMessage(t, "BorrowBookRequest", descs)
 
 		expected := []string{
 			"Person::name (TYPE_STRING)",
@@ -198,7 +194,7 @@ func Test_makePrefix(t *testing.T) {
 			"Book::author (TYPE_STRING)",
 		}
 
-		personMsg := msg.Desc.GetFields()
+		personMsg := m.GetFields()
 		for i, m := range personMsg {
 			for j, f := range m.GetMessageType().GetFields() {
 				actual := makePrefix(prefix, f, false)

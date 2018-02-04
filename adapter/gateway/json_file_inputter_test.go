@@ -11,25 +11,23 @@ import (
 )
 
 func TestJSONFileInputter(t *testing.T) {
-	env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
-
-	envMsg, err := env.Message("HelloRequest")
-	require.NoError(t, err)
+	descs := testhelper.ReadProtoAsFileDescriptors(t, "helloworld.proto")
+	m := testhelper.FindMessage(t, "HelloRequest", descs)
 
 	jsonInput := `{
 	"name": "ktr",
 	"message": "hi"
 }`
 
-	msg := dynamic.NewMessage(envMsg.Desc)
-	err = msg.TrySetField(msg.FindFieldDescriptorByName("name"), "ktr")
+	msg := dynamic.NewMessage(m)
+	err := msg.TrySetField(msg.FindFieldDescriptorByName("name"), "ktr")
 	require.NoError(t, err)
 	err = msg.TrySetField(msg.FindFieldDescriptorByName("message"), "hi")
 	require.NoError(t, err)
 
 	in := bytes.NewReader([]byte(jsonInput))
 	inputter := NewJSONFileInputter(in)
-	actual, err := inputter.Input(envMsg.Desc)
+	actual, err := inputter.Input(m)
 	require.NoError(t, err)
 
 	assert.Exactly(t, actual, msg)
