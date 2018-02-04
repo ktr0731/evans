@@ -9,51 +9,14 @@ import (
 
 // TODO: MessageImpl と Message インターフェースを定義して、余計なメソッドを公開しないようにする
 type Message struct {
-	Fields         []field
-	OneOfs         []*OneOf
-	NestedMessages Messages
-	NestedEnums    []*Enum
-
 	desc      *desc.MessageDescriptor
 	fieldDesc *desc.FieldDescriptor // fieldDesc is nil if this message is not used as a field
 }
 
 func newMessage(m *desc.MessageDescriptor) *Message {
-	msg := Message{
+	return &Message{
 		desc: m,
 	}
-
-	msgs := make(Messages, len(m.GetNestedMessageTypes()))
-	for i, d := range m.GetNestedMessageTypes() {
-		msgs[i] = newMessage(d)
-	}
-	msg.NestedMessages = msgs
-
-	enums := make([]*Enum, len(m.GetNestedEnumTypes()))
-	for i, d := range m.GetNestedEnumTypes() {
-		enums[i] = newEnum(d)
-	}
-	msg.NestedEnums = enums
-
-	// TODO: label, map, options
-	fields := make([]field, len(m.GetFields()))
-	for i, f := range m.GetFields() {
-		// self-referenced field
-		if IsMessageType(f.GetType()) && f.GetMessageType().GetName() == m.GetName() {
-			fields[i] = &msg
-		} else {
-			fields[i] = newField(f)
-		}
-	}
-	msg.Fields = fields
-
-	oneOfs := make([]*OneOf, len(m.GetOneOfs()))
-	for i, o := range m.GetOneOfs() {
-		oneOfs[i] = newOneOf(o)
-	}
-	msg.OneOfs = oneOfs
-
-	return &msg
 }
 
 func newMessageAsField(f *desc.FieldDescriptor) *Message {
