@@ -1,22 +1,34 @@
 package entity
 
 import (
-	"bytes"
-
 	"github.com/jhump/protoreflect/desc"
-	"github.com/olekukonko/tablewriter"
 )
 
-// TODO: MessageImpl と Message インターフェースを定義して、余計なメソッドを公開しないようにする
 type Message struct {
+	fields []field
+
 	desc      *desc.MessageDescriptor
 	fieldDesc *desc.FieldDescriptor // fieldDesc is nil if this message is not used as a field
 }
 
 func newMessage(m *desc.MessageDescriptor) *Message {
-	return &Message{
+	msg := Message{
 		desc: m,
 	}
+
+	// TODO: label, map, options
+	fields := make([]field, len(m.GetFields()))
+	for i, f := range m.GetFields() {
+		// self-referenced field
+		if IsMessageType(f.GetType()) && f.GetMessageType().GetName() == m.GetName() {
+			fields[i] = &msg
+		} else {
+			fields[i] = newField(f)
+		}
+	}
+	msg.fields = fields
+
+	return &msg
 }
 
 func newMessageAsField(f *desc.FieldDescriptor) *Message {
@@ -55,34 +67,8 @@ func (m *Message) IsRepeated() bool {
 	return m.fieldDesc.IsRepeated()
 }
 
-func (m *Message) String() string {
-	buf := new(bytes.Buffer)
-	table := tablewriter.NewWriter(buf)
-	table.SetHeader([]string{"field", "type"})
-	rows := [][]string{}
-	for _, f := range m.Fields {
-		row := []string{f.Name(), f.Type()}
-		rows = append(rows, row)
-	}
-	table.AppendBulk(rows)
-	table.Render()
-
-	return buf.String()
+func (m *Message) Fields() []field {
+	return m.fields
 }
 
 type Messages []*Message
-
-func (m Messages) String() string {
-	buf := new(bytes.Buffer)
-	table := tablewriter.NewWriter(buf)
-	table.SetHeader([]string{"message"})
-	rows := [][]string{}
-	for _, message := range m {
-		row := []string{message.Name()}
-		rows = append(rows, row)
-	}
-	table.AppendBulk(rows)
-	table.Render()
-
-	return buf.String()
-}

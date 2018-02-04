@@ -12,5 +12,5 @@ func Describe(params *port.DescribeParams, outputPort port.OutputPort, env entit
 	if err != nil {
 		return nil, err
 	}
-	return outputPort.Describe(msg)
+	return outputPort.Describe(&message{msg})
 }

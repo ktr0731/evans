@@ -1,11 +1,13 @@
 package usecase
 
 import (
+	"bytes"
 	"errors"
 	"io"
 
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
+	"github.com/olekukonko/tablewriter"
 )
 
 func Show(params *port.ShowParams, outputPort port.OutputPort, env entity.Environment) (io.Reader, error) {
@@ -39,4 +41,23 @@ func Show(params *port.ShowParams, outputPort port.OutputPort, env entity.Enviro
 	}
 
 	return outputPort.Show(showable)
+}
+
+type message struct {
+	*entity.Message
+}
+
+func (m *message) Show() string {
+	buf := new(bytes.Buffer)
+	table := tablewriter.NewWriter(buf)
+	table.SetHeader([]string{"field", "type"})
+	rows := [][]string{}
+	for _, f := range m.Fields() {
+		row := []string{f.Name(), f.Type()}
+		rows = append(rows, row)
+	}
+	table.AppendBulk(rows)
+	table.Render()
+
+	return buf.String()
 }

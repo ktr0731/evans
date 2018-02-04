@@ -2,7 +2,6 @@ package port
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 
 	"github.com/ktr0731/evans/entity"
@@ -48,17 +47,12 @@ const (
 )
 
 type Showable interface {
-	canShow() bool // used as identifier only
-	fmt.Stringer
+	Show() string
 }
 
 type Packages entity.Packages
 
-func (p Packages) canShow() bool {
-	return true
-}
-
-func (p Packages) String() string {
+func (p Packages) Show() string {
 	buf := new(bytes.Buffer)
 	table := tablewriter.NewWriter(buf)
 	table.SetHeader([]string{"package"})
@@ -79,7 +73,7 @@ func (s Services) canShow() bool {
 	return true
 }
 
-func (s Services) String() string {
+func (s Services) Show() string {
 	buf := new(bytes.Buffer)
 	table := tablewriter.NewWriter(buf)
 	table.SetHeader([]string{"service", "RPC", "RequestType", "ResponseType"})
@@ -108,7 +102,7 @@ func (m Messages) canShow() bool {
 	return true
 }
 
-func (m Messages) String() string {
+func (m Messages) Show() string {
 	buf := new(bytes.Buffer)
 	table := tablewriter.NewWriter(buf)
 	table.SetHeader([]string{"message"})
@@ -129,7 +123,7 @@ func (r RPCs) canShow() bool {
 	return true
 }
 
-func (r RPCs) String() string {
+func (r RPCs) Show() string {
 	buf := new(bytes.Buffer)
 	table := tablewriter.NewWriter(buf)
 	table.SetHeader([]string{"RPC", "RequestType", "ResponseType"})
@@ -158,7 +152,7 @@ func (h Headers) canShow() bool {
 	return true
 }
 
-func (h Headers) String() string {
+func (h Headers) Show() string {
 	buf := new(bytes.Buffer)
 	table := tablewriter.NewWriter(buf)
 	table.SetHeader([]string{"key", "val"})
