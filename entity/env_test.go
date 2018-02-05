@@ -66,7 +66,7 @@ func TestEnv(t *testing.T) {
 		msg, err := env.Message("HelloRequest")
 		require.NoError(t, err)
 		assert.Equal(t, "HelloRequest", msg.Name())
-		assert.Len(t, msg.Fields, 2)
+		assert.Len(t, msg.Fields(), 2)
 	})
 
 	t.Run("RPC", func(t *testing.T) {

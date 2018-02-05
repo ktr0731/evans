@@ -13,9 +13,9 @@ func TestPrimitiveField(t *testing.T) {
 	assert.Len(t, msgs, 2)
 
 	m := newMessage(msgs[0])
-	assert.Len(t, m.Fields, 1)
-	assert.Equal(t, m.Fields[0].Name(), "name")
+	assert.Len(t, m.Fields(), 1)
+	assert.Equal(t, m.Fields()[0].Name(), "name")
 
 	stringType := descriptor.FieldDescriptorProto_Type_name[int32(descriptor.FieldDescriptorProto_TYPE_STRING)]
-	assert.Equal(t, m.Fields[0].Type(), stringType)
+	assert.Equal(t, m.Fields()[0].Type(), stringType)
 }

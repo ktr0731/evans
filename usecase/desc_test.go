@@ -32,6 +32,6 @@ func TestDescribe(t *testing.T) {
 	require.NoError(t, err)
 
 	actual := helper.ReadAllAsStr(t, res)
-
-	assert.Equal(t, expected.String(), actual)
+	m := &message{expected}
+	assert.Equal(t, m.Show(), actual)
 }

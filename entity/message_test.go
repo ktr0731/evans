@@ -19,8 +19,8 @@ func TestMessage(t *testing.T) {
 		assert.Equal(t, "Person", personMsg.Name())
 		assert.Equal(t, NON_FIELD, personMsg.Number())
 
-		require.Len(t, personMsg.Fields, 1)
-		personField := personMsg.Fields[0]
+		require.Len(t, personMsg.Fields(), 1)
+		personField := personMsg.Fields()[0]
 		assert.Equal(t, personField.Name(), "name")
 		assert.Equal(t, personField.Number(), int32(1))
 
@@ -31,8 +31,8 @@ func TestMessage(t *testing.T) {
 		assert.Equal(t, "Nested", nestedMsg.Name())
 		assert.Equal(t, NON_FIELD, nestedMsg.Number())
 
-		require.Len(t, nestedMsg.Fields, 1)
-		nestedMsgField := nestedMsg.Fields[0]
+		require.Len(t, nestedMsg.Fields(), 1)
+		nestedMsgField := nestedMsg.Fields()[0]
 		assert.Equal(t, nestedMsgField.Name(), "person")
 		assert.Equal(t, nestedMsgField.Number(), int32(1))
 
@@ -43,8 +43,8 @@ func TestMessage(t *testing.T) {
 		m, err := nestedMsgField.(*Message)
 		require.True(t, err)
 
-		require.Len(t, m.Fields, 1)
-		mField := m.Fields[0]
+		require.Len(t, m.Fields(), 1)
+		mField := m.Fields()[0]
 		assert.Equal(t, mField.Name(), "name")
 		assert.Equal(t, mField.Number(), int32(1))
 		assert.Equal(t, mField.Type(), stringType)

@@ -14,7 +14,7 @@ func TestField(t *testing.T) {
 
 		m := newMessage(msgs[0])
 
-		fields := m.Fields
+		fields := m.Fields()
 		assert.Len(t, fields, 1)
 
 		assert.True(t, fields[0].IsRepeated())
