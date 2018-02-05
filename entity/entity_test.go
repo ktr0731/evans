@@ -84,7 +84,7 @@ func toEntitiesFrom(files []*desc.FileDescriptor) (Packages, error) {
 
 	var pkgs Packages
 	for _, pkgName := range pkgNames {
-		pkgs = append(pkgs, NewPackage(pkgName, msgMap[pkgName], svcMap[pkgName]))
+		pkgs = append(pkgs, newPackage(pkgName, msgMap[pkgName], svcMap[pkgName]))
 	}
 
 	return pkgs, nil

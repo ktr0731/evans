@@ -142,7 +142,7 @@ func (c *CLI) Run(args []string) int {
 
 		c.ui.Println(b.String())
 	} else {
-		params.InputterPort = gateway.NewPromptInputter(c.config, env)
+		params.InputterPort = gateway.NewPrompt(c.config, env)
 		interactor := usecase.NewInteractor(params)
 
 		var ui ui

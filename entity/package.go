@@ -6,7 +6,7 @@ type Package struct {
 	Messages Messages
 }
 
-func NewPackage(name string, msgs Messages, svcs Services) *Package {
+func newPackage(name string, msgs Messages, svcs Services) *Package {
 	return &Package{
 		Name:     name,
 		Services: svcs,

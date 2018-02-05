@@ -56,7 +56,7 @@ func (p *RealPrompter) SetPrefixColor(color prompt.Color) error {
 }
 
 // mixin go-prompt
-func NewPromptInputter(config *config.Config, env entity.Environment) *PromptInputter {
+func NewPrompt(config *config.Config, env entity.Environment) *PromptInputter {
 	executor := func(in string) {
 		return
 	}
