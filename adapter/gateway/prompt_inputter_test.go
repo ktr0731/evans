@@ -44,7 +44,7 @@ func (p *mockPrompt) SetPrefixColor(_ prompt.Color) error {
 	return nil
 }
 
-func TestPromptInputter_Input(t *testing.T) {
+func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/simple", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
 

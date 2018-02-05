@@ -56,7 +56,7 @@ func (p *RealPrompter) SetPrefixColor(color prompt.Color) error {
 }
 
 // mixin go-prompt
-func NewPrompt(config *config.Config, env entity.Environment) *PromptInputter {
+func NewPrompt(config *config.Config, env entity.Environment) *Prompt {
 	executor := func(in string) {
 		return
 	}
@@ -66,21 +66,21 @@ func NewPrompt(config *config.Config, env entity.Environment) *PromptInputter {
 	return newPrompt(&RealPrompter{prompt.New(executor, completer)}, config, env)
 }
 
-type PromptInputter struct {
+type Prompt struct {
 	prompt prompter
 	config *config.Config
 	env    entity.Environment
 }
 
-func newPrompt(prompt prompter, config *config.Config, env entity.Environment) *PromptInputter {
-	return &PromptInputter{
+func newPrompt(prompt prompter, config *config.Config, env entity.Environment) *Prompt {
+	return &Prompt{
 		prompt: prompt,
 		config: config,
 		env:    env,
 	}
 }
 
-func (i *PromptInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, error) {
+func (i *Prompt) Input(reqType *desc.MessageDescriptor) (proto.Message, error) {
 	req := dynamic.NewMessage(reqType)
 	fields := reqType.GetFields()
 
