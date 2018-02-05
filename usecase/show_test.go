@@ -32,5 +32,5 @@ func TestShow(t *testing.T) {
 
 	actual := helper.ReadAllAsStr(t, res)
 
-	assert.Equal(t, expected.String(), actual)
+	assert.Equal(t, packages(expected).Show(), actual)
 }

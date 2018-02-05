@@ -5,7 +5,7 @@ import (
 )
 
 type Message struct {
-	fields []field
+	fields []*field
 
 	desc      *desc.MessageDescriptor
 	fieldDesc *desc.FieldDescriptor // fieldDesc is nil if this message is not used as a field
@@ -17,13 +17,11 @@ func newMessage(m *desc.MessageDescriptor) *Message {
 	}
 
 	// TODO: label, map, options
-	fields := make([]field, len(m.GetFields()))
+	fields := make([]*field, len(m.GetFields()))
 	for i, f := range m.GetFields() {
-		// self-referenced field
-		if IsMessageType(f.GetType()) && f.GetMessageType().GetName() == m.GetName() {
-			fields[i] = &msg
-		} else {
-			fields[i] = newField(f)
+		fields[i] = &field{
+			Name: f.GetName(),
+			Type: f.GetType().String(),
 		}
 	}
 	msg.fields = fields
@@ -67,7 +65,7 @@ func (m *Message) IsRepeated() bool {
 	return m.fieldDesc.IsRepeated()
 }
 
-func (m *Message) Fields() []field {
+func (m *Message) Fields() []*field {
 	return m.fields
 }
 

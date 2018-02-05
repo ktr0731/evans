@@ -16,7 +16,5 @@ func TestField(t *testing.T) {
 
 		fields := m.Fields()
 		assert.Len(t, fields, 1)
-
-		assert.True(t, fields[0].IsRepeated())
 	})
 }
