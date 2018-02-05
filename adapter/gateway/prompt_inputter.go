@@ -63,7 +63,7 @@ func NewPrompt(config *config.Config, env entity.Environment) *PromptInputter {
 	completer := func(d prompt.Document) []prompt.Suggest {
 		return nil
 	}
-	return newPromptInputter(&RealPrompter{prompt.New(executor, completer)}, config, env)
+	return newPrompt(&RealPrompter{prompt.New(executor, completer)}, config, env)
 }
 
 type PromptInputter struct {
@@ -72,7 +72,7 @@ type PromptInputter struct {
 	env    entity.Environment
 }
 
-func newPromptInputter(prompt prompter, config *config.Config, env entity.Environment) *PromptInputter {
+func newPrompt(prompt prompter, config *config.Config, env entity.Environment) *PromptInputter {
 	return &PromptInputter{
 		prompt: prompt,
 		config: config,

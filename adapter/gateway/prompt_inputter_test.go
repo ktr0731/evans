@@ -49,7 +49,7 @@ func TestPromptInputter_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
 
 		prompt := &mockPrompt{}
-		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("SayHello")
 		require.NoError(t, err)
@@ -68,7 +68,7 @@ func TestPromptInputter_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
 
 		prompt := &mockPrompt{}
-		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("BorrowBook")
 		require.NoError(t, err)
@@ -87,7 +87,7 @@ func TestPromptInputter_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 
 		prompt := &mockPrompt{}
-		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "enum.proto")
 		m := testhelper.FindMessage(t, "Book", descs)
@@ -107,7 +107,7 @@ func TestPromptInputter_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 
 		prompt := &mockPrompt{}
-		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "enum.proto")
 		m := testhelper.FindMessage(t, "Book", descs)
@@ -123,7 +123,7 @@ func TestPromptInputter_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 
 		prompt := &mockPrompt{}
-		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
 		m := testhelper.FindMessage(t, "BorrowRequest", descs)
@@ -144,7 +144,7 @@ func TestPromptInputter_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 
 		prompt := &mockPrompt{}
-		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
 		m := testhelper.FindMessage(t, "BorrowRequest", descs)
