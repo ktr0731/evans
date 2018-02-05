@@ -98,7 +98,7 @@ type fieldInputter struct {
 	encountered map[string]map[string]bool
 	msg         *dynamic.Message
 	fields      []*desc.FieldDescriptor
-	dep         messageDependency
+	dep         msgDep
 
 	color prompt.Color
 
@@ -109,10 +109,10 @@ type fieldInputter struct {
 	enteredEmptyInput bool
 }
 
-type messageDependency map[string]*desc.MessageDescriptor
+type msgDep map[string]*desc.MessageDescriptor
 
 // resolve dependencies of reqType
-func resolveMessageDependency(msg *desc.MessageDescriptor, dep messageDependency, encountered map[string]bool) {
+func resolveMessageDependency(msg *desc.MessageDescriptor, dep msgDep, encountered map[string]bool) {
 	if encountered[msg.GetFullyQualifiedName()] {
 		return
 	}
@@ -126,7 +126,7 @@ func resolveMessageDependency(msg *desc.MessageDescriptor, dep messageDependency
 }
 
 func newFieldInputter(prompter prompter, prefixFormat string, msg *dynamic.Message, msgType *desc.MessageDescriptor, isTopLevelMessage bool, color prompt.Color) *fieldInputter {
-	dep := messageDependency{}
+	dep := msgDep{}
 	resolveMessageDependency(msgType, dep, map[string]bool{})
 	return &fieldInputter{
 		prompt:       prompter,
@@ -171,6 +171,7 @@ func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) (proto.Message, er
 					return nil, err
 				}
 			}
+			i.enteredEmptyInput = false
 		}
 	}
 
@@ -285,9 +286,8 @@ func (i *fieldInputter) inputField(field *desc.FieldDescriptor) error {
 func (i *fieldInputter) inputPrimitiveField(req *dynamic.Message, field *desc.FieldDescriptor) error {
 	in := i.prompt.Input()
 
-	if in == "" {
+	if in == "" && field.IsRepeated() {
 		if i.enteredEmptyInput {
-			i.enteredEmptyInput = false
 			return EORF
 		}
 		i.enteredEmptyInput = true
