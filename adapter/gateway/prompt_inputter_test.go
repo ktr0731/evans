@@ -163,7 +163,7 @@ func Test_resolveMessageDependency(t *testing.T) {
 	descs := testhelper.ReadProtoAsFileDescriptors(t, "nested.proto")
 	m := testhelper.FindMessage(t, "Book", descs)
 
-	dep := messageDependency{}
+	dep := msgDep{}
 	resolveMessageDependency(m, dep, map[string]bool{})
 
 	assert.Len(t, dep, 1)
