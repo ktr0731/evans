@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func ReadProto(t *testing.T, fpath ...string) entity.Packages {
+func ReadProto(t *testing.T, fpath ...string) []*entity.Package {
 	for i := range fpath {
 		fpath[i] = filepath.Join("testdata", fpath[i])
 	}

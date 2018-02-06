@@ -5,24 +5,24 @@ import (
 
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/ktr0731/evans/usecase/port"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type describeEnv struct {
 	entity.Environment
 
-	expected *entity.Message
+	expected entity.Message
 }
 
-func (e *describeEnv) Message(msgName string) (*entity.Message, error) {
+func (e *describeEnv) Message(msgName string) (entity.Message, error) {
 	return e.expected, nil
 }
 
 func TestDescribe(t *testing.T) {
-	expected := &entity.Message{}
+	var expected entity.Message = testentity.NewMsg()
 
 	params := &port.DescribeParams{}
 	presenter := presenter.NewJSONCLIPresenter()
@@ -32,6 +32,6 @@ func TestDescribe(t *testing.T) {
 	require.NoError(t, err)
 
 	actual := helper.ReadAllAsStr(t, res)
-
-	assert.Equal(t, expected.String(), actual)
+	m := &message{expected}
+	require.Equal(t, m.Show(), actual)
 }

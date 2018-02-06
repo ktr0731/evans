@@ -2,8 +2,8 @@ package gateway
 
 import (
 	"github.com/golang/protobuf/proto"
-	"github.com/jhump/protoreflect/desc"
-	"github.com/jhump/protoreflect/dynamic"
+	"github.com/ktr0731/evans/adapter/protobuf"
+	"github.com/ktr0731/evans/entity"
 )
 
 type DynamicBuilder struct{}
@@ -12,6 +12,6 @@ func NewDynamicBuilder() *DynamicBuilder {
 	return &DynamicBuilder{}
 }
 
-func (b *DynamicBuilder) NewMessage(md *desc.MessageDescriptor) proto.Message {
-	return dynamic.NewMessage(md)
+func (b *DynamicBuilder) NewMessage(m entity.Message) proto.Message {
+	return protobuf.NewDynamicMessage(m)
 }

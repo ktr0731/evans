@@ -4,33 +4,38 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/jhump/protoreflect/dynamic"
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
-	"github.com/stretchr/testify/assert"
+	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/stretchr/testify/require"
 )
 
 func TestJSONFileInputter(t *testing.T) {
-	env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
-
-	envMsg, err := env.Message("HelloRequest")
+	d := testhelper.ReadProtoAsFileDescriptors(t, "helloworld.proto")
+	p, err := protobuf.ToEntitiesFrom(d)
 	require.NoError(t, err)
+
+	m := p[0].Messages[0]
 
 	jsonInput := `{
 	"name": "ktr",
 	"message": "hi"
 }`
 
-	msg := dynamic.NewMessage(envMsg.Desc)
-	err = msg.TrySetField(msg.FindFieldDescriptorByName("name"), "ktr")
+	setter := protobuf.NewMessageSetter(m)
+	err = setter.SetField(m.Fields()[0], "ktr")
 	require.NoError(t, err)
-	err = msg.TrySetField(msg.FindFieldDescriptorByName("message"), "hi")
+	err = setter.SetField(m.Fields()[1], "hi")
 	require.NoError(t, err)
 
 	in := bytes.NewReader([]byte(jsonInput))
 	inputter := NewJSONFileInputter(in)
-	actual, err := inputter.Input(envMsg.Desc)
+	res, err := inputter.Input(m)
 	require.NoError(t, err)
 
-	assert.Exactly(t, actual, msg)
+	marshaler := jsonpb.Marshaler{}
+	actual, err := marshaler.MarshalToString(res)
+	require.NoError(t, err)
+
+	require.Exactly(t, actual, `{"name":"ktr","message":"hi"}`)
 }

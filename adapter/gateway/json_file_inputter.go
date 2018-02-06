@@ -5,8 +5,8 @@ import (
 	"io"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/jhump/protoreflect/desc"
-	"github.com/jhump/protoreflect/dynamic"
+	"github.com/ktr0731/evans/adapter/protobuf"
+	"github.com/ktr0731/evans/entity"
 )
 
 type JSONFileInputter struct {
@@ -19,7 +19,7 @@ func NewJSONFileInputter(in io.Reader) *JSONFileInputter {
 	}
 }
 
-func (i *JSONFileInputter) Input(reqType *desc.MessageDescriptor) (proto.Message, error) {
-	req := dynamic.NewMessage(reqType)
+func (i *JSONFileInputter) Input(reqType entity.Message) (proto.Message, error) {
+	req := protobuf.NewDynamicMessage(reqType)
 	return req, i.decoder.Decode(req)
 }

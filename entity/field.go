@@ -1,33 +1,45 @@
 package entity
 
-import (
-	"github.com/jhump/protoreflect/desc"
-)
+type FieldType int
 
 const (
-	NON_FIELD = int32(0)
+	FieldTypePrimitive FieldType = iota
+	FieldTypeEnum
+	FieldTypeOneOf
+	FieldTypeMessage
 )
 
 // fieldable types:
-//	enum, oneof, message
-type field interface {
-	isField()
-
-	Name() string
-	Number() int32
-	Type() string
+//	enum, oneof, message, primitive
+type Field interface {
+	FieldName() string
+	FQRN() string
+	Type() FieldType
 	IsRepeated() bool
+
+	// *desc.FieldDescriptor.GetType().String()
+	// used only from port.Showable
+	PBType() string
 }
 
-func newField(desc *desc.FieldDescriptor) field {
-	var f field
-	switch {
-	case IsMessageType(desc.AsFieldDescriptorProto().GetType()):
-		f = newMessageAsField(desc)
-	case IsEnumType(desc):
-		f = newEnumAsField(desc)
-	default: // primitive field
-		f = newPrimitiveField(desc)
-	}
-	return f
+type PrimitiveField interface {
+	Field
 }
+
+// EnumField is set of values
+type EnumField interface {
+	Field
+	Enum
+}
+
+type OneOfField interface {
+	Field
+	Choices() []Field
+}
+
+type MessageField interface {
+	Field
+	Message
+}
+
+// TODO: map field

@@ -1,14 +1,16 @@
 package gateway
 
 import (
+	"fmt"
 	"testing"
 
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
+	"github.com/ktr0731/evans/adapter/protobuf"
+	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,166 +46,145 @@ func (p *mockPrompt) SetPrefixColor(_ prompt.Color) error {
 	return nil
 }
 
-func TestPromptInputter_Input(t *testing.T) {
+func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/simple", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
 
 		prompt := &mockPrompt{}
-		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("SayHello")
 		require.NoError(t, err)
 
 		prompt.setExpectedInput("foo")
-		dmsg, err := inputter.Input(rpc.RequestType)
+		dmsg, err := inputter.Input(rpc.RequestMessage())
 		require.NoError(t, err)
 
 		msg, ok := dmsg.(*dynamic.Message)
 		require.True(t, ok)
 
-		assert.Equal(t, `name:"foo" message:"foo"`, msg.String())
+		require.Equal(t, `name:"foo" message:"foo"`, msg.String())
 	})
 
 	t.Run("normal/nested_message", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
 
 		prompt := &mockPrompt{}
-		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("BorrowBook")
 		require.NoError(t, err)
 
 		prompt.setExpectedInput("foo")
-		dmsg, err := inputter.Input(rpc.RequestType)
+		dmsg, err := inputter.Input(rpc.RequestMessage())
 		require.NoError(t, err)
 
 		msg, ok := dmsg.(*dynamic.Message)
 		require.True(t, ok)
 
-		assert.Equal(t, `person:<name:"foo"> book:<title:"foo" author:"foo">`, msg.String())
+		require.Equal(t, `person:<name:"foo"> book:<title:"foo" author:"foo">`, msg.String())
 	})
 
 	t.Run("normal/enum", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 
 		prompt := &mockPrompt{}
-		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
-		m, err := env.Message("Book")
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "enum.proto")
+		p, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
+		m := p[0].Messages[0]
 
 		prompt.setExpectedSelect("PHILOSOPHY", nil)
 
-		dmsg, err := inputter.Input(m.Desc)
+		dmsg, err := inputter.Input(m)
 		require.NoError(t, err)
 
 		msg, ok := dmsg.(*dynamic.Message)
 		require.True(t, ok)
 
-		assert.Equal(t, `type:PHILOSOPHY`, msg.String())
+		require.Equal(t, `type:PHILOSOPHY`, msg.String())
 	})
 
 	t.Run("error/enum:invalid enum name", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 
 		prompt := &mockPrompt{}
-		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
-		m, err := env.Message("Book")
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "enum.proto")
+		p, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
+		m := p[0].Messages[0]
 
 		prompt.setExpectedSelect("kumiko", nil)
 
-		_, err = inputter.Input(m.Desc)
+		_, err = inputter.Input(m)
 		e := errors.Cause(err)
-		assert.Equal(t, ErrUnknownEnumName, e)
+		require.Equal(t, ErrUnknownEnumName, e)
 	})
 
 	t.Run("normal/oneof", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 
 		prompt := &mockPrompt{}
-		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
-		m, err := env.Message("BorrowRequest")
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
+		p, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
+
+		m := p[0].Messages[2]
+		require.Equal(t, m.Name(), "BorrowRequest")
+		require.Len(t, m.Fields(), 1)
 
 		prompt.setExpectedInput("bar")
 		prompt.setExpectedSelect("book", nil)
 
-		dmsg, err := inputter.Input(m.Desc)
+		dmsg, err := inputter.Input(m)
 		require.NoError(t, err)
 
 		msg, ok := dmsg.(*dynamic.Message)
 		require.True(t, ok)
 
-		assert.Equal(t, `book:<title:"bar" author:"bar">`, msg.String())
+		require.Equal(t, `book:<title:"bar" author:"bar">`, msg.String())
 	})
 
 	t.Run("error/oneof:invalid oneof field name", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 
 		prompt := &mockPrompt{}
-		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
-		m, err := env.Message("BorrowRequest")
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
+		p, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
+		m := p[0].Messages[2]
 
 		prompt.setExpectedInput("bar")
 		prompt.setExpectedSelect("Book", nil)
 
-		_, err = inputter.Input(m.Desc)
+		_, err = inputter.Input(m)
 
 		e := errors.Cause(err)
-		assert.Equal(t, ErrUnknownOneofFieldName, e)
+		require.Equal(t, ErrUnknownOneofFieldName, e)
 	})
-}
-
-func Test_resolveMessageDependency(t *testing.T) {
-	env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
-
-	msg, err := env.Message("Book")
-	require.NoError(t, err)
-
-	dep := messageDependency{}
-	resolveMessageDependency(msg.Desc, dep, map[string]bool{})
-
-	assert.Len(t, dep, 1)
 }
 
 func Test_makePrefix(t *testing.T) {
-	env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
-
 	prefix := "{ancestor}{name} ({type})"
-
+	f := testentity.NewFld()
 	t.Run("primitive", func(t *testing.T) {
-		msg, err := env.Message("Person")
-		require.NoError(t, err)
+		expected := fmt.Sprintf("%s (%s)", f.FieldName(), f.PBType())
+		actual := makePrefix(prefix, f, nil)
 
-		name := msg.Desc.GetFields()[0]
-
-		expected := "name (TYPE_STRING)"
-		actual := makePrefix(prefix, name, true)
-
-		assert.Equal(t, expected, actual)
+		require.Equal(t, expected, actual)
 	})
 
 	t.Run("nested", func(t *testing.T) {
-		msg, err := env.Message("BorrowBookRequest")
-		require.NoError(t, err)
-
-		expected := []string{
-			"Person::name (TYPE_STRING)",
-			"Book::title (TYPE_STRING)",
-			"Book::author (TYPE_STRING)",
-		}
-
-		personMsg := msg.Desc.GetFields()
-		for i, m := range personMsg {
-			for j, f := range m.GetMessageType().GetFields() {
-				actual := makePrefix(prefix, f, false)
-				assert.Equal(t, expected[i+j], actual)
-			}
-		}
+		expected := fmt.Sprintf("Foo::Bar::%s (%s)", f.FieldName(), f.PBType())
+		actual := makePrefix(prefix, f, []string{"Foo", "Bar"})
+		require.Equal(t, expected, actual)
 	})
 }

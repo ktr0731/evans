@@ -7,22 +7,21 @@ import (
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/ktr0731/evans/usecase/port"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type showEnv struct {
 	entity.Environment
 
-	expected entity.Packages
+	expected []*entity.Package
 }
 
-func (e *showEnv) Packages() entity.Packages {
+func (e *showEnv) Packages() []*entity.Package {
 	return e.expected
 }
 
 func TestShow(t *testing.T) {
-	expected := entity.Packages{{Name: "example_package"}}
+	expected := []*entity.Package{{Name: "example_package"}}
 	params := &port.ShowParams{Type: port.ShowTypePackage}
 	presenter := presenter.NewJSONCLIPresenter()
 	env := &showEnv{expected: expected}
@@ -32,5 +31,5 @@ func TestShow(t *testing.T) {
 
 	actual := helper.ReadAllAsStr(t, res)
 
-	assert.Equal(t, expected.String(), actual)
+	require.Equal(t, packages(expected).Show(), actual)
 }

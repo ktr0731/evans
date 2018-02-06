@@ -1,6 +1,10 @@
 syntax = "proto3";
 package shop;
 
+service Shop {
+  rpc Borrow(BorrowRequest) returns (BorrowResponse) {}
+}
+
 message Book {
   string title = 1;
   string author = 2;
@@ -17,3 +21,5 @@ message BorrowRequest {
     CD cd = 2;
   }
 }
+
+message BorrowResponse {}

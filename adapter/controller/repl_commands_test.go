@@ -6,7 +6,6 @@ import (
 
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,7 +43,7 @@ func Test_headCommand(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Exactly(t, c.expected, inputPort.received.Headers[0])
+			require.Exactly(t, c.expected, inputPort.received.Headers[0])
 		})
 	}
 }

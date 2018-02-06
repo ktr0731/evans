@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/protobuf/protoc-gen-go/descriptor"
-	"github.com/jhump/protoreflect/desc"
 	"github.com/ktr0731/evans/config"
 	"github.com/pkg/errors"
 )
@@ -21,13 +19,13 @@ var (
 )
 
 type Environment interface {
-	Packages() Packages
-	Services() (Services, error)
-	Messages() (Messages, error)
-	RPCs() (RPCs, error)
-	Service(name string) (*Service, error)
-	Message(name string) (*Message, error)
-	RPC(name string) (*RPC, error)
+	Packages() []*Package
+	Services() ([]Service, error)
+	Messages() ([]Message, error)
+	RPCs() ([]RPC, error)
+	Service(name string) (Service, error)
+	Message(name string) (Message, error)
+	RPC(name string) (RPC, error)
 
 	Headers() []*Header
 	AddHeader(header *Header) error
@@ -42,7 +40,7 @@ type Environment interface {
 // pkgList is used by showing all packages
 // pkg is used by extract a package by package name
 type cache struct {
-	pkgList Packages
+	pkgList []*Package
 	pkg     map[string]*Package
 }
 
@@ -56,14 +54,14 @@ type option struct {
 }
 
 type Env struct {
-	pkgs   Packages
+	pkgs   []*Package
 	state  state
 	option option
 	config *config.Env
 	cache  cache
 }
 
-func New(pkgs Packages, config *config.Env) (*Env, error) {
+func New(pkgs []*Package, config *config.Env) (*Env, error) {
 	return &Env{
 		pkgs:   pkgs,
 		config: config,
@@ -84,11 +82,11 @@ func (e *Env) HasCurrentService() bool {
 	return e.state.currentService != ""
 }
 
-func (e *Env) Packages() Packages {
+func (e *Env) Packages() []*Package {
 	return e.pkgs
 }
 
-func (e *Env) Services() (Services, error) {
+func (e *Env) Services() ([]Service, error) {
 	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
 	}
@@ -98,7 +96,7 @@ func (e *Env) Services() (Services, error) {
 	return e.cache.pkg[e.state.currentPackage].Services, nil
 }
 
-func (e *Env) Messages() (Messages, error) {
+func (e *Env) Messages() ([]Message, error) {
 	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
 	}
@@ -106,7 +104,7 @@ func (e *Env) Messages() (Messages, error) {
 	return e.cache.pkg[e.state.currentPackage].Messages, nil
 }
 
-func (e *Env) RPCs() (RPCs, error) {
+func (e *Env) RPCs() ([]RPC, error) {
 	if !e.HasCurrentService() {
 		return nil, ErrServiceUnselected
 	}
@@ -115,23 +113,23 @@ func (e *Env) RPCs() (RPCs, error) {
 	if err != nil {
 		return nil, err
 	}
-	return svc.RPCs, nil
+	return svc.RPCs(), nil
 }
 
-func (e *Env) Service(name string) (*Service, error) {
+func (e *Env) Service(name string) (Service, error) {
 	svc, err := e.Services()
 	if err != nil {
 		return nil, err
 	}
 	for _, svc := range svc {
-		if name == svc.Name {
+		if name == svc.Name() {
 			return svc, nil
 		}
 	}
 	return nil, errors.Wrapf(ErrInvalidServiceName, "%s not found", name)
 }
 
-func (e *Env) Message(name string) (*Message, error) {
+func (e *Env) Message(name string) (Message, error) {
 	msg, err := e.Messages()
 	if err != nil {
 		return nil, err
@@ -185,13 +183,13 @@ func (e *Env) findHeader(key string) (int, *Header) {
 	return 0, nil
 }
 
-func (e *Env) RPC(name string) (*RPC, error) {
+func (e *Env) RPC(name string) (RPC, error) {
 	rpcs, err := e.RPCs()
 	if err != nil {
 		return nil, err
 	}
 	for _, rpc := range rpcs {
-		if name == rpc.Name {
+		if name == rpc.Name() {
 			return rpc, nil
 		}
 	}
@@ -225,7 +223,7 @@ func (e *Env) UseService(name string) error {
 		return errors.Wrapf(err, "failed to get services")
 	}
 	for _, svc := range services {
-		if name == svc.Name {
+		if name == svc.Name() {
 			e.state.currentService = name
 			return nil
 		}
@@ -242,17 +240,4 @@ func (e *Env) DSN() string {
 		dsn += "." + e.state.currentService
 	}
 	return dsn
-}
-
-// TODO: unxport
-func IsMessageType(typeName descriptor.FieldDescriptorProto_Type) bool {
-	return typeName == descriptor.FieldDescriptorProto_TYPE_MESSAGE
-}
-
-func IsOneOf(f *desc.FieldDescriptor) bool {
-	return f.GetOneOf() != nil
-}
-
-func IsEnumType(f *desc.FieldDescriptor) bool {
-	return f.GetEnumType() != nil
 }
