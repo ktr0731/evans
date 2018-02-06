@@ -92,7 +92,7 @@ func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
 // first fieldInputter is instantiated per one request
 type fieldInputter struct {
 	prompt prompter
-	setter protobuf.MessageSetter
+	setter *protobuf.MessageSetter
 
 	prefixFormat string
 
@@ -113,18 +113,18 @@ type fieldInputter struct {
 type msgDep map[string]*desc.MessageDescriptor
 
 // resolve dependencies of reqType
-func resolveMessageDependency(msg *desc.MessageDescriptor, dep msgDep, encountered map[string]bool) {
-	if encountered[msg.GetFullyQualifiedName()] {
-		return
-	}
-
-	dep[msg.GetFullyQualifiedName()] = msg
-	for _, f := range msg.GetFields() {
-		if entity.IsMessageType(f.GetType()) {
-			resolveMessageDependency(f.GetMessageType(), dep, encountered)
-		}
-	}
-}
+// func resolveMessageDependency(msg *desc.MessageDescriptor, dep msgDep, encountered map[string]bool) {
+// 	if encountered[msg.GetFullyQualifiedName()] {
+// 		return
+// 	}
+//
+// 	dep[msg.GetFullyQualifiedName()] = msg
+// 	for _, f := range msg.GetFields() {
+// 		if entity.IsMessageType(f.GetType()) {
+// 			resolveMessageDependency(f.GetMessageType(), dep, encountered)
+// 		}
+// 	}
+// }
 
 func newFieldInputter(prompter prompter, prefixFormat string, setter *protobuf.MessageSetter, isTopLevelMessage bool, color prompt.Color) *fieldInputter {
 	// dep := msgDep{}
@@ -254,27 +254,27 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		if err != nil {
 			return err
 		}
-		if err := i.setter.SetEnumField(f, v.Number()); err != nil {
+		if err := i.setter.SetField(f, v.Number()); err != nil {
 			return err
 		}
 	case entity.MessageField:
 		// nestedFields := i.dep[field.GetMessageType().GetFullyQualifiedName()].GetFields()
-		msgType := field.GetMessageType()
-		msg, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType, false, i.color).Input(nestedFields)
+		setter := protobuf.NewMessageSetter(f)
+		fields := f.Fields()
+		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, false, i.color).Input(fields)
 		if err != nil {
 			return err
 		}
-		if err := i.setField(i.msg, field, msg); err != nil {
+		if err := i.setter.SetField(f, msg); err != nil {
 			return err
 		}
-
 		// increment prompt color to next one
 		i.color = (i.color + 1) % 16
 	case entity.PrimitiveField:
 		if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.isTopLevelMessage)); err != nil {
 			return err
 		}
-		if err := i.inputPrimitiveField(i.msg, field); err != nil {
+		if err := i.inputPrimitiveField(f); err != nil {
 			return err
 		}
 	default:
@@ -283,7 +283,7 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 	return nil
 }
 
-func (i *fieldInputter) inputPrimitiveField(req *dynamic.Message, field *desc.FieldDescriptor) error {
+func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) error {
 	in := i.prompt.Input()
 
 	if in == "" {
@@ -292,14 +292,14 @@ func (i *fieldInputter) inputPrimitiveField(req *dynamic.Message, field *desc.Fi
 		}
 		i.enteredEmptyInput = true
 		// ignore the input
-		return i.inputPrimitiveField(req, field)
+		return i.inputPrimitiveField(f)
 	}
 
-	v, err := protobuf.ConvertValue(in, field)
+	v, err := protobuf.ConvertValue(in, f)
 	if err != nil {
 		return err
 	}
-	return i.setField(req, field, v)
+	return i.setter.SetField(f, v)
 }
 
 func (i *fieldInputter) setField(req *dynamic.Message, field *desc.FieldDescriptor, v interface{}) error {
@@ -320,28 +320,28 @@ func (i *fieldInputter) setField(req *dynamic.Message, field *desc.FieldDescript
 //   Book book = 2;
 // }
 //
-func makePrefix(s string, f *desc.FieldDescriptor, isTopLevelMessage bool) string {
-	ancestor := []string{}
-	var d desc.Descriptor = f.GetParent()
-
-	// if f is a top-level, message, exclude name of top-level message.
-	if isTopLevelMessage {
-		d = d.GetParent()
-	}
-
-	for d != nil {
-		ancestor = append([]string{d.GetName()}, ancestor...)
-		d = d.GetParent()
-	}
-	// remove file name
-	ancestor = ancestor[1:]
-
-	joinedAncestor := strings.Join(ancestor, "::")
-	if joinedAncestor != "" {
-		joinedAncestor += "::"
-	}
-	s = strings.Replace(s, "{ancestor}", joinedAncestor, -1)
-	s = strings.Replace(s, "{name}", f.GetName(), -1)
-	s = strings.Replace(s, "{type}", f.GetType().String(), -1)
+func makePrefix(s string, f entity.PrimitiveField, isTopLevelMessage bool) string {
+	// ancestor := []string{}
+	// var d desc.Descriptor = f.GetParent()
+	//
+	// // if f is a top-level, message, exclude name of top-level message.
+	// if isTopLevelMessage {
+	// 	d = d.GetParent()
+	// }
+	//
+	// for d != nil {
+	// 	ancestor = append([]string{d.GetName()}, ancestor...)
+	// 	d = d.GetParent()
+	// }
+	// // remove file name
+	// ancestor = ancestor[1:]
+	//
+	// joinedAncestor := strings.Join(ancestor, "::")
+	// if joinedAncestor != "" {
+	// 	joinedAncestor += "::"
+	// }
+	// s = strings.Replace(s, "{ancestor}", joinedAncestor, -1)
+	s = strings.Replace(s, "{name}", f.FieldName(), -1)
+	s = strings.Replace(s, "{type}", f.PBType(), -1)
 	return s
 }

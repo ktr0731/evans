@@ -1,6 +1,7 @@
 package protobuf
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -11,11 +12,17 @@ import (
 
 // ConvertValue holds value and error of conversion
 // each cast (Parse*) returns falsy value when failed to parse argument
-func ConvertValue(pv string, f *desc.FieldDescriptor) (interface{}, error) {
+func ConvertValue(pv string, field entity.PrimitiveField) (interface{}, error) {
+	f, ok := field.(*primitiveField)
+	if !ok {
+		return nil, errors.New("type assertion failed")
+	}
+
 	var v interface{}
 	var err error
 
-	switch f.GetType() {
+	t := descriptor.FieldDescriptorProto_Type(descriptor.FieldDescriptorProto_Type_value[f.PBType()])
+	switch t {
 	case descriptor.FieldDescriptorProto_TYPE_DOUBLE:
 		v, err = strconv.ParseFloat(pv, 64)
 
@@ -69,7 +76,7 @@ func ConvertValue(pv string, f *desc.FieldDescriptor) (interface{}, error) {
 		v = int32(v.(int64))
 
 	default:
-		return nil, fmt.Errorf("invalid type: %#v", f.GetType())
+		return nil, fmt.Errorf("invalid type: %s", t)
 	}
 	return v, err
 }

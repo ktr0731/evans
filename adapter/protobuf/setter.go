@@ -3,7 +3,6 @@ package protobuf
 import (
 	"errors"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/entity"
 )
@@ -18,16 +17,11 @@ func NewMessageSetter(m entity.Message) *MessageSetter {
 	}
 }
 
-func (s *MessageSetter) SetEnumField(f entity.EnumField, v int32) error {
-	e, ok := f.(*enumField)
-	if !ok {
+func (s *MessageSetter) SetField(field entity.Field, v interface{}) error {
+	switch f := field.(type) {
+	case *enumField:
+		return s.m.TrySetField(f.d, v)
+	default:
 		return errors.New("type assertion failed")
 	}
-	return s.m.TrySetField(e.d, v)
-}
-
-func (s *MessageSetter) Done() proto.Message {
-	m := s.m
-	s.m = nil
-	return m
 }

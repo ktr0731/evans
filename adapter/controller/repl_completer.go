@@ -47,7 +47,7 @@ func (c *completer) complete(d prompt.Document) []prompt.Suggest {
 		}
 		s = make([]prompt.Suggest, len(svcs))
 		for i, svc := range svcs {
-			s[i] = prompt.Suggest{Text: svc.Name}
+			s[i] = prompt.Suggest{Text: svc.Name()}
 		}
 
 	case "call":
@@ -57,7 +57,7 @@ func (c *completer) complete(d prompt.Document) []prompt.Suggest {
 		}
 		s = make([]prompt.Suggest, len(rpcs))
 		for i, rpc := range rpcs {
-			s[i] = prompt.Suggest{Text: rpc.Name}
+			s[i] = prompt.Suggest{Text: rpc.Name()}
 		}
 
 	case "desc":
