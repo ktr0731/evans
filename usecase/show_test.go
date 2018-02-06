@@ -14,15 +14,15 @@ import (
 type showEnv struct {
 	entity.Environment
 
-	expected entity.Packages
+	expected []*entity.Package
 }
 
-func (e *showEnv) Packages() entity.Packages {
+func (e *showEnv) Packages() []*entity.Package {
 	return e.expected
 }
 
 func TestShow(t *testing.T) {
-	expected := entity.Packages{{Name: "example_package"}}
+	expected := []*entity.Package{{Name: "example_package"}}
 	params := &port.ShowParams{Type: port.ShowTypePackage}
 	presenter := presenter.NewJSONCLIPresenter()
 	env := &showEnv{expected: expected}
