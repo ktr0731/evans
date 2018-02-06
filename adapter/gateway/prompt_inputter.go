@@ -79,11 +79,10 @@ func newPrompt(prompt prompter, config *config.Config, env entity.Environment) *
 // impl of port.Inputter
 func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
 	setter := protobuf.NewMessageSetter(reqType)
-	// req := dynamic.NewMessage(reqType)
 	fields := reqType.Fields()
 
 	// DarkGreen is the initial color
-	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, setter, true, []string{}, prompt.DarkGreen).Input(fields)
+	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, setter, []string{}, prompt.DarkGreen).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively
@@ -97,21 +96,18 @@ type fieldInputter struct {
 
 	color prompt.Color
 
-	isTopLevelMessage bool
-
 	// enteredEmptyInput is used to terminate repeated field inputting
 	// if input is empty and enteredEmptyInput is true, exit repeated input prompt
 	enteredEmptyInput bool
 }
 
-func newFieldInputter(prompter prompter, prefixFormat string, setter *protobuf.MessageSetter, isTopLevelMessage bool, ancestor []string, color prompt.Color) *fieldInputter {
+func newFieldInputter(prompter prompter, prefixFormat string, setter *protobuf.MessageSetter, ancestor []string, color prompt.Color) *fieldInputter {
 	return &fieldInputter{
-		prompt:            prompter,
-		setter:            setter,
-		prefixFormat:      prefixFormat,
-		ancestor:          ancestor,
-		isTopLevelMessage: isTopLevelMessage,
-		color:             color,
+		prompt:       prompter,
+		setter:       setter,
+		prefixFormat: prefixFormat,
+		ancestor:     ancestor,
+		color:        color,
 	}
 }
 
@@ -216,7 +212,7 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		setter := protobuf.NewMessageSetter(f)
 		fields := f.Fields()
 
-		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, false, append(i.ancestor, f.Name()), i.color).Input(fields)
+		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.Name()), i.color).Input(fields)
 		if err != nil {
 			return err
 		}
@@ -242,12 +238,16 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) error {
 	in := i.prompt.Input()
 
 	if in == "" {
-		if i.enteredEmptyInput {
-			return EORF
+		if f.IsRepeated() {
+			if i.enteredEmptyInput {
+				return EORF
+			}
+			i.enteredEmptyInput = true
+			// ignore the input
+			return i.inputPrimitiveField(f)
 		}
-		i.enteredEmptyInput = true
-		// ignore the input
-		return i.inputPrimitiveField(f)
+	} else {
+		i.enteredEmptyInput = false
 	}
 
 	v, err := protobuf.ConvertValue(in, f)
