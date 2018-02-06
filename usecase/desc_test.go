@@ -8,7 +8,6 @@ import (
 	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/ktr0731/evans/usecase/port"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,5 +33,5 @@ func TestDescribe(t *testing.T) {
 
 	actual := helper.ReadAllAsStr(t, res)
 	m := &message{expected}
-	assert.Equal(t, m.Show(), actual)
+	require.Equal(t, m.Show(), actual)
 }

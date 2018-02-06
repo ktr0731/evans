@@ -6,7 +6,6 @@ import (
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,5 +28,5 @@ func TestService(t *testing.T) {
 
 	_, err := Service(params, presenter, env)
 	require.NoError(t, err)
-	assert.Equal(t, expected, env.usedService)
+	require.Equal(t, expected, env.usedService)
 }

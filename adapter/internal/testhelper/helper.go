@@ -8,7 +8,7 @@ import (
 	"github.com/ktr0731/evans/adapter/internal/proto_parser"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/tests/helper"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,7 +18,7 @@ func ReadProtoAsFileDescriptors(t *testing.T, fpath ...string) []*desc.FileDescr
 	}
 	set, err := proto_parser.ParseFile(fpath, nil)
 	require.NoError(t, err)
-	assert.Len(t, set, len(fpath))
+	require.Len(t, set, len(fpath))
 	return set
 }
 

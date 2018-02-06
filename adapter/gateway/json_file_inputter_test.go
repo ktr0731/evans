@@ -6,7 +6,6 @@ import (
 
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,5 +29,5 @@ func TestJSONFileInputter(t *testing.T) {
 	actual, err := inputter.Input(m)
 	require.NoError(t, err)
 
-	assert.Exactly(t, actual, msg)
+	require.Exactly(t, actual, msg)
 }

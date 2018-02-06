@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func NewEnv(t *testing.T, desc entity.Packages, config *config.Env) *entity.Env {
+func NewEnv(t *testing.T, desc []*entity.Package, config *config.Env) *entity.Env {
 	env, err := entity.New(desc, config)
 	require.NoError(t, err)
 	return env

@@ -6,7 +6,6 @@ import (
 
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,6 +26,6 @@ func TestCLIPresenter(t *testing.T) {
 		b, err := ioutil.ReadAll(out)
 		require.NoError(t, err)
 
-		assert.Equal(t, `{"name":"makise","message":"kurisu"}`+"\n", string(b))
+		require.Equal(t, `{"name":"makise","message":"kurisu"}`+"\n", string(b))
 	})
 }

@@ -4,18 +4,18 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPrimitiveField(t *testing.T) {
 	d := parseFile(t, "message.proto")
 	msgs := d.GetMessageTypes()
-	assert.Len(t, msgs, 2)
+	require.Len(t, msgs, 2)
 
 	m := newMessage(msgs[0])
-	assert.Len(t, m.Fields, 1)
-	assert.Equal(t, m.Fields[0].Name(), "name")
+	require.Len(t, m.Fields(), 1)
+	require.Equal(t, m.Fields()[0].FieldName(), "name")
 
 	stringType := descriptor.FieldDescriptorProto_Type_name[int32(descriptor.FieldDescriptorProto_TYPE_STRING)]
-	assert.Equal(t, m.Fields[0].Type(), stringType)
+	require.Equal(t, m.Fields()[0].Type(), stringType)
 }

@@ -12,7 +12,7 @@ type enum struct {
 }
 
 func newEnum(d *desc.EnumDescriptor) entity.Enum {
-	values := make([]entity.EnumValue, len(d.GetValues()))
+	values := make([]entity.EnumValue, 0, len(d.GetValues()))
 	for _, v := range d.GetValues() {
 		values = append(values, newEnumValue(v))
 	}

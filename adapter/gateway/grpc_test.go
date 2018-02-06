@@ -5,7 +5,6 @@ import (
 
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
 	"github.com/ktr0731/evans/tests/helper"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,5 +19,5 @@ func Test_fqrnToEndpoint(t *testing.T) {
 
 	fqrn, err := client.fqrnToEndpoint(rpc.FQRN)
 	require.NoError(t, err)
-	assert.Equal(t, fqrn, "/helloworld.Greeter/SayHello")
+	require.Equal(t, fqrn, "/helloworld.Greeter/SayHello")
 }

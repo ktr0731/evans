@@ -9,7 +9,6 @@ import (
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/usecase/port"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 )
@@ -65,7 +64,7 @@ func TestCall(t *testing.T) {
 		res, err := Call(params, presenter, inputter, grpcClient, builder, env)
 		require.NoError(t, err)
 
-		assert.Equal(t, nil, res)
+		require.Equal(t, nil, res)
 	})
 
 	t.Run("with headers", func(t *testing.T) {
@@ -76,7 +75,7 @@ func TestCall(t *testing.T) {
 		res, err := Call(params, presenter, inputter, grpcClient, builder, env)
 		require.NoError(t, err)
 
-		assert.Equal(t, nil, res)
+		require.Equal(t, nil, res)
 
 		md, ok := metadata.FromOutgoingContext(grpcClient.actualCtx)
 		require.True(t, ok)

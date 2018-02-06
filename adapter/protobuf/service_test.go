@@ -3,7 +3,6 @@ package protobuf
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,6 +12,6 @@ func TestService(t *testing.T) {
 	require.Len(t, svcs, 1)
 
 	svc := newService(svcs[0])
-	assert.Equal(t, "Greeter", svc.Name)
-	assert.Len(t, svc.RPCs, 1)
+	require.Equal(t, "Greeter", svc.Name)
+	require.Len(t, svc.RPCs, 1)
 }

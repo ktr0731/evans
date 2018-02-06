@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,27 +18,25 @@ func TestMessage(t *testing.T) {
 
 		t.Run("Person message", func(t *testing.T) {
 			personMsg := newMessage(msgs[0])
-			assert.Equal(t, "Person", personMsg.Name())
-			assert.Equal(t, NON_FIELD, personMsg.Number())
+			require.Equal(t, "Person", personMsg.Name())
 
 			require.Len(t, personMsg.Fields(), 1)
 			personField := personMsg.Fields()[0]
-			assert.Equal(t, personField.Name, "name")
+			require.Equal(t, personField.FieldName(), "name")
 
-			assert.Equal(t, personField.Type, stringType)
+			require.Equal(t, personField.Type, stringType)
 		})
 
 		t.Run("Nested message", func(t *testing.T) {
 			nestedMsg := newMessage(msgs[1])
-			assert.Equal(t, "Nested", nestedMsg.Name())
-			assert.Equal(t, NON_FIELD, nestedMsg.Number())
+			require.Equal(t, "Nested", nestedMsg.Name())
 
 			require.Len(t, nestedMsg.Fields(), 1)
 			nestedMsgField := nestedMsg.Fields()[0]
-			assert.Equal(t, nestedMsgField.Name, "person")
+			require.Equal(t, nestedMsgField.FieldName(), "person")
 
 			msgType := descriptor.FieldDescriptorProto_Type_name[int32(descriptor.FieldDescriptorProto_TYPE_MESSAGE)]
-			assert.Equal(t, nestedMsgField.Type, msgType)
+			require.Equal(t, nestedMsgField.Type, msgType)
 		})
 	})
 
@@ -61,6 +58,6 @@ func TestMessage(t *testing.T) {
 		require.Len(t, msgs, 1)
 
 		msg := newMessage(msgs[0])
-		assert.Equal(t, "Foo", msg.Name())
+		require.Equal(t, "Foo", msg.Name())
 	})
 }
