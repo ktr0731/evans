@@ -59,22 +59,22 @@ func (p packages) Show() string {
 	return buf.String()
 }
 
-type services entity.Services
+type services []entity.Service
 
 func (s services) Show() string {
 	buf := new(bytes.Buffer)
 	table := tablewriter.NewWriter(buf)
 	table.SetHeader([]string{"service", "RPC", "RequestType", "ResponseType"})
 	rows := [][]string{}
-	for _, service := range s {
+	for _, svc := range s {
 		first := true
-		for _, rpc := range service.RPCs {
-			serviceName := ""
+		for _, rpc := range svc.RPCs() {
+			svcName := ""
 			if first {
-				serviceName = service.Name
+				svcName = svc.Name()
 				first = false
 			}
-			row := []string{serviceName, rpc.Name, rpc.RequestType.GetName(), rpc.ResponseType.GetName()}
+			row := []string{svcName, rpc.Name(), rpc.RequestMessage().Name(), rpc.ResponseMessage().Name()}
 			rows = append(rows, row)
 		}
 	}
@@ -85,7 +85,7 @@ func (s services) Show() string {
 }
 
 type message struct {
-	*entity.Message
+	entity.Message
 }
 
 func (m *message) Show() string {
@@ -94,7 +94,7 @@ func (m *message) Show() string {
 	table.SetHeader([]string{"field", "type"})
 	rows := [][]string{}
 	for _, f := range m.Fields() {
-		row := []string{f.Name, f.Type}
+		row := []string{f.FieldName(), f.PBType()}
 		rows = append(rows, row)
 	}
 	table.AppendBulk(rows)
@@ -103,7 +103,7 @@ func (m *message) Show() string {
 	return buf.String()
 }
 
-type messages entity.Messages
+type messages []entity.Message
 
 func (m messages) Show() string {
 	buf := new(bytes.Buffer)
@@ -120,7 +120,7 @@ func (m messages) Show() string {
 	return buf.String()
 }
 
-type rpcs entity.RPCs
+type rpcs []entity.RPC
 
 func (r rpcs) Show() string {
 	buf := new(bytes.Buffer)
@@ -128,7 +128,7 @@ func (r rpcs) Show() string {
 	table.SetHeader([]string{"RPC", "RequestType", "ResponseType"})
 	rows := [][]string{}
 	for _, rpc := range r {
-		row := []string{rpc.Name, rpc.RequestType.GetName(), rpc.ResponseType.GetName()}
+		row := []string{rpc.Name(), rpc.RequestMessage().Name(), rpc.ResponseMessage().Name()}
 		rows = append(rows, row)
 	}
 	table.AppendBulk(rows)

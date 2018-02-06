@@ -2,9 +2,9 @@ package port
 
 import (
 	"github.com/golang/protobuf/proto"
-	"github.com/jhump/protoreflect/desc"
+	"github.com/ktr0731/evans/entity"
 )
 
 type DynamicBuilder interface {
-	NewMessage(md *desc.MessageDescriptor) proto.Message
+	NewMessage(m entity.Message) proto.Message
 }

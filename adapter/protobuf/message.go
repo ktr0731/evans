@@ -5,69 +5,58 @@ import (
 	"github.com/ktr0731/evans/entity"
 )
 
-type Message struct {
-	fields []*field
+type message struct {
+	d *desc.MessageDescriptor
 
-	desc      *desc.MessageDescriptor
-	fieldDesc *desc.FieldDescriptor // fieldDesc is nil if this message is not used as a field
+	fields []entity.Field
+	oneOfs []entity.OneOfField
+
+	nestedMessages []entity.Message
+	nestedEnums    []entity.Enum
 }
 
-func newMessage(m *desc.MessageDescriptor) *Message {
-	msg := entity.Message{
-		desc: m,
+func newMessage(m *desc.MessageDescriptor) entity.Message {
+	msg := message{
+		d: m,
 	}
 
+	msgs := make([]entity.Message, 0, len(m.GetNestedMessageTypes()))
+	for _, d := range m.GetNestedMessageTypes() {
+		msgs = append(msgs, newMessage(d))
+	}
+	msg.nestedMessages = msgs
+
+	enums := make([]entity.Enum, 0, len(m.GetNestedEnumTypes()))
+	for _, d := range m.GetNestedEnumTypes() {
+		enums = append(enums, newEnum(d))
+	}
+	msg.nestedEnums = enums
+
 	// TODO: label, map, options
-	fields := make([]*field, len(m.GetFields()))
-	for i, f := range m.GetFields() {
-		fields[i] = &field{
-			Name: f.GetName(),
-			Type: f.GetType().String(),
+	fields := make([]entity.Field, 0, len(m.GetFields()))
+	for _, f := range m.GetFields() {
+		// self-referenced field
+		if IsMessageType(f.GetType()) && f.GetMessageType().GetName() == m.GetName() {
+			fields = append(fields, &msg)
+		} else {
+			fields = append(fields, newField(f))
 		}
 	}
 	msg.fields = fields
 
+	oneOfs := make([]entity.OneOfField, 0, len(m.GetOneOfs()))
+	for _, o := range m.GetOneOfs() {
+		oneOfs = append(oneOfs, newOneOf(o))
+	}
+	msg.oneOfs = oneOfs
+
 	return &msg
 }
 
-func newMessageAsField(f *desc.FieldDescriptor) *Message {
-	msg := newMessage(f.GetMessageType())
-	msg.fieldDesc = f
-	return msg
+func (m *message) Name() string {
+	return m.d.GetName()
 }
 
-func (m *Message) isField() {}
-
-func (m *Message) Name() string {
-	if m.fieldDesc != nil {
-		return m.fieldDesc.GetName()
-	}
-	return m.desc.GetName()
-}
-
-func (m *Message) Type() string {
-	if m.fieldDesc == nil {
-		return ""
-	}
-	return m.fieldDesc.GetType().String()
-}
-
-func (m *Message) Number() int32 {
-	if m.fieldDesc == nil {
-		return NON_FIELD
-	}
-	return m.fieldDesc.GetNumber()
-}
-
-func (m *Message) IsRepeated() bool {
-	if m.fieldDesc == nil {
-		return false
-	}
-	return m.fieldDesc.IsRepeated()
-}
-
-func (m *Message) Fields() []*field {
+func (m *message) Fields() []entity.Field {
 	return m.fields
 }
-
-type Messages []*Message

@@ -48,8 +48,6 @@ type Showable interface {
 	Show() string
 }
 
-type RPCs entity.RPCs
-
 type ShowParams struct {
 	Type ShowType
 }

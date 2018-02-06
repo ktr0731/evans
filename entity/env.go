@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/protobuf/protoc-gen-go/descriptor"
-	"github.com/jhump/protoreflect/desc"
 	"github.com/ktr0731/evans/config"
 	"github.com/pkg/errors"
 )
@@ -242,17 +240,4 @@ func (e *Env) DSN() string {
 		dsn += "." + e.state.currentService
 	}
 	return dsn
-}
-
-// TODO: unxport
-func IsMessageType(typeName descriptor.FieldDescriptorProto_Type) bool {
-	return typeName == descriptor.FieldDescriptorProto_TYPE_MESSAGE
-}
-
-func IsOneOf(f *desc.FieldDescriptor) bool {
-	return f.GetOneOf() != nil
-}
-
-func IsEnumType(f *desc.FieldDescriptor) bool {
-	return f.GetEnumType() != nil
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
+	"github.com/ktr0731/evans/entity"
 )
 
 // ConvertValue holds value and error of conversion
@@ -71,4 +72,37 @@ func ConvertValue(pv string, f *desc.FieldDescriptor) (interface{}, error) {
 		return nil, fmt.Errorf("invalid type: %#v", f.GetType())
 	}
 	return v, err
+}
+
+// ToEntitiesFrom normalizes descriptors to entities
+//
+// package
+// ├ messages
+// ├ enums
+// └ services
+//   └ rpcs
+//
+func ToEntitiesFrom(files []*desc.FileDescriptor) (entity.Packages, error) {
+	var pkgNames []string
+	msgMap := map[string][]entity.Message{}
+	svcMap := map[string][]entity.Service{}
+	for _, f := range files {
+		pkgName := f.GetPackage()
+
+		pkgNames = append(pkgNames, pkgName)
+
+		for _, msg := range f.GetMessageTypes() {
+			msgMap[pkgName] = append(msgMap[pkgName], newMessage(msg))
+		}
+		for _, svc := range f.GetServices() {
+			svcMap[pkgName] = append(svcMap[pkgName], newService(svc))
+		}
+	}
+
+	var pkgs []*entity.Package
+	for _, pkgName := range pkgNames {
+		pkgs = append(pkgs, entity.NewPackage(pkgName, msgMap[pkgName], svcMap[pkgName]))
+	}
+
+	return pkgs, nil
 }

@@ -1,10 +1,9 @@
 package port
 
 import (
-	"github.com/golang/protobuf/proto"
-	"github.com/jhump/protoreflect/desc"
+	"github.com/ktr0731/evans/entity"
 )
 
 type Inputter interface {
-	Input(reqType *desc.MessageDescriptor) (proto.Message, error)
+	Input(reqMsg entity.Message) (interface{}, error)
 }
