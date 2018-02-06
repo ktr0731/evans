@@ -23,8 +23,8 @@ func newEnumField(d *desc.FieldDescriptor) entity.EnumField {
 }
 
 func (e *enumField) Name() string {
-	// parent of the enum value
-	return e.d.GetOneOf().GetName()
+	m := e.d.GetParent().(*desc.MessageDescriptor)
+	return m.GetName()
 }
 
 func (e *enumField) FieldName() string {

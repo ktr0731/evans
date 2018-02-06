@@ -9,7 +9,6 @@ import (
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/require"
 )
 
 func ReadProtoAsFileDescriptors(t *testing.T, fpath ...string) []*desc.FileDescriptor {

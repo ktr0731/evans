@@ -132,7 +132,10 @@ func TestPrompt_Input(t *testing.T) {
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
 		p, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
-		m := p[0].Messages[0]
+
+		m := p[0].Messages[2]
+		require.Equal(t, m.Name(), "BorrowRequest")
+		require.Len(t, m.Fields(), 1)
 
 		prompt.setExpectedInput("bar")
 		prompt.setExpectedSelect("book", nil)
@@ -155,7 +158,7 @@ func TestPrompt_Input(t *testing.T) {
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
 		p, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
-		m := p[0].Messages[0]
+		m := p[0].Messages[2]
 
 		prompt.setExpectedInput("bar")
 		prompt.setExpectedSelect("Book", nil)

@@ -9,7 +9,6 @@ type message struct {
 	d *desc.MessageDescriptor
 
 	fields []entity.Field
-	oneOfs []entity.OneOfField
 
 	nestedMessages []entity.Message
 	nestedEnums    []entity.Enum
@@ -32,9 +31,24 @@ func newMessage(m *desc.MessageDescriptor) entity.Message {
 	}
 	msg.nestedEnums = enums
 
-	// TODO: label, map, options
+	// it need to resolve oneofs before resolve other fields.
+	// GetFields contains fields of oneofs.
+	encounteredOneOfFields := map[string]bool{}
 	fields := make([]entity.Field, 0, len(m.GetFields()))
+	for _, o := range m.GetOneOfs() {
+		for _, c := range o.GetChoices() {
+			encounteredOneOfFields[c.GetFullyQualifiedName()] = true
+		}
+		fields = append(fields, newOneOfField(o))
+	}
+
+	// TODO: label, map, options
 	for _, f := range m.GetFields() {
+		// skip fields of oneofs
+		if encounteredOneOfFields[f.GetFullyQualifiedName()] {
+			continue
+		}
+
 		// self-referenced field
 		if isMessageType(f.GetType()) && f.GetMessageType().GetName() == m.GetName() {
 			fields = append(fields, &messageField{d: f, Message: &msg})
@@ -43,12 +57,6 @@ func newMessage(m *desc.MessageDescriptor) entity.Message {
 		}
 	}
 	msg.fields = fields
-
-	oneOfs := make([]entity.OneOfField, 0, len(m.GetOneOfs()))
-	for _, o := range m.GetOneOfs() {
-		oneOfs = append(oneOfs, newOneOfField(o))
-	}
-	msg.oneOfs = oneOfs
 
 	return &msg
 }

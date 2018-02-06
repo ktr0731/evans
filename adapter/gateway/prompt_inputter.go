@@ -96,10 +96,8 @@ type fieldInputter struct {
 
 	prefixFormat string
 
-	encountered map[string]map[string]bool
-	msg         *dynamic.Message
-	fields      []*desc.FieldDescriptor
-	dep         msgDep
+	msg    *dynamic.Message
+	fields []*desc.FieldDescriptor
 
 	color prompt.Color
 
@@ -110,33 +108,11 @@ type fieldInputter struct {
 	enteredEmptyInput bool
 }
 
-type msgDep map[string]*desc.MessageDescriptor
-
-// resolve dependencies of reqType
-// func resolveMessageDependency(msg *desc.MessageDescriptor, dep msgDep, encountered map[string]bool) {
-// 	if encountered[msg.GetFullyQualifiedName()] {
-// 		return
-// 	}
-//
-// 	dep[msg.GetFullyQualifiedName()] = msg
-// 	for _, f := range msg.GetFields() {
-// 		if entity.IsMessageType(f.GetType()) {
-// 			resolveMessageDependency(f.GetMessageType(), dep, encountered)
-// 		}
-// 	}
-// }
-
 func newFieldInputter(prompter prompter, prefixFormat string, setter *protobuf.MessageSetter, isTopLevelMessage bool, color prompt.Color) *fieldInputter {
-	// dep := msgDep{}
-	// resolveMessageDependency(msgType, dep, map[string]bool{})
 	return &fieldInputter{
-		prompt:       prompter,
-		setter:       setter,
-		prefixFormat: prefixFormat,
-		encountered: map[string]map[string]bool{
-			"oneof": map[string]bool{},
-			"enum":  map[string]bool{},
-		},
+		prompt:            prompter,
+		setter:            setter,
+		prefixFormat:      prefixFormat,
 		isTopLevelMessage: isTopLevelMessage,
 		color:             color,
 	}
@@ -178,12 +154,6 @@ func (i *fieldInputter) Input(fields []entity.Field) (proto.Message, error) {
 	return i.setter.Done(), nil
 }
 
-func (i *fieldInputter) encounteredOneof(oneof entity.OneOfField) bool {
-	encountered := i.encountered["oneof"][oneof.FQRN()]
-	i.encountered["oneof"][oneof.FQRN()] = true
-	return encountered
-}
-
 func (i *fieldInputter) chooseOneof(oneof entity.OneOfField) (entity.Field, error) {
 	options := make([]string, len(oneof.Choices()))
 	fieldOf := map[string]entity.Field{}
@@ -203,12 +173,6 @@ func (i *fieldInputter) chooseOneof(oneof entity.OneOfField) (entity.Field, erro
 	}
 
 	return f, nil
-}
-
-func (i *fieldInputter) encounteredEnum(enum entity.EnumField) bool {
-	encountered := i.encountered["enum"][enum.FQRN()]
-	i.encountered["enum"][enum.FQRN()] = true
-	return encountered
 }
 
 func (i *fieldInputter) chooseEnum(enum entity.EnumField) (entity.EnumValue, error) {
@@ -235,9 +199,6 @@ func (i *fieldInputter) chooseEnum(enum entity.EnumField) (entity.EnumValue, err
 func (i *fieldInputter) inputField(field entity.Field) error {
 	// if oneof, choose one from selection
 	if oneof, ok := field.(entity.OneOfField); ok {
-		if i.encounteredOneof(oneof) {
-			return nil
-		}
 		var err error
 		field, err = i.chooseOneof(oneof)
 		if err != nil {
@@ -247,9 +208,6 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 
 	switch f := field.(type) {
 	case entity.EnumField:
-		if i.encounteredEnum(f) {
-			return nil
-		}
 		v, err := i.chooseEnum(f)
 		if err != nil {
 			return err
