@@ -89,7 +89,7 @@ func ConvertValue(pv string, field entity.PrimitiveField) (interface{}, error) {
 // └ services
 //   └ rpcs
 //
-func ToEntitiesFrom(files []*desc.FileDescriptor) (entity.Packages, error) {
+func ToEntitiesFrom(files []*desc.FileDescriptor) ([]*entity.Package, error) {
 	var pkgNames []string
 	msgMap := map[string][]entity.Message{}
 	svcMap := map[string][]entity.Service{}

@@ -6,7 +6,7 @@ import (
 	"github.com/ktr0731/evans/entity"
 )
 
-func ParseFile(filename []string, paths []string) (entity.Packages, error) {
+func ParseFile(filename []string, paths []string) ([]*entity.Package, error) {
 	set, err := proto_parser.ParseFile(filename, paths)
 	if err != nil {
 		return nil, err

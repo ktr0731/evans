@@ -42,7 +42,7 @@ func Show(params *port.ShowParams, outputPort port.OutputPort, env entity.Enviro
 	return outputPort.Show(showable)
 }
 
-type packages entity.Packages
+type packages []*entity.Package
 
 func (p packages) Show() string {
 	buf := new(bytes.Buffer)

@@ -19,7 +19,7 @@ var (
 )
 
 type Environment interface {
-	Packages() Packages
+	Packages() []*Package
 	Services() ([]Service, error)
 	Messages() ([]Message, error)
 	RPCs() ([]RPC, error)
@@ -40,7 +40,7 @@ type Environment interface {
 // pkgList is used by showing all packages
 // pkg is used by extract a package by package name
 type cache struct {
-	pkgList Packages
+	pkgList []*Package
 	pkg     map[string]*Package
 }
 
@@ -54,14 +54,14 @@ type option struct {
 }
 
 type Env struct {
-	pkgs   Packages
+	pkgs   []*Package
 	state  state
 	option option
 	config *config.Env
 	cache  cache
 }
 
-func New(pkgs Packages, config *config.Env) (*Env, error) {
+func New(pkgs []*Package, config *config.Env) (*Env, error) {
 	return &Env{
 		pkgs:   pkgs,
 		config: config,
@@ -82,7 +82,7 @@ func (e *Env) HasCurrentService() bool {
 	return e.state.currentService != ""
 }
 
-func (e *Env) Packages() Packages {
+func (e *Env) Packages() []*Package {
 	return e.pkgs
 }
 
