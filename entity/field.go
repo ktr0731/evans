@@ -45,7 +45,7 @@ type EnumValueField interface {
 type OneOfField interface{}
 
 type MessageField interface {
-	IMessage
+	Message
 }
 
 // TODO: map field

@@ -1,6 +1,6 @@
 package entity
 
-type IMessage interface {
+type Message interface {
 	Name() string
 	Fields() []Field
 }

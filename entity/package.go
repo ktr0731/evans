@@ -2,11 +2,11 @@ package entity
 
 type Package struct {
 	Name     string
-	Services Services
-	Messages Messages
+	Services []Service
+	Messages []Message
 }
 
-func newPackage(name string, msgs Messages, svcs Services) *Package {
+func newPackage(name string, msgs []Message, svcs []Service) *Package {
 	return &Package{
 		Name:     name,
 		Services: svcs,
@@ -15,7 +15,7 @@ func newPackage(name string, msgs Messages, svcs Services) *Package {
 }
 
 // GetMessage is only used to get a root message
-func (p *Package) GetMessage(name string) (*Message, error) {
+func (p *Package) GetMessage(name string) (Message, error) {
 	// nested message は辿る必要がない
 	for _, msg := range p.Messages {
 		if msg.Name() == name {

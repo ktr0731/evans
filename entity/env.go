@@ -22,12 +22,12 @@ var (
 
 type Environment interface {
 	Packages() Packages
-	Services() (Services, error)
-	Messages() (Messages, error)
-	RPCs() (RPCs, error)
-	Service(name string) (*Service, error)
-	Message(name string) (*Message, error)
-	RPC(name string) (*RPC, error)
+	Services() ([]Service, error)
+	Messages() ([]Message, error)
+	RPCs() ([]RPC, error)
+	Service(name string) (Service, error)
+	Message(name string) (Message, error)
+	RPC(name string) (RPC, error)
 
 	Headers() []*Header
 	AddHeader(header *Header) error
@@ -88,7 +88,7 @@ func (e *Env) Packages() Packages {
 	return e.pkgs
 }
 
-func (e *Env) Services() (Services, error) {
+func (e *Env) Services() ([]Service, error) {
 	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
 	}
@@ -98,7 +98,7 @@ func (e *Env) Services() (Services, error) {
 	return e.cache.pkg[e.state.currentPackage].Services, nil
 }
 
-func (e *Env) Messages() (Messages, error) {
+func (e *Env) Messages() ([]Message, error) {
 	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
 	}
@@ -106,7 +106,7 @@ func (e *Env) Messages() (Messages, error) {
 	return e.cache.pkg[e.state.currentPackage].Messages, nil
 }
 
-func (e *Env) RPCs() (RPCs, error) {
+func (e *Env) RPCs() ([]RPC, error) {
 	if !e.HasCurrentService() {
 		return nil, ErrServiceUnselected
 	}
@@ -115,23 +115,23 @@ func (e *Env) RPCs() (RPCs, error) {
 	if err != nil {
 		return nil, err
 	}
-	return svc.RPCs, nil
+	return svc.RPCs(), nil
 }
 
-func (e *Env) Service(name string) (*Service, error) {
+func (e *Env) Service(name string) (Service, error) {
 	svc, err := e.Services()
 	if err != nil {
 		return nil, err
 	}
 	for _, svc := range svc {
-		if name == svc.Name {
+		if name == svc.Name() {
 			return svc, nil
 		}
 	}
 	return nil, errors.Wrapf(ErrInvalidServiceName, "%s not found", name)
 }
 
-func (e *Env) Message(name string) (*Message, error) {
+func (e *Env) Message(name string) (Message, error) {
 	msg, err := e.Messages()
 	if err != nil {
 		return nil, err
@@ -185,13 +185,13 @@ func (e *Env) findHeader(key string) (int, *Header) {
 	return 0, nil
 }
 
-func (e *Env) RPC(name string) (*RPC, error) {
+func (e *Env) RPC(name string) (RPC, error) {
 	rpcs, err := e.RPCs()
 	if err != nil {
 		return nil, err
 	}
 	for _, rpc := range rpcs {
-		if name == rpc.Name {
+		if name == rpc.Name() {
 			return rpc, nil
 		}
 	}
@@ -225,7 +225,7 @@ func (e *Env) UseService(name string) error {
 		return errors.Wrapf(err, "failed to get services")
 	}
 	for _, svc := range services {
-		if name == svc.Name {
+		if name == svc.Name() {
 			e.state.currentService = name
 			return nil
 		}
