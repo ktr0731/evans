@@ -4,6 +4,13 @@ import (
 	"github.com/jhump/protoreflect/desc"
 )
 
+type IRPC interface {
+	Name() string
+	FQRN() string
+	RequestMessage() IMessage
+	ResponseMessage() IMessage
+}
+
 type RPC struct {
 	Name         string
 	FQRN         string
