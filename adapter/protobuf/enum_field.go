@@ -33,7 +33,7 @@ func (e *enumValueField) IsRepeated() bool {
 }
 
 func (e *enumValueField) PBType() string {
-	return descriptor.FieldDescriptorProto_TYPE_ENUM
+	return descriptor.FieldDescriptorProto_TYPE_ENUM.String()
 }
 
 func (e *enumValueField) Number() int32 {

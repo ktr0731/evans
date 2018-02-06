@@ -22,7 +22,9 @@ type Field interface {
 	PBType() string
 }
 
-type PrimitiveField interface{}
+type PrimitiveField interface {
+	Field
+}
 
 // EnumField is a value of EnumDescriptor.GetValues()
 type EnumField interface {

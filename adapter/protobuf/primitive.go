@@ -6,29 +6,31 @@ import (
 )
 
 type primitiveField struct {
-	desc *desc.FieldDescriptor
+	d *desc.FieldDescriptor
 }
 
 func newPrimitiveField(f *desc.FieldDescriptor) entity.PrimitiveField {
 	return &primitiveField{
-		desc: f,
+		d: f,
 	}
 }
 
-func (f *primitiveField) isField() {}
+func (f *primitiveField) FieldName() string {
+	return f.d.GetName()
+}
 
-func (f *primitiveField) Name() string {
-	return f.desc.GetName()
+func (f *primitiveField) FQRN() string {
+	return f.d.GetFullyQualifiedName()
 }
 
 func (f *primitiveField) Type() string {
-	return f.desc.GetType().String()
+	return f.d.GetType().String()
 }
 
 func (f *primitiveField) Number() int32 {
-	return f.desc.GetNumber()
+	return f.d.GetNumber()
 }
 
 func (f *primitiveField) IsRepeated() bool {
-	return f.desc.IsRepeated()
+	return f.d.IsRepeated()
 }
