@@ -4,6 +4,8 @@ import (
 	"github.com/jhump/protoreflect/desc"
 )
 
+type IMessage interface{}
+
 type Message struct {
 	fields []*field
 

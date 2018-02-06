@@ -284,7 +284,7 @@ func (i *fieldInputter) inputField(field *desc.FieldDescriptor) error {
 func (i *fieldInputter) inputPrimitiveField(req *dynamic.Message, field *desc.FieldDescriptor) error {
 	in := i.prompt.Input()
 
-	if in == "" && field.IsRepeated() {
+	if in == "" {
 		if i.enteredEmptyInput {
 			return EORF
 		}
