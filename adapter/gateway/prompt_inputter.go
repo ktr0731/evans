@@ -78,7 +78,8 @@ func newPrompt(prompt prompter, config *config.Config, env entity.Environment) *
 	}
 }
 
-func (i *Prompt) Input(reqType *desc.MessageDescriptor) (proto.Message, error) {
+// impl of port.Inputter
+func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
 	req := dynamic.NewMessage(reqType)
 	fields := reqType.GetFields()
 

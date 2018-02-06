@@ -6,7 +6,7 @@ import (
 )
 
 type Service struct {
-	rpcs RPCs
+	rpcs []entity.RPC
 
 	d *desc.ServiceDescriptor
 }

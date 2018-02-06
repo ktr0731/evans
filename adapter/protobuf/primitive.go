@@ -23,8 +23,8 @@ func (f *primitiveField) FQRN() string {
 	return f.d.GetFullyQualifiedName()
 }
 
-func (f *primitiveField) Type() string {
-	return f.d.GetType().String()
+func (f *primitiveField) Type() entity.FieldType {
+	return entity.FieldTypePrimitive
 }
 
 func (f *primitiveField) Number() int32 {
@@ -33,4 +33,8 @@ func (f *primitiveField) Number() int32 {
 
 func (f *primitiveField) IsRepeated() bool {
 	return f.d.IsRepeated()
+}
+
+func (f *primitiveField) PBType() string {
+	return f.d.GetType().String()
 }

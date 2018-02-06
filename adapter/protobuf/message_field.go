@@ -7,37 +7,15 @@ import (
 
 type messageField struct {
 	d *desc.FieldDescriptor
-
-	fields []entity.Field
-	oneOfs []entity.OneOfField
+	entity.Message
 }
 
-func newMessageField(m *desc.FieldDescriptor) entity.MessageField {
-	msg := &messageField{
-		d: m,
+func newMessageField(d *desc.FieldDescriptor) entity.MessageField {
+	m := newMessage(d.GetMessageType())
+	return &messageField{
+		d:       d,
+		Message: m,
 	}
-
-	mt := m.GetMessageType()
-
-	// TODO: label, map, options
-	fields := make([]entity.Field, 0, len(mt.GetFields()))
-	for _, f := range mt.GetFields() {
-		// self-referenced field
-		if isMessageType(f.GetType()) && f.GetMessageType().GetName() == m.GetName() {
-			fields = append(fields, msg)
-		} else {
-			fields = append(fields, newField(f))
-		}
-	}
-	msg.fields = fields
-
-	oneOfs := make([]entity.OneOfField, 0, len(mt.GetOneOfs()))
-	for _, o := range mt.GetOneOfs() {
-		oneOfs = append(oneOfs, newOneOf(o))
-	}
-	msg.oneOfs = oneOfs
-
-	return msg
 }
 
 func (f *messageField) FieldName() string {
@@ -48,8 +26,8 @@ func (f *messageField) FQRN() string {
 	return f.d.GetFullyQualifiedName()
 }
 
-func (f *messageField) Number() int32 {
-	return f.d.GetNumber()
+func (f *messageField) Type() entity.FieldType {
+	return entity.FieldTypeMessage
 }
 
 func (f *messageField) IsRepeated() bool {
