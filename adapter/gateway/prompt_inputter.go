@@ -6,8 +6,6 @@ import (
 	"github.com/AlecAivazis/survey"
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/golang/protobuf/proto"
-	"github.com/jhump/protoreflect/desc"
-	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
@@ -85,7 +83,7 @@ func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
 	fields := reqType.Fields()
 
 	// DarkGreen is the initial color
-	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, setter, true, prompt.DarkGreen).Input(fields)
+	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, setter, true, []string{}, prompt.DarkGreen).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively
@@ -95,9 +93,7 @@ type fieldInputter struct {
 	setter *protobuf.MessageSetter
 
 	prefixFormat string
-
-	msg    *dynamic.Message
-	fields []*desc.FieldDescriptor
+	ancestor     []string
 
 	color prompt.Color
 
@@ -108,11 +104,12 @@ type fieldInputter struct {
 	enteredEmptyInput bool
 }
 
-func newFieldInputter(prompter prompter, prefixFormat string, setter *protobuf.MessageSetter, isTopLevelMessage bool, color prompt.Color) *fieldInputter {
+func newFieldInputter(prompter prompter, prefixFormat string, setter *protobuf.MessageSetter, isTopLevelMessage bool, ancestor []string, color prompt.Color) *fieldInputter {
 	return &fieldInputter{
 		prompt:            prompter,
 		setter:            setter,
 		prefixFormat:      prefixFormat,
+		ancestor:          ancestor,
 		isTopLevelMessage: isTopLevelMessage,
 		color:             color,
 	}
@@ -216,10 +213,10 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 			return err
 		}
 	case entity.MessageField:
-		// nestedFields := i.dep[field.GetMessageType().GetFullyQualifiedName()].GetFields()
 		setter := protobuf.NewMessageSetter(f)
 		fields := f.Fields()
-		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, false, i.color).Input(fields)
+
+		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, false, append(i.ancestor, f.Name()), i.color).Input(fields)
 		if err != nil {
 			return err
 		}
@@ -229,7 +226,7 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		// increment prompt color to next one
 		i.color = (i.color + 1) % 16
 	case entity.PrimitiveField:
-		if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.isTopLevelMessage)); err != nil {
+		if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.ancestor)); err != nil {
 			return err
 		}
 		if err := i.inputPrimitiveField(f); err != nil {
@@ -260,45 +257,13 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) error {
 	return i.setter.SetField(f, v)
 }
 
-func (i *fieldInputter) setField(req *dynamic.Message, field *desc.FieldDescriptor, v interface{}) error {
-	if field.IsRepeated() {
-		return req.TryAddRepeatedField(field, v)
-	}
-
-	return req.TrySetField(field, v)
-}
-
 // makePrefix makes prefix for field f.
-// isTopLevelMessage is used to show passed f is a message and it is top-level message.
-// for example, person field is a message, Person. and a part of BorrowBookRequest.
-// also BorrowBookRequest is a top-level message.
-//
-// message BorrowBookRequest {
-//  Person person = 1;
-//   Book book = 2;
-// }
-//
-func makePrefix(s string, f entity.PrimitiveField, isTopLevelMessage bool) string {
-	// ancestor := []string{}
-	// var d desc.Descriptor = f.GetParent()
-	//
-	// // if f is a top-level, message, exclude name of top-level message.
-	// if isTopLevelMessage {
-	// 	d = d.GetParent()
-	// }
-	//
-	// for d != nil {
-	// 	ancestor = append([]string{d.GetName()}, ancestor...)
-	// 	d = d.GetParent()
-	// }
-	// // remove file name
-	// ancestor = ancestor[1:]
-	//
-	// joinedAncestor := strings.Join(ancestor, "::")
-	// if joinedAncestor != "" {
-	// 	joinedAncestor += "::"
-	// }
-	// s = strings.Replace(s, "{ancestor}", joinedAncestor, -1)
+func makePrefix(s string, f entity.PrimitiveField, ancestor []string) string {
+	joinedAncestor := strings.Join(ancestor, "::")
+	if joinedAncestor != "" {
+		joinedAncestor += "::"
+	}
+	s = strings.Replace(s, "{ancestor}", joinedAncestor, -1)
 	s = strings.Replace(s, "{name}", f.FieldName(), -1)
 	s = strings.Replace(s, "{type}", f.PBType(), -1)
 	return s
