@@ -90,13 +90,13 @@ func ConvertValue(pv string, field entity.PrimitiveField) (interface{}, error) {
 //   └ rpcs
 //
 func ToEntitiesFrom(files []*desc.FileDescriptor) ([]*entity.Package, error) {
-	var pkgNames []string
+	pkgNames := map[string]bool{}
 	msgMap := map[string][]entity.Message{}
 	svcMap := map[string][]entity.Service{}
 	for _, f := range files {
 		pkgName := f.GetPackage()
 
-		pkgNames = append(pkgNames, pkgName)
+		pkgNames[pkgName] = true
 
 		for _, msg := range f.GetMessageTypes() {
 			msgMap[pkgName] = append(msgMap[pkgName], newMessage(msg))
@@ -107,7 +107,7 @@ func ToEntitiesFrom(files []*desc.FileDescriptor) ([]*entity.Package, error) {
 	}
 
 	var pkgs []*entity.Package
-	for _, pkgName := range pkgNames {
+	for pkgName := range pkgNames {
 		pkgs = append(pkgs, entity.NewPackage(pkgName, msgMap[pkgName], svcMap[pkgName]))
 	}
 
