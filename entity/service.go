@@ -4,6 +4,12 @@ import (
 	"github.com/jhump/protoreflect/desc"
 )
 
+type IService interface {
+	Name() string
+	FQRN() string
+	RPCs() []IRPC
+}
+
 type Service struct {
 	Name string
 	RPCs RPCs
