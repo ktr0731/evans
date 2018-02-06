@@ -6,36 +6,47 @@ import (
 	"github.com/ktr0731/evans/entity"
 )
 
-type enumValueField struct {
-	d *desc.FieldDescriptor
+type enumField struct {
+	d      *desc.FieldDescriptor
+	values []entity.EnumValue
 }
 
 func newEnumField(d *desc.FieldDescriptor) entity.EnumField {
-	return &enumValueField{
-		d: d,
+	values := make([]entity.EnumValue, 0, len(d.GetEnumType().GetValues()))
+	for _, v := range d.GetEnumType().GetValues() {
+		values = append(values, newEnumValue(v))
+	}
+	return &enumField{
+		d:      d,
+		values: values,
 	}
 }
 
-func (e *enumValueField) FieldName() string {
+func (e *enumField) Name() string {
+	// parent of the enum value
+	return e.d.GetOneOf().GetName()
+}
+
+func (e *enumField) FieldName() string {
 	return e.d.GetName()
 }
 
-func (e *enumValueField) FQRN() string {
+func (e *enumField) FQRN() string {
 	return e.d.GetFullyQualifiedName()
 }
 
-func (e *enumValueField) Type() entity.FieldType {
+func (e *enumField) Type() entity.FieldType {
 	return entity.FieldTypeEnum
 }
 
-func (e *enumValueField) IsRepeated() bool {
+func (e *enumField) IsRepeated() bool {
 	return false
 }
 
-func (e *enumValueField) PBType() string {
+func (e *enumField) PBType() string {
 	return descriptor.FieldDescriptorProto_TYPE_ENUM.String()
 }
 
-func (e *enumValueField) Number() int32 {
-	return e.d.GetNumber()
+func (e *enumField) Values() []entity.EnumValue {
+	return e.values
 }

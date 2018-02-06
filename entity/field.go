@@ -26,14 +26,15 @@ type PrimitiveField interface {
 	Field
 }
 
-// EnumField is a value of EnumDescriptor.GetValues()
+// EnumField is set of values
 type EnumField interface {
 	Field
-	Number() int32
+	Enum
 }
 
 type OneOfField interface {
 	Field
+	Choices() []Field
 }
 
 type MessageField interface {

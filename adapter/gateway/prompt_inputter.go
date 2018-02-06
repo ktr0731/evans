@@ -80,17 +80,19 @@ func newPrompt(prompt prompter, config *config.Config, env entity.Environment) *
 
 // impl of port.Inputter
 func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
-	req := dynamic.NewMessage(reqType)
-	fields := reqType.GetFields()
+	setter := protobuf.NewMessageSetter(reqType)
+	// req := dynamic.NewMessage(reqType)
+	fields := reqType.Fields()
 
 	// DarkGreen is the initial color
-	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, req, reqType, true, prompt.DarkGreen).Input(fields)
+	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, setter, true, prompt.DarkGreen).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively
 // first fieldInputter is instantiated per one request
 type fieldInputter struct {
 	prompt prompter
+	setter protobuf.MessageSetter
 
 	prefixFormat string
 
@@ -124,18 +126,17 @@ func resolveMessageDependency(msg *desc.MessageDescriptor, dep msgDep, encounter
 	}
 }
 
-func newFieldInputter(prompter prompter, prefixFormat string, msg *dynamic.Message, msgType *desc.MessageDescriptor, isTopLevelMessage bool, color prompt.Color) *fieldInputter {
-	dep := msgDep{}
-	resolveMessageDependency(msgType, dep, map[string]bool{})
+func newFieldInputter(prompter prompter, prefixFormat string, setter *protobuf.MessageSetter, isTopLevelMessage bool, color prompt.Color) *fieldInputter {
+	// dep := msgDep{}
+	// resolveMessageDependency(msgType, dep, map[string]bool{})
 	return &fieldInputter{
 		prompt:       prompter,
+		setter:       setter,
 		prefixFormat: prefixFormat,
 		encountered: map[string]map[string]bool{
 			"oneof": map[string]bool{},
 			"enum":  map[string]bool{},
 		},
-		msg:               msg,
-		dep:               dep,
 		isTopLevelMessage: isTopLevelMessage,
 		color:             color,
 	}
@@ -152,16 +153,12 @@ func newFieldInputter(prompter prompter, prefixFormat string, msg *dynamic.Messa
 // Input is called two times
 // one for Foo's primitive fields
 // another one for bar's primitive fields
-func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) (proto.Message, error) {
+func (i *fieldInputter) Input(fields []entity.Field) (proto.Message, error) {
 	if err := i.prompt.SetPrefixColor(i.color); err != nil {
 		return nil, err
 	}
 
 	for _, field := range fields {
-		if err := i.inputField(field); err != nil {
-			return nil, err
-		}
-
 		if field.IsRepeated() {
 			for {
 				if err := i.inputField(field); err == EORF {
@@ -171,70 +168,73 @@ func (i *fieldInputter) Input(fields []*desc.FieldDescriptor) (proto.Message, er
 				}
 			}
 			i.enteredEmptyInput = false
+		} else {
+			if err := i.inputField(field); err != nil {
+				return nil, err
+			}
 		}
 	}
 
 	return i.msg, nil
 }
 
-func (i *fieldInputter) encounteredOneof(oneof *desc.OneOfDescriptor) bool {
-	encountered := i.encountered["oneof"][oneof.GetFullyQualifiedName()]
-	i.encountered["oneof"][oneof.GetFullyQualifiedName()] = true
+func (i *fieldInputter) encounteredOneof(oneof entity.OneOfField) bool {
+	encountered := i.encountered["oneof"][oneof.FQRN()]
+	i.encountered["oneof"][oneof.FQRN()] = true
 	return encountered
 }
 
-func (i *fieldInputter) chooseOneof(oneof *desc.OneOfDescriptor) (*desc.FieldDescriptor, error) {
-	options := make([]string, len(oneof.GetChoices()))
-	descOf := map[string]*desc.FieldDescriptor{}
-	for i, choice := range oneof.GetChoices() {
-		options[i] = choice.GetName()
-		descOf[choice.GetName()] = choice
+func (i *fieldInputter) chooseOneof(oneof entity.OneOfField) (entity.Field, error) {
+	options := make([]string, len(oneof.Choices()))
+	fieldOf := map[string]entity.Field{}
+	for _, choice := range oneof.Choices() {
+		options = append(options, choice.FieldName())
+		fieldOf[choice.FieldName()] = choice
 	}
 
-	choice, err := i.prompt.Select(oneof.GetName(), options)
+	choice, err := i.prompt.Select(oneof.FieldName(), options)
 	if err != nil {
 		return nil, err
 	}
 
-	d, ok := descOf[choice]
+	f, ok := fieldOf[choice]
 	if !ok {
 		return nil, errors.Wrap(ErrUnknownOneofFieldName, choice)
 	}
 
-	return d, nil
+	return f, nil
 }
 
-func (i *fieldInputter) encounteredEnum(enum *desc.EnumDescriptor) bool {
-	encountered := i.encountered["enum"][enum.GetFullyQualifiedName()]
-	i.encountered["enum"][enum.GetFullyQualifiedName()] = true
+func (i *fieldInputter) encounteredEnum(enum entity.EnumField) bool {
+	encountered := i.encountered["enum"][enum.FQRN()]
+	i.encountered["enum"][enum.FQRN()] = true
 	return encountered
 }
 
-func (i *fieldInputter) chooseEnum(enum *desc.EnumDescriptor) (*desc.EnumValueDescriptor, error) {
-	options := make([]string, len(enum.GetValues()))
-	descOf := map[string]*desc.EnumValueDescriptor{}
-	for i, v := range enum.GetValues() {
-		options[i] = v.GetName()
-		descOf[v.GetName()] = v
+func (i *fieldInputter) chooseEnum(enum entity.EnumField) (entity.EnumValue, error) {
+	options := make([]string, 0, len(enum.Values()))
+	valOf := map[string]entity.EnumValue{}
+	for _, v := range enum.Values() {
+		options = append(options, v.Name())
+		valOf[v.Name()] = v
 	}
 
-	choice, err := i.prompt.Select(enum.GetName(), options)
+	choice, err := i.prompt.Select(enum.Name(), options)
 	if err != nil {
 		return nil, err
 	}
 
-	d, ok := descOf[choice]
+	c, ok := valOf[choice]
 	if !ok {
 		return nil, errors.Wrap(ErrUnknownEnumName, choice)
 	}
 
-	return d, nil
+	return c, nil
 }
 
-func (i *fieldInputter) inputField(field *desc.FieldDescriptor) error {
+func (i *fieldInputter) inputField(field entity.Field) error {
 	// if oneof, choose one from selection
-	if entity.IsOneOf(field) {
-		oneof := field.GetOneOf()
+	if oneof, ok := field.(entity.OneOfField); ok {
 		if i.encounteredOneof(oneof) {
 			return nil
 		}
@@ -245,21 +245,20 @@ func (i *fieldInputter) inputField(field *desc.FieldDescriptor) error {
 		}
 	}
 
-	switch {
-	case entity.IsEnumType(field):
-		enum := field.GetEnumType()
-		if i.encounteredEnum(enum) {
+	switch f := field.(type) {
+	case entity.EnumField:
+		if i.encounteredEnum(f) {
 			return nil
 		}
-		v, err := i.chooseEnum(enum)
+		v, err := i.chooseEnum(f)
 		if err != nil {
 			return err
 		}
-		if err := i.setField(i.msg, field, v.GetNumber()); err != nil {
+		if err := i.setter.SetEnumField(f, v.Number()); err != nil {
 			return err
 		}
-	case entity.IsMessageType(field.GetType()):
-		nestedFields := i.dep[field.GetMessageType().GetFullyQualifiedName()].GetFields()
+	case entity.MessageField:
+		// nestedFields := i.dep[field.GetMessageType().GetFullyQualifiedName()].GetFields()
 		msgType := field.GetMessageType()
 		msg, err := newFieldInputter(i.prompt, i.prefixFormat, dynamic.NewMessage(msgType), msgType, false, i.color).Input(nestedFields)
 		if err != nil {
@@ -271,13 +270,15 @@ func (i *fieldInputter) inputField(field *desc.FieldDescriptor) error {
 
 		// increment prompt color to next one
 		i.color = (i.color + 1) % 16
-	default: // primitive type
+	case entity.PrimitiveField:
 		if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.isTopLevelMessage)); err != nil {
 			return err
 		}
 		if err := i.inputPrimitiveField(i.msg, field); err != nil {
 			return err
 		}
+	default:
+		panic("unknown type: " + field.PBType())
 	}
 	return nil
 }

@@ -41,3 +41,7 @@ func (o *oneOfField) IsRepeated() bool {
 func (o *oneOfField) PBType() string {
 	return "oneof"
 }
+
+func (o *oneOfField) Choices() []entity.Field {
+	return o.choices
+}
