@@ -8,7 +8,7 @@ import (
 )
 
 func TestEnv(t *testing.T) {
-	pkgs := Packages{
+	pkgs := []*Package{
 		{
 			Name: "helloworld",
 			Services: []Service{
