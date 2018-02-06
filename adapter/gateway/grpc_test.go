@@ -17,7 +17,7 @@ func Test_fqrnToEndpoint(t *testing.T) {
 	client, err := NewGRPCClient(helper.TestConfig())
 	require.NoError(t, err)
 
-	fqrn, err := client.fqrnToEndpoint(rpc.FQRN)
+	fqrn, err := client.fqrnToEndpoint(rpc.FQRN())
 	require.NoError(t, err)
 	require.Equal(t, fqrn, "/helloworld.Greeter/SayHello")
 }

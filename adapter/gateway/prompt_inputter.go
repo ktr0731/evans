@@ -175,7 +175,7 @@ func (i *fieldInputter) Input(fields []entity.Field) (proto.Message, error) {
 		}
 	}
 
-	return i.msg, nil
+	return i.setter.Done(), nil
 }
 
 func (i *fieldInputter) encounteredOneof(oneof entity.OneOfField) bool {
