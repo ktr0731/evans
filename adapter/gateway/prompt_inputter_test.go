@@ -1,12 +1,14 @@
 package gateway
 
 import (
+	"fmt"
 	"testing"
 
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
 	"github.com/ktr0731/evans/adapter/protobuf"
+	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -170,37 +172,19 @@ func TestPrompt_Input(t *testing.T) {
 	})
 }
 
-// func Test_makePrefix(t *testing.T) {
-// 	descs := testhelper.ReadProtoAsFileDescriptors(t, "nested.proto")
-//
-// 	prefix := "{ancestor}{name} ({type})"
-//
-// 	t.Run("primitive", func(t *testing.T) {
-// 		m := testhelper.FindMessage(t, "Person", descs)
-//
-// 		name := m.GetFields()[0]
-//
-// 		expected := "name (TYPE_STRING)"
-// 		actual := makePrefix(prefix, name, true)
-//
-// 		require.Equal(t, expected, actual)
-// 	})
-//
-// 	t.Run("nested", func(t *testing.T) {
-// 		m := testhelper.FindMessage(t, "BorrowBookRequest", descs)
-//
-// 		expected := []string{
-// 			"Person::name (TYPE_STRING)",
-// 			"Book::title (TYPE_STRING)",
-// 			"Book::author (TYPE_STRING)",
-// 		}
-//
-// 		personMsg := m.GetFields()
-// 		for i, m := range personMsg {
-// 			for j, f := range m.GetMessageType().GetFields() {
-// 				actual := makePrefix(prefix, f, false)
-// 				require.Equal(t, expected[i+j], actual)
-// 			}
-// 		}
-// 	})
-// }
+func Test_makePrefix(t *testing.T) {
+	prefix := "{ancestor}{name} ({type})"
+	f := testentity.NewFld()
+	t.Run("primitive", func(t *testing.T) {
+		expected := fmt.Sprintf("%s (%s)", f.FieldName(), f.PBType())
+		actual := makePrefix(prefix, f, nil)
+
+		require.Equal(t, expected, actual)
+	})
+
+	t.Run("nested", func(t *testing.T) {
+		expected := fmt.Sprintf("Foo::Bar::%s (%s)", f.FieldName(), f.PBType())
+		actual := makePrefix(prefix, f, []string{"Foo", "Bar"})
+		require.Equal(t, expected, actual)
+	})
+}

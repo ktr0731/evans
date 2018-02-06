@@ -22,15 +22,29 @@ func newName() string {
 type Fld struct {
 	entity.Field
 
-	name string
+	name      string
+	fieldName string
+	pbtype    string
 }
 
 func NewFld() *Fld {
-	return &Fld{name: newName()}
+	return &Fld{
+		name:      newName(),
+		fieldName: newName(),
+		pbtype:    newName(),
+	}
 }
 
 func (f *Fld) Name() string {
 	return f.name
+}
+
+func (f *Fld) FieldName() string {
+	return f.fieldName
+}
+
+func (f *Fld) PBType() string {
+	return f.pbtype
 }
 
 type RPC struct {
