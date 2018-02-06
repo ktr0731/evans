@@ -18,12 +18,14 @@ func TestRPC(t *testing.T) {
 	resMsg := msgs[1]
 
 	svc := newService(svcs[0])
-	require.Len(t, svc.RPCs, 1)
+	require.Len(t, svc.RPCs(), 1)
 
 	rpc := svc.RPCs()[0]
 
-	require.Equal(t, "SayHello", rpc.Name)
-	require.Equal(t, "helloworld.Greeter.SayHello", rpc.FQRN)
-	require.Equal(t, reqMsg, rpc.RequestMessage())
-	require.Equal(t, resMsg, rpc.ResponseMessage())
+	require.Equal(t, "SayHello", rpc.Name())
+	require.Equal(t, "helloworld.Greeter.SayHello", rpc.FQRN())
+	require.Equal(t, reqMsg.GetName(), rpc.RequestMessage().Name())
+	require.Equal(t, len(reqMsg.GetFields()), len(rpc.RequestMessage().Fields()))
+	require.Equal(t, resMsg.GetName(), rpc.ResponseMessage().Name())
+	require.Equal(t, len(resMsg.GetFields()), len(rpc.ResponseMessage().Fields()))
 }

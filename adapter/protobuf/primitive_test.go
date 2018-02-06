@@ -17,5 +17,5 @@ func TestPrimitiveField(t *testing.T) {
 	require.Equal(t, m.Fields()[0].FieldName(), "name")
 
 	stringType := descriptor.FieldDescriptorProto_Type_name[int32(descriptor.FieldDescriptorProto_TYPE_STRING)]
-	require.Equal(t, m.Fields()[0].Type(), stringType)
+	require.Equal(t, m.Fields()[0].PBType(), stringType)
 }

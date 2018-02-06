@@ -31,6 +31,7 @@ func newRPCs(svc *desc.ServiceDescriptor) []entity.RPC {
 	rpcs := make([]entity.RPC, 0, len(svc.GetMethods()))
 	for _, r := range svc.GetMethods() {
 		r := &rpc{
+			d:               r,
 			requestMessage:  newMessage(r.GetInputType()),
 			responseMessage: newMessage(r.GetOutputType()),
 		}

@@ -24,7 +24,7 @@ func TestMessage(t *testing.T) {
 			personField := personMsg.Fields()[0]
 			require.Equal(t, personField.FieldName(), "name")
 
-			require.Equal(t, personField.Type, stringType)
+			require.Equal(t, personField.PBType(), stringType)
 		})
 
 		t.Run("Nested message", func(t *testing.T) {
@@ -36,7 +36,7 @@ func TestMessage(t *testing.T) {
 			require.Equal(t, nestedMsgField.FieldName(), "person")
 
 			msgType := descriptor.FieldDescriptorProto_Type_name[int32(descriptor.FieldDescriptorProto_TYPE_MESSAGE)]
-			require.Equal(t, nestedMsgField.Type, msgType)
+			require.Equal(t, nestedMsgField.PBType(), msgType)
 		})
 	})
 
