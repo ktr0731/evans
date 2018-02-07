@@ -6,7 +6,6 @@ import (
 	"github.com/AlecAivazis/survey"
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/golang/protobuf/proto"
-	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
@@ -83,7 +82,7 @@ func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
 	fields := reqType.Fields()
 
 	// DarkGreen is the initial color
-	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, setter, []string{}, prompt.DarkGreen).Input(fields)
+	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, setter, []string{}, false, prompt.DarkGreen).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively
@@ -100,15 +99,26 @@ type fieldInputter struct {
 	// enteredEmptyInput is used to terminate repeated field inputting
 	// if input is empty and enteredEmptyInput is true, exit repeated input prompt
 	enteredEmptyInput bool
+
+	// the field has parent field (in other words, the field is child of a message field)
+	hasParentAndItIsRepeatedField bool
 }
 
-func newFieldInputter(prompter prompter, prefixFormat string, setter *protobuf.MessageSetter, ancestor []string, color prompt.Color) *fieldInputter {
+func newFieldInputter(
+	prompter prompter,
+	prefixFormat string,
+	setter *protobuf.MessageSetter,
+	ancestor []string,
+	hasParentAndItIsRepeatedField bool,
+	color prompt.Color,
+) *fieldInputter {
 	return &fieldInputter{
 		prompt:       prompter,
 		setter:       setter,
 		prefixFormat: prefixFormat,
 		ancestor:     ancestor,
 		color:        color,
+		hasParentAndItIsRepeatedField: hasParentAndItIsRepeatedField,
 	}
 }
 
@@ -139,7 +149,6 @@ func (i *fieldInputter) Input(fields []entity.Field) (proto.Message, error) {
 			}
 			i.enteredEmptyInput = false
 		} else {
-			pp.Println(field.FieldName(), field.Type())
 			// if oneof, choose one from selection
 			if oneof, ok := field.(entity.OneOfField); ok {
 				var err error
@@ -214,7 +223,7 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		setter := protobuf.NewMessageSetter(f)
 		fields := f.Fields()
 
-		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.Name()), i.color).Input(fields)
+		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.Name()), true, i.color).Input(fields)
 		if err != nil {
 			return err
 		}
@@ -223,11 +232,6 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		}
 		// increment prompt color to next one
 		i.color = (i.color + 1) % 16
-	case entity.MapField:
-		pp.Println("MAPFIELD: ", f.FieldName())
-		if err := i.inputMapField(f); err != nil {
-			return err
-		}
 	case entity.PrimitiveField:
 		if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.ancestor)); err != nil {
 			return err
@@ -249,7 +253,9 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{
 	in := i.prompt.Input()
 
 	if in == "" {
-		if f.IsRepeated() {
+		// if f is repeated or
+		// the parent field of f is repeated field
+		if f.IsRepeated() || i.hasParentAndItIsRepeatedField {
 			if i.enteredEmptyInput {
 				return nil, EORF
 			}
@@ -262,65 +268,6 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{
 	}
 
 	return protobuf.ConvertValue(in, f)
-}
-
-func (i *fieldInputter) inputMapField(field entity.MapField) error {
-	for {
-		key := i.prompt.Input()
-		pp.Println(key)
-
-		// use local var instead of i.enteredEmptyInput
-		var enteredEmptyInput bool
-
-		// TODO: integrate to inputField logic
-		var val interface{}
-		switch f := field.Val().(type) {
-		case entity.EnumField:
-			v, err := i.chooseEnum(f)
-			if err != nil {
-				return err
-			}
-			val = v.Number()
-		case entity.MessageField:
-			setter := protobuf.NewMessageSetter(f)
-			fields := f.Fields()
-
-			msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.Name()), i.color).Input(fields)
-			if err != nil {
-				return err
-			}
-			val = msg
-			// increment prompt color to next one
-			i.color = (i.color + 1) % 16
-		case entity.PrimitiveField:
-			err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.ancestor))
-			if err != nil {
-				return err
-			}
-			in := i.prompt.Input()
-			if in == "" {
-				if enteredEmptyInput {
-					pp.Println("ENDDDDDDDDDDDDDd")
-					break
-				}
-				enteredEmptyInput = true
-			} else {
-				enteredEmptyInput = false
-			}
-			pp.Println(enteredEmptyInput)
-			val, err = protobuf.ConvertValue(in, f)
-			if err != nil {
-				return err
-			}
-		default:
-			panic("unknown type: " + field.PBType())
-		}
-
-		if err := i.setter.SetMapField(field, key, val); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // makePrefix makes prefix for field f.
