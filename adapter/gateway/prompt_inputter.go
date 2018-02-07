@@ -6,6 +6,7 @@ import (
 	"github.com/AlecAivazis/survey"
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/golang/protobuf/proto"
+	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
@@ -138,6 +139,7 @@ func (i *fieldInputter) Input(fields []entity.Field) (proto.Message, error) {
 			}
 			i.enteredEmptyInput = false
 		} else {
+			pp.Println(field.FieldName(), field.Type())
 			// if oneof, choose one from selection
 			if oneof, ok := field.(entity.OneOfField); ok {
 				var err error
@@ -222,6 +224,7 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		// increment prompt color to next one
 		i.color = (i.color + 1) % 16
 	case entity.MapField:
+		pp.Println("MAPFIELD: ", f.FieldName())
 		if err := i.inputMapField(f); err != nil {
 			return err
 		}
@@ -254,7 +257,7 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{
 			// ignore the input
 			return i.inputPrimitiveField(f)
 		}
-	} else if f.Type() != entity.FieldTypeMap { // if f is map, don't reset enteredEmptyInput flag
+	} else {
 		i.enteredEmptyInput = false
 	}
 
@@ -262,41 +265,62 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{
 }
 
 func (i *fieldInputter) inputMapField(field entity.MapField) error {
-	key := i.prompt.Input()
+	for {
+		key := i.prompt.Input()
+		pp.Println(key)
 
-	// TODO: integrate to inputField logic
-	var val interface{}
-	switch f := field.Val().(type) {
-	case entity.EnumField:
-		v, err := i.chooseEnum(f)
-		if err != nil {
-			return err
-		}
-		val = v.Number()
-	case entity.MessageField:
-		setter := protobuf.NewMessageSetter(f)
-		fields := f.Fields()
+		// use local var instead of i.enteredEmptyInput
+		var enteredEmptyInput bool
 
-		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.Name()), i.color).Input(fields)
-		if err != nil {
+		// TODO: integrate to inputField logic
+		var val interface{}
+		switch f := field.Val().(type) {
+		case entity.EnumField:
+			v, err := i.chooseEnum(f)
+			if err != nil {
+				return err
+			}
+			val = v.Number()
+		case entity.MessageField:
+			setter := protobuf.NewMessageSetter(f)
+			fields := f.Fields()
+
+			msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.Name()), i.color).Input(fields)
+			if err != nil {
+				return err
+			}
+			val = msg
+			// increment prompt color to next one
+			i.color = (i.color + 1) % 16
+		case entity.PrimitiveField:
+			err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.ancestor))
+			if err != nil {
+				return err
+			}
+			in := i.prompt.Input()
+			if in == "" {
+				if enteredEmptyInput {
+					pp.Println("ENDDDDDDDDDDDDDd")
+					break
+				}
+				enteredEmptyInput = true
+			} else {
+				enteredEmptyInput = false
+			}
+			pp.Println(enteredEmptyInput)
+			val, err = protobuf.ConvertValue(in, f)
+			if err != nil {
+				return err
+			}
+		default:
+			panic("unknown type: " + field.PBType())
+		}
+
+		if err := i.setter.SetMapField(field, key, val); err != nil {
 			return err
 		}
-		val = msg
-		// increment prompt color to next one
-		i.color = (i.color + 1) % 16
-	case entity.PrimitiveField:
-		err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.ancestor))
-		if err != nil {
-			return err
-		}
-		val, err = i.inputPrimitiveField(f)
-		if err != nil {
-			return err
-		}
-	default:
-		panic("unknown type: " + field.PBType())
 	}
-	return i.setter.SetMapField(field, key, val)
+	return nil
 }
 
 // makePrefix makes prefix for field f.

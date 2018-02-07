@@ -200,6 +200,24 @@ func TestPrompt_Input(t *testing.T) {
 
 		require.Equal(t, `name:"foo" name:"bar"`, msg.String())
 	})
+
+	t.Run("normal/map", func(t *testing.T) {
+		env := testhelper.SetupEnv(t, "map.proto", "example", "")
+
+		prompt := &mockRepeatedPrompt{mockPrompt: &mockPrompt{}, inputOutputs: []string{"foo", "", "bar", "", ""}}
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
+
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "map.proto")
+		p, err := protobuf.ToEntitiesFrom(descs)
+		require.NoError(t, err)
+		m := p[0].Messages[0]
+		require.Equal(t, "PrimitiveRequest", m.Name())
+
+		msg, err := inputter.Input(m)
+		require.NoError(t, err)
+
+		require.Equal(t, `name:"foo" name:"bar"`, msg.String())
+	})
 }
 
 func Test_makePrefix(t *testing.T) {
