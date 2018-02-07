@@ -46,6 +46,10 @@ func (s *MessageSetter) SetField(field entity.Field, v interface{}) error {
 	}
 }
 
+func (s *MessageSetter) SetMapField(f *mapField, k, v interface{}) error {
+	return s.m.TryPutMapField(f.d, k, v)
+}
+
 func (s *MessageSetter) Done() proto.Message {
 	m := s.m
 	s.m = nil

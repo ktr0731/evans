@@ -138,6 +138,15 @@ func (i *fieldInputter) Input(fields []entity.Field) (proto.Message, error) {
 			}
 			i.enteredEmptyInput = false
 		} else {
+			// if oneof, choose one from selection
+			if oneof, ok := field.(entity.OneOfField); ok {
+				var err error
+				field, err = i.chooseOneof(oneof)
+				if err != nil {
+					return nil, err
+				}
+			}
+
 			if err := i.inputField(field); err != nil {
 				return nil, err
 			}
@@ -190,15 +199,6 @@ func (i *fieldInputter) chooseEnum(enum entity.EnumField) (entity.EnumValue, err
 }
 
 func (i *fieldInputter) inputField(field entity.Field) error {
-	// if oneof, choose one from selection
-	if oneof, ok := field.(entity.OneOfField); ok {
-		var err error
-		field, err = i.chooseOneof(oneof)
-		if err != nil {
-			return err
-		}
-	}
-
 	switch f := field.(type) {
 	case entity.EnumField:
 		v, err := i.chooseEnum(f)
@@ -221,6 +221,10 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		}
 		// increment prompt color to next one
 		i.color = (i.color + 1) % 16
+	// case entity.MapField:
+	// 	if err := i.inputMapField(f); err != nil {
+	// 		return err
+	// 	}
 	case entity.PrimitiveField:
 		if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.ancestor)); err != nil {
 			return err
@@ -256,6 +260,13 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) error {
 	}
 	return i.setter.SetField(f, v)
 }
+
+// func (i *fieldInputter) inputMapField(f entity.MapField) error {
+// 	key := i.prompt.Input()
+// 	i.setter.SetMapField()
+// 	// input primitive
+// 	// input ? field
+// }
 
 // makePrefix makes prefix for field f.
 func makePrefix(s string, f entity.PrimitiveField, ancestor []string) string {
