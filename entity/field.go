@@ -41,5 +41,3 @@ type MessageField interface {
 	Field
 	Message
 }
-
-// TODO: map field

@@ -27,11 +27,11 @@ type Server struct {
 
 type Header struct {
 	Key string `toml:"key"`
-	Val string `toml:"value"`
+	Val string `toml:"val"`
 }
 
 type Request struct {
-	Header []Header `toml:"header"`
+	Header []Header `default:"foo" toml:"header"`
 }
 
 type REPL struct {
@@ -48,9 +48,8 @@ type REPL struct {
 }
 
 type Env struct {
-	Server            *Server  `toml:"-"`
-	InputPromptFormat string   `default:"{ancestor}{name} ({type}) => " toml:"inputPromptFormat"`
-	Request           *Request `toml:"request"`
+	Server            *Server `toml:"-"`
+	InputPromptFormat string  `default:"{ancestor}{name} ({type}) => " toml:"inputPromptFormat"`
 }
 
 type Meta struct {
@@ -64,6 +63,7 @@ type Config struct {
 	Env     *Env     `toml:"env"`
 	Server  *Server  `toml:"server"`
 	Log     *Log     `toml:"log"`
+	Request *Request `toml:"request"`
 }
 
 type Default struct {

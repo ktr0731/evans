@@ -210,7 +210,7 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 				return nil, errors.New(`header must be specified "key=val" format`)
 			}
 			key, val := s[0], s[1]
-			conf.Env.Request.Header = append(conf.Env.Request.Header, config.Header{Key: key, Val: val})
+			conf.Request.Header = append(conf.Request.Header, config.Header{Key: key, Val: val})
 		}
 	}
 	if opt.Host != "" {
@@ -243,7 +243,7 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 		return nil, err
 	}
 
-	env, err := entity.New(desc, conf.Env)
+	env, err := entity.NewEnv(desc, conf)
 	if err != nil {
 		return nil, err
 	}

@@ -20,4 +20,4 @@ message MessageRequest {
   map<string, Hoge> foo = 1;
 }
 
-message HelloResponse {}
+message Response {}

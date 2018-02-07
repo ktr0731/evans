@@ -82,7 +82,7 @@ func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
 	fields := reqType.Fields()
 
 	// DarkGreen is the initial color
-	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, setter, []string{}, prompt.DarkGreen).Input(fields)
+	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, setter, []string{}, false, prompt.DarkGreen).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively
@@ -99,15 +99,26 @@ type fieldInputter struct {
 	// enteredEmptyInput is used to terminate repeated field inputting
 	// if input is empty and enteredEmptyInput is true, exit repeated input prompt
 	enteredEmptyInput bool
+
+	// the field has parent field (in other words, the field is child of a message field)
+	hasParentAndItIsRepeatedField bool
 }
 
-func newFieldInputter(prompter prompter, prefixFormat string, setter *protobuf.MessageSetter, ancestor []string, color prompt.Color) *fieldInputter {
+func newFieldInputter(
+	prompter prompter,
+	prefixFormat string,
+	setter *protobuf.MessageSetter,
+	ancestor []string,
+	hasParentAndItIsRepeatedField bool,
+	color prompt.Color,
+) *fieldInputter {
 	return &fieldInputter{
 		prompt:       prompter,
 		setter:       setter,
 		prefixFormat: prefixFormat,
 		ancestor:     ancestor,
 		color:        color,
+		hasParentAndItIsRepeatedField: hasParentAndItIsRepeatedField,
 	}
 }
 
@@ -138,6 +149,15 @@ func (i *fieldInputter) Input(fields []entity.Field) (proto.Message, error) {
 			}
 			i.enteredEmptyInput = false
 		} else {
+			// if oneof, choose one from selection
+			if oneof, ok := field.(entity.OneOfField); ok {
+				var err error
+				field, err = i.chooseOneof(oneof)
+				if err != nil {
+					return nil, err
+				}
+			}
+
 			if err := i.inputField(field); err != nil {
 				return nil, err
 			}
@@ -148,7 +168,7 @@ func (i *fieldInputter) Input(fields []entity.Field) (proto.Message, error) {
 }
 
 func (i *fieldInputter) chooseOneof(oneof entity.OneOfField) (entity.Field, error) {
-	options := make([]string, len(oneof.Choices()))
+	options := make([]string, 0, len(oneof.Choices()))
 	fieldOf := map[string]entity.Field{}
 	for _, choice := range oneof.Choices() {
 		options = append(options, choice.FieldName())
@@ -190,15 +210,6 @@ func (i *fieldInputter) chooseEnum(enum entity.EnumField) (entity.EnumValue, err
 }
 
 func (i *fieldInputter) inputField(field entity.Field) error {
-	// if oneof, choose one from selection
-	if oneof, ok := field.(entity.OneOfField); ok {
-		var err error
-		field, err = i.chooseOneof(oneof)
-		if err != nil {
-			return err
-		}
-	}
-
 	switch f := field.(type) {
 	case entity.EnumField:
 		v, err := i.chooseEnum(f)
@@ -212,7 +223,7 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		setter := protobuf.NewMessageSetter(f)
 		fields := f.Fields()
 
-		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.Name()), i.color).Input(fields)
+		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.Name()), true, i.color).Input(fields)
 		if err != nil {
 			return err
 		}
@@ -225,7 +236,11 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.ancestor)); err != nil {
 			return err
 		}
-		if err := i.inputPrimitiveField(f); err != nil {
+		v, err := i.inputPrimitiveField(f)
+		if err != nil {
+			return err
+		}
+		if err := i.setter.SetField(f, v); err != nil {
 			return err
 		}
 	default:
@@ -234,13 +249,15 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 	return nil
 }
 
-func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) error {
+func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{}, error) {
 	in := i.prompt.Input()
 
 	if in == "" {
-		if f.IsRepeated() {
+		// if f is repeated or
+		// the parent field of f is repeated field
+		if f.IsRepeated() || i.hasParentAndItIsRepeatedField {
 			if i.enteredEmptyInput {
-				return EORF
+				return nil, EORF
 			}
 			i.enteredEmptyInput = true
 			// ignore the input
@@ -250,11 +267,7 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) error {
 		i.enteredEmptyInput = false
 	}
 
-	v, err := protobuf.ConvertValue(in, f)
-	if err != nil {
-		return err
-	}
-	return i.setter.SetField(f, v)
+	return protobuf.ConvertValue(in, f)
 }
 
 // makePrefix makes prefix for field f.
