@@ -7,6 +7,7 @@ const (
 	FieldTypeEnum
 	FieldTypeOneOf
 	FieldTypeMessage
+	FieldTypeMap
 )
 
 // fieldable types:
@@ -42,4 +43,8 @@ type MessageField interface {
 	Message
 }
 
-// TODO: map field
+type MapField interface {
+	Field
+	Key() Field
+	Val() Field
+}

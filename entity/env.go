@@ -61,17 +61,24 @@ type Env struct {
 	cache  cache
 }
 
-func New(pkgs []*Package, config *config.Env) (*Env, error) {
-	return &Env{
+func NewEnv(pkgs []*Package, config *config.Config) (*Env, error) {
+	env := &Env{
 		pkgs:   pkgs,
-		config: config,
-		option: option{
-		// headers: config.Request.Header,
-		},
+		config: config.Env,
 		cache: cache{
 			pkg: map[string]*Package{},
 		},
-	}, nil
+	}
+	opt := option{
+		headers: make([]*Header, 0, len(config.Request.Header)),
+	}
+	for _, h := range config.Request.Header {
+		if err := env.AddHeader(&Header{Key: h.Key, Val: h.Val}); err != nil {
+			return nil, err
+		}
+	}
+	env.option = opt
+	return env, nil
 }
 
 func (e *Env) HasCurrentPackage() bool {
@@ -143,7 +150,7 @@ func (e *Env) Message(name string) (Message, error) {
 }
 
 func (e *Env) Headers() (headers []*Header) {
-	headers = make([]*Header, 0, len(e.config.Request.Header))
+	headers = make([]*Header, 0, len(e.option.headers))
 	for _, header := range e.option.headers {
 		headers = append(headers, &Header{Key: header.Key, Val: header.Val})
 	}

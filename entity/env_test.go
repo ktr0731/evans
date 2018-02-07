@@ -30,8 +30,16 @@ func TestEnv(t *testing.T) {
 			},
 		},
 	}
-	setup := func(t *testing.T, cfg *config.Env) *Env {
-		env, err := New(pkgs, cfg)
+	setup := func(t *testing.T, cfg *config.Config) *Env {
+		if cfg == nil {
+			cfg = &config.Config{
+				Env: &config.Env{},
+				Request: &config.Request{
+					Header: []config.Header{},
+				},
+			}
+		}
+		env, err := NewEnv(pkgs, cfg)
 		require.NoError(t, err)
 		return env
 	}
@@ -94,7 +102,7 @@ func TestEnv(t *testing.T) {
 	})
 
 	t.Run("Headers", func(t *testing.T) {
-		cfg := &config.Env{
+		cfg := &config.Config{
 			Request: &config.Request{},
 		}
 		env := setup(t, cfg)
@@ -113,7 +121,7 @@ func TestEnv(t *testing.T) {
 	})
 
 	t.Run("AddHeader", func(t *testing.T) {
-		cfg := &config.Env{
+		cfg := &config.Config{
 			Request: &config.Request{},
 		}
 		env := setup(t, cfg)
@@ -128,7 +136,7 @@ func TestEnv(t *testing.T) {
 	})
 
 	t.Run("RemoveHeader", func(t *testing.T) {
-		cfg := &config.Env{
+		cfg := &config.Config{
 			Request: &config.Request{},
 		}
 		env := setup(t, cfg)
