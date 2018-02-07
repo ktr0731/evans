@@ -68,16 +68,16 @@ func NewEnv(pkgs []*Package, config *config.Config) (*Env, error) {
 		cache: cache{
 			pkg: map[string]*Package{},
 		},
+		option: option{
+			headers: make([]*Header, 0, len(config.Request.Header)),
+		},
 	}
-	opt := option{
-		headers: make([]*Header, 0, len(config.Request.Header)),
-	}
+
 	for _, h := range config.Request.Header {
 		if err := env.AddHeader(&Header{Key: h.Key, Val: h.Val}); err != nil {
 			return nil, err
 		}
 	}
-	env.option = opt
 	return env, nil
 }
 

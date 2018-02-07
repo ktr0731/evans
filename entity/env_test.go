@@ -7,6 +7,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestNewEnv(t *testing.T) {
+	cfg := &config.Config{
+		Request: &config.Request{
+			Header: []config.Header{{"foo", "bar"}},
+		},
+	}
+	env, err := NewEnv(nil, cfg)
+	require.NoError(t, err)
+	h := env.Headers()
+	require.Len(t, h, 1)
+	require.Equal(t, h[0].Key, "foo")
+	require.Equal(t, h[0].Val, "bar")
+}
+
 func TestEnv(t *testing.T) {
 	pkgs := []*Package{
 		{
