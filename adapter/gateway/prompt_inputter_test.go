@@ -216,7 +216,25 @@ func TestPrompt_Input(t *testing.T) {
 		msg, err := inputter.Input(m)
 		require.NoError(t, err)
 
-		require.Equal(t, `name:"foo" name:"bar"`, msg.String())
+		require.Equal(t, `foo:<key:"foo" value:"bar">`, msg.String())
+	})
+
+	t.Run("normal/map val is message", func(t *testing.T) {
+		env := testhelper.SetupEnv(t, "map.proto", "example", "")
+
+		prompt := &mockRepeatedPrompt{mockPrompt: &mockPrompt{}, inputOutputs: []string{"key", "", "val1", "3", "", ""}}
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
+
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "map.proto")
+		p, err := protobuf.ToEntitiesFrom(descs)
+		require.NoError(t, err)
+		m := p[0].Messages[2]
+		require.Equal(t, "MessageRequest", m.Name())
+
+		msg, err := inputter.Input(m)
+		require.NoError(t, err)
+
+		require.Equal(t, `foo:<key:"key" value:<fuga:"val1" piyo:3>>`, msg.String())
 	})
 }
 
