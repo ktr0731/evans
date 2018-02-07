@@ -4,8 +4,6 @@ import (
 	"context"
 	"io"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 	"google.golang.org/grpc/metadata"
@@ -36,12 +34,6 @@ func Call(
 	}
 	ctx := metadata.NewOutgoingContext(context.Background(), metadata.New(data))
 
-	m := &jsonpb.Marshaler{}
-	s, err := m.MarshalToString(req)
-	if err != nil {
-		panic(err)
-	}
-	pp.Println(s)
 	if err := grpcPort.Invoke(ctx, rpc.FQRN(), req, res); err != nil {
 		return nil, err
 	}
