@@ -189,15 +189,16 @@ func TestPrompt_Input(t *testing.T) {
 		prompt := &mockRepeatedPrompt{mockPrompt: &mockPrompt{}, inputOutputs: []string{"foo", "", "bar", "", ""}}
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
-		descs := testhelper.ReadProtoAsFileDescriptors(t, "helloworld.proto")
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "repeated.proto")
 		p, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
-		m := p[0].Messages[1]
+		m := p[0].Messages[0]
+		require.Equal(t, "HelloRequest", m.Name())
 
 		msg, err := inputter.Input(m)
 		require.NoError(t, err)
 
-		require.Equal(t, `name:"foo"`, msg.String())
+		require.Equal(t, `name:"foo" name:"bar"`, msg.String())
 	})
 }
 
