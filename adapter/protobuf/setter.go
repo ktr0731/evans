@@ -46,7 +46,11 @@ func (s *MessageSetter) SetField(field entity.Field, v interface{}) error {
 	}
 }
 
-func (s *MessageSetter) SetMapField(f *mapField, k, v interface{}) error {
+func (s *MessageSetter) SetMapField(field entity.MapField, k, v interface{}) error {
+	f, ok := field.(*mapField)
+	if !ok {
+		return errors.New("type assertion failed: " + field.PBType())
+	}
 	return s.m.TryPutMapField(f.d, k, v)
 }
 

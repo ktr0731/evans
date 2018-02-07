@@ -221,15 +221,19 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		}
 		// increment prompt color to next one
 		i.color = (i.color + 1) % 16
-	// case entity.MapField:
-	// 	if err := i.inputMapField(f); err != nil {
-	// 		return err
-	// 	}
+	case entity.MapField:
+		if err := i.inputMapField(f); err != nil {
+			return err
+		}
 	case entity.PrimitiveField:
 		if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.ancestor)); err != nil {
 			return err
 		}
-		if err := i.inputPrimitiveField(f); err != nil {
+		v, err := i.inputPrimitiveField(f)
+		if err != nil {
+			return err
+		}
+		if err := i.setter.SetField(f, v); err != nil {
 			return err
 		}
 	default:
@@ -238,35 +242,62 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 	return nil
 }
 
-func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) error {
+func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{}, error) {
 	in := i.prompt.Input()
 
 	if in == "" {
 		if f.IsRepeated() {
 			if i.enteredEmptyInput {
-				return EORF
+				return nil, EORF
 			}
 			i.enteredEmptyInput = true
 			// ignore the input
 			return i.inputPrimitiveField(f)
 		}
-	} else {
+	} else if f.Type() != entity.FieldTypeMap { // if f is map, don't reset enteredEmptyInput flag
 		i.enteredEmptyInput = false
 	}
 
-	v, err := protobuf.ConvertValue(in, f)
-	if err != nil {
-		return err
-	}
-	return i.setter.SetField(f, v)
+	return protobuf.ConvertValue(in, f)
 }
 
-// func (i *fieldInputter) inputMapField(f entity.MapField) error {
-// 	key := i.prompt.Input()
-// 	i.setter.SetMapField()
-// 	// input primitive
-// 	// input ? field
-// }
+func (i *fieldInputter) inputMapField(field entity.MapField) error {
+	key := i.prompt.Input()
+
+	// TODO: integrate to inputField logic
+	var val interface{}
+	switch f := field.Val().(type) {
+	case entity.EnumField:
+		v, err := i.chooseEnum(f)
+		if err != nil {
+			return err
+		}
+		val = v.Number()
+	case entity.MessageField:
+		setter := protobuf.NewMessageSetter(f)
+		fields := f.Fields()
+
+		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.Name()), i.color).Input(fields)
+		if err != nil {
+			return err
+		}
+		val = msg
+		// increment prompt color to next one
+		i.color = (i.color + 1) % 16
+	case entity.PrimitiveField:
+		err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.ancestor))
+		if err != nil {
+			return err
+		}
+		val, err = i.inputPrimitiveField(f)
+		if err != nil {
+			return err
+		}
+	default:
+		panic("unknown type: " + field.PBType())
+	}
+	return i.setter.SetMapField(field, key, val)
+}
 
 // makePrefix makes prefix for field f.
 func makePrefix(s string, f entity.PrimitiveField, ancestor []string) string {
