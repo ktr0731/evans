@@ -46,6 +46,18 @@ func (p *mockPrompt) SetPrefixColor(_ prompt.Color) error {
 	return nil
 }
 
+type mockRepeatedPrompt struct {
+	*mockPrompt
+
+	cnt          int
+	inputOutputs []string
+}
+
+func (p *mockRepeatedPrompt) Input() string {
+	p.cnt++
+	return p.inputOutputs[p.cnt-1]
+}
+
 func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/simple", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
@@ -169,6 +181,23 @@ func TestPrompt_Input(t *testing.T) {
 
 		e := errors.Cause(err)
 		require.Equal(t, ErrUnknownOneofFieldName, e)
+	})
+
+	t.Run("normal/repeated", func(t *testing.T) {
+		env := testhelper.SetupEnv(t, "repeated.proto", "helloworld", "")
+
+		prompt := &mockRepeatedPrompt{mockPrompt: &mockPrompt{}, inputOutputs: []string{"foo", "", "bar", "", ""}}
+		inputter := newPrompt(prompt, helper.TestConfig(), env)
+
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "helloworld.proto")
+		p, err := protobuf.ToEntitiesFrom(descs)
+		require.NoError(t, err)
+		m := p[0].Messages[1]
+
+		msg, err := inputter.Input(m)
+		require.NoError(t, err)
+
+		require.Equal(t, `name:"foo"`, msg.String())
 	})
 }
 
