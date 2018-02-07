@@ -148,7 +148,7 @@ func (i *fieldInputter) Input(fields []entity.Field) (proto.Message, error) {
 }
 
 func (i *fieldInputter) chooseOneof(oneof entity.OneOfField) (entity.Field, error) {
-	options := make([]string, len(oneof.Choices()))
+	options := make([]string, 0, len(oneof.Choices()))
 	fieldOf := map[string]entity.Field{}
 	for _, choice := range oneof.Choices() {
 		options = append(options, choice.FieldName())
