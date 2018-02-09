@@ -22,29 +22,35 @@ func newName() string {
 type Fld struct {
 	entity.Field
 
-	name      string
-	fieldName string
-	pbtype    string
+	FName       string
+	FFieldName  string
+	FPBtype     string
+	FIsRepeated bool
 }
 
 func NewFld() *Fld {
 	return &Fld{
-		name:      newName(),
-		fieldName: newName(),
-		pbtype:    newName(),
+		FName:       newName(),
+		FFieldName:  newName(),
+		FPBtype:     newName(),
+		FIsRepeated: false,
 	}
 }
 
 func (f *Fld) Name() string {
-	return f.name
+	return f.FName
 }
 
 func (f *Fld) FieldName() string {
-	return f.fieldName
+	return f.FFieldName
 }
 
 func (f *Fld) PBType() string {
-	return f.pbtype
+	return f.FPBtype
+}
+
+func (f *Fld) IsRepeated() bool {
+	return f.FIsRepeated
 }
 
 type RPC struct {
