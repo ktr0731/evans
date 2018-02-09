@@ -223,6 +223,7 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		setter := protobuf.NewMessageSetter(f)
 		fields := f.Fields()
 
+		// msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.FieldName()), f.IsRepeated(), i.color).Input(fields)
 		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.FieldName()), true, i.color).Input(fields)
 		if err != nil {
 			return err
@@ -233,7 +234,7 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		// increment prompt color to next one
 		i.color = (i.color + 1) % 16
 	case entity.PrimitiveField:
-		if err := i.prompt.SetPrefix(makePrefix(i.prefixFormat, field, i.ancestor)); err != nil {
+		if err := i.prompt.SetPrefix(i.makePrefix(field)); err != nil {
 			return err
 		}
 		v, err := i.inputPrimitiveField(f)
@@ -271,13 +272,31 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{
 }
 
 // makePrefix makes prefix for field f.
-func makePrefix(s string, f entity.PrimitiveField, ancestor []string) string {
-	joinedAncestor := strings.Join(ancestor, "::")
-	if joinedAncestor != "" {
-		joinedAncestor += "::"
+func (i *fieldInputter) makePrefix(f entity.PrimitiveField) string {
+	return makePrefix(i.prefixFormat, f, i.ancestor, i.hasParentAndItIsRepeatedField)
+}
+
+const (
+	repeatedStr       = " <repeated>"
+	ancestorDelimiter = "::"
+)
+
+func makePrefix(s string, f entity.PrimitiveField, ancestor []string, parentIsRepeated bool) string {
+	joinedAncestor := strings.Join(ancestor, ancestorDelimiter)
+	if parentIsRepeated {
+		joinedAncestor += repeatedStr
 	}
+	if joinedAncestor != "" {
+		joinedAncestor += ancestorDelimiter
+	}
+
+	name := f.FieldName()
+	if f.IsRepeated() {
+		name += repeatedStr
+	}
+
 	s = strings.Replace(s, "{ancestor}", joinedAncestor, -1)
-	s = strings.Replace(s, "{name}", f.FieldName(), -1)
+	s = strings.Replace(s, "{name}", name, -1)
 	s = strings.Replace(s, "{type}", f.PBType(), -1)
 	return s
 }

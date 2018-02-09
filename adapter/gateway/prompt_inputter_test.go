@@ -243,14 +243,21 @@ func Test_makePrefix(t *testing.T) {
 	f := testentity.NewFld()
 	t.Run("primitive", func(t *testing.T) {
 		expected := fmt.Sprintf("%s (%s)", f.FieldName(), f.PBType())
-		actual := makePrefix(prefix, f, nil)
+		actual := makePrefix(prefix, f, nil, false)
 
 		require.Equal(t, expected, actual)
 	})
 
 	t.Run("nested", func(t *testing.T) {
 		expected := fmt.Sprintf("Foo::Bar::%s (%s)", f.FieldName(), f.PBType())
-		actual := makePrefix(prefix, f, []string{"Foo", "Bar"})
+		actual := makePrefix(prefix, f, []string{"Foo", "Bar"}, false)
 		require.Equal(t, expected, actual)
+	})
+
+	t.Run("repeated (field)", func(t *testing.T) {
+		expected := fmt.Sprintf("Foo::Bar::%s <repeated> (%s)", f.FieldName(), f.PBType())
+		f.FIsRepeated = true
+		actual := makePrefix(prefix, f, []string{"Foo", "Bar"}, false)
+		require.Equal(t, expected, actual, false)
 	})
 }
