@@ -239,8 +239,15 @@ func TestPrompt_Input(t *testing.T) {
 }
 
 func Test_makePrefix(t *testing.T) {
+	var f *testentity.Fld
+	backup := func(tmp testentity.Fld) func() {
+		return func() {
+			f = &tmp
+		}
+	}
+
 	prefix := "{ancestor}{name} ({type})"
-	f := testentity.NewFld()
+	f = testentity.NewFld()
 	t.Run("primitive", func(t *testing.T) {
 		expected := fmt.Sprintf("%s (%s)", f.FieldName(), f.PBType())
 		actual := makePrefix(prefix, f, nil, false)
@@ -255,9 +262,26 @@ func Test_makePrefix(t *testing.T) {
 	})
 
 	t.Run("repeated (field)", func(t *testing.T) {
-		expected := fmt.Sprintf("Foo::Bar::%s <repeated> (%s)", f.FieldName(), f.PBType())
+		expected := fmt.Sprintf("<repeated> Foo::Bar::%s (%s)", f.FieldName(), f.PBType())
+		cleanup := backup(*f)
+		defer cleanup()
 		f.FIsRepeated = true
 		actual := makePrefix(prefix, f, []string{"Foo", "Bar"}, false)
+		require.Equal(t, expected, actual, false)
+	})
+
+	t.Run("repeated (ancestor)", func(t *testing.T) {
+		expected := fmt.Sprintf("<repeated> Foo::Bar::%s (%s)", f.FieldName(), f.PBType())
+		actual := makePrefix(prefix, f, []string{"Foo", "Bar"}, true)
+		require.Equal(t, expected, actual, false)
+	})
+
+	t.Run("repeated (both)", func(t *testing.T) {
+		expected := fmt.Sprintf("<repeated> Foo::Bar::%s (%s)", f.FieldName(), f.PBType())
+		cleanup := backup(*f)
+		defer cleanup()
+		f.FIsRepeated = true
+		actual := makePrefix(prefix, f, []string{"Foo", "Bar"}, true)
 		require.Equal(t, expected, actual, false)
 	})
 }

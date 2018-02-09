@@ -101,7 +101,7 @@ type fieldInputter struct {
 	enteredEmptyInput bool
 
 	// the field has parent field (in other words, the field is child of a message field)
-	hasParentAndItIsRepeatedField bool
+	hasAncestorAndHasRepeatedField bool
 }
 
 func newFieldInputter(
@@ -109,7 +109,7 @@ func newFieldInputter(
 	prefixFormat string,
 	setter *protobuf.MessageSetter,
 	ancestor []string,
-	hasParentAndItIsRepeatedField bool,
+	hasAncestorAndHasRepeatedField bool,
 	color prompt.Color,
 ) *fieldInputter {
 	return &fieldInputter{
@@ -118,7 +118,7 @@ func newFieldInputter(
 		prefixFormat: prefixFormat,
 		ancestor:     ancestor,
 		color:        color,
-		hasParentAndItIsRepeatedField: hasParentAndItIsRepeatedField,
+		hasAncestorAndHasRepeatedField: hasAncestorAndHasRepeatedField,
 	}
 }
 
@@ -223,8 +223,7 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		setter := protobuf.NewMessageSetter(f)
 		fields := f.Fields()
 
-		// msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.FieldName()), f.IsRepeated(), i.color).Input(fields)
-		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.FieldName()), true, i.color).Input(fields)
+		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.FieldName()), i.hasAncestorAndHasRepeatedField || f.IsRepeated(), i.color).Input(fields)
 		if err != nil {
 			return err
 		}
@@ -255,8 +254,8 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{
 
 	if in == "" {
 		// if f is repeated or
-		// the parent field of f is repeated field
-		if f.IsRepeated() || i.hasParentAndItIsRepeatedField {
+		// ancestor has repeated field
+		if f.IsRepeated() || i.hasAncestorAndHasRepeatedField {
 			if i.enteredEmptyInput {
 				return nil, EORF
 			}
@@ -273,30 +272,26 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{
 
 // makePrefix makes prefix for field f.
 func (i *fieldInputter) makePrefix(f entity.PrimitiveField) string {
-	return makePrefix(i.prefixFormat, f, i.ancestor, i.hasParentAndItIsRepeatedField)
+	return makePrefix(i.prefixFormat, f, i.ancestor, i.hasAncestorAndHasRepeatedField)
 }
 
 const (
-	repeatedStr       = " <repeated>"
+	repeatedStr       = "<repeated> "
 	ancestorDelimiter = "::"
 )
 
-func makePrefix(s string, f entity.PrimitiveField, ancestor []string, parentIsRepeated bool) string {
+func makePrefix(s string, f entity.PrimitiveField, ancestor []string, ancestorHasRepeated bool) string {
 	joinedAncestor := strings.Join(ancestor, ancestorDelimiter)
-	if parentIsRepeated {
-		joinedAncestor += repeatedStr
-	}
 	if joinedAncestor != "" {
 		joinedAncestor += ancestorDelimiter
 	}
 
-	name := f.FieldName()
-	if f.IsRepeated() {
-		name += repeatedStr
-	}
-
 	s = strings.Replace(s, "{ancestor}", joinedAncestor, -1)
-	s = strings.Replace(s, "{name}", name, -1)
+	s = strings.Replace(s, "{name}", f.FieldName(), -1)
 	s = strings.Replace(s, "{type}", f.PBType(), -1)
+
+	if f.IsRepeated() || ancestorHasRepeated {
+		return repeatedStr + s
+	}
 	return s
 }
