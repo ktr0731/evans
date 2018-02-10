@@ -1,5 +1,5 @@
 hash: 9b110fe65e53714f2e18f00a7d9b8e97181867975e8dc9fc06129dc7e64cdc4b
-updated: 2018-01-21T15:08:49.482810541+09:00
+updated: 2018-02-10T16:56:52.137823863+09:00
 imports:
 - name: github.com/AlecAivazis/survey
   version: f051d0d636f1be0261d8d320a4b2365e7ccd9888
@@ -55,6 +55,8 @@ imports:
   repo: https://github.com/mattn/go-isatty
 - name: github.com/mattn/go-runewidth
   version: 97311d9f7767e3d6f422ea06661bc2c7a19e8a5d
+- name: github.com/mattn/go-shellwords
+  version: 39dbbfa24bbc39559b61cae9b20b0e8db0e55525
 - name: github.com/mgutz/ansi
   version: 9520e82c474b0a04dd04f8a40959027271bab992
 - name: github.com/mitchellh/go-homedir
