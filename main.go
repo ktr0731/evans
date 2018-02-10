@@ -4,15 +4,11 @@ import (
 	"os"
 
 	"github.com/ktr0731/evans/adapter/controller"
-)
-
-const (
-	name    = "evans"
-	version = "0.2.3"
+	"github.com/ktr0731/evans/meta"
 )
 
 func main() {
-	os.Exit(run(controller.NewCLI(name, version)))
+	os.Exit(run(controller.NewCLI(meta.Name, meta.Version)))
 }
 
 func run(runnable controller.Runnable) int {
