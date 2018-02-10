@@ -31,7 +31,7 @@ type Header struct {
 }
 
 type Request struct {
-	Header []Header `default:"foo" toml:"header"`
+	Header []Header `toml:"header"`
 }
 
 type REPL struct {
@@ -67,8 +67,9 @@ type Config struct {
 }
 
 type Default struct {
-	Package string `toml:"package" default:""`
-	Service string `toml:"service" default:""`
+	ProtoPath []string `toml:"protoPath" default:""`
+	Package   string   `toml:"package" default:""`
+	Service   string   `toml:"service" default:""`
 }
 
 type Log struct {
@@ -80,7 +81,17 @@ type localConfig struct {
 }
 
 func init() {
-	var conf Config
+	conf := Config{
+		Request: &Request{
+			Header: []Header{
+				{"user-agent", "evans"},
+			},
+		},
+		// to show items in initial config file, set an empty value
+		Default: &Default{
+			ProtoPath: []string{""},
+		},
+	}
 	var err error
 	if err := envconfig.Process("evans", &conf); err != nil {
 		panic(err)

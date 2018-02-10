@@ -17,6 +17,7 @@ import (
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
 	isatty "github.com/mattn/go-isatty"
+	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 
 	"io"
@@ -223,19 +224,9 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 		conf.Server.Port = opt.Port
 	}
 
-	// find all proto paths
-	paths := make([]string, 0, len(opt.Path))
-	encountered := map[string]bool{}
-	for _, p := range opt.Path {
-		encountered[p] = true
-		paths = append(paths, p)
-	}
-	for _, proto := range opt.Proto {
-		p := filepath.Dir(proto)
-		if !encountered[p] {
-			paths = append(paths, p)
-			encountered[p] = true
-		}
+	paths, err := collectProtoPaths(conf, opt)
+	if err != nil {
+		return nil, err
 	}
 
 	desc, err := parser.ParseFile(opt.Proto, paths)
@@ -271,4 +262,53 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 		}
 	}
 	return env, nil
+}
+
+func collectProtoPaths(conf *config.Config, opt *Options) ([]string, error) {
+	paths := make([]string, 0, len(opt.Path)+len(conf.Default.ProtoPath))
+	encountered := map[string]bool{}
+	parser := shellwords.NewParser()
+	parser.ParseEnv = true
+
+	parse := func(p string) (string, error) {
+		res, err := parser.Parse(p)
+		if err != nil {
+			return "", err
+		}
+		if len(res) > 1 {
+			return "", errors.New("failed to parse proto path")
+		}
+		// empty path
+		if len(res) == 0 {
+			return "", nil
+		}
+		return res[0], nil
+	}
+
+	for _, p := range append(opt.Path, conf.Default.ProtoPath...) {
+		path, err := parse(p)
+		if err != nil {
+			return nil, err
+		}
+
+		if encountered[path] || path == "" {
+			continue
+		}
+		encountered[path] = true
+		paths = append(paths, path)
+	}
+	for _, proto := range opt.Proto {
+		p, err := parse(proto)
+		if err != nil {
+			return nil, err
+		}
+		path := filepath.Dir(p)
+
+		if encountered[path] || path == "" {
+			continue
+		}
+		paths = append(paths, path)
+		encountered[path] = true
+	}
+	return paths, nil
 }
