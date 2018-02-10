@@ -4,13 +4,19 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ktr0731/evans/tests/helper"
+	"github.com/ktr0731/evans/config"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCLI(t *testing.T) {
+	newConfig := func() *config.Config {
+		return &config.Config{
+			Default: &config.Default{},
+		}
+	}
+
 	t.Run("proto path (option)", func(t *testing.T) {
-		conf := helper.TestConfig()
+		conf := newConfig()
 		opt := &Options{
 			Path: []string{"foo", "foo", "bar"},
 		}
@@ -20,7 +26,7 @@ func TestCLI(t *testing.T) {
 	})
 
 	t.Run("proto path (config)", func(t *testing.T) {
-		conf := helper.TestConfig()
+		conf := newConfig()
 		conf.Default.ProtoPath = []string{"foo", "foo", "bar"}
 		opt := &Options{}
 		paths, err := collectProtoPaths(conf, opt)
@@ -29,7 +35,7 @@ func TestCLI(t *testing.T) {
 	})
 
 	t.Run("proto path (both)", func(t *testing.T) {
-		conf := helper.TestConfig()
+		conf := newConfig()
 		conf.Default.ProtoPath = []string{"foo", "foo", "bar"}
 		opt := &Options{
 			Path: []string{"foo", "baz", "bar"},
@@ -40,7 +46,7 @@ func TestCLI(t *testing.T) {
 	})
 
 	t.Run("proto path (from file)", func(t *testing.T) {
-		conf := helper.TestConfig()
+		conf := newConfig()
 		opt := &Options{
 			Proto: []string{"./hoge", "./foo/bar"},
 		}
@@ -59,7 +65,7 @@ func TestCLI(t *testing.T) {
 	}
 
 	t.Run("proto path (env)", func(t *testing.T) {
-		conf := helper.TestConfig()
+		conf := newConfig()
 		opt := &Options{
 			Proto: []string{"$hoge/foo", "/fuga/bar"},
 		}
@@ -74,7 +80,7 @@ func TestCLI(t *testing.T) {
 	})
 
 	t.Run("error/proto path", func(t *testing.T) {
-		conf := helper.TestConfig()
+		conf := newConfig()
 		opt := &Options{
 			Proto: []string{"foo bar"},
 		}
