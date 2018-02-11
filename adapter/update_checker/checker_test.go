@@ -27,21 +27,23 @@ func TestUpdateChecker(t *testing.T) {
 	}
 
 	t.Run("latest", func(t *testing.T) {
-		isLatest, err := u.IsLatest(context.TODO())
+		tag, err := u.Check(context.TODO())
 		require.NoError(t, err)
-		require.True(t, isLatest)
+		require.True(t, tag.CurrentIsLatest)
+		require.Equal(t, "0.1.0", tag.LatestVersion)
 	})
 
 	t.Run("old", func(t *testing.T) {
 		client.tag = "0.1.1"
-		isLatest, err := u.IsLatest(context.TODO())
+		tag, err := u.Check(context.TODO())
 		require.NoError(t, err)
-		require.False(t, isLatest)
+		require.False(t, tag.CurrentIsLatest)
+		require.Equal(t, "0.1.1", tag.LatestVersion)
 	})
 
 	t.Run("error", func(t *testing.T) {
 		client.err = errors.New("an error")
-		_, err := u.IsLatest(context.TODO())
+		_, err := u.Check(context.TODO())
 		require.Error(t, err)
 	})
 }

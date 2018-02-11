@@ -18,10 +18,18 @@ func NewUpdateChecker() *UpdateChecker {
 	}
 }
 
-func (u *UpdateChecker) IsLatest(ctx context.Context) (bool, error) {
+type ReleaseTag struct {
+	LatestVersion   string
+	CurrentIsLatest bool
+}
+
+func (u *UpdateChecker) Check(ctx context.Context) (*ReleaseTag, error) {
 	tag, err := u.client.FetchLatestTag(ctx)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return tag == u.version, nil
+	return &ReleaseTag{
+		LatestVersion:   tag,
+		CurrentIsLatest: tag == u.version,
+	}, nil
 }
