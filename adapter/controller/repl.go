@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,7 +9,6 @@ import (
 	"strings"
 
 	prompt "github.com/c-bata/go-prompt"
-	"github.com/ktr0731/evans/adapter/update_checker"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
@@ -26,12 +24,11 @@ var (
 )
 
 type REPL struct {
-	ui       ui
-	config   *config.REPL
-	env      *entity.Env
-	prompt   *prompt.Prompt
-	cmds     map[string]Commander
-	isLatest bool
+	ui     ui
+	config *config.REPL
+	env    *entity.Env
+	prompt *prompt.Prompt
+	cmds   map[string]Commander
 }
 
 func NewREPL(config *config.REPL, env *entity.Env, ui ui, inputPort port.InputPort) *REPL {
@@ -44,17 +41,11 @@ func NewREPL(config *config.REPL, env *entity.Env, ui ui, inputPort port.InputPo
 		"header":  &headerCommand{inputPort},
 	}
 
-	isLatest, err := update_checker.NewUpdateChecker().IsLatest(context.Background())
-	if err != nil {
-		isLatest = true
-	}
-
 	repl := &REPL{
-		ui:       ui,
-		config:   config,
-		env:      env,
-		cmds:     cmds,
-		isLatest: isLatest,
+		ui:     ui,
+		config: config,
+		env:    env,
+		cmds:   cmds,
 	}
 
 	executor := &executor{repl: repl}
@@ -117,10 +108,7 @@ func (r *REPL) eval(l string) (string, error) {
 func (r *REPL) Start() error {
 	r.printSplash(r.config.SplashTextPath)
 	r.prompt.Run()
-	return nil
-}
 
-func (r *REPL) Close() error {
 	r.ui.InfoPrintln("Good Bye :)")
 	return nil
 }
@@ -154,9 +142,6 @@ func (r *REPL) getPrompt() string {
 	p := fmt.Sprintf("%s:%s> ", r.config.Server.Host, r.config.Server.Port)
 	if dsn := r.env.DSN(); dsn != "" {
 		p = fmt.Sprintf("%s@%s", dsn, p)
-	}
-	if !r.isLatest {
-		p = "[*] " + p
 	}
 	return p
 }
