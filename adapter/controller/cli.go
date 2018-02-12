@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"path/filepath"
 	"strconv"
@@ -12,8 +13,10 @@ import (
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/adapter/presenter"
+	"github.com/ktr0731/evans/adapter/update_checker"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
 	isatty "github.com/mattn/go-isatty"
@@ -112,6 +115,19 @@ func (c *CLI) Run(args []string) int {
 		DynamicBuilder: gateway.NewDynamicBuilder(),
 	}
 
+	// check latest update
+	var tag *update_checker.ReleaseTag
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // for non-zero return value
+	go func() {
+		defer cancel()
+		var err error
+		tag, err = update_checker.NewUpdateChecker().Check(ctx)
+		if err != nil {
+			tag.CurrentIsLatest = true
+		}
+	}()
+
 	if isCommandLineMode(c.options) {
 		var in io.Reader
 		if c.options.File != "" {
@@ -153,15 +169,36 @@ func (c *CLI) Run(args []string) int {
 			ui = newREPLUI("")
 		}
 		r := NewREPL(c.config.REPL, env, ui, interactor)
-		defer r.Close()
-
 		if err := r.Start(); err != nil {
 			c.Error(err)
 			return 1
 		}
-
 	}
+
+	// cancel update checking
+	cancel()
+	<-ctx.Done()
+
+	if tag != nil && !tag.CurrentIsLatest {
+		c.printUpdateInfo(tag.LatestVersion)
+	}
+
 	return 0
+}
+
+var updateInfoFormat string = `
+  new update available:
+    old version: %s
+    new version: %s
+
+  $ brew upgrade evans
+  $ go get -u github.com/ktr0731/evans
+  $ curl -sL https://github.com/ktr0731/evans/releases/download/%s/evans_{OS}_{ARCH}.tar.gz | tar xf -
+
+`
+
+func (c *CLI) printUpdateInfo(latestVersion string) {
+	c.ui.Println(fmt.Sprintf(updateInfoFormat, meta.Version, latestVersion, latestVersion))
 }
 
 func checkPrecondition(config *config.Config, opt *Options) error {

@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-VERSION := $(shell grep 'version = ' < main.go | sed -r 's/\sversion = "(.*)".*/\1/')
+VERSION := $(shell grep 'Version = ' < meta/meta.go | sed -r 's/\sVersion = "(.*)".*/\1/')
 
 .PHONY: version
 version:

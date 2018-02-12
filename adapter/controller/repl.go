@@ -40,6 +40,7 @@ func NewREPL(config *config.REPL, env *entity.Env, ui ui, inputPort port.InputPo
 		"show":    &showCommand{inputPort},
 		"header":  &headerCommand{inputPort},
 	}
+
 	repl := &REPL{
 		ui:     ui,
 		config: config,
@@ -107,10 +108,7 @@ func (r *REPL) eval(l string) (string, error) {
 func (r *REPL) Start() error {
 	r.printSplash(r.config.SplashTextPath)
 	r.prompt.Run()
-	return nil
-}
 
-func (r *REPL) Close() error {
 	r.ui.InfoPrintln("Good Bye :)")
 	return nil
 }
@@ -137,7 +135,7 @@ Available commands:
 Show more details:
   <command> --help
 `, cmdText)
-	r.ui.InfoPrintln(strings.TrimRight(msg, "\n"))
+	r.ui.Println(strings.TrimRight(msg, "\n"))
 }
 
 func (r *REPL) getPrompt() string {
