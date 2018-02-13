@@ -48,8 +48,11 @@ type REPL struct {
 }
 
 type Env struct {
-	Server            *Server `toml:"-"`
-	InputPromptFormat string  `default:"{ancestor}{name} ({type}) => " toml:"inputPromptFormat"`
+	Server *Server `toml:"-"`
+}
+
+type Input struct {
+	PromptFormat string `default:"{ancestor}{name} ({type}) => " toml:"promptFormat"`
 }
 
 type Meta struct {
@@ -64,10 +67,12 @@ type Config struct {
 	Server  *Server  `toml:"server"`
 	Log     *Log     `toml:"log"`
 	Request *Request `toml:"request"`
+	Input   *Input   `toml:"input"`
 }
 
 type Default struct {
 	ProtoPath []string `toml:"protoPath" default:""`
+	ProtoFile []string `toml:"protoFile" default:""`
 	Package   string   `toml:"package" default:""`
 	Service   string   `toml:"service" default:""`
 }
@@ -90,6 +95,7 @@ func init() {
 		// to show items in initial config file, set an empty value
 		Default: &Default{
 			ProtoPath: []string{""},
+			ProtoFile: []string{""},
 		},
 	}
 	var err error
@@ -180,6 +186,7 @@ func lookupProjectRoot() (io.ReadCloser, error) {
 	return os.Open(p)
 }
 
+// TODO: 改善
 func applyLocalConfig(global *Config, local *localConfig) {
 	if local == nil {
 		return
@@ -189,5 +196,9 @@ func applyLocalConfig(global *Config, local *localConfig) {
 	}
 	if local.Default.Service != "" {
 		global.Default.Service = local.Default.Service
+	}
+
+	if len(local.Default.ProtoFile) != 0 {
+		global.Default.ProtoFile = local.Default.ProtoFile
 	}
 }

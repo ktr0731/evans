@@ -83,7 +83,7 @@ func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
 	fields := reqType.Fields()
 
 	// DarkGreen is the initial color
-	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, setter, []string{}, false, prompt.DarkGreen).Input(fields)
+	return newFieldInputter(i.prompt, i.config.Input.PromptFormat, setter, []string{}, false, prompt.DarkGreen).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively
