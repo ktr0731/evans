@@ -22,12 +22,25 @@ var (
 type prompter interface {
 	Input() string
 	Select(msg string, opts []string) (string, error)
-	SetPrefix(prefix string) error
+	SetPrefix(prefix string)
 	SetPrefixColor(color prompt.Color) error
 }
 
 type RealPrompter struct {
 	fieldPrompter *prompt.Prompt
+	currentPrefix string
+}
+
+func newRealPrompter() *RealPrompter {
+	executor := func(in string) {
+		return
+	}
+	completer := func(d prompt.Document) []prompt.Suggest {
+		return nil
+	}
+	p := &RealPrompter{}
+	p.fieldPrompter = prompt.New(executor, completer, prompt.OptionLivePrefix(p.livePrefix))
+	return p
 }
 
 func (p *RealPrompter) Input() string {
@@ -43,23 +56,21 @@ func (p *RealPrompter) Select(msg string, opts []string) (string, error) {
 	return choice, err
 }
 
-func (p *RealPrompter) SetPrefix(prefix string) error {
-	return prompt.OptionPrefix(prefix)(p.fieldPrompter)
+func (p *RealPrompter) SetPrefix(prefix string) {
+	p.currentPrefix = prefix
 }
 
 func (p *RealPrompter) SetPrefixColor(color prompt.Color) error {
 	return prompt.OptionPrefixTextColor(color)(p.fieldPrompter)
 }
 
+func (p *RealPrompter) livePrefix() (string, bool) {
+	return p.currentPrefix, true
+}
+
 // mixin go-prompt
 func NewPrompt(config *config.Config, env entity.Environment) *Prompt {
-	executor := func(in string) {
-		return
-	}
-	completer := func(d prompt.Document) []prompt.Suggest {
-		return nil
-	}
-	return newPrompt(&RealPrompter{prompt.New(executor, completer)}, config, env)
+	return newPrompt(newRealPrompter(), config, env)
 }
 
 type Prompt struct {
@@ -233,9 +244,7 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		// increment prompt color to next one
 		i.color = (i.color + 1) % 16
 	case entity.PrimitiveField:
-		if err := i.prompt.SetPrefix(i.makePrefix(field)); err != nil {
-			return err
-		}
+		i.prompt.SetPrefix(i.makePrefix(field))
 		v, err := i.inputPrimitiveField(f)
 		if err != nil {
 			return err
