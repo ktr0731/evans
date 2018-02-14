@@ -1,5 +1,5 @@
 hash: 9b110fe65e53714f2e18f00a7d9b8e97181867975e8dc9fc06129dc7e64cdc4b
-updated: 2018-02-11T13:54:22.912436859+09:00
+updated: 2018-02-14T20:49:31.185236536+09:00
 imports:
 - name: github.com/AlecAivazis/survey
   version: f051d0d636f1be0261d8d320a4b2365e7ccd9888
@@ -10,7 +10,7 @@ imports:
 - name: github.com/BurntSushi/toml
   version: a368813c5e648fee92e5f6c30e3944ff9d5e8895
 - name: github.com/c-bata/go-prompt
-  version: c292a2f4b4fe8563883871456e19028ff9df0f26
+  version: 65b515231dd8dbaa5bc87a73e2766825d4816cd2
 - name: github.com/davecgh/go-spew
   version: 2df174808ee097f90d259e432cc04442cf60be21
   subpackages:
@@ -29,7 +29,7 @@ imports:
   - ptypes/struct
   - ptypes/timestamp
 - name: github.com/google/go-github
-  version: 08e68b58d6369e25c2375020353d0d642aa4b2b1
+  version: 632a2caf6d3d380753dc7e422748202982ad18a3
   subpackages:
   - github
 - name: github.com/google/go-querystring

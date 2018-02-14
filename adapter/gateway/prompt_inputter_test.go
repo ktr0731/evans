@@ -38,9 +38,7 @@ func (p *mockPrompt) setExpectedSelect(s string, err error) {
 	p.selectOutputError = err
 }
 
-func (p *mockPrompt) SetPrefix(_ string) error {
-	return nil
-}
+func (p *mockPrompt) SetPrefix(_ string) {}
 
 func (p *mockPrompt) SetPrefixColor(_ prompt.Color) error {
 	return nil
