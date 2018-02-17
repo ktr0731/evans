@@ -10,6 +10,7 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	configure "github.com/ktr0731/go-configure"
+	"github.com/ktr0731/mapstruct"
 	"github.com/ktr0731/toml"
 	"github.com/mitchellh/mapstructure"
 )
@@ -103,21 +104,10 @@ func init() {
 		panic(err)
 	}
 
-	// TODO: use more better method
-	conf.REPL.Server = conf.Server
-	conf.Env.Server = conf.Server
-
 	mConfig, err = configure.NewConfigure(conf.Meta.Path, conf, nil)
 	if err != nil {
 		panic(err)
 	}
-
-	local, err := getLocalConfig()
-	if err != nil {
-		panic(err)
-	}
-
-	applyLocalConfig(&conf, local)
 }
 
 func Get() *Config {
@@ -127,24 +117,35 @@ func Get() *Config {
 		panic(err)
 	}
 
-	// TODO: use more better method
-	config.REPL.Server = config.Server
-	config.Env.Server = config.Server
-
 	local, err := getLocalConfig()
 	if err != nil {
 		panic(err)
 	}
-	applyLocalConfig(&config, local)
 
-	return &config
+	// if local config missing, return global config
+	if local == nil {
+		return &config
+	}
+
+	ic, err := mapstruct.Map(&config, local)
+	if err != nil {
+		panic(err)
+	}
+
+	c := ic.(*Config)
+
+	// TODO: use more better method
+	c.REPL.Server = c.Server
+	c.Env.Server = c.Server
+
+	return c
 }
 
 func Edit() error {
 	return mConfig.Edit()
 }
 
-func getLocalConfig() (*localConfig, error) {
+func getLocalConfig() (*Config, error) {
 	var f io.ReadCloser
 	if _, err := os.Stat(localConfigName); err != nil {
 		if os.IsNotExist(err) {
@@ -163,7 +164,7 @@ func getLocalConfig() (*localConfig, error) {
 		}
 		defer f.Close()
 	}
-	var conf localConfig
+	var conf Config
 	_, err := toml.DecodeReader(f, &conf)
 	return &conf, err
 }
@@ -184,21 +185,4 @@ func lookupProjectRoot() (io.ReadCloser, error) {
 		return nil, nil
 	}
 	return os.Open(p)
-}
-
-// TODO: 改善
-func applyLocalConfig(global *Config, local *localConfig) {
-	if local == nil {
-		return
-	}
-	if local.Default.Package != "" {
-		global.Default.Package = local.Default.Package
-	}
-	if local.Default.Service != "" {
-		global.Default.Service = local.Default.Service
-	}
-
-	if len(local.Default.ProtoFile) != 0 {
-		global.Default.ProtoFile = local.Default.ProtoFile
-	}
 }
