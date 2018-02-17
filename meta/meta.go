@@ -2,5 +2,5 @@ package meta
 
 const (
 	Name    = "evans"
-	Version = "0.2.6"
+	Version = "0.2.7"
 )

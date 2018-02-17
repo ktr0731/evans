@@ -15,7 +15,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-const (
+var (
 	localConfigName = ".evans.toml"
 )
 
@@ -110,9 +110,14 @@ func init() {
 	}
 }
 
+func setupConfig(c *Config) {
+	c.REPL.Server = c.Server
+	c.Env.Server = c.Server
+}
+
 func Get() *Config {
-	var config Config
-	err := mapstructure.Decode(mConfig.Get(), &config)
+	var global Config
+	err := mapstructure.Decode(mConfig.Get(), &global)
 	if err != nil {
 		panic(err)
 	}
@@ -124,19 +129,17 @@ func Get() *Config {
 
 	// if local config missing, return global config
 	if local == nil {
-		return &config
+		setupConfig(&global)
+		return &global
 	}
 
-	ic, err := mapstruct.Map(&config, local)
+	ic, err := mapstruct.Map(&global, local)
 	if err != nil {
 		panic(err)
 	}
 
 	c := ic.(*Config)
-
-	// TODO: use more better method
-	c.REPL.Server = c.Server
-	c.Env.Server = c.Server
+	setupConfig(c)
 
 	return c
 }
