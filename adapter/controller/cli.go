@@ -27,6 +27,10 @@ import (
 	"os"
 )
 
+var (
+	ErrProtoFileRequired = errors.New("least one proto file required")
+)
+
 type Options struct {
 	Proto []string `arg:"positional,help:.proto files"`
 
@@ -98,6 +102,9 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	env, err := setupEnv(c.config, c.options)
+	if err == ErrProtoFileRequired {
+		c.Usage()
+	}
 	if err != nil {
 		c.Error(err)
 		return 1
@@ -202,9 +209,6 @@ func (c *CLI) printUpdateInfo(latestVersion string) {
 }
 
 func checkPrecondition(config *config.Config, opt *Options) error {
-	if len(opt.Proto) == 0 {
-		return errors.New("invalid argument")
-	}
 	if err := isCallable(config, opt); err != nil {
 		return err
 	}
@@ -266,7 +270,12 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 		return nil, err
 	}
 
-	desc, err := parser.ParseFile(opt.Proto, paths)
+	files, err := collectProtoFiles(conf, opt)
+	if err != nil {
+		return nil, err
+	}
+
+	desc, err := parser.ParseFile(files, paths)
 	if err != nil {
 		return nil, err
 	}
@@ -348,4 +357,17 @@ func collectProtoPaths(conf *config.Config, opt *Options) ([]string, error) {
 		encountered[path] = true
 	}
 	return paths, nil
+}
+
+func collectProtoFiles(conf *config.Config, opt *Options) ([]string, error) {
+	files := make([]string, 0, len(conf.Default.ProtoFile)+len(opt.Proto))
+	for _, f := range append(conf.Default.ProtoFile, opt.Proto...) {
+		if f != "" {
+			files = append(files, f)
+		}
+	}
+	if len(files) == 0 {
+		return nil, ErrProtoFileRequired
+	}
+	return files, nil
 }

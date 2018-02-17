@@ -1,5 +1,5 @@
 hash: 9b110fe65e53714f2e18f00a7d9b8e97181867975e8dc9fc06129dc7e64cdc4b
-updated: 2018-02-14T20:49:31.185236536+09:00
+updated: 2018-02-17T16:16:43.233771311+09:00
 imports:
 - name: github.com/AlecAivazis/survey
   version: f051d0d636f1be0261d8d320a4b2365e7ccd9888
@@ -53,11 +53,12 @@ imports:
   version: 37d89cb5546f3e3f28142a781ea345e42b32d50c
 - name: github.com/ktr0731/go-shellstring
   version: 1ce8b8bf5b06ae1ff26aa02fa393084bcb2f4b62
+- name: github.com/ktr0731/mapstruct
+  version: 39ad5868fa43338db745229c95923b300b9dcaf8
 - name: github.com/ktr0731/toml
   version: a368813c5e648fee92e5f6c30e3944ff9d5e8895
 - name: github.com/mattn/go-colorable
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
-  repo: https://github.com/mattn/go-colorable
 - name: github.com/mattn/go-isatty
   version: 57fdcb988a5c543893cc61bce354a6e24ab70022
   repo: https://github.com/mattn/go-isatty
@@ -65,6 +66,8 @@ imports:
   version: 97311d9f7767e3d6f422ea06661bc2c7a19e8a5d
 - name: github.com/mattn/go-shellwords
   version: 39dbbfa24bbc39559b61cae9b20b0e8db0e55525
+- name: github.com/mattn/go-tty
+  version: 5128a79c1473f8efe218f7a0e992e2c43ffa0bab
 - name: github.com/mgutz/ansi
   version: 9520e82c474b0a04dd04f8a40959027271bab992
 - name: github.com/mitchellh/go-homedir

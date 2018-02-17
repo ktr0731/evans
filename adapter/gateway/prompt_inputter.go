@@ -9,6 +9,7 @@ import (
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
+	shellstring "github.com/ktr0731/go-shellstring"
 	"github.com/pkg/errors"
 )
 
@@ -93,7 +94,7 @@ func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
 	fields := reqType.Fields()
 
 	// DarkGreen is the initial color
-	return newFieldInputter(i.prompt, i.config.Env.InputPromptFormat, setter, []string{}, false, prompt.DarkGreen).Input(fields)
+	return newFieldInputter(i.prompt, i.config.Input.PromptFormat, setter, []string{}, false, prompt.DarkGreen).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively
@@ -259,7 +260,20 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 }
 
 func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{}, error) {
-	in := i.prompt.Input()
+	l := i.prompt.Input()
+	part, err := shellstring.Parse(l)
+	if err != nil {
+		return "", err
+	}
+
+	if len(part) > 1 {
+		return nil, errors.New("invalid input string")
+	}
+
+	var in string
+	if len(part) != 0 {
+		in = part[0]
+	}
 
 	if in == "" {
 		// if f is repeated or
