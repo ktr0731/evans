@@ -127,7 +127,7 @@ func Get() *Config {
 		panic(err)
 	}
 
-	// if local global missing, return global global
+	// if local config missing, return global config
 	if local == nil {
 		setupConfig(&global)
 		return &global
