@@ -17,14 +17,14 @@ Evans was created to use easier than other existing gRPC clients.
 If you want to keep your product quality, you must use CI with gRPC testing, should not do use manually testing.  
 Evans will complete your other usecases just like:  
 
+- manually gRPC API inspection
 - to automate some tasks by scripting
-- manullary gRPC API inspection
 
-above usecases is corresponding to Evans's two modes, command-line mode and REPL mode.  
+above usecases is corresponding to Evans's two modes, REPL mode, and command-line mode.  
 
 ## REPL mode
 ![Evans](./evans1.gif)  
-REPL mode is the solution for second usecase.  
+REPL mode is the solution for first usecase.  
 You can use it without thinking like package name, service name, RPC name, command usage, and so on because REPL mode has powerful completion!  
 
 proto file which read in demonstration and its implementation are available at [ktr0731/evans-demo](https://github.com/ktr0731/evans-demo).  
@@ -38,9 +38,9 @@ So it is based on UNIX philosophy.
 
 For example, read inputs from `stdin`, the command will be a filter command.  
 On the other hand, the command result will be outputted to `stdout` by JSON formatted.  
-So, you can format it by any commands like `jq`. Also, if you want to use same command (e.g. use same JSON inputs), you can use `--file` (`-f`) option.  
+So, you can format it by any commands like `jq`. Also, if you want to use the same command (e.g. use same JSON inputs), you can use `--file` (`-f`) option.  
 
-By the way, command-line mode is not able to omit `--package`, `--service` and `--call` option unlike REPL mode.  
+By the way, command-line mode is not able to omit `--package`, `--service` and `--call` option, unlike REPL mode.  
 However, if `.evans.toml` is exist in Git project root, you can denote default values.  
 
 ``` toml
@@ -50,7 +50,7 @@ package = "api"
 service = "UserService"
 ```
 
-Then, command will be more clearly.  
+Then, the command will be more clear.  
 
 ## Installation
 ### from binary
@@ -76,7 +76,7 @@ Enter to REPL (this file is [here](./testdata/proto/helloworld/helloworld.proto)
 $ evans testdata/proto/helloworld/helloworld.proto
 ```
 
-To show summary of packages, services or messages of proto files REPL read:  
+To show the summary of packages, services or messages of proto files REPL read:  
 ``` 
 > show package
 +------------+
@@ -101,7 +101,7 @@ To show summary of packages, services or messages of proto files REPL read:
 +--------------+
 ```
 
-To show more description of message:  
+To show more description of a message:  
 ``` 
 > desc HelloRequest
 +-------+-------------+
@@ -111,7 +111,7 @@ To show more description of message:
 +-------+-------------+
 ```
 
-Set headers to each request:
+Set headers for each request:
 ```
 > header foo=bar
 ```
@@ -136,7 +136,7 @@ name (TYPE_STRING) = ktr
 }
 ```
 
-Evans constructs a gRPC request interactively and send the request to gRPC server.  
+Evans constructs a gRPC request interactively and sends the request to a gRPC server.  
 Finally, Evans prints the JSON formatted result.  
 
 ## Supported IDL (interface definition language)
