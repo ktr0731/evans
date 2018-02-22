@@ -140,7 +140,7 @@ Evans constructs a gRPC request interactively and send the request to gRPC serve
 Finally, Evans prints the JSON formatted result.  
 
 ## Supported IDL (interface definition language)
-- [ProtocolBuffers](https://developers.google.com/protocol-buffers/)  
+- [Protocol Buffers 3](https://developers.google.com/protocol-buffers/)  
 
 ## See Also
 Evans (DJ YOSHITAKA)  
