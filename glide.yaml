@@ -1,4 +1,4 @@
-package: github.com/lycoris0731/evans
+package: github.com/ktr0731/evans
 import:
 - package: github.com/alexflint/go-arg
 - package: github.com/fatih/color
