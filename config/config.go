@@ -8,10 +8,10 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/BurntSushi/toml"
 	"github.com/kelseyhightower/envconfig"
 	configure "github.com/ktr0731/go-configure"
 	"github.com/ktr0731/mapstruct"
-	"github.com/ktr0731/toml"
 	"github.com/mitchellh/mapstructure"
 )
 
