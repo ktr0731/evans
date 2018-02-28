@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/jhump/protoreflect/desc"
-	"github.com/ktr0731/evans/adapter/internal/proto_parser"
+	"github.com/ktr0731/evans/adapter/internal/protoparser"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ func ReadProtoAsFileDescriptors(t *testing.T, fpath ...string) []*desc.FileDescr
 	for i := range fpath {
 		fpath[i] = filepath.Join("testdata", fpath[i])
 	}
-	set, err := proto_parser.ParseFile(fpath, nil)
+	set, err := protoparser.ParseFile(fpath, nil)
 	require.NoError(t, err)
 	require.Len(t, set, len(fpath))
 	return set
