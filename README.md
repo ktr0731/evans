@@ -71,9 +71,9 @@ $ go get github.com/ktr0731/evans
 ## Usage
 Evans consists of some commands in REPL.  
 
-Enter to REPL (this file is [here](./testdata/proto/helloworld/helloworld.proto))  
+Enter to REPL (this file is [here](adapter/gateway/testdata/helloworld.proto))  
 ``` 
-$ evans testdata/proto/helloworld/helloworld.proto
+$ evans adapter/gateway/testdata/helloworld.proto
 ```
 
 To show the summary of packages, services or messages of proto files REPL read:  
@@ -86,29 +86,30 @@ To show the summary of packages, services or messages of proto files REPL read:
 +------------+
 
 > show service
-+---------+----------+--------------+--------------+
-| SERVICE |   RPC    | REQUESTTYPE  | RESPONSETYPE |
-+---------+----------+--------------+--------------+
-| Greeter | SayHello | HelloRequest | HelloReply   |
-+---------+----------+--------------+--------------+
++---------+----------+--------------+---------------+
+| SERVICE |   RPC    | REQUESTTYPE  | RESPONSETYPE  |
++---------+----------+--------------+---------------+
+| Greeter | SayHello | HelloRequest | HelloResponse |
++---------+----------+--------------+---------------+
 
 > show message
-+--------------+
-|   MESSAGE    |
-+--------------+
-| HelloRequest |
-| HelloReply   |
-+--------------+
++---------------+
+|    MESSAGE    |
++---------------+
+| HelloRequest  |
+| HelloResponse |
++---------------+
 ```
 
 To show more description of a message:  
 ``` 
 > desc HelloRequest
-+-------+-------------+
-| FIELD |    TYPE     |
-+-------+-------------+
-| name  | TYPE_STRING |
-+-------+-------------+
++---------+-------------+
+|  FIELD  |    TYPE     |
++---------+-------------+
+| name    | TYPE_STRING |
+| message | TYPE_STRING |
++---------+-------------+
 ```
 
 Set headers for each request:
@@ -131,9 +132,7 @@ Call a RPC:
 ``` 
 > call SayHello
 name (TYPE_STRING) = ktr
-{
-  "message": "Hello ktr"
-}
+message (TYPE_STRING) => hello!
 ```
 
 Evans constructs a gRPC request interactively and sends the request to a gRPC server.  
