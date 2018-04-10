@@ -131,7 +131,7 @@ func (c *CLI) Run(args []string) int {
 		var err error
 		tag, err = update_checker.NewUpdateChecker().Check(ctx)
 		if err != nil {
-			tag.CurrentIsLatest = true
+			tag = &update_checker.ReleaseTag{CurrentIsLatest: true}
 		}
 	}()
 
