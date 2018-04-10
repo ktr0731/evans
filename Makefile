@@ -18,14 +18,14 @@ deps: glide
 
 .PHONY: build
 build: deps
-	go build 
+	go build
 
 .PHONY: test
 test:
 	go test -race -v $(shell glide novendor)
 
 .PHONY: coverage
-coverage: 
+coverage:
 	go tool cover -html=coverage.out
 
 .PHONY: brew-update
