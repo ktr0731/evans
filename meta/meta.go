@@ -1,6 +1,7 @@
 package meta
 
-const (
-	Name    = "evans"
-	Version = "0.2.8"
-)
+import semver "github.com/ktr0731/go-semver"
+
+const Name = "evans"
+
+var Version = semver.MustParse("0.2.8")

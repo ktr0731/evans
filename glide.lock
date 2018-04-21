@@ -1,5 +1,5 @@
 hash: 32f98c9a1f8d3c067e4111b28c07a964859a4afe51a6d9a48479f4bee3ae80d2
-updated: 2018-02-28T21:32:52.270874947+09:00
+updated: 2018-04-20T09:42:51.550785412+09:00
 imports:
 - name: github.com/AlecAivazis/survey
   version: f051d0d636f1be0261d8d320a4b2365e7ccd9888
@@ -12,7 +12,7 @@ imports:
 - name: github.com/c-bata/go-prompt
   version: 65b515231dd8dbaa5bc87a73e2766825d4816cd2
 - name: github.com/davecgh/go-spew
-  version: 2df174808ee097f90d259e432cc04442cf60be21
+  version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
   subpackages:
   - spew
 - name: github.com/fatih/color
@@ -23,11 +23,14 @@ imports:
   - jsonpb
   - proto
   - protoc-gen-go/descriptor
+  - protoc-gen-go/plugin
   - ptypes
   - ptypes/any
   - ptypes/duration
+  - ptypes/empty
   - ptypes/struct
   - ptypes/timestamp
+  - ptypes/wrappers
 - name: github.com/google/go-github
   version: 632a2caf6d3d380753dc7e422748202982ad18a3
   subpackages:
@@ -45,12 +48,15 @@ imports:
   subpackages:
   - desc
   - desc/internal
+  - desc/protoparse
   - dynamic
   - internal
 - name: github.com/kelseyhightower/envconfig
-  version: 462fda1f11d8cad3660e52737b8beefd27acfb3f
+  version: b6fde1625d631a48340817849a547164f395d9eb
 - name: github.com/ktr0731/go-configure
   version: 37d89cb5546f3e3f28142a781ea345e42b32d50c
+- name: github.com/ktr0731/go-semver
+  version: ed82d06df7996aa671033c2e3c2442120bae638c
 - name: github.com/ktr0731/go-shellstring
   version: 1ce8b8bf5b06ae1ff26aa02fa393084bcb2f4b62
 - name: github.com/ktr0731/mapstruct
@@ -59,6 +65,7 @@ imports:
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
 - name: github.com/mattn/go-isatty
   version: 57fdcb988a5c543893cc61bce354a6e24ab70022
+  repo: https://github.com/mattn/go-isatty
 - name: github.com/mattn/go-runewidth
   version: 97311d9f7767e3d6f422ea06661bc2c7a19e8a5d
 - name: github.com/mattn/go-shellwords
@@ -76,7 +83,7 @@ imports:
 - name: github.com/peterh/liner
   version: 3681c2a912330352991ecdd642f257efe5b85518
 - name: github.com/pkg/errors
-  version: e881fd58d78e04cf6d0de1217f8707c8cc2249bc
+  version: f15c970de5b76fac0b59abb32d62c17cc7bed265
 - name: github.com/pkg/term
   version: b1f72af2d63057363398bec5873d16a98b453312
   subpackages:
@@ -90,8 +97,10 @@ imports:
   subpackages:
   - assert
   - require
+  - vendor/github.com/davecgh/go-spew/spew
+  - vendor/github.com/pmezard/go-difflib/difflib
 - name: golang.org/x/net
-  version: 5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec
+  version: feeb485667d1fdabe727840fe00adc22431bc86e
   subpackages:
   - context
   - http2
@@ -106,21 +115,24 @@ imports:
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: e19ae1496984b1c655b8044a65c0300a3c878dd3
+  version: 88f656faf3f37f690df1a32515b479415e1a6769
   subpackages:
   - secure/bidirule
   - transform
   - unicode/bidi
   - unicode/norm
 - name: google.golang.org/genproto
-  version: a8101f21cf983e773d0c1133ebc5424792003214
+  version: 891aceb7c239e72692819142dfca057bdcbfcb96
   subpackages:
   - googleapis/rpc/status
+  - protobuf/api
+  - protobuf/field_mask
+  - protobuf/ptype
+  - protobuf/source_context
 - name: google.golang.org/grpc
-  version: b71aced4a2a1ee80a1cbbd26b85a57623790d7f4
+  version: 6253aa9397d3f97c06b2c67e2b2965b558b3705f
   subpackages:
   - balancer
-  - balancer/base
   - balancer/roundrobin
   - codes
   - connectivity

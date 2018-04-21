@@ -14,7 +14,7 @@ type UpdateChecker struct {
 func NewUpdateChecker() *UpdateChecker {
 	return &UpdateChecker{
 		client:  newGitHubClient(),
-		version: meta.Version,
+		version: meta.Version.String(),
 	}
 }
 
