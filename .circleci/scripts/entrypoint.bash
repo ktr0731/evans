@@ -5,13 +5,13 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
+if [ "$CIRCLE_BRANCH" != "master" ]; then
+  exit 0
+fi
+
 if [ "$GITHUB_TOKEN" = "" ]; then
   echo 'please set $GITHUB_TOKEN'
   exit 1
-fi
-
-if [ "$CIRCLE_BRANCH" != "master" ]; then
-  exit 0
 fi
 
 LATEST_VERSION=$(curl -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/ktr0731/evans/releases | jq -r '.[0].tag_name')
