@@ -36,7 +36,7 @@ type Options struct {
 
 	Interactive bool     `arg:"-i,help:use interactive mode"`
 	EditConfig  bool     `arg:"-e,help:edit config file by $EDITOR"`
-	Host        string   `arg:"-h,help:gRPC host"`
+	Host        string   `arg:"help:gRPC host"`
 	Port        string   `arg:"-p,help:gRPC port"`
 	Package     string   `arg:"help:default package"`
 	Service     string   `arg:"help:default service. evans parse package from this if --package is nothing."`
