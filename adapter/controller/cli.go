@@ -13,10 +13,10 @@ import (
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/adapter/presenter"
-	"github.com/ktr0731/evans/adapter/update_checker"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/meta"
+	"github.com/ktr0731/evans/updatechecker"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
 	isatty "github.com/mattn/go-isatty"
@@ -123,15 +123,15 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	// check latest update
-	var tag *update_checker.ReleaseTag
+	var tag *updatechecker.ReleaseTag
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 	go func() {
 		defer cancel()
 		var err error
-		tag, err = update_checker.NewUpdateChecker().Check(ctx)
+		tag, err = updatechecker.NewUpdateChecker().Check(ctx)
 		if err != nil {
-			tag = &update_checker.ReleaseTag{CurrentIsLatest: true}
+			tag = &updatechecker.ReleaseTag{CurrentIsLatest: true}
 		}
 	}()
 

@@ -1,4 +1,4 @@
-package update_checker
+package updatechecker
 
 import (
 	"context"
