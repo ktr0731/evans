@@ -1,4 +1,4 @@
-package updatechecker
+package updater
 
 import (
 	"context"
