@@ -2,9 +2,12 @@ package meta
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
+	toml "github.com/pelletier/go-toml"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var testDir = "tmp"
@@ -26,15 +29,33 @@ func TestMeta(t *testing.T) {
 		defer func() {
 			os.RemoveAll(testDir)
 		}()
+		assert.NotNil(t, Get())
 	})
 
 	t.Run("config exist", func(t *testing.T) {
 		setup()
-		setup()
 		defer func() {
 			os.RemoveAll(testDir)
 		}()
-	})
 
-	assert.NotNil(t, Get())
+		cache := Get()
+		cache.LatestVersion = "1.0.0"
+		cache.UpdateAvailable = true
+
+		base, err := resolvePath()
+		require.NoError(t, err)
+		f, err := os.Create(filepath.Join(base, defaultFileName))
+		require.NoError(t, err)
+		defer f.Close()
+
+		err = toml.NewEncoder(f).Encode(*cache)
+		require.NoError(t, err)
+
+		// get new meta config
+		setup()
+
+		newCache := Get()
+		assert.Equal(t, "1.0.0", newCache.LatestVersion)
+		assert.True(t, newCache.UpdateAvailable)
+	})
 }

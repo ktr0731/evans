@@ -28,21 +28,14 @@ func init() {
 }
 
 func setup() {
-	base := os.Getenv("XDG_CACHE_HOME")
-	if base == "" {
-		home, err := homedir.Dir()
-		if err != nil {
-			panic(err)
-		}
-		base = filepath.Join(home, ".cache", Name)
-	} else {
-		base = filepath.Join(base, Name)
+	base, err := resolvePath()
+	if err != nil {
+		panic(err)
 	}
-
 	fname := filepath.Join(base, defaultFileName)
 
 	if _, err := os.Stat(base); os.IsNotExist(err) {
-		if err := initConfigFile(fname); err != nil {
+		if err := initCacheFile(fname); err != nil {
 			panic(err)
 		}
 	} else if err != nil {
@@ -64,7 +57,19 @@ func Get() *Meta {
 	return &m
 }
 
-func initConfigFile(fname string) error {
+func resolvePath() (string, error) {
+	base := os.Getenv("XDG_CACHE_HOME")
+	if base == "" {
+		home, err := homedir.Dir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(home, ".cache", Name), nil
+	}
+	return filepath.Join(base, Name), nil
+}
+
+func initCacheFile(fname string) error {
 	if err := os.MkdirAll(filepath.Dir(fname), 0755); err != nil {
 		return err
 	}
