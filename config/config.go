@@ -57,7 +57,8 @@ type Input struct {
 }
 
 type Meta struct {
-	Path string `default:"~/.config/evans/config.toml" toml:"path"`
+	Path       string `default:"~/.config/evans/config.toml" toml:"path"`
+	AutoUpdate bool   `default:"false" toml:"autoUpdate"`
 }
 
 type Config struct {
