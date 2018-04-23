@@ -8,17 +8,21 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AlecAivazis/survey"
 	arg "github.com/alexflint/go-arg"
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/meta"
-	"github.com/ktr0731/evans/updatechecker"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
+	updater "github.com/ktr0731/go-updater"
+	"github.com/ktr0731/go-updater/brew"
+	"github.com/ktr0731/go-updater/github"
 	isatty "github.com/mattn/go-isatty"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
@@ -122,18 +126,43 @@ func (c *CLI) Run(args []string) int {
 		DynamicBuilder: gateway.NewDynamicBuilder(),
 	}
 
-	// check latest update
-	var tag *updatechecker.ReleaseTag
+	// update check
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
-	go func() {
-		defer cancel()
-		var err error
-		tag, err = updatechecker.NewUpdateChecker().Check(ctx)
-		if err != nil {
-			tag = &updatechecker.ReleaseTag{CurrentIsLatest: true}
+
+	// TODO: split command-line, REPL
+	cache := meta.Get()
+	errCh := make(chan error, 1)
+	// if using as CLI mode, don't show prompt
+	if isatty.IsTerminal(os.Stdin.Fd()) && cache.UpdateAvailable {
+		pp.Println("update available")
+		// TODO: 共通化
+		var m updater.Means
+		switch cache.InstalledBy {
+		case meta.MeansTypeGitHubRelease:
+			m, err = updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans"))
+		case meta.MeansTypeHomeBrew:
+			m, err = updater.NewMeans(brew.HomeBrewMeans("ktr0731/evans", "evans"))
 		}
-	}()
+		// if ErrUnavailable, user installed Evans by manually, ignore
+		if err != nil && err != updater.ErrUnavailable {
+			c.Error(err)
+			return 1
+		}
+		c.printUpdateInfo(cache.LatestVersion)
+		var yes bool
+		if err := survey.AskOne(&survey.Confirm{
+			Message: "update?",
+		}, &yes, nil); err != nil {
+			c.Error(err)
+			return 1
+		}
+		if yes {
+			update(ctx, c.ui.Writer(), updater.New(meta.Version, m))
+		}
+	} else {
+		go checkUpdate(ctx, cache, errCh)
+	}
 
 	if isCommandLineMode(c.options) {
 		var in io.Reader
@@ -184,11 +213,11 @@ func (c *CLI) Run(args []string) int {
 
 	// cancel update checking
 	cancel()
-	<-ctx.Done()
-
-	if tag != nil && !tag.CurrentIsLatest {
-		c.printUpdateInfo(tag.LatestVersion)
+	if err := <-errCh; err != nil {
+		c.Error(err)
+		return 1
 	}
+	<-ctx.Done()
 
 	return 0
 }
@@ -197,15 +226,10 @@ var updateInfoFormat string = `
   new update available:
     old version: %s
     new version: %s
-
-  $ brew upgrade evans
-  $ go get -u github.com/ktr0731/evans
-  $ curl -sL https://github.com/ktr0731/evans/releases/download/%s/evans_{OS}_{ARCH}.tar.gz | tar xf -
-
 `
 
-func (c *CLI) printUpdateInfo(latestVersion string) {
-	c.ui.Println(fmt.Sprintf(updateInfoFormat, meta.Version, latestVersion, latestVersion))
+func (c *CLI) printUpdateInfo(latest string) {
+	c.ui.Println(fmt.Sprintf(updateInfoFormat, meta.Version, latest))
 }
 
 func checkPrecondition(config *config.Config, opt *Options) error {

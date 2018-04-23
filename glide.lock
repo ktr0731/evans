@@ -1,5 +1,5 @@
 hash: 32f98c9a1f8d3c067e4111b28c07a964859a4afe51a6d9a48479f4bee3ae80d2
-updated: 2018-04-20T09:42:51.550785412+09:00
+updated: 2018-04-23T23:55:32.50683013+09:00
 imports:
 - name: github.com/AlecAivazis/survey
   version: f051d0d636f1be0261d8d320a4b2365e7ccd9888
@@ -12,7 +12,7 @@ imports:
 - name: github.com/c-bata/go-prompt
   version: 65b515231dd8dbaa5bc87a73e2766825d4816cd2
 - name: github.com/davecgh/go-spew
-  version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
+  version: 2df174808ee097f90d259e432cc04442cf60be21
   subpackages:
   - spew
 - name: github.com/fatih/color
@@ -51,14 +51,21 @@ imports:
   - desc/protoparse
   - dynamic
   - internal
+- name: github.com/k0kubun/pp
+  version: e057ee7a28277be4d2af303443b6da377768181f
 - name: github.com/kelseyhightower/envconfig
   version: b6fde1625d631a48340817849a547164f395d9eb
 - name: github.com/ktr0731/go-configure
   version: 37d89cb5546f3e3f28142a781ea345e42b32d50c
 - name: github.com/ktr0731/go-semver
-  version: ed82d06df7996aa671033c2e3c2442120bae638c
+  version: 1c7a2ae67b5e66420549b0128c36ccdeab903636
 - name: github.com/ktr0731/go-shellstring
   version: 1ce8b8bf5b06ae1ff26aa02fa393084bcb2f4b62
+- name: github.com/ktr0731/go-updater
+  version: a8783449a53d0feeb1a9b3732350b016b8ad59e0
+  subpackages:
+  - brew
+  - github
 - name: github.com/ktr0731/mapstruct
   version: 39ad5868fa43338db745229c95923b300b9dcaf8
 - name: github.com/mattn/go-colorable
@@ -66,6 +73,8 @@ imports:
 - name: github.com/mattn/go-isatty
   version: 57fdcb988a5c543893cc61bce354a6e24ab70022
   repo: https://github.com/mattn/go-isatty
+- name: github.com/mattn/go-pipeline
+  version: cfb87a531e2beb376fe3ce94a6dfef7956d33bc7
 - name: github.com/mattn/go-runewidth
   version: 97311d9f7767e3d6f422ea06661bc2c7a19e8a5d
 - name: github.com/mattn/go-shellwords
@@ -80,6 +89,8 @@ imports:
   version: b4575eea38cca1123ec2dc90c26529b5c5acfcff
 - name: github.com/olekukonko/tablewriter
   version: 96aac992fc8b1a4c83841a6c3e7178d20d989625
+- name: github.com/pelletier/go-toml
+  version: 66540cf1fcd2c3aee6f6787dfa32a6ae9a870f12
 - name: github.com/peterh/liner
   version: 3681c2a912330352991ecdd642f257efe5b85518
 - name: github.com/pkg/errors
@@ -99,6 +110,8 @@ imports:
   - require
   - vendor/github.com/davecgh/go-spew/spew
   - vendor/github.com/pmezard/go-difflib/difflib
+- name: github.com/tj/go-spin
+  version: 30574f5fadef1aa5c61d4c42e936785af9f03ada
 - name: golang.org/x/net
   version: feeb485667d1fdabe727840fe00adc22431bc86e
   subpackages:
