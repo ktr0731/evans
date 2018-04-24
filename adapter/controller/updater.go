@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/meta"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
@@ -30,7 +31,7 @@ func joinCommandText(sv string, builders ...updater.MeansBuilder) (string, error
 	return sb.String(), nil
 }
 
-func checkUpdate(ctx context.Context, cache *meta.Meta, errCh chan<- error) {
+func checkUpdate(ctx context.Context, cfg *config.Config, cache *meta.Meta, errCh chan<- error) {
 	go func() {
 		<-ctx.Done()
 		if err := ctx.Err(); err != context.Canceled {
@@ -62,7 +63,12 @@ func checkUpdate(ctx context.Context, cache *meta.Meta, errCh chan<- error) {
 		return
 	}
 
-	u := updater.New(meta.Version, m)
+	if cache.InstalledBy == meta.MeansTypeUndefined {
+		// TODO: add Type()
+		meta.SetInstalledBy(meta.MeansTypeGitHubRelease)
+	}
+
+	u := newUpdater(cfg, meta.Version, m)
 	updatable, latest, err := u.Updatable(ctx)
 	if err != nil {
 		errCh <- err
@@ -129,7 +135,22 @@ func printUpdateInfoWithCommandText(w io.Writer, latest string) {
 	fmt.Fprintln(w, sb)
 }
 
-func newUpdater(cache *meta.Meta) (updater.Means, error) {
+func newUpdater(cfg *config.Config, v *semver.Version, m updater.Means) *updater.Updater {
+	u := updater.New(v, m)
+	switch cfg.Meta.UpdateLevel {
+	case "patch":
+		u.UpdateIf = updater.FoundPatchUpdate
+	case "minor":
+		u.UpdateIf = updater.FoundMinorUpdate
+	case "major":
+		u.UpdateIf = updater.FoundMajorUpdate
+	default:
+		panic("unknown update level")
+	}
+	return u
+}
+
+func newMeans(cache *meta.Meta) (updater.Means, error) {
 	switch cache.InstalledBy {
 	case meta.MeansTypeGitHubRelease:
 		m, err := updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans"))

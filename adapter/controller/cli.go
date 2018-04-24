@@ -143,7 +143,7 @@ func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 	defer cancel() // for non-zero return value
 
 	errCh := make(chan error, 1)
-	go checkUpdate(ctx, c.cache, errCh)
+	go checkUpdate(ctx, c.config, c.cache, errCh)
 
 	var in io.Reader
 	if c.options.File != "" {
@@ -193,6 +193,12 @@ func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
 	}
 	defer afterMain()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // for non-zero return value
+
+	errCh := make(chan error, 1)
+	go checkUpdate(ctx, c.config, c.cache, errCh)
+
 	p.InputterPort = gateway.NewPrompt(c.config, env)
 	interactor := usecase.NewInteractor(p)
 
@@ -208,6 +214,9 @@ func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
 		return 1
 	}
 
+	cancel()
+	<-ctx.Done()
+
 	return 0
 }
 
@@ -219,7 +228,7 @@ func (c *CLI) processUpdate() (func(), error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 
-	m, err := newUpdater(c.cache)
+	m, err := newMeans(c.cache)
 	// if ErrUnavailable, user installed Evans by manually, ignore
 	if err == updater.ErrUnavailable {
 		// show update info at the end
@@ -237,10 +246,12 @@ func (c *CLI) processUpdate() (func(), error) {
 	}, &yes, nil); err != nil {
 		return nil, err
 	}
-	if yes {
-		if err := update(ctx, c.ui.Writer(), updater.New(meta.Version, m)); err != nil {
-			return nil, err
-		}
+	if !yes {
+		return func() {}, nil
+	}
+
+	if err := update(ctx, c.ui.Writer(), newUpdater(c.config, meta.Version, m)); err != nil {
+		return nil, err
 	}
 
 	sigCh := make(chan os.Signal, 1)
