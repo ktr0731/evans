@@ -58,29 +58,26 @@ func checkUpdate(ctx context.Context, cache *meta.Meta, errCh chan<- error) {
 		}
 	}
 
-	// write result
-
 	errCh <- nil
 	return
 }
 
 func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater) error {
 	errCh := make(chan error, 1)
-	go func(errCh chan<- error) {
-		// errCh <- c.updater.Update()
-		time.Sleep(2 * time.Second)
-		errCh <- nil
-	}(errCh)
+	go func(ctx context.Context, errCh chan<- error) {
+		errCh <- updater.Update(ctx)
+	}(ctx, errCh)
 
 	s := spin.New()
-LOOP:
 	for {
 		select {
 		case err := <-errCh:
 			if err != nil {
 				return err
 			}
-			break LOOP
+			// update successful
+			fmt.Fprintf(infoWriter, "\r             \r✔ updated!\n\n")
+			return meta.Clear()
 		case <-ctx.Done():
 			if ctx.Err() != context.Canceled {
 				return ctx.Err()
@@ -91,6 +88,4 @@ LOOP:
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
-	fmt.Fprintf(infoWriter, "\r             \r✔ updated!\n\n")
-	return meta.Clear()
 }
