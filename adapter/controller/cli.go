@@ -217,7 +217,7 @@ func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
 
 func (c *CLI) processUpdate() (func(), error) {
 	if !c.cache.UpdateAvailable {
-		return nil, nil
+		return func() {}, nil
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
