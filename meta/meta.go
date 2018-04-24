@@ -56,6 +56,14 @@ func setup() {
 		panic(err)
 	}
 
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		if err := initCacheFile(p); err != nil {
+			panic(err)
+		}
+	} else if err != nil {
+		panic(err)
+	}
+
 	f, err := os.Open(p)
 	if err != nil {
 		panic(err)
@@ -124,5 +132,5 @@ func save() error {
 		return err
 	}
 	defer f.Close()
-	return toml.NewEncoder(f).Encode(&m)
+	return toml.NewEncoder(f).Encode(m)
 }

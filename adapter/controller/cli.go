@@ -39,6 +39,7 @@ var (
 type Options struct {
 	Proto []string `arg:"positional,help:.proto files"`
 
+	Silent      bool     `arg:"-s,help:don't show splash text"`
 	Interactive bool     `arg:"-i,help:use interactive mode"`
 	EditConfig  bool     `arg:"-e,help:edit config file by $EDITOR"`
 	Host        string   `arg:"help:gRPC host"`
@@ -227,7 +228,18 @@ func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
 			defer cancel()
 			<-sigCh
 		}()
-		<-ctx.Done()
+
+		// if not canceled
+		if ctx.Err() == nil {
+			if err := syscall.Exec(
+				os.Args[0],
+				append([]string{os.Args[0], "--silent"}, os.Args[1:]...),
+				os.Environ(),
+			); err != nil {
+				c.Error(err)
+				return 1
+			}
+		}
 	}
 
 	p.InputterPort = gateway.NewPrompt(c.config, env)
@@ -238,6 +250,9 @@ func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
 		ui = newColoredREPLUI("")
 	} else {
 		ui = newREPLUI("")
+	}
+	if c.options.Silent {
+		c.config.REPL.ShowSplashText = false
 	}
 	r := NewREPL(c.config.REPL, env, ui, interactor)
 	if err := r.Start(); err != nil {
