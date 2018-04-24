@@ -50,21 +50,27 @@ func checkUpdate(ctx context.Context, cfg *config.Config, cache *meta.Meta, errC
 			github.GitHubReleaseMeans("ktr0731", "evans"),
 			brew.HomeBrewMeans("ktr0731/evans", "evans"),
 		)
+		// if ErrUnavailable, user installed Evans by manually, ignore
+		if err == updater.ErrUnavailable {
+			errCh <- nil
+			return
+		} else if err != nil {
+			errCh <- errors.Wrap(err, "failed to instantiate new means, available means not found")
+			return
+		}
 		if err := meta.SetInstalledBy(meta.MeansType(m.Type())); err != nil {
 			errCh <- err
 			return
 		}
 	default:
 		m, err = newMeans(cache)
-	}
-
-	// if ErrUnavailable, user installed Evans by manually, ignore
-	if err == updater.ErrUnavailable {
-		errCh <- nil
-		return
-	} else if err != nil {
-		errCh <- errors.Wrapf(err, "failed to instantiate new means, installed by %s", cache.InstalledBy)
-		return
+		if err == updater.ErrUnavailable {
+			errCh <- nil
+			return
+		} else if err != nil {
+			errCh <- errors.Wrapf(err, "failed to instantiate new means, installed by %s", cache.InstalledBy)
+			return
+		}
 	}
 
 	u := newUpdater(cfg, meta.Version, m)

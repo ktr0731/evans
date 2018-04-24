@@ -13,7 +13,7 @@ import (
 const AppName = "evans"
 
 var (
-	Version = semver.MustParse("0.3.0")
+	Version = semver.MustParse("0.2.5")
 
 	m               Meta
 	defaultFileName = "meta.toml"
