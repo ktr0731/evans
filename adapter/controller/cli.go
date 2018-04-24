@@ -186,15 +186,14 @@ func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 }
 
 func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
-	afterMain, err := c.processUpdate()
+	err := c.processUpdate()
 	if err != nil {
 		c.Error(err)
 		return 1
 	}
-	defer afterMain()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // for non-zero return value
+	defer cancel()
 
 	errCh := make(chan error, 1)
 	go checkUpdate(ctx, c.config, c.cache, errCh)
@@ -216,13 +215,17 @@ func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
 
 	cancel()
 	<-ctx.Done()
+	if err := <-errCh; err != nil {
+		c.Error(err)
+		return 1
+	}
 
 	return 0
 }
 
-func (c *CLI) processUpdate() (func(), error) {
+func (c *CLI) processUpdate() error {
 	if !c.cache.UpdateAvailable {
-		return func() {}, nil
+		return nil
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -232,26 +235,25 @@ func (c *CLI) processUpdate() (func(), error) {
 	// if ErrUnavailable, user installed Evans by manually, ignore
 	if err == updater.ErrUnavailable {
 		// show update info at the end
-		return func() {
-			printUpdateInfoWithCommandText(c.ui.Writer(), c.cache.LatestVersion)
-		}, nil
+		return nil
 	} else if err != nil {
-		return nil, err
+		return errors.Wrapf(err, "failed to get means from cache (%s)", c.cache)
 	}
 
 	printUpdateInfo(c.ui.Writer(), c.cache.LatestVersion)
+
 	var yes bool
 	if err := survey.AskOne(&survey.Confirm{
 		Message: "update?",
 	}, &yes, nil); err != nil {
-		return nil, err
+		return errors.Wrap(err, "failed to get survey answer")
 	}
 	if !yes {
-		return func() {}, nil
+		return nil
 	}
 
 	if err := update(ctx, c.ui.Writer(), newUpdater(c.config, meta.Version, m)); err != nil {
-		return nil, err
+		return errors.Wrap(err, "failed to update binary")
 	}
 
 	sigCh := make(chan os.Signal, 1)
@@ -264,10 +266,10 @@ func (c *CLI) processUpdate() (func(), error) {
 	// if not canceled
 	if ctx.Err() == nil {
 		if err := syscall.Exec(os.Args[0], os.Args, os.Environ()); err != nil {
-			return nil, err
+			return errors.Wrapf(err, "failed to exec the command: args=%s", os.Args)
 		}
 	}
-	return func() {}, nil
+	return nil
 }
 
 func checkPrecondition(config *config.Config, opt *Options) error {

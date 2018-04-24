@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"runtime"
 	"strings"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	updater "github.com/ktr0731/go-updater"
 	"github.com/ktr0731/go-updater/brew"
 	"github.com/ktr0731/go-updater/github"
+	"github.com/pkg/errors"
 	spin "github.com/tj/go-spin"
 )
 
@@ -51,32 +51,32 @@ func checkUpdate(ctx context.Context, cfg *config.Config, cache *meta.Meta, errC
 			github.GitHubReleaseMeans("ktr0731", "evans"),
 			brew.HomeBrewMeans("ktr0731/evans", "evans"),
 		)
-	case meta.MeansTypeGitHubRelease:
-		m, err = updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans"))
-	case meta.MeansTypeHomeBrew:
-		m, err = updater.NewMeans(brew.HomeBrewMeans("ktr0731/evans", "evans"))
+		if err := meta.SetInstalledBy(meta.MeansType(m.Type())); err != nil {
+			errCh <- err
+			return
+		}
+	default:
+		m, err = newMeans(cache)
 	}
 
 	// if ErrUnavailable, user installed Evans by manually, ignore
-	if err != nil && err != updater.ErrUnavailable {
-		errCh <- err
+	if err == updater.ErrUnavailable {
+		errCh <- nil
 		return
-	}
-
-	if cache.InstalledBy == meta.MeansTypeUndefined {
-		// TODO: add Type()
-		meta.SetInstalledBy(meta.MeansTypeGitHubRelease)
+	} else if err != nil {
+		errCh <- errors.Wrapf(err, "failed to instantiate new means, installed by %s", cache.InstalledBy)
+		return
 	}
 
 	u := newUpdater(cfg, meta.Version, m)
 	updatable, latest, err := u.Updatable(ctx)
 	if err != nil {
-		errCh <- err
+		errCh <- errors.Wrap(err, "failed to check updatable")
 		return
 	}
 	if updatable {
 		if err := meta.SetUpdateInfo(latest); err != nil {
-			errCh <- err
+			errCh <- errors.Wrap(err, "failed to write update info to cache")
 			return
 		}
 	}
@@ -96,15 +96,12 @@ func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater)
 		select {
 		case err := <-errCh:
 			if err != nil {
-				return err
+				return errors.Wrap(err, "failed to update binary")
 			}
 			// update successful
 			fmt.Fprintf(infoWriter, "\r             \r✔ updated!\n\n")
 			return meta.Clear()
 		case <-ctx.Done():
-			if ctx.Err() != context.Canceled {
-				return ctx.Err()
-			}
 			return nil
 		default:
 			fmt.Fprintf(infoWriter, "\r%s updating...", s.Next())
@@ -117,24 +114,16 @@ var updateInfoFormat string = `
 new update available:
   current version: %s
   latest version:  %s
-`
 
-var commandText = `  $ brew upgrade evans
-  $ go get -u github.com/ktr0731/evans
-  $ curl -sL https://github.com/ktr0731/evans/releases/download/%s/evans_%s_%s.tar.gz | tar xf -
 `
 
 func printUpdateInfo(w io.Writer, latest string) {
-	fmt.Fprintf(w, updateInfoFormat+"\n", meta.Version, latest)
+	fmt.Fprintf(w, updateInfoFormat, meta.Version, latest)
 }
 
-func printUpdateInfoWithCommandText(w io.Writer, latest string) {
-	sb := &strings.Builder{}
-	printUpdateInfo(sb, latest)
-	fmt.Fprintf(sb, commandText, latest, runtime.GOOS, runtime.GOARCH)
-	fmt.Fprintln(w, sb)
-}
-
+// newUpdater creates new updater from cached information.
+// updater checks whether UpdateIf is true or false
+// to display update information to the user.
 func newUpdater(cfg *config.Config, v *semver.Version, m updater.Means) *updater.Updater {
 	u := updater.New(v, m)
 	switch cfg.Meta.UpdateLevel {
@@ -150,16 +139,18 @@ func newUpdater(cfg *config.Config, v *semver.Version, m updater.Means) *updater
 	return u
 }
 
+// newMeans creates new available means from cached infomation.
+// if InstalledBy is MeansTypeUndefined, returns updater.ErrUnavailable.
 func newMeans(cache *meta.Meta) (updater.Means, error) {
 	switch cache.InstalledBy {
-	case meta.MeansTypeGitHubRelease:
+	case meta.MeansType(github.MeansTypeGitHubRelease):
 		m, err := updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans"))
 		if err != nil {
 			return nil, err
 		}
 		m.(*github.GitHubClient).Decompresser = github.TarDecompresser
 		return m, nil
-	case meta.MeansTypeHomeBrew:
+	case meta.MeansType(brew.MeansTypeHomeBrew):
 		return updater.NewMeans(brew.HomeBrewMeans("ktr0731/evans", "evans"))
 	}
 	return nil, updater.ErrUnavailable

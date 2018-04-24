@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	semver "github.com/ktr0731/go-semver"
+	updater "github.com/ktr0731/go-updater"
 	homedir "github.com/mitchellh/go-homedir"
 	toml "github.com/pelletier/go-toml"
 )
@@ -12,25 +13,15 @@ import (
 const AppName = "evans"
 
 var (
-	Version = semver.MustParse("0.2.8")
+	Version = semver.MustParse("0.2.7")
 
 	m               Meta
 	defaultFileName = "meta.toml"
 )
 
-type meansType string
+type MeansType updater.MeansType
 
-type MeansType meansType
-
-func (mt MeansType) UnmarshalText() ([]byte, error) {
-	return []byte(mt), nil
-}
-
-var (
-	MeansTypeUndefined     MeansType = ""
-	MeansTypeHomeBrew      MeansType = "homebrew"
-	MeansTypeGitHubRelease MeansType = "github-release"
-)
+const MeansTypeUndefined MeansType = ""
 
 type Meta struct {
 	UpdateAvailable bool      `default:"false" toml:"updateAvailable"`

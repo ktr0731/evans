@@ -1,5 +1,5 @@
 hash: 32f98c9a1f8d3c067e4111b28c07a964859a4afe51a6d9a48479f4bee3ae80d2
-updated: 2018-04-24T09:03:27.384705+09:00
+updated: 2018-04-24T19:31:07.052156+09:00
 imports:
 - name: github.com/AlecAivazis/survey
   version: e752db451e07e09c7d7dc8cada807a44bdb0fd47
@@ -12,7 +12,7 @@ imports:
 - name: github.com/c-bata/go-prompt
   version: 15992ed45e46edd6168d7c8bfda14b700f6b756a
 - name: github.com/davecgh/go-spew
-  version: 8991bc29aa16c548c550c7ff78260e27b9ab7c73
+  version: 2df174808ee097f90d259e432cc04442cf60be21
   subpackages:
   - spew
 - name: github.com/fatih/color
@@ -51,8 +51,6 @@ imports:
   - desc/protoparse
   - dynamic
   - internal
-- name: github.com/k0kubun/pp
-  version: e057ee7a28277be4d2af303443b6da377768181f
 - name: github.com/kelseyhightower/envconfig
   version: b2c5c876e2659d9060d82e9b8494150d53854cc4
 - name: github.com/ktr0731/go-configure
@@ -62,7 +60,7 @@ imports:
 - name: github.com/ktr0731/go-shellstring
   version: 1b2bf0a2055df1a9cbea8f57e1d8cb96a6b1086e
 - name: github.com/ktr0731/go-updater
-  version: a8783449a53d0feeb1a9b3732350b016b8ad59e0
+  version: abec08c84ffb3888ebec425c16bd8a5afacefaee
   subpackages:
   - brew
   - github
@@ -99,7 +97,7 @@ imports:
   subpackages:
   - termios
 - name: github.com/pmezard/go-difflib
-  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
 - name: github.com/stretchr/testify
