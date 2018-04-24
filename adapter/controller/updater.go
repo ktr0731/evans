@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/ktr0731/evans/config"
@@ -34,10 +37,6 @@ func joinCommandText(sv string, builders ...updater.MeansBuilder) (string, error
 func checkUpdate(ctx context.Context, cfg *config.Config, cache *meta.Meta, errCh chan<- error) {
 	go func() {
 		<-ctx.Done()
-		if err := ctx.Err(); err != context.Canceled {
-			errCh <- err
-			return
-		}
 		errCh <- nil
 		return
 	}()
@@ -70,7 +69,7 @@ func checkUpdate(ctx context.Context, cfg *config.Config, cache *meta.Meta, errC
 
 	u := newUpdater(cfg, meta.Version, m)
 	updatable, latest, err := u.Updatable(ctx)
-	if err != nil {
+	if errors.Cause(err) != context.Canceled && err != nil {
 		errCh <- errors.Wrap(err, "failed to check updatable")
 		return
 	}
@@ -85,24 +84,31 @@ func checkUpdate(ctx context.Context, cfg *config.Config, cache *meta.Meta, errC
 	return
 }
 
-func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater) error {
+func update(infoWriter io.Writer, updater *updater.Updater) error {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+
 	errCh := make(chan error, 1)
-	go func(ctx context.Context, errCh chan<- error) {
+	go func() {
 		errCh <- updater.Update(ctx)
-	}(ctx, errCh)
+	}()
 
 	s := spin.New()
 	for {
 		select {
+		case <-sigCh:
+			cancel()
+		case <-ctx.Done():
+			return ctx.Err()
 		case err := <-errCh:
-			if err != nil {
-				return errors.Wrap(err, "failed to update binary")
+			if errors.Cause(err) != context.Canceled && err != nil {
+				return errors.Wrap(err, "failed to update Evans")
 			}
 			// update successful
 			fmt.Fprintf(infoWriter, "\r             \r✔ updated!\n\n")
 			return meta.Clear()
-		case <-ctx.Done():
-			return nil
 		default:
 			fmt.Fprintf(infoWriter, "\r%s updating...", s.Next())
 			time.Sleep(100 * time.Millisecond)
@@ -113,7 +119,7 @@ func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater)
 var updateInfoFormat string = `
 new update available:
   current version: %s
-  latest version:  %s
+   latest version: %s
 
 `
 

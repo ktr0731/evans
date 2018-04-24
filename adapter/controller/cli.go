@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -228,9 +227,6 @@ func (c *CLI) processUpdate() error {
 		return nil
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // for non-zero return value
-
 	m, err := newMeans(c.cache)
 	// if ErrUnavailable, user installed Evans by manually, ignore
 	if err == updater.ErrUnavailable {
@@ -252,22 +248,15 @@ func (c *CLI) processUpdate() error {
 		return nil
 	}
 
-	if err := update(ctx, c.ui.Writer(), newUpdater(c.config, meta.Version, m)); err != nil {
+	// if canceled, ignore and return
+	if err := update(c.ui.Writer(), newUpdater(c.config, meta.Version, m)); errors.Cause(err) == context.Canceled {
+		return nil
+	} else if err != nil {
 		return errors.Wrap(err, "failed to update binary")
 	}
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		defer cancel()
-		<-sigCh
-	}()
-
-	// if not canceled
-	if ctx.Err() == nil {
-		if err := syscall.Exec(os.Args[0], os.Args, os.Environ()); err != nil {
-			return errors.Wrapf(err, "failed to exec the command: args=%s", os.Args)
-		}
+	if err := syscall.Exec(os.Args[0], os.Args, os.Environ()); err != nil {
+		return errors.Wrapf(err, "failed to exec the command: args=%s", os.Args)
 	}
 	return nil
 }

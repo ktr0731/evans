@@ -71,7 +71,8 @@ func Get() *Meta {
 }
 
 func Clear() error {
-	m = Meta{}
+	m.UpdateAvailable = false
+	m.LatestVersion = ""
 	return save()
 }
 
