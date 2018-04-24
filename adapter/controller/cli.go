@@ -37,7 +37,6 @@ var (
 type Options struct {
 	Proto []string `arg:"positional,help:.proto files"`
 
-	Silent      bool     `arg:"-s,help:don't show splash text"`
 	Interactive bool     `arg:"-i,help:use interactive mode"`
 	EditConfig  bool     `arg:"-e,help:edit config file by $EDITOR"`
 	Host        string   `arg:"help:gRPC host"`
@@ -203,9 +202,6 @@ func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
 	} else {
 		ui = newREPLUI("")
 	}
-	if c.options.Silent {
-		c.config.REPL.ShowSplashText = false
-	}
 	r := NewREPL(c.config.REPL, env, ui, interactor)
 	if err := r.Start(); err != nil {
 		c.Error(err)
@@ -256,11 +252,7 @@ func (c *CLI) processUpdate() (func(), error) {
 
 	// if not canceled
 	if ctx.Err() == nil {
-		args := os.Args
-		if !c.options.Silent {
-			args = append([]string{args[0], "--silent"}, os.Args[1:]...)
-		}
-		if err := syscall.Exec(os.Args[0], args, os.Environ()); err != nil {
+		if err := syscall.Exec(os.Args[0], os.Args, os.Environ()); err != nil {
 			return nil, err
 		}
 	}

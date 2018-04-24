@@ -108,30 +108,36 @@ func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater)
 }
 
 var updateInfoFormat string = `
-  new update available:
-    old version: %s
-    new version: %s
+new update available:
+  current version: %s
+  latest version:  %s
 `
 
-var commandText = `
-  $ brew upgrade evans
+var commandText = `  $ brew upgrade evans
   $ go get -u github.com/ktr0731/evans
   $ curl -sL https://github.com/ktr0731/evans/releases/download/%s/evans_%s_%s.tar.gz | tar xf -
 `
 
 func printUpdateInfo(w io.Writer, latest string) {
-	fmt.Fprintf(w, updateInfoFormat, meta.Version, latest)
+	fmt.Fprintf(w, updateInfoFormat+"\n", meta.Version, latest)
 }
 
 func printUpdateInfoWithCommandText(w io.Writer, latest string) {
-	printUpdateInfo(w, latest)
-	fmt.Fprintf(w, commandText, latest, runtime.GOOS, runtime.GOARCH)
+	sb := &strings.Builder{}
+	printUpdateInfo(sb, latest)
+	fmt.Fprintf(sb, commandText, latest, runtime.GOOS, runtime.GOARCH)
+	fmt.Fprintln(w, sb)
 }
 
 func newUpdater(cache *meta.Meta) (updater.Means, error) {
 	switch cache.InstalledBy {
 	case meta.MeansTypeGitHubRelease:
-		return updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans"))
+		m, err := updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans"))
+		if err != nil {
+			return nil, err
+		}
+		m.(*github.GitHubClient).Decompresser = github.TarDecompresser
+		return m, nil
 	case meta.MeansTypeHomeBrew:
 		return updater.NewMeans(brew.HomeBrewMeans("ktr0731/evans", "evans"))
 	}
