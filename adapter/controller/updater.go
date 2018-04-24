@@ -84,8 +84,9 @@ func checkUpdate(ctx context.Context, cfg *config.Config, cache *meta.Meta, errC
 	return
 }
 
-func update(infoWriter io.Writer, updater *updater.Updater) error {
-	ctx, cancel := context.WithCancel(context.Background())
+func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)

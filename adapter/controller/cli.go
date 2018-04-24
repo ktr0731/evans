@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -185,17 +186,25 @@ func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 }
 
 func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
-	err := c.processUpdate()
-	if err != nil {
-		c.Error(err)
-		return 1
-	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	errCh := make(chan error, 1)
-	go checkUpdate(ctx, c.config, c.cache, errCh)
+	// if AutoUpdate enabled, do update asynchronously
+	puCh := make(chan error, 1)
+	if c.config.Meta.AutoUpdate {
+		go func() {
+			puCh <- c.processUpdate(ctx)
+		}()
+	} else {
+		err := c.processUpdate(ctx)
+		if err != nil {
+			c.Error(err)
+			return 1
+		}
+	}
+
+	cuCh := make(chan error, 1)
+	go checkUpdate(ctx, c.config, c.cache, cuCh)
 
 	p.InputterPort = gateway.NewPrompt(c.config, env)
 	interactor := usecase.NewInteractor(p)
@@ -214,7 +223,13 @@ func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
 
 	cancel()
 	<-ctx.Done()
-	if err := <-errCh; err != nil {
+	if c.config.Meta.AutoUpdate {
+		if err := <-puCh; err != nil {
+			c.Error(err)
+			return 1
+		}
+	}
+	if err := <-cuCh; err != nil {
 		c.Error(err)
 		return 1
 	}
@@ -222,7 +237,10 @@ func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
 	return 0
 }
 
-func (c *CLI) processUpdate() error {
+// processUpdate checks new changes and updates Evans in accordance with user's selection.
+// if config.Meta.AutoUpdate enabled, processUpdate is called asynchronously.
+// other than, processUpdate is called synchronously.
+func (c *CLI) processUpdate(ctx context.Context) error {
 	if !c.cache.UpdateAvailable {
 		return nil
 	}
@@ -236,27 +254,37 @@ func (c *CLI) processUpdate() error {
 		return errors.Wrapf(err, "failed to get means from cache (%s)", c.cache)
 	}
 
-	printUpdateInfo(c.ui.Writer(), c.cache.LatestVersion)
+	var w io.Writer
+	if !c.config.Meta.AutoUpdate {
+		printUpdateInfo(c.ui.Writer(), c.cache.LatestVersion)
 
-	var yes bool
-	if err := survey.AskOne(&survey.Confirm{
-		Message: "update?",
-	}, &yes, nil); err != nil {
-		return errors.Wrap(err, "failed to get survey answer")
-	}
-	if !yes {
-		return nil
+		var yes bool
+		if err := survey.AskOne(&survey.Confirm{
+			Message: "update?",
+		}, &yes, nil); err != nil {
+			return errors.Wrap(err, "failed to get survey answer")
+		}
+		if !yes {
+			return nil
+		}
+
+		w = c.ui.Writer()
+
+		// restart Evans after updating
+		defer func() {
+			if err := syscall.Exec(os.Args[0], os.Args, os.Environ()); err != nil {
+				panic(errors.Wrapf(err, "failed to exec the command: args=%s", os.Args))
+			}
+		}()
+	} else {
+		w = ioutil.Discard
 	}
 
 	// if canceled, ignore and return
-	if err := update(c.ui.Writer(), newUpdater(c.config, meta.Version, m)); errors.Cause(err) == context.Canceled {
+	if err := update(ctx, w, newUpdater(c.config, meta.Version, m)); errors.Cause(err) == context.Canceled {
 		return nil
 	} else if err != nil {
 		return errors.Wrap(err, "failed to update binary")
-	}
-
-	if err := syscall.Exec(os.Args[0], os.Args, os.Environ()); err != nil {
-		return errors.Wrapf(err, "failed to exec the command: args=%s", os.Args)
 	}
 	return nil
 }
