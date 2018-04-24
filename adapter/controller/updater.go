@@ -4,14 +4,31 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/ktr0731/evans/meta"
+	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
 	"github.com/ktr0731/go-updater/brew"
 	"github.com/ktr0731/go-updater/github"
 	spin "github.com/tj/go-spin"
 )
+
+func joinCommandText(sv string, builders ...updater.MeansBuilder) (string, error) {
+	sb := &strings.Builder{}
+	v := semver.MustParse(sv)
+	for _, b := range builders {
+		m, err := b()
+		if err != nil {
+			return "", err
+		}
+		fmt.Fprintf(sb, "  $ %s\n", m.CommandText(v))
+	}
+	fmt.Fprintln(sb)
+	return sb.String(), nil
+}
 
 func checkUpdate(ctx context.Context, cache *meta.Meta, errCh chan<- error) {
 	go func() {
@@ -88,4 +105,35 @@ func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater)
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
+}
+
+var updateInfoFormat string = `
+  new update available:
+    old version: %s
+    new version: %s
+`
+
+var commandText = `
+  $ brew upgrade evans
+  $ go get -u github.com/ktr0731/evans
+  $ curl -sL https://github.com/ktr0731/evans/releases/download/%s/evans_%s_%s.tar.gz | tar xf -
+`
+
+func printUpdateInfo(w io.Writer, latest string) {
+	fmt.Fprintf(w, updateInfoFormat, meta.Version, latest)
+}
+
+func printUpdateInfoWithCommandText(w io.Writer, latest string) {
+	printUpdateInfo(w, latest)
+	fmt.Fprintf(w, commandText, latest, runtime.GOOS, runtime.GOARCH)
+}
+
+func newUpdater(cache *meta.Meta) (updater.Means, error) {
+	switch cache.InstalledBy {
+	case meta.MeansTypeGitHubRelease:
+		return updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans"))
+	case meta.MeansTypeHomeBrew:
+		return updater.NewMeans(brew.HomeBrewMeans("ktr0731/evans", "evans"))
+	}
+	return nil, updater.ErrUnavailable
 }

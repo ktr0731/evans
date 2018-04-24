@@ -22,8 +22,6 @@ import (
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
 	updater "github.com/ktr0731/go-updater"
-	"github.com/ktr0731/go-updater/brew"
-	"github.com/ktr0731/go-updater/github"
 	isatty "github.com/mattn/go-isatty"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
@@ -189,58 +187,12 @@ func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 }
 
 func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
-	if c.cache.UpdateAvailable {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel() // for non-zero return value
-
-		var m updater.Means
-		var err error
-		switch c.cache.InstalledBy {
-		case meta.MeansTypeGitHubRelease:
-			m, err = updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans"))
-		case meta.MeansTypeHomeBrew:
-			m, err = updater.NewMeans(brew.HomeBrewMeans("ktr0731/evans", "evans"))
-		}
-		// if ErrUnavailable, user installed Evans by manually, ignore
-		// return error response if other than errors
-		if err != nil && err != updater.ErrUnavailable {
-			c.Error(err)
-			return 1
-		}
-		c.printUpdateInfo(c.cache.LatestVersion)
-		var yes bool
-		if err := survey.AskOne(&survey.Confirm{
-			Message: "update?",
-		}, &yes, nil); err != nil {
-			c.Error(err)
-			return 1
-		}
-		if yes {
-			if err := update(ctx, c.ui.Writer(), updater.New(meta.Version, m)); err != nil {
-				c.Error(err)
-				return 1
-			}
-		}
-
-		sigCh := make(chan os.Signal, 1)
-		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-		go func() {
-			defer cancel()
-			<-sigCh
-		}()
-
-		// if not canceled
-		if ctx.Err() == nil {
-			if err := syscall.Exec(
-				os.Args[0],
-				append([]string{os.Args[0], "--silent"}, os.Args[1:]...),
-				os.Environ(),
-			); err != nil {
-				c.Error(err)
-				return 1
-			}
-		}
+	afterMain, err := c.processUpdate()
+	if err != nil {
+		c.Error(err)
+		return 1
 	}
+	defer afterMain()
 
 	p.InputterPort = gateway.NewPrompt(c.config, env)
 	interactor := usecase.NewInteractor(p)
@@ -263,14 +215,56 @@ func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
 	return 0
 }
 
-var updateInfoFormat string = `
-  new update available:
-    old version: %s
-    new version: %s
-`
+func (c *CLI) processUpdate() (func(), error) {
+	if !c.cache.UpdateAvailable {
+		return nil, nil
+	}
 
-func (c *CLI) printUpdateInfo(latest string) {
-	c.ui.Println(fmt.Sprintf(updateInfoFormat, meta.Version, latest))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // for non-zero return value
+
+	m, err := newUpdater(c.cache)
+	// if ErrUnavailable, user installed Evans by manually, ignore
+	if err == updater.ErrUnavailable {
+		// show update info at the end
+		return func() {
+			printUpdateInfoWithCommandText(c.ui.Writer(), c.cache.LatestVersion)
+		}, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	printUpdateInfo(c.ui.Writer(), c.cache.LatestVersion)
+	var yes bool
+	if err := survey.AskOne(&survey.Confirm{
+		Message: "update?",
+	}, &yes, nil); err != nil {
+		return nil, err
+	}
+	if yes {
+		if err := update(ctx, c.ui.Writer(), updater.New(meta.Version, m)); err != nil {
+			return nil, err
+		}
+	}
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		defer cancel()
+		<-sigCh
+	}()
+
+	// if not canceled
+	if ctx.Err() == nil {
+		args := os.Args
+		if !c.options.Silent {
+			args = append([]string{args[0], "--silent"}, os.Args[1:]...)
+		}
+		if err := syscall.Exec(os.Args[0], args, os.Environ()); err != nil {
+			return nil, err
+		}
+	}
+	return func() {}, nil
 }
 
 func checkPrecondition(config *config.Config, opt *Options) error {
