@@ -2,7 +2,6 @@ package meta
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
 	toml "github.com/pelletier/go-toml"
@@ -42,9 +41,9 @@ func TestMeta(t *testing.T) {
 		cache.LatestVersion = "1.0.0"
 		cache.UpdateAvailable = true
 
-		base, err := resolvePath()
+		p, err := resolvePath()
 		require.NoError(t, err)
-		f, err := os.Create(filepath.Join(base, defaultFileName))
+		f, err := os.Create(p)
 		require.NoError(t, err)
 		defer f.Close()
 
