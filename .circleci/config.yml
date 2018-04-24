@@ -25,6 +25,10 @@ jobs:
       - checkout
 
       - run:
+          name: install deps
+          command: make deps
+
+      - run:
           name: update GitHub releases and update brew formula
           command: make brew-update
 
