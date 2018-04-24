@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  common:
     working_directory: /go/src/github.com/ktr0731/evans
     docker:
       - image: ktr0731/circleci-evans
@@ -16,6 +16,27 @@ jobs:
           name: test
           command: make test
 
+  update-release:
+    working_directory: /go/src/github.com/ktr0731/evans
+    docker:
+      - image: ktr0731/circleci-evans
+
+    steps:
+      - checkout
+
       - run:
           name: update GitHub releases and update brew formula
           command: make brew-update
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - common
+      - update-release:
+          requires:
+            - common
+          filters:
+            branches:
+              only:
+                - master

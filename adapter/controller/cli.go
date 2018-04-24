@@ -4,21 +4,25 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 
+	"github.com/AlecAivazis/survey"
 	arg "github.com/alexflint/go-arg"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/adapter/presenter"
-	"github.com/ktr0731/evans/adapter/update_checker"
+	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
+	updater "github.com/ktr0731/go-updater"
 	isatty "github.com/mattn/go-isatty"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
@@ -36,7 +40,7 @@ type Options struct {
 
 	Interactive bool     `arg:"-i,help:use interactive mode"`
 	EditConfig  bool     `arg:"-e,help:edit config file by $EDITOR"`
-	Host        string   `arg:"-h,help:gRPC host"`
+	Host        string   `arg:"help:gRPC host"`
 	Port        string   `arg:"-p,help:gRPC port"`
 	Package     string   `arg:"help:default package"`
 	Service     string   `arg:"help:default service. evans parse package from this if --package is nothing."`
@@ -59,6 +63,8 @@ type CLI struct {
 
 	parser  *arg.Parser
 	options *Options
+
+	cache *cache.Cache
 }
 
 func NewCLI(name, version string) *CLI {
@@ -70,6 +76,7 @@ func NewCLI(name, version string) *CLI {
 			version: version,
 		},
 		config: config.Get(),
+		cache:  cache.Get(),
 	}
 }
 
@@ -122,90 +129,172 @@ func (c *CLI) Run(args []string) int {
 		DynamicBuilder: gateway.NewDynamicBuilder(),
 	}
 
-	// check latest update
-	var tag *update_checker.ReleaseTag
+	var status int
+	if isCommandLineMode(c.options) {
+		status = c.runAsCLI(params)
+	} else {
+		status = c.runAsREPL(params, env)
+	}
+
+	return status
+}
+
+func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
-	go func() {
-		defer cancel()
-		var err error
-		tag, err = update_checker.NewUpdateChecker().Check(ctx)
-		if err != nil {
-			tag = &update_checker.ReleaseTag{CurrentIsLatest: true}
-		}
-	}()
 
-	if isCommandLineMode(c.options) {
-		var in io.Reader
-		if c.options.File != "" {
-			f, err := os.Open(c.options.File)
-			if err != nil {
-				c.Error(err)
-				return 1
-			}
-			defer f.Close()
-			in = f
-		} else {
-			in = os.Stdin
-		}
+	errCh := make(chan error, 1)
+	go checkUpdate(ctx, c.config, c.cache, errCh)
 
-		params.InputterPort = gateway.NewJSONFileInputter(in)
-		interactor := usecase.NewInteractor(params)
-
-		res, err := interactor.Call(&port.CallParams{c.options.Call})
+	var in io.Reader
+	if c.options.File != "" {
+		f, err := os.Open(c.options.File)
 		if err != nil {
 			c.Error(err)
 			return 1
 		}
-
-		b := new(bytes.Buffer)
-		if _, err := b.ReadFrom(res); err != nil {
-			c.Error(err)
-			return 1
-		}
-
-		c.ui.Println(b.String())
+		defer f.Close()
+		in = f
 	} else {
-		params.InputterPort = gateway.NewPrompt(c.config, env)
-		interactor := usecase.NewInteractor(params)
+		in = os.Stdin
+	}
 
-		var ui ui
-		if c.config.REPL.ColoredOutput {
-			ui = newColoredREPLUI("")
-		} else {
-			ui = newREPLUI("")
-		}
-		r := NewREPL(c.config.REPL, env, ui, interactor)
-		if err := r.Start(); err != nil {
+	p.InputterPort = gateway.NewJSONFileInputter(in)
+	interactor := usecase.NewInteractor(p)
+
+	res, err := interactor.Call(&port.CallParams{c.options.Call})
+	if err != nil {
+		c.Error(err)
+		return 1
+	}
+
+	b := new(bytes.Buffer)
+	if _, err := b.ReadFrom(res); err != nil {
+		c.Error(err)
+		return 1
+	}
+
+	c.ui.Println(b.String())
+
+	cancel()
+	if err := <-errCh; err != nil {
+		c.Error(err)
+		return 1
+	}
+	<-ctx.Done()
+
+	return 0
+}
+
+func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// if AutoUpdate enabled, do update asynchronously
+	puCh := make(chan error, 1)
+	if c.config.Meta.AutoUpdate {
+		go func() {
+			puCh <- c.processUpdate(ctx)
+		}()
+	} else {
+		err := c.processUpdate(ctx)
+		if err != nil {
 			c.Error(err)
 			return 1
 		}
 	}
 
-	// cancel update checking
+	cuCh := make(chan error, 1)
+	go checkUpdate(ctx, c.config, c.cache, cuCh)
+
+	p.InputterPort = gateway.NewPrompt(c.config, env)
+	interactor := usecase.NewInteractor(p)
+
+	var ui ui
+	if c.config.REPL.ColoredOutput {
+		ui = newColoredREPLUI("")
+	} else {
+		ui = newREPLUI("")
+	}
+	r := NewREPL(c.config.REPL, env, ui, interactor)
+	if err := r.Start(); err != nil {
+		c.Error(err)
+		return 1
+	}
+
 	cancel()
 	<-ctx.Done()
-
-	if tag != nil && !tag.CurrentIsLatest {
-		c.printUpdateInfo(tag.LatestVersion)
+	if c.config.Meta.AutoUpdate {
+		if err := <-puCh; err != nil {
+			c.Error(err)
+			return 1
+		}
+	}
+	if err := <-cuCh; err != nil {
+		c.Error(err)
+		return 1
 	}
 
 	return 0
 }
 
-var updateInfoFormat string = `
-  new update available:
-    old version: %s
-    new version: %s
+// processUpdate checks new changes and updates Evans in accordance with user's selection.
+// if config.Meta.AutoUpdate enabled, processUpdate is called asynchronously.
+// other than, processUpdate is called synchronously.
+func (c *CLI) processUpdate(ctx context.Context) error {
+	if !c.cache.UpdateAvailable {
+		return nil
+	}
 
-  $ brew upgrade evans
-  $ go get -u github.com/ktr0731/evans
-  $ curl -sL https://github.com/ktr0731/evans/releases/download/%s/evans_{OS}_{ARCH}.tar.gz | tar xf -
+	m, err := newMeans(c.cache)
+	// if ErrUnavailable, user installed Evans by manually, ignore
+	if err == updater.ErrUnavailable {
+		// show update info at the end
+		return nil
+	} else if err != nil {
+		return errors.Wrapf(err, "failed to get means from cache (%s)", c.cache)
+	}
 
-`
+	var w io.Writer
+	if c.config.Meta.AutoUpdate {
+		w = ioutil.Discard
 
-func (c *CLI) printUpdateInfo(latestVersion string) {
-	c.ui.Println(fmt.Sprintf(updateInfoFormat, meta.Version, latestVersion, latestVersion))
+		// if canceled, ignore and return
+		err := update(ctx, w, newUpdater(c.config, meta.Version, m))
+		if errors.Cause(err) == context.Canceled {
+			return nil
+		}
+		return err
+	}
+
+	printUpdateInfo(c.ui.Writer(), c.cache.LatestVersion)
+
+	var yes bool
+	if err := survey.AskOne(&survey.Confirm{
+		Message: "update?",
+	}, &yes, nil); err != nil {
+		return errors.Wrap(err, "failed to get survey answer")
+	}
+	if !yes {
+		return nil
+	}
+
+	w = c.ui.Writer()
+
+	// if canceled, ignore and return
+	err = update(ctx, w, newUpdater(c.config, meta.Version, m))
+	if errors.Cause(err) == context.Canceled {
+		return nil
+	} else if err != nil {
+		return errors.Wrap(err, "failed to update binary")
+	}
+
+	// restart Evans
+	if err := syscall.Exec(os.Args[0], os.Args, os.Environ()); err != nil {
+		return errors.Wrapf(err, "failed to exec the command: args=%s", os.Args)
+	}
+
+	return nil
 }
 
 func checkPrecondition(config *config.Config, opt *Options) error {

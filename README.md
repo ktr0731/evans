@@ -53,7 +53,9 @@ service = "UserService"
 Then, the command will be more clear.  
 
 ## Installation
-### from binary
+highly recommended methods are GitHub Releases or HomeBrew because these can be software update automatically by the built-in feature in Evans.  
+
+### from GitHub Releases
 please see [GitHub Releases](https://github.com/ktr0731/evans/releases).  
 
 ### macOS
@@ -63,10 +65,10 @@ $ brew install evans
 ```
 
 ### go get
+v1.10 or later required.  
 ``` sh
 $ go get github.com/ktr0731/evans
 ```
-
 
 ## Usage
 Evans consists of some commands in REPL.  
