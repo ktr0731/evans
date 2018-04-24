@@ -1,4 +1,4 @@
-package meta
+package cache
 
 import (
 	"os"
@@ -19,7 +19,7 @@ func setEnv(k, v string) func() {
 	}
 }
 
-func TestMeta(t *testing.T) {
+func TestCache(t *testing.T) {
 	cleanup := setEnv("XDG_CACHE_HOME", testDir)
 	defer cleanup()
 
@@ -50,7 +50,7 @@ func TestMeta(t *testing.T) {
 		err = toml.NewEncoder(f).Encode(*cache)
 		require.NoError(t, err)
 
-		// get new meta config
+		// get new cached
 		setup()
 
 		newCache := Get()

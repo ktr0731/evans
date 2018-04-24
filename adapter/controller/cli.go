@@ -16,6 +16,7 @@ import (
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/adapter/presenter"
+	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/meta"
@@ -63,7 +64,7 @@ type CLI struct {
 	parser  *arg.Parser
 	options *Options
 
-	cache *meta.Meta
+	cache *cache.Cache
 }
 
 func NewCLI(name, version string) *CLI {
@@ -75,7 +76,7 @@ func NewCLI(name, version string) *CLI {
 			version: version,
 		},
 		config: config.Get(),
-		cache:  meta.Get(),
+		cache:  cache.Get(),
 	}
 }
 

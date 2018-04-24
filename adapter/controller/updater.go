@@ -6,10 +6,10 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
+	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/meta"
 	semver "github.com/ktr0731/go-semver"
@@ -20,21 +20,7 @@ import (
 	spin "github.com/tj/go-spin"
 )
 
-func joinCommandText(sv string, builders ...updater.MeansBuilder) (string, error) {
-	sb := &strings.Builder{}
-	v := semver.MustParse(sv)
-	for _, b := range builders {
-		m, err := b()
-		if err != nil {
-			return "", err
-		}
-		fmt.Fprintf(sb, "  $ %s\n", m.CommandText(v))
-	}
-	fmt.Fprintln(sb)
-	return sb.String(), nil
-}
-
-func checkUpdate(ctx context.Context, cfg *config.Config, cache *meta.Meta, errCh chan<- error) {
+func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache, errCh chan<- error) {
 	go func() {
 		<-ctx.Done()
 		errCh <- nil
@@ -43,8 +29,8 @@ func checkUpdate(ctx context.Context, cfg *config.Config, cache *meta.Meta, errC
 
 	var m updater.Means
 	var err error
-	switch cache.InstalledBy {
-	case meta.MeansTypeUndefined:
+	switch c.InstalledBy {
+	case cache.MeansTypeUndefined:
 		m, err = updater.SelectAvailableMeansFrom(
 			ctx,
 			github.GitHubReleaseMeans("ktr0731", "evans"),
@@ -58,17 +44,17 @@ func checkUpdate(ctx context.Context, cfg *config.Config, cache *meta.Meta, errC
 			errCh <- errors.Wrap(err, "failed to instantiate new means, available means not found")
 			return
 		}
-		if err := meta.SetInstalledBy(meta.MeansType(m.Type())); err != nil {
+		if err := cache.SetInstalledBy(cache.MeansType(m.Type())); err != nil {
 			errCh <- err
 			return
 		}
 	default:
-		m, err = newMeans(cache)
+		m, err = newMeans(c)
 		if err == updater.ErrUnavailable {
 			errCh <- nil
 			return
 		} else if err != nil {
-			errCh <- errors.Wrapf(err, "failed to instantiate new means, installed by %s", cache.InstalledBy)
+			errCh <- errors.Wrapf(err, "failed to instantiate new means, installed by %s", c.InstalledBy)
 			return
 		}
 	}
@@ -80,7 +66,7 @@ func checkUpdate(ctx context.Context, cfg *config.Config, cache *meta.Meta, errC
 		return
 	}
 	if updatable {
-		if err := meta.SetUpdateInfo(latest); err != nil {
+		if err := cache.SetUpdateInfo(latest); err != nil {
 			errCh <- errors.Wrap(err, "failed to write update info to cache")
 			return
 		}
@@ -115,7 +101,7 @@ func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater)
 			}
 			// update successful
 			fmt.Fprintf(infoWriter, "\r             \r✔ updated!\n\n")
-			return meta.Clear()
+			return cache.Clear()
 		default:
 			fmt.Fprintf(infoWriter, "\r%s updating...", s.Next())
 			time.Sleep(100 * time.Millisecond)
@@ -154,16 +140,16 @@ func newUpdater(cfg *config.Config, v *semver.Version, m updater.Means) *updater
 
 // newMeans creates new available means from cached infomation.
 // if InstalledBy is MeansTypeUndefined, returns updater.ErrUnavailable.
-func newMeans(cache *meta.Meta) (updater.Means, error) {
-	switch cache.InstalledBy {
-	case meta.MeansType(github.MeansTypeGitHubRelease):
+func newMeans(c *cache.Cache) (updater.Means, error) {
+	switch c.InstalledBy {
+	case cache.MeansType(github.MeansTypeGitHubRelease):
 		m, err := updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans"))
 		if err != nil {
 			return nil, err
 		}
 		m.(*github.GitHubClient).Decompresser = github.TarDecompresser
 		return m, nil
-	case meta.MeansType(brew.MeansTypeHomeBrew):
+	case cache.MeansType(brew.MeansTypeHomeBrew):
 		return updater.NewMeans(brew.HomeBrewMeans("ktr0731/evans", "evans"))
 	}
 	return nil, updater.ErrUnavailable
