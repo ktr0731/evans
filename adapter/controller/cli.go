@@ -256,37 +256,44 @@ func (c *CLI) processUpdate(ctx context.Context) error {
 	}
 
 	var w io.Writer
-	if !c.config.Meta.AutoUpdate {
-		printUpdateInfo(c.ui.Writer(), c.cache.LatestVersion)
+	if c.config.Meta.AutoUpdate {
+		w = ioutil.Discard
 
-		var yes bool
-		if err := survey.AskOne(&survey.Confirm{
-			Message: "update?",
-		}, &yes, nil); err != nil {
-			return errors.Wrap(err, "failed to get survey answer")
-		}
-		if !yes {
+		// if canceled, ignore and return
+		err := update(ctx, w, newUpdater(c.config, meta.Version, m))
+		if errors.Cause(err) == context.Canceled {
 			return nil
 		}
-
-		w = c.ui.Writer()
-
-		// restart Evans after updating
-		defer func() {
-			if err := syscall.Exec(os.Args[0], os.Args, os.Environ()); err != nil {
-				panic(errors.Wrapf(err, "failed to exec the command: args=%s", os.Args))
-			}
-		}()
-	} else {
-		w = ioutil.Discard
+		return err
 	}
 
+	printUpdateInfo(c.ui.Writer(), c.cache.LatestVersion)
+
+	var yes bool
+	if err := survey.AskOne(&survey.Confirm{
+		Message: "update?",
+	}, &yes, nil); err != nil {
+		return errors.Wrap(err, "failed to get survey answer")
+	}
+	if !yes {
+		return nil
+	}
+
+	w = c.ui.Writer()
+
 	// if canceled, ignore and return
-	if err := update(ctx, w, newUpdater(c.config, meta.Version, m)); errors.Cause(err) == context.Canceled {
+	err = update(ctx, w, newUpdater(c.config, meta.Version, m))
+	if errors.Cause(err) == context.Canceled {
 		return nil
 	} else if err != nil {
 		return errors.Wrap(err, "failed to update binary")
 	}
+
+	// restart Evans
+	if err := syscall.Exec(os.Args[0], os.Args, os.Environ()); err != nil {
+		return errors.Wrapf(err, "failed to exec the command: args=%s", os.Args)
+	}
+
 	return nil
 }
 
