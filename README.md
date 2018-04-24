@@ -63,6 +63,7 @@ $ brew install evans
 ```
 
 ### go get
+v1.10 or later required.  
 ``` sh
 $ go get github.com/ktr0731/evans
 ```
