@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/AlecAivazis/survey"
 	arg "github.com/alexflint/go-arg"
 	multierror "github.com/hashicorp/go-multierror"
-	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/adapter/presenter"
@@ -63,6 +64,8 @@ type CLI struct {
 
 	parser  *arg.Parser
 	options *Options
+
+	cache *meta.Meta
 }
 
 func NewCLI(name, version string) *CLI {
@@ -74,6 +77,7 @@ func NewCLI(name, version string) *CLI {
 			version: version,
 		},
 		config: config.Get(),
+		cache:  meta.Get(),
 	}
 }
 
@@ -126,30 +130,83 @@ func (c *CLI) Run(args []string) int {
 		DynamicBuilder: gateway.NewDynamicBuilder(),
 	}
 
-	// update check
+	var status int
+	if isCommandLineMode(c.options) {
+		status = c.runAsCLI(params)
+	} else {
+		status = c.runAsREPL(params, env)
+	}
+
+	return status
+}
+
+func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 
-	// TODO: split command-line, REPL
-	cache := meta.Get()
 	errCh := make(chan error, 1)
-	// if using as CLI mode, don't show prompt
-	if isatty.IsTerminal(os.Stdin.Fd()) && cache.UpdateAvailable {
-		pp.Println("update available")
-		// TODO: 共通化
+	go checkUpdate(ctx, c.cache, errCh)
+
+	var in io.Reader
+	if c.options.File != "" {
+		f, err := os.Open(c.options.File)
+		if err != nil {
+			c.Error(err)
+			return 1
+		}
+		defer f.Close()
+		in = f
+	} else {
+		in = os.Stdin
+	}
+
+	p.InputterPort = gateway.NewJSONFileInputter(in)
+	interactor := usecase.NewInteractor(p)
+
+	res, err := interactor.Call(&port.CallParams{c.options.Call})
+	if err != nil {
+		c.Error(err)
+		return 1
+	}
+
+	b := new(bytes.Buffer)
+	if _, err := b.ReadFrom(res); err != nil {
+		c.Error(err)
+		return 1
+	}
+
+	c.ui.Println(b.String())
+
+	cancel()
+	if err := <-errCh; err != nil {
+		c.Error(err)
+		return 1
+	}
+	<-ctx.Done()
+
+	return 0
+}
+
+func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
+	if c.cache.UpdateAvailable {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel() // for non-zero return value
+
 		var m updater.Means
-		switch cache.InstalledBy {
+		var err error
+		switch c.cache.InstalledBy {
 		case meta.MeansTypeGitHubRelease:
 			m, err = updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans"))
 		case meta.MeansTypeHomeBrew:
 			m, err = updater.NewMeans(brew.HomeBrewMeans("ktr0731/evans", "evans"))
 		}
 		// if ErrUnavailable, user installed Evans by manually, ignore
+		// return error response if other than errors
 		if err != nil && err != updater.ErrUnavailable {
 			c.Error(err)
 			return 1
 		}
-		c.printUpdateInfo(cache.LatestVersion)
+		c.printUpdateInfo(c.cache.LatestVersion)
 		var yes bool
 		if err := survey.AskOne(&survey.Confirm{
 			Message: "update?",
@@ -158,66 +215,35 @@ func (c *CLI) Run(args []string) int {
 			return 1
 		}
 		if yes {
-			update(ctx, c.ui.Writer(), updater.New(meta.Version, m))
-		}
-	} else {
-		go checkUpdate(ctx, cache, errCh)
-	}
-
-	if isCommandLineMode(c.options) {
-		var in io.Reader
-		if c.options.File != "" {
-			f, err := os.Open(c.options.File)
-			if err != nil {
+			if err := update(ctx, c.ui.Writer(), updater.New(meta.Version, m)); err != nil {
 				c.Error(err)
 				return 1
 			}
-			defer f.Close()
-			in = f
-		} else {
-			in = os.Stdin
 		}
 
-		params.InputterPort = gateway.NewJSONFileInputter(in)
-		interactor := usecase.NewInteractor(params)
-
-		res, err := interactor.Call(&port.CallParams{c.options.Call})
-		if err != nil {
-			c.Error(err)
-			return 1
-		}
-
-		b := new(bytes.Buffer)
-		if _, err := b.ReadFrom(res); err != nil {
-			c.Error(err)
-			return 1
-		}
-
-		c.ui.Println(b.String())
-	} else {
-		params.InputterPort = gateway.NewPrompt(c.config, env)
-		interactor := usecase.NewInteractor(params)
-
-		var ui ui
-		if c.config.REPL.ColoredOutput {
-			ui = newColoredREPLUI("")
-		} else {
-			ui = newREPLUI("")
-		}
-		r := NewREPL(c.config.REPL, env, ui, interactor)
-		if err := r.Start(); err != nil {
-			c.Error(err)
-			return 1
-		}
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			defer cancel()
+			<-sigCh
+		}()
+		<-ctx.Done()
 	}
 
-	// cancel update checking
-	cancel()
-	if err := <-errCh; err != nil {
+	p.InputterPort = gateway.NewPrompt(c.config, env)
+	interactor := usecase.NewInteractor(p)
+
+	var ui ui
+	if c.config.REPL.ColoredOutput {
+		ui = newColoredREPLUI("")
+	} else {
+		ui = newREPLUI("")
+	}
+	r := NewREPL(c.config.REPL, env, ui, interactor)
+	if err := r.Start(); err != nil {
 		c.Error(err)
 		return 1
 	}
-	<-ctx.Done()
 
 	return 0
 }
