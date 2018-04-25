@@ -24,14 +24,14 @@ var (
 )
 
 type REPL struct {
-	ui     ui
+	ui     UI
 	config *config.REPL
 	env    *entity.Env
 	prompt *prompt.Prompt
 	cmds   map[string]Commander
 }
 
-func NewREPL(config *config.REPL, env *entity.Env, ui ui, inputPort port.InputPort) *REPL {
+func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPort) *REPL {
 	cmds := map[string]Commander{
 		"call":    &callCommand{inputPort},
 		"desc":    &descCommand{inputPort},

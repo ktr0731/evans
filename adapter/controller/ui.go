@@ -8,7 +8,7 @@ import (
 	"github.com/fatih/color"
 )
 
-type ui interface {
+type UI interface {
 	Println(s string)
 	InfoPrintln(s string)
 	ErrPrintln(s string)
@@ -17,79 +17,79 @@ type ui interface {
 	ErrWriter() io.Writer
 }
 
-type UI struct {
+type BaseUI struct {
 	reader            io.Reader
 	writer, errWriter io.Writer
 }
 
-func NewUI() *UI {
-	return &UI{
+func NewUI() *BaseUI {
+	return &BaseUI{
 		reader:    os.Stdin,
 		writer:    os.Stdout,
 		errWriter: os.Stderr,
 	}
 }
 
-func (u *UI) Println(s string) {
+func (u *BaseUI) Println(s string) {
 	fmt.Fprintln(u.writer, s)
 }
 
-func (u *UI) InfoPrintln(s string) {
+func (u *BaseUI) InfoPrintln(s string) {
 	fmt.Fprintln(u.writer, s)
 }
 
-func (u *UI) ErrPrintln(s string) {
+func (u *BaseUI) ErrPrintln(s string) {
 	fmt.Fprintln(u.errWriter, s)
 }
 
-func (u *UI) Writer() io.Writer {
+func (u *BaseUI) Writer() io.Writer {
 	return u.writer
 }
 
-func (u *UI) ErrWriter() io.Writer {
+func (u *BaseUI) ErrWriter() io.Writer {
 	return u.errWriter
 }
 
 type REPLUI struct {
-	ui
+	UI
 	prompt string
 }
 
 func newREPLUI(prompt string) *REPLUI {
 	return &REPLUI{
-		ui:     newUI(),
+		UI:     NewUI(),
 		prompt: prompt,
 	}
 }
 
 func (u *REPLUI) Println(s string) {
-	u.ui.Println(s)
+	u.UI.Println(s)
 }
 
 func (u *REPLUI) InfoPrintln(s string) {
-	u.ui.InfoPrintln(s)
+	u.UI.InfoPrintln(s)
 }
 
 func (u *REPLUI) ErrPrintln(s string) {
-	u.ui.ErrPrintln(s)
+	u.UI.ErrPrintln(s)
 }
 
 type ColoredUI struct {
-	ui
+	UI
 }
 
 func newColoredUI() *ColoredUI {
 	return &ColoredUI{
-		newUI(),
+		NewUI(),
 	}
 }
 
 func (u *ColoredUI) InfoPrintln(s string) {
-	u.ui.InfoPrintln(color.BlueString(s))
+	u.UI.InfoPrintln(color.BlueString(s))
 }
 
 func (u *ColoredUI) ErrPrintln(s string) {
-	u.ui.ErrPrintln(color.RedString(s))
+	u.UI.ErrPrintln(color.RedString(s))
 }
 
 type ColoredREPLUI struct {
@@ -103,9 +103,9 @@ func newColoredREPLUI(prompt string) *ColoredREPLUI {
 }
 
 func (u *ColoredREPLUI) InfoPrintln(s string) {
-	u.ui.InfoPrintln(color.BlueString(s))
+	u.UI.InfoPrintln(color.BlueString(s))
 }
 
 func (u *ColoredREPLUI) ErrPrintln(s string) {
-	u.ui.ErrPrintln(color.RedString(s))
+	u.UI.ErrPrintln(color.RedString(s))
 }

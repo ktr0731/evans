@@ -58,7 +58,7 @@ func (o *Options) Version() string {
 }
 
 type CLI struct {
-	ui     ui
+	ui     UI
 	config *config.Config
 
 	parser  *arg.Parser
@@ -67,16 +67,15 @@ type CLI struct {
 	cache *cache.Cache
 }
 
-func NewCLI(name, version string) *CLI {
-	cfg := config.Get()
+func NewCLI(name, version string, ui UI) *CLI {
 	return &CLI{
-		ui: newUI(cfg),
+		ui: ui,
 		options: &Options{
 			Port:    "50051",
 			name:    name,
 			version: version,
 		},
-		config: cfg,
+		config: config.Get(),
 		cache:  cache.Get(),
 	}
 }
@@ -211,7 +210,7 @@ func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
 	p.InputterPort = gateway.NewPrompt(c.config, env)
 	interactor := usecase.NewInteractor(p)
 
-	var ui ui
+	var ui UI
 	if c.config.REPL.ColoredOutput {
 		ui = newColoredREPLUI("")
 	} else {
