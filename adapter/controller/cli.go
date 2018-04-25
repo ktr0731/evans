@@ -68,14 +68,15 @@ type CLI struct {
 }
 
 func NewCLI(name, version string) *CLI {
+	cfg := config.Get()
 	return &CLI{
-		ui: newUI(),
+		ui: newUI(cfg),
 		options: &Options{
 			Port:    "50051",
 			name:    name,
 			version: version,
 		},
-		config: config.Get(),
+		config: cfg,
 		cache:  cache.Get(),
 	}
 }

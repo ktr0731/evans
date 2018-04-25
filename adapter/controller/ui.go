@@ -22,7 +22,7 @@ type UI struct {
 	writer, errWriter io.Writer
 }
 
-func newUI() *UI {
+func NewUI() *UI {
 	return &UI{
 		reader:    os.Stdin,
 		writer:    os.Stdout,
