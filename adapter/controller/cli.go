@@ -196,9 +196,7 @@ func (c *CLI) Run(args []string) int {
 	case c.options.help:
 		c.Usage()
 		return 0
-	}
-
-	if c.options.EditConfig {
+	case c.options.EditConfig:
 		if err := config.Edit(); err != nil {
 			c.Error(err)
 			return 1
