@@ -67,6 +67,9 @@ type CLI struct {
 	cache *cache.Cache
 }
 
+// NewCLI instantiate CLI interface.
+// if Evans is used as REPL mode, its UI is created by newREPLUI() in runAsREPL.
+// if CLI mode, its ui is same as passed ui.
 func NewCLI(name, version string, ui UI) *CLI {
 	return &CLI{
 		ui: ui,

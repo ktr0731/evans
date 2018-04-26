@@ -11,6 +11,6 @@ func main() {
 	os.Exit(controller.NewCLI(
 		meta.AppName,
 		meta.Version.String(),
-		controller.NewUI(),
+		controller.NewBasicUI(),
 	).Run(os.Args[1:]))
 }

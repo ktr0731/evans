@@ -22,7 +22,15 @@ type BaseUI struct {
 	writer, errWriter io.Writer
 }
 
-func NewUI() *BaseUI {
+func NewUI(r io.Reader, w, ew io.Writer) UI {
+	return &BaseUI{
+		reader:    r,
+		writer:    w,
+		errWriter: ew,
+	}
+}
+
+func NewBasicUI() *BaseUI {
 	return &BaseUI{
 		reader:    os.Stdin,
 		writer:    os.Stdout,
@@ -57,7 +65,7 @@ type REPLUI struct {
 
 func newREPLUI(prompt string) *REPLUI {
 	return &REPLUI{
-		UI:     NewUI(),
+		UI:     NewBasicUI(),
 		prompt: prompt,
 	}
 }
@@ -80,7 +88,7 @@ type ColoredUI struct {
 
 func newColoredUI() *ColoredUI {
 	return &ColoredUI{
-		NewUI(),
+		NewBasicUI(),
 	}
 }
 
