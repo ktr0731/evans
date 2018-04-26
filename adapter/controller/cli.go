@@ -3,6 +3,7 @@ package controller
 import (
 	"bytes"
 	"context"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -11,7 +12,6 @@ import (
 	"syscall"
 
 	"github.com/AlecAivazis/survey"
-	arg "github.com/alexflint/go-arg"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/parser"
@@ -35,33 +35,125 @@ var (
 	ErrProtoFileRequired = errors.New("least one proto file required")
 )
 
-type Options struct {
-	Proto []string `arg:"positional,help:.proto files"`
+type optStrSlice []string
 
-	Interactive bool     `arg:"-i,help:use interactive mode"`
-	EditConfig  bool     `arg:"-e,help:edit config file by $EDITOR"`
-	Host        string   `arg:"help:gRPC host"`
-	Port        string   `arg:"-p,help:gRPC port"`
-	Package     string   `arg:"help:default package"`
-	Service     string   `arg:"help:default service. evans parse package from this if --package is nothing."`
-	Call        string   `arg:"-c,help:call specified RPC"`
-	File        string   `arg:"-f,help:the script file which will be executed (used only command-line mode)"`
-	Path        []string `arg:"separate,help:proto file path"`
-	Header      []string `arg:"separate,help:headers set to each requests"`
-
-	name    string `arg:"-"`
-	version string `arg:"-"`
+func (o *optStrSlice) String() string {
+	return fmt.Sprintf("%v", *o)
 }
 
-func (o *Options) Version() string {
-	return fmt.Sprintf("%s %s", o.name, o.version)
+func (o *optStrSlice) Set(v string) error {
+	*o = append(*o, v)
+	return nil
+}
+
+var usageFormat = `
+Usage: %s [options ...] [PROTO [PROTO ...]]
+
+Positional arguments:
+	PROTO			.proto files
+
+Options:
+	--interactive, -i	%s
+	--edit, -e		%s
+	--host HOST		%s
+	--port PORT, -p PORT	%s
+	--package PACKAGE	%s
+	--service SERVICE	%s
+	--call CALL		%s
+	--file FILE, -f FILE	%s
+	--path PATH		%s
+	--header HEADER		%s
+	--help, -h		%s
+	--version, -v		%s
+`
+
+func (c *CLI) parseFlags(args []string) {
+	const (
+		interactive = "use interactive mode"
+		edit        = "edit config file using by $EDITOR"
+		host        = "gRPC server host"
+		port        = "gRPC server port"
+		pkg         = "default package"
+		service     = "default service"
+		call        = "call specified RPC by CLI mode"
+		file        = "the script file which will be executed by (used only CLI mode)"
+		path        = "proto file paths"
+		header      = "default headers which set to each requests (example: foo=bar)"
+
+		version = "display version and exit"
+		help    = "display this help and exit"
+	)
+
+	f := flag.NewFlagSet("main", flag.ExitOnError)
+	f.Usage = func() {
+		c.Version()
+		fmt.Fprintf(
+			c.ui.Writer(),
+			usageFormat,
+			c.name,
+			interactive,
+			edit,
+			host,
+			port,
+			pkg,
+			service,
+			call,
+			file,
+			path,
+			header,
+			version,
+			help,
+		)
+		os.Exit(0)
+	}
+
+	f.BoolVar(&c.options.Interactive, "interactive", false, interactive)
+	f.BoolVar(&c.options.Interactive, "i", false, interactive)
+	f.BoolVar(&c.options.EditConfig, "edit", false, edit)
+	f.BoolVar(&c.options.EditConfig, "e", false, edit)
+	f.StringVar(&c.options.Host, "host", "", host)
+	f.StringVar(&c.options.Port, "port", "50051", port)
+	f.StringVar(&c.options.Port, "p", "50051", port)
+	f.StringVar(&c.options.Package, "package", "", pkg)
+	f.StringVar(&c.options.Service, "service", "", service)
+	f.StringVar(&c.options.Call, "call", "", call)
+	f.StringVar(&c.options.File, "file", "", file)
+	f.StringVar(&c.options.File, "f", "", file)
+	f.Var(&c.options.Path, "path", path)
+	f.Var(&c.options.Header, "header", header)
+	f.BoolVar(&c.options.version, "version", false, version)
+	f.BoolVar(&c.options.version, "v", false, version)
+
+	// ignore error because flag set mode is ExitOnError
+	_ = f.Parse(args)
+
+	c.flagSet = f
+}
+
+type Options struct {
+	Interactive bool
+	EditConfig  bool
+	Host        string
+	Port        string
+	Package     string
+	Service     string
+	Call        string
+	File        string
+	Path        optStrSlice
+	Header      optStrSlice
+
+	version bool
+	help    bool
 }
 
 type CLI struct {
+	name    string
+	version string
+
 	ui     UI
 	config *config.Config
 
-	parser  *arg.Parser
+	flagSet *flag.FlagSet
 	options *Options
 
 	cache *cache.Cache
@@ -72,14 +164,12 @@ type CLI struct {
 // if CLI mode, its ui is same as passed ui.
 func NewCLI(name, version string, ui UI) *CLI {
 	return &CLI{
-		ui: ui,
-		options: &Options{
-			Port:    "50051",
-			name:    name,
-			version: version,
-		},
-		config: config.Get(),
-		cache:  cache.Get(),
+		name:    name,
+		version: version,
+		options: &Options{},
+		ui:      ui,
+		config:  config.Get(),
+		cache:   cache.Get(),
 	}
 }
 
@@ -87,16 +177,26 @@ func (c *CLI) Error(err error) {
 	c.ui.ErrPrintln(err.Error())
 }
 
-func (c *CLI) Help() {
-	c.parser.WriteHelp(c.ui.Writer())
+func (c *CLI) Usage() {
+	c.flagSet.Usage()
 }
 
-func (c *CLI) Usage() {
-	c.parser.WriteUsage(c.ui.Writer())
+func (c *CLI) Version() {
+	c.ui.Println(fmt.Sprintf("%s %s", c.name, c.version))
 }
 
 func (c *CLI) Run(args []string) int {
-	c.parser = arg.MustParse(c.options)
+	c.parseFlags(args)
+	proto := c.flagSet.Args()
+
+	switch {
+	case c.options.version:
+		c.Version()
+		return 0
+	case c.options.help:
+		c.Usage()
+		return 0
+	}
 
 	if c.options.EditConfig {
 		if err := config.Edit(); err != nil {
@@ -111,7 +211,7 @@ func (c *CLI) Run(args []string) int {
 		return 1
 	}
 
-	env, err := setupEnv(c.config, c.options)
+	env, err := setupEnv(c.config, c.options, proto)
 	if err == ErrProtoFileRequired {
 		c.Usage()
 	}
@@ -336,7 +436,7 @@ func isCommandLineMode(opt *Options) bool {
 	return !isatty.IsTerminal(os.Stdin.Fd()) || opt.File != ""
 }
 
-func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
+func setupEnv(conf *config.Config, opt *Options, proto []string) (*entity.Env, error) {
 	if len(opt.Header) > 0 {
 		for _, h := range opt.Header {
 			s := strings.SplitN(h, "=", 2)
@@ -357,12 +457,12 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 		conf.Server.Port = opt.Port
 	}
 
-	paths, err := collectProtoPaths(conf, opt)
+	paths, err := collectProtoPaths(conf, opt, proto)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := collectProtoFiles(conf, opt)
+	files, err := collectProtoFiles(conf, opt, proto)
 	if err != nil {
 		return nil, err
 	}
@@ -385,7 +485,7 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 
 	if pkg != "" {
 		if err := env.UsePackage(pkg); err != nil {
-			return nil, errors.Wrapf(err, "file %s", strings.Join(opt.Proto, ", "))
+			return nil, errors.Wrapf(err, "file %s", strings.Join(proto, ", "))
 		}
 	}
 
@@ -396,13 +496,13 @@ func setupEnv(conf *config.Config, opt *Options) (*entity.Env, error) {
 
 	if svc != "" {
 		if err := env.UseService(svc); err != nil {
-			return nil, errors.Wrapf(err, "file %s", strings.Join(opt.Proto, ", "))
+			return nil, errors.Wrapf(err, "file %s", strings.Join(proto, ", "))
 		}
 	}
 	return env, nil
 }
 
-func collectProtoPaths(conf *config.Config, opt *Options) ([]string, error) {
+func collectProtoPaths(conf *config.Config, opt *Options, proto []string) ([]string, error) {
 	paths := make([]string, 0, len(opt.Path)+len(conf.Default.ProtoPath))
 	encountered := map[string]bool{}
 	parser := shellwords.NewParser()
@@ -435,7 +535,7 @@ func collectProtoPaths(conf *config.Config, opt *Options) ([]string, error) {
 		encountered[path] = true
 		paths = append(paths, path)
 	}
-	for _, proto := range opt.Proto {
+	for _, proto := range proto {
 		p, err := parse(proto)
 		if err != nil {
 			return nil, err
@@ -451,9 +551,9 @@ func collectProtoPaths(conf *config.Config, opt *Options) ([]string, error) {
 	return paths, nil
 }
 
-func collectProtoFiles(conf *config.Config, opt *Options) ([]string, error) {
-	files := make([]string, 0, len(conf.Default.ProtoFile)+len(opt.Proto))
-	for _, f := range append(conf.Default.ProtoFile, opt.Proto...) {
+func collectProtoFiles(conf *config.Config, opt *Options, proto []string) ([]string, error) {
+	files := make([]string, 0, len(conf.Default.ProtoFile)+len(proto))
+	for _, f := range append(conf.Default.ProtoFile, proto...) {
 		if f != "" {
 			files = append(files, f)
 		}
