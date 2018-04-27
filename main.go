@@ -8,9 +8,9 @@ import (
 )
 
 func main() {
-	os.Exit(run(controller.NewCLI(meta.AppName, meta.Version.String())))
-}
-
-func run(runnable controller.Runnable) int {
-	return runnable.Run(os.Args[1:])
+	os.Exit(controller.NewCLI(
+		meta.AppName,
+		meta.Version.String(),
+		controller.NewBasicUI(),
+	).Run(os.Args[1:]))
 }

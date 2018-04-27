@@ -17,10 +17,10 @@ func TestCLI(t *testing.T) {
 
 	t.Run("proto path (option)", func(t *testing.T) {
 		conf := newConfig()
-		opt := &Options{
-			Path: []string{"foo", "foo", "bar"},
+		opt := &options{
+			path: []string{"foo", "foo", "bar"},
 		}
-		paths, err := collectProtoPaths(conf, opt)
+		paths, err := collectProtoPaths(conf, opt, nil)
 		require.NoError(t, err)
 		require.Len(t, paths, 2)
 	})
@@ -28,8 +28,8 @@ func TestCLI(t *testing.T) {
 	t.Run("proto path (config)", func(t *testing.T) {
 		conf := newConfig()
 		conf.Default.ProtoPath = []string{"foo", "foo", "bar"}
-		opt := &Options{}
-		paths, err := collectProtoPaths(conf, opt)
+		opt := &options{}
+		paths, err := collectProtoPaths(conf, opt, nil)
 		require.NoError(t, err)
 		require.Len(t, paths, 2)
 	})
@@ -37,20 +37,19 @@ func TestCLI(t *testing.T) {
 	t.Run("proto path (both)", func(t *testing.T) {
 		conf := newConfig()
 		conf.Default.ProtoPath = []string{"foo", "foo", "bar"}
-		opt := &Options{
-			Path: []string{"foo", "baz", "bar"},
+		opt := &options{
+			path: []string{"foo", "baz", "bar"},
 		}
-		paths, err := collectProtoPaths(conf, opt)
+		paths, err := collectProtoPaths(conf, opt, nil)
 		require.NoError(t, err)
 		require.Len(t, paths, 3)
 	})
 
 	t.Run("proto path (from file)", func(t *testing.T) {
 		conf := newConfig()
-		opt := &Options{
-			Proto: []string{"./hoge", "./foo/bar"},
-		}
-		paths, err := collectProtoPaths(conf, opt)
+		proto := []string{"./hoge", "./foo/bar"}
+		opt := &options{}
+		paths, err := collectProtoPaths(conf, opt, proto)
 		require.NoError(t, err)
 		require.Len(t, paths, 2)
 		require.Exactly(t, []string{".", "foo"}, paths)
@@ -66,14 +65,13 @@ func TestCLI(t *testing.T) {
 
 	t.Run("proto path (env)", func(t *testing.T) {
 		conf := newConfig()
-		opt := &Options{
-			Proto: []string{"$hoge/foo", "/fuga/bar"},
-		}
+		proto := []string{"$hoge/foo", "/fuga/bar"}
+		opt := &options{}
 
 		cleanup := setEnv("hoge", "/fuga")
 		defer cleanup()
 
-		paths, err := collectProtoPaths(conf, opt)
+		paths, err := collectProtoPaths(conf, opt, proto)
 		require.NoError(t, err)
 		require.Len(t, paths, 1)
 		require.Equal(t, "/fuga", paths[0])
@@ -81,11 +79,10 @@ func TestCLI(t *testing.T) {
 
 	t.Run("error/proto path", func(t *testing.T) {
 		conf := newConfig()
-		opt := &Options{
-			Proto: []string{"foo bar"},
-		}
+		proto := []string{"foo bar"}
+		opt := &options{}
 
-		_, err := collectProtoPaths(conf, opt)
+		_, err := collectProtoPaths(conf, opt, proto)
 		require.Error(t, err)
 	})
 }

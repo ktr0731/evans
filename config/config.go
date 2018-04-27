@@ -38,9 +38,6 @@ type Request struct {
 type REPL struct {
 	Server       *Server `toml:"-"`
 	PromptFormat string  `default:"{package}.{sevice}@{addr}:{port}" toml:"promptFormat"`
-	Reader       string  `default:"stdin" toml:"reader"`
-	Writer       string  `default:"stdout" toml:"writer"`
-	ErrWriter    string  `default:"stderr" toml:"errWriter"`
 
 	ColoredOutput bool `default:"true" toml:"coloredOutput"`
 
