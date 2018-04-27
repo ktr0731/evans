@@ -104,7 +104,6 @@ func (c *CLI) parseFlags(args []string) {
 			version,
 			help,
 		)
-		os.Exit(0)
 	}
 
 	f.BoolVar(&c.options.interactive, "interactive", false, interactive)

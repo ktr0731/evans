@@ -2,39 +2,122 @@ package e2e
 
 import (
 	"bytes"
+	"io/ioutil"
+	"net"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/adapter/controller"
 	"github.com/ktr0731/evans/meta"
+	srv "github.com/ktr0731/evans/tests/helper/server"
+	"github.com/ktr0731/evans/tests/helper/server/helloworld"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc/test/grpc_testing"
+	"google.golang.org/grpc"
 )
+
+type server struct {
+	t *testing.T
+	s *grpc.Server
+}
+
+func newServer(t *testing.T) *server {
+	s := grpc.NewServer()
+	helloworld.RegisterGreeterServer(s, srv.NewUnary())
+	return &server{
+		t: t,
+		s: s,
+	}
+}
+
+func (s *server) start() *server {
+	go func() {
+		l, err := net.Listen("tcp", ":50051")
+		require.NoError(s.t, err)
+		err = s.s.Serve(l)
+		require.NoError(s.t, err)
+	}()
+	return s
+}
+
+func (s *server) stop() {
+	s.s.GracefulStop()
+}
 
 func newCLI(t *testing.T, ui controller.UI) *controller.CLI {
 	return controller.NewCLI(meta.AppName, meta.Version.String(), ui)
 }
 
+func flatten(s string) string {
+	s = strings.Replace(s, "\n", " ", -1)
+	s = strings.TrimSpace(s)
+	re := regexp.MustCompile(" +")
+	return re.ReplaceAllString(s, " ")
+}
+
 func TestCLI(t *testing.T) {
-	in := strings.NewReader(`{ "name": "maho", "message": "hiyajo" }`)
+	in := strings.NewReader(`{ "name": "maho" }`)
 
 	controller.DefaultCLIReader = in
 	defer func() {
 		controller.DefaultCLIReader = os.Stdin
 	}()
 
-	runServer := func() chan struct{} {
-		grpc_testing.Empty{}
-	}
+	defer newServer(t).start().stop()
 
 	t.Run("from stdin", func(t *testing.T) {
-		out := new(bytes.Buffer)
-		ui := controller.NewUI(in, out, os.Stderr)
-		c := newCLI(t, ui)
-		code := c.Run([]string{"--package", "helloworld", "--service", "Greeter", "--call", "SayHello", "testdata/helloworld.proto"})
-		require.Equal(t, 0, code)
-		pp.Println(out.String())
+		cases := []struct {
+			args string
+			code int
+		}{
+			{args: "", code: 1},
+			{args: "testdata/helloworld.proto", code: 1},
+			{args: "--package helloworld testdata/helloworld.proto", code: 1},
+			{args: "--package helloworld --service Greeter testdata/helloworld.proto", code: 1},
+			{args: "--package helloworld --call SayHello testdata/helloworld.proto", code: 1},
+			{args: "--package helloworld --service Greeter --call SayHello", code: 1},
+			{args: "--package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
+		}
+
+		for _, c := range cases {
+			out := new(bytes.Buffer)
+			ui := controller.NewUI(in, out, ioutil.Discard)
+
+			code := newCLI(t, ui).Run(strings.Split(c.args, " "))
+			require.Equal(t, c.code, code)
+
+			if c.code == 0 {
+				assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
+			}
+		}
+	})
+
+	t.Run("from file", func(t *testing.T) {
+		cases := []struct {
+			args string
+			code int
+		}{
+			{args: "--file testdata/in.json", code: 1},
+			{args: "--file testdata/in.json testdata/helloworld.proto", code: 1},
+			{args: "--file testdata/in.json --package helloworld testdata/helloworld.proto", code: 1},
+			{args: "--file testdata/in.json --package helloworld --service Greeter testdata/helloworld.proto", code: 1},
+			{args: "--file testdata/in.json --package helloworld --call SayHello testdata/helloworld.proto", code: 1},
+			{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello", code: 1},
+			{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
+		}
+
+		for _, c := range cases {
+			out := new(bytes.Buffer)
+			ui := controller.NewUI(in, out, ioutil.Discard)
+
+			code := newCLI(t, ui).Run(strings.Split(c.args, " "))
+			require.Equal(t, c.code, code)
+
+			if c.code == 0 {
+				assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
+			}
+		}
 	})
 }
