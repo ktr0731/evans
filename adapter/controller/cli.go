@@ -107,20 +107,20 @@ func (c *CLI) parseFlags(args []string) {
 		os.Exit(0)
 	}
 
-	f.BoolVar(&c.options.Interactive, "interactive", false, interactive)
-	f.BoolVar(&c.options.Interactive, "i", false, interactive)
-	f.BoolVar(&c.options.EditConfig, "edit", false, edit)
-	f.BoolVar(&c.options.EditConfig, "e", false, edit)
-	f.StringVar(&c.options.Host, "host", "", host)
-	f.StringVar(&c.options.Port, "port", "50051", port)
-	f.StringVar(&c.options.Port, "p", "50051", port)
-	f.StringVar(&c.options.Package, "package", "", pkg)
-	f.StringVar(&c.options.Service, "service", "", service)
-	f.StringVar(&c.options.Call, "call", "", call)
-	f.StringVar(&c.options.File, "file", "", file)
-	f.StringVar(&c.options.File, "f", "", file)
-	f.Var(&c.options.Path, "path", path)
-	f.Var(&c.options.Header, "header", header)
+	f.BoolVar(&c.options.interactive, "interactive", false, interactive)
+	f.BoolVar(&c.options.interactive, "i", false, interactive)
+	f.BoolVar(&c.options.editConfig, "edit", false, edit)
+	f.BoolVar(&c.options.editConfig, "e", false, edit)
+	f.StringVar(&c.options.host, "host", "", host)
+	f.StringVar(&c.options.port, "port", "50051", port)
+	f.StringVar(&c.options.port, "p", "50051", port)
+	f.StringVar(&c.options.pkg, "package", "", pkg)
+	f.StringVar(&c.options.service, "service", "", service)
+	f.StringVar(&c.options.call, "call", "", call)
+	f.StringVar(&c.options.file, "file", "", file)
+	f.StringVar(&c.options.file, "f", "", file)
+	f.Var(&c.options.path, "path", path)
+	f.Var(&c.options.header, "header", header)
 	f.BoolVar(&c.options.version, "version", false, version)
 	f.BoolVar(&c.options.version, "v", false, version)
 
@@ -130,17 +130,17 @@ func (c *CLI) parseFlags(args []string) {
 	c.flagSet = f
 }
 
-type Options struct {
-	Interactive bool
-	EditConfig  bool
-	Host        string
-	Port        string
-	Package     string
-	Service     string
-	Call        string
-	File        string
-	Path        optStrSlice
-	Header      optStrSlice
+type options struct {
+	interactive bool
+	editConfig  bool
+	host        string
+	port        string
+	pkg         string
+	service     string
+	call        string
+	file        string
+	path        optStrSlice
+	header      optStrSlice
 
 	version bool
 	help    bool
@@ -154,7 +154,7 @@ type CLI struct {
 	config *config.Config
 
 	flagSet *flag.FlagSet
-	options *Options
+	options *options
 
 	cache *cache.Cache
 }
@@ -166,7 +166,7 @@ func NewCLI(name, version string, ui UI) *CLI {
 	return &CLI{
 		name:    name,
 		version: version,
-		options: &Options{},
+		options: &options{},
 		ui:      ui,
 		config:  config.Get(),
 		cache:   cache.Get(),
@@ -196,7 +196,7 @@ func (c *CLI) Run(args []string) int {
 	case c.options.help:
 		c.Usage()
 		return 0
-	case c.options.EditConfig:
+	case c.options.editConfig:
 		if err := config.Edit(); err != nil {
 			c.Error(err)
 			return 1
@@ -248,8 +248,8 @@ func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 	go checkUpdate(ctx, c.config, c.cache, errCh)
 
 	var in io.Reader
-	if c.options.File != "" {
-		f, err := os.Open(c.options.File)
+	if c.options.file != "" {
+		f, err := os.Open(c.options.file)
 		if err != nil {
 			c.Error(err)
 			return 1
@@ -263,7 +263,7 @@ func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 	p.InputterPort = gateway.NewJSONFileInputter(in)
 	interactor := usecase.NewInteractor(p)
 
-	res, err := interactor.Call(&port.CallParams{c.options.Call})
+	res, err := interactor.Call(&port.CallParams{c.options.call})
 	if err != nil {
 		c.Error(err)
 		return 1
@@ -398,23 +398,23 @@ func (c *CLI) processUpdate(ctx context.Context) error {
 	return nil
 }
 
-func checkPrecondition(config *config.Config, opt *Options) error {
+func checkPrecondition(config *config.Config, opt *options) error {
 	if err := isCallable(config, opt); err != nil {
 		return err
 	}
 	return nil
 }
 
-func isCallable(config *config.Config, opt *Options) error {
-	if opt.Call == "" {
+func isCallable(config *config.Config, opt *options) error {
+	if opt.call == "" {
 		return nil
 	}
 
 	var result *multierror.Error
-	if config.Default.Service == "" && opt.Service == "" {
+	if config.Default.Service == "" && opt.service == "" {
 		result = multierror.Append(result, errors.New("--service flag unselected"))
 	}
-	if config.Default.Package == "" && opt.Package == "" {
+	if config.Default.Package == "" && opt.pkg == "" {
 		result = multierror.Append(result, errors.New("--package flag unselected"))
 	}
 	if result != nil {
@@ -430,13 +430,13 @@ func isCallable(config *config.Config, opt *Options) error {
 	return nil
 }
 
-func isCommandLineMode(opt *Options) bool {
-	return !isatty.IsTerminal(os.Stdin.Fd()) || opt.File != ""
+func isCommandLineMode(opt *options) bool {
+	return !isatty.IsTerminal(os.Stdin.Fd()) || opt.file != ""
 }
 
-func setupEnv(conf *config.Config, opt *Options, proto []string) (*entity.Env, error) {
-	if len(opt.Header) > 0 {
-		for _, h := range opt.Header {
+func setupEnv(conf *config.Config, opt *options, proto []string) (*entity.Env, error) {
+	if len(opt.header) > 0 {
+		for _, h := range opt.header {
 			s := strings.SplitN(h, "=", 2)
 			if len(s) != 2 {
 				return nil, errors.New(`header must be specified "key=val" format`)
@@ -445,14 +445,14 @@ func setupEnv(conf *config.Config, opt *Options, proto []string) (*entity.Env, e
 			conf.Request.Header = append(conf.Request.Header, config.Header{Key: key, Val: val})
 		}
 	}
-	if opt.Host != "" {
-		conf.Server.Host = opt.Host
+	if opt.host != "" {
+		conf.Server.Host = opt.host
 	}
-	if _, err := strconv.Atoi(opt.Port); err != nil {
+	if _, err := strconv.Atoi(opt.port); err != nil {
 		return nil, errors.New(`port must be integer`)
 	}
-	if opt.Port != "50051" {
-		conf.Server.Port = opt.Port
+	if opt.port != "50051" {
+		conf.Server.Port = opt.port
 	}
 
 	paths, err := collectProtoPaths(conf, opt, proto)
@@ -476,7 +476,7 @@ func setupEnv(conf *config.Config, opt *Options, proto []string) (*entity.Env, e
 	}
 
 	// option is higher priority than config file
-	pkg := opt.Package
+	pkg := opt.pkg
 	if pkg == "" && conf.Default.Package != "" {
 		pkg = conf.Default.Package
 	}
@@ -487,7 +487,7 @@ func setupEnv(conf *config.Config, opt *Options, proto []string) (*entity.Env, e
 		}
 	}
 
-	svc := opt.Service
+	svc := opt.service
 	if svc == "" && conf.Default.Service != "" {
 		svc = conf.Default.Service
 	}
@@ -500,8 +500,8 @@ func setupEnv(conf *config.Config, opt *Options, proto []string) (*entity.Env, e
 	return env, nil
 }
 
-func collectProtoPaths(conf *config.Config, opt *Options, proto []string) ([]string, error) {
-	paths := make([]string, 0, len(opt.Path)+len(conf.Default.ProtoPath))
+func collectProtoPaths(conf *config.Config, opt *options, proto []string) ([]string, error) {
+	paths := make([]string, 0, len(opt.path)+len(conf.Default.ProtoPath))
 	encountered := map[string]bool{}
 	parser := shellwords.NewParser()
 	parser.ParseEnv = true
@@ -521,7 +521,7 @@ func collectProtoPaths(conf *config.Config, opt *Options, proto []string) ([]str
 		return res[0], nil
 	}
 
-	for _, p := range append(opt.Path, conf.Default.ProtoPath...) {
+	for _, p := range append(opt.path, conf.Default.ProtoPath...) {
 		path, err := parse(p)
 		if err != nil {
 			return nil, err
@@ -549,7 +549,7 @@ func collectProtoPaths(conf *config.Config, opt *Options, proto []string) ([]str
 	return paths, nil
 }
 
-func collectProtoFiles(conf *config.Config, opt *Options, proto []string) ([]string, error) {
+func collectProtoFiles(conf *config.Config, opt *options, proto []string) ([]string, error) {
 	files := make([]string, 0, len(conf.Default.ProtoFile)+len(proto))
 	for _, f := range append(conf.Default.ProtoFile, proto...) {
 		if f != "" {
