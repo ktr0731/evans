@@ -33,8 +33,8 @@ func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache, errCh 
 	case cache.MeansTypeUndefined:
 		m, err = updater.SelectAvailableMeansFrom(
 			ctx,
-			github.GitHubReleaseMeans("ktr0731", "evans"),
 			brew.HomeBrewMeans("ktr0731/evans", "evans"),
+			github.GitHubReleaseMeans("ktr0731", "evans"),
 		)
 		// if ErrUnavailable, user installed Evans by manually, ignore
 		if err == updater.ErrUnavailable {
