@@ -240,6 +240,8 @@ func (c *CLI) Run(args []string) int {
 	return status
 }
 
+var DefaultCLIReader io.Reader = os.Stdin
+
 func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
@@ -247,7 +249,7 @@ func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 	errCh := make(chan error, 1)
 	go checkUpdate(ctx, c.config, c.cache, errCh)
 
-	var in io.Reader
+	in := DefaultCLIReader
 	if c.options.file != "" {
 		f, err := os.Open(c.options.file)
 		if err != nil {
@@ -256,8 +258,6 @@ func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 		}
 		defer f.Close()
 		in = f
-	} else {
-		in = os.Stdin
 	}
 
 	p.InputterPort = gateway.NewJSONFileInputter(in)
