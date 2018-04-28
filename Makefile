@@ -21,8 +21,15 @@ build: deps
 	go build
 
 .PHONY: test
-test:
-	go test -race -v $(shell glide novendor)
+test: unit-test e2e-test
+
+.PHONY: unit-test
+unit-test:
+	go test -race $(shell glide novendor | grep -v tests)
+
+.PHONY: e2e-test
+e2e-test:
+	go test -race -tags e2e ./tests/...
 
 .PHONY: coverage
 coverage:
