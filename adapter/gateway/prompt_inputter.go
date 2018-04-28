@@ -20,7 +20,7 @@ var (
 )
 
 // for mocking
-type prompter interface {
+type Prompter interface {
 	Input() string
 	Select(msg string, opts []string) (string, error)
 	SetPrefix(prefix string)
@@ -75,12 +75,12 @@ func NewPrompt(config *config.Config, env entity.Environment) *Prompt {
 }
 
 type Prompt struct {
-	prompt prompter
+	prompt Prompter
 	config *config.Config
 	env    entity.Environment
 }
 
-func newPrompt(prompt prompter, config *config.Config, env entity.Environment) *Prompt {
+func newPrompt(prompt Prompter, config *config.Config, env entity.Environment) *Prompt {
 	return &Prompt{
 		prompt: prompt,
 		config: config,
@@ -100,7 +100,7 @@ func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
 // fieldInputter inputs each fields of req in interactively
 // first fieldInputter is instantiated per one request
 type fieldInputter struct {
-	prompt prompter
+	prompt Prompter
 	setter *protobuf.MessageSetter
 
 	prefixFormat string
@@ -117,7 +117,7 @@ type fieldInputter struct {
 }
 
 func newFieldInputter(
-	prompter prompter,
+	prompter Prompter,
 	prefixFormat string,
 	setter *protobuf.MessageSetter,
 	ancestor []string,

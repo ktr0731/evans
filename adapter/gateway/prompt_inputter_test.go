@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	prompt "github.com/c-bata/go-prompt"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
 	"github.com/ktr0731/evans/adapter/protobuf"
@@ -14,59 +13,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type mockPrompt struct {
-	inputOutput string
-
-	selectOutputString string
-	selectOutputError  error
-}
-
-func (p *mockPrompt) Input() string {
-	return p.inputOutput
-}
-
-func (p *mockPrompt) setExpectedInput(s string) {
-	p.inputOutput = s
-}
-
-func (p *mockPrompt) Select(msg string, opts []string) (string, error) {
-	return p.selectOutputString, p.selectOutputError
-}
-
-func (p *mockPrompt) setExpectedSelect(s string, err error) {
-	p.selectOutputString = s
-	p.selectOutputError = err
-}
-
-func (p *mockPrompt) SetPrefix(_ string) {}
-
-func (p *mockPrompt) SetPrefixColor(_ prompt.Color) error {
-	return nil
-}
-
-type mockRepeatedPrompt struct {
-	*mockPrompt
-
-	cnt          int
-	inputOutputs []string
-}
-
-func (p *mockRepeatedPrompt) Input() string {
-	p.cnt++
-	return p.inputOutputs[p.cnt-1]
-}
-
 func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/simple", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
 
-		prompt := &mockPrompt{}
+		prompt := helper.NewMockPrompt([]string{"foo"}, nil)
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("SayHello")
 		require.NoError(t, err)
 
-		prompt.setExpectedInput("foo")
 		dmsg, err := inputter.Input(rpc.RequestMessage())
 		require.NoError(t, err)
 
@@ -79,13 +35,12 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/nested_message", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
 
-		prompt := &mockPrompt{}
+		prompt := helper.NewMockPrompt([]string{"foo"}, nil)
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("BorrowBook")
 		require.NoError(t, err)
 
-		prompt.setExpectedInput("foo")
 		dmsg, err := inputter.Input(rpc.RequestMessage())
 		require.NoError(t, err)
 
@@ -98,15 +53,13 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/enum", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 
-		prompt := &mockPrompt{}
+		prompt := helper.NewMockPrompt(nil, []string{"PHILOSOPHY"})
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "enum.proto")
 		p, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
 		m := p[0].Messages[0]
-
-		prompt.setExpectedSelect("PHILOSOPHY", nil)
 
 		dmsg, err := inputter.Input(m)
 		require.NoError(t, err)
@@ -120,15 +73,13 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("error/enum:invalid enum name", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 
-		prompt := &mockPrompt{}
+		prompt := helper.NewMockPrompt(nil, []string{"kumiko"})
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "enum.proto")
 		p, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
 		m := p[0].Messages[0]
-
-		prompt.setExpectedSelect("kumiko", nil)
 
 		_, err = inputter.Input(m)
 		e := errors.Cause(err)
@@ -138,7 +89,7 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/oneof", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 
-		prompt := &mockPrompt{}
+		prompt := helper.NewMockPrompt([]string{"bar"}, []string{"book"})
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
@@ -148,9 +99,6 @@ func TestPrompt_Input(t *testing.T) {
 		m := p[0].Messages[2]
 		require.Equal(t, m.Name(), "BorrowRequest")
 		require.Len(t, m.Fields(), 1)
-
-		prompt.setExpectedInput("bar")
-		prompt.setExpectedSelect("book", nil)
 
 		dmsg, err := inputter.Input(m)
 		require.NoError(t, err)
@@ -164,16 +112,13 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("error/oneof:invalid oneof field name", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 
-		prompt := &mockPrompt{}
+		prompt := helper.NewMockPrompt([]string{"bar"}, []string{"Book"})
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
 		p, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
 		m := p[0].Messages[2]
-
-		prompt.setExpectedInput("bar")
-		prompt.setExpectedSelect("Book", nil)
 
 		_, err = inputter.Input(m)
 
