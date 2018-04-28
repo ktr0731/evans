@@ -129,7 +129,9 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/repeated", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "repeated.proto", "helloworld", "")
 
-		prompt := &mockRepeatedPrompt{mockPrompt: &mockPrompt{}, inputOutputs: []string{"foo", "", "bar", "", ""}}
+		prompt := helper.NewMockRepeatedPrompt([][]string{
+			{"foo", "", "bar", "", ""},
+		}, nil)
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "repeated.proto")
@@ -147,7 +149,9 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/map", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "map.proto", "example", "")
 
-		prompt := &mockRepeatedPrompt{mockPrompt: &mockPrompt{}, inputOutputs: []string{"foo", "", "bar", "", ""}}
+		prompt := helper.NewMockRepeatedPrompt([][]string{
+			{"foo", "", "bar", "", ""},
+		}, nil)
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "map.proto")
@@ -165,7 +169,9 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/map val is message", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "map.proto", "example", "")
 
-		prompt := &mockRepeatedPrompt{mockPrompt: &mockPrompt{}, inputOutputs: []string{"key", "", "val1", "3", "", ""}}
+		prompt := helper.NewMockRepeatedPrompt([][]string{
+			{"key", "", "val1", "3", "", ""},
+		}, nil)
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "map.proto")
