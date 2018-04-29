@@ -3,7 +3,6 @@ package e2e
 import (
 	"bytes"
 	"io/ioutil"
-	"net"
 	"os"
 	"regexp"
 	"strings"
@@ -11,40 +10,10 @@ import (
 
 	"github.com/ktr0731/evans/adapter/controller"
 	"github.com/ktr0731/evans/meta"
-	srv "github.com/ktr0731/evans/tests/helper/server"
-	"github.com/ktr0731/evans/tests/helper/server/helloworld"
+	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
 )
-
-type server struct {
-	t *testing.T
-	s *grpc.Server
-}
-
-func newServer(t *testing.T) *server {
-	s := grpc.NewServer()
-	helloworld.RegisterGreeterServer(s, srv.NewUnary())
-	return &server{
-		t: t,
-		s: s,
-	}
-}
-
-func (s *server) start() *server {
-	go func() {
-		l, err := net.Listen("tcp", ":50051")
-		require.NoError(s.t, err)
-		err = s.s.Serve(l)
-		require.NoError(s.t, err)
-	}()
-	return s
-}
-
-func (s *server) stop() {
-	s.s.GracefulStop()
-}
 
 func newCLI(t *testing.T, ui controller.UI) *controller.CLI {
 	return controller.NewCLI(meta.AppName, meta.Version.String(), ui)
@@ -65,7 +34,7 @@ func TestCLI(t *testing.T) {
 		controller.DefaultCLIReader = os.Stdin
 	}()
 
-	defer newServer(t).start().stop()
+	defer helper.NewServer(t).Start().Stop()
 
 	t.Run("from stdin", func(t *testing.T) {
 		cases := []struct {
