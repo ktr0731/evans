@@ -2,13 +2,14 @@ package gateway
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 
 	"github.com/ktr0731/evans/config"
+	"github.com/pkg/errors"
 )
 
 type GRPCClient struct {
@@ -21,6 +22,12 @@ func NewGRPCClient(config *config.Config) (*GRPCClient, error) {
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port), grpc.WithInsecure())
 	if err != nil {
 		return nil, err
+	}
+	switch s := conn.GetState(); s {
+	case connectivity.TransientFailure:
+		return nil, errors.Errorf("connection transient failure, is the gRPC server running?: %s", s)
+	case connectivity.Shutdown:
+		return nil, errors.Errorf("the gRPC server is closed: %s", s)
 	}
 	return &GRPCClient{
 		config: config,
