@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/controller"
+	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,7 @@ import (
 )
 
 func newCLI(t *testing.T, ui controller.UI) *controller.CLI {
+	di.NewCLIInteractor()
 	return controller.NewCLI(meta.AppName, meta.Version.String(), ui)
 }
 
