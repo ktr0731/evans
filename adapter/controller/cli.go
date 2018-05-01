@@ -437,13 +437,12 @@ func mergeConfig(cfg *config.Config, opt *options, proto []string) (*config.Conf
 		return nil, errors.Wrap(err, "failed to merge config and option")
 	}
 
-	cfg.Default.ProtoFile = append(cfg.Default.ProtoFile, proto...)
-
 	optCfg := &config.Config{
 		Default: &config.Default{
 			Package:   opt.pkg,
 			Service:   opt.service,
 			ProtoPath: opt.path,
+			ProtoFile: proto,
 		},
 		Server: &config.Server{
 			Host: opt.host,
