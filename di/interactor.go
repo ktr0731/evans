@@ -1,38 +1,35 @@
 package di
 
 import (
-	"sync"
-
-	"github.com/ktr0731/evans/adapter/controller"
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
-	"github.com/pkg/errors"
+	multierror "github.com/ktr0731/go-multierror"
 )
 
-func NewCLIInteractor(cfg *config.Config, opt *controller.Options, env *entity.Env) (*usecase.Interactor, error) {
-	grpcAdapter, err := gRPCAdapter(cfg)
+func NewCLIInteractor(cfg *config.Config, env *entity.Env, inputter port.Inputter) (*usecase.Interactor, error) {
+	return newInteractor(cfg, env, inputter)
+}
+
+func NewREPLInteractor(cfg *config.Config, env *entity.Env) (*usecase.Interactor, error) {
+	inputter := gateway.NewPrompt(cfg, env)
+	return newInteractor(cfg, env, inputter)
+}
+
+func newInteractor(cfg *config.Config, env *entity.Env, inputter port.Inputter) (*usecase.Interactor, error) {
+	var result error
+	grpcAdapter, err := gateway.NewGRPCClient(cfg)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create CLI interactor")
+		result = multierror.Append(result, err)
 	}
-	param := &usecase.InteractorParams{
+	return usecase.NewInteractor(&usecase.InteractorParams{
 		Env:            env,
 		OutputPort:     presenter.NewJSONCLIPresenterWithIndent(),
+		InputterPort:   inputter,
 		GRPCPort:       grpcAdapter,
 		DynamicBuilder: gateway.NewDynamicBuilder(),
-	}
-	return usecase.NewInteractor(param), nil
-}
-
-func NewREPLInteractor() *usecase.Interactor {
-	return nil
-}
-
-var grpcOnce sync.Once
-
-func gRPCAdapter(cfg *config.Config) (port.GRPCPort, error) {
-	return gateway.NewGRPCClient(cfg)
+	}), result
 }

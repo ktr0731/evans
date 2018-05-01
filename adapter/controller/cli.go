@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,12 +16,11 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/parser"
-	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
+	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/meta"
-	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
 	updater "github.com/ktr0731/go-updater"
 	"github.com/ktr0731/mapstruct"
@@ -251,23 +251,11 @@ func (c *CLI) Run(args []string) int {
 		return 1
 	}
 
-	grpcAdapter, err := gateway.NewGRPCClient(c.wcfg.cfg)
-	if err != nil {
-		c.Error(err)
-		return 1
-	}
-	params := &usecase.InteractorParams{
-		Env:            env,
-		OutputPort:     presenter.NewJSONCLIPresenterWithIndent(),
-		GRPCPort:       grpcAdapter,
-		DynamicBuilder: gateway.NewDynamicBuilder(),
-	}
-
 	var status int
 	if isCommandLineMode(c.wcfg) {
-		status = c.runAsCLI(params)
+		status = c.runAsCLI(env)
 	} else {
-		status = c.runAsREPL(params, env)
+		status = c.runAsREPL(env)
 	}
 
 	return status
@@ -275,7 +263,7 @@ func (c *CLI) Run(args []string) int {
 
 var DefaultCLIReader io.Reader = os.Stdin
 
-func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
+func (c *CLI) runAsCLI(env *entity.Env) int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 
@@ -293,8 +281,12 @@ func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 		in = f
 	}
 
-	p.InputterPort = gateway.NewJSONFileInputter(in)
-	interactor := usecase.NewInteractor(p)
+	inputter := gateway.NewJSONFileInputter(in)
+	interactor, err := di.NewCLIInteractor(c.wcfg.cfg, env, inputter)
+	if err != nil {
+		c.Error(err)
+		return 1
+	}
 
 	res, err := interactor.Call(&port.CallParams{c.wcfg.call})
 	if err != nil {
@@ -320,7 +312,7 @@ func (c *CLI) runAsCLI(p *usecase.InteractorParams) int {
 	return 0
 }
 
-func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
+func (c *CLI) runAsREPL(env *entity.Env) int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -341,8 +333,11 @@ func (c *CLI) runAsREPL(p *usecase.InteractorParams, env *entity.Env) int {
 	cuCh := make(chan error, 1)
 	go checkUpdate(ctx, c.wcfg.cfg, c.cache, cuCh)
 
-	p.InputterPort = gateway.NewPrompt(c.wcfg.cfg, env)
-	interactor := usecase.NewInteractor(p)
+	interactor, err := di.NewREPLInteractor(c.wcfg.cfg, env)
+	if err != nil {
+		c.Error(err)
+		return 1
+	}
 
 	var ui UI
 	if c.wcfg.cfg.REPL.ColoredOutput {
@@ -557,7 +552,12 @@ func resolveProtoPaths(cfg *config.Config) ([]string, error) {
 		return res[0], nil
 	}
 
-	for _, p := range cfg.Default.ProtoPath {
+	fpaths := make([]string, 0, len(cfg.Default.ProtoFile))
+	for _, f := range cfg.Default.ProtoFile {
+		fpaths = append(fpaths, filepath.Dir(f))
+	}
+
+	for _, p := range append(cfg.Default.ProtoPath, fpaths...) {
 		path, err := parse(p)
 		if err != nil {
 			return nil, err
