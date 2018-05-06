@@ -21,6 +21,7 @@ import (
 	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/meta"
+	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
 	updater "github.com/ktr0731/go-updater"
 	"github.com/ktr0731/mapstruct"
@@ -282,11 +283,12 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 	}
 
 	inputter := gateway.NewJSONFileInputter(in)
-	interactor, err := di.NewCLIInteractor(c.wcfg.cfg, env, inputter)
+	p, err := di.NewCLIInteractorParams(c.wcfg.cfg, env, inputter)
 	if err != nil {
 		c.Error(err)
 		return 1
 	}
+	interactor := usecase.NewInteractor(p)
 
 	res, err := interactor.Call(&port.CallParams{c.wcfg.call})
 	if err != nil {
@@ -312,6 +314,9 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 	return 0
 }
 
+// for e2e testing
+var DefaultREPLUI UI = newREPLUI("")
+
 func (c *CLI) runAsREPL(env *entity.Env) int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -333,17 +338,18 @@ func (c *CLI) runAsREPL(env *entity.Env) int {
 	cuCh := make(chan error, 1)
 	go checkUpdate(ctx, c.wcfg.cfg, c.cache, cuCh)
 
-	interactor, err := di.NewREPLInteractor(c.wcfg.cfg, env)
+	p, err := di.NewREPLInteractorParams(c.wcfg.cfg, env)
 	if err != nil {
 		c.Error(err)
 		return 1
 	}
+	interactor := usecase.NewInteractor(p)
 
 	var ui UI
 	if c.wcfg.cfg.REPL.ColoredOutput {
 		ui = newColoredREPLUI("")
 	} else {
-		ui = newREPLUI("")
+		ui = DefaultREPLUI
 	}
 	r := NewREPL(c.wcfg.cfg.REPL, env, ui, interactor)
 	if err := r.Start(); err != nil {
