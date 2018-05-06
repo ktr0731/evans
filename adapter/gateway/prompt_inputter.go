@@ -70,10 +70,13 @@ func (p *RealPrompter) livePrefix() (string, bool) {
 }
 
 // mixin go-prompt
-func NewPrompt(config *config.Config, env entity.Environment) *Prompt {
+var NewPrompt = func(config *config.Config, env entity.Environment) *Prompt {
 	return newPrompt(newRealPrompter(), config, env)
 }
 
+// Prompt has common logic to input fields interactively.
+// prompt is an implementation of inputting method.
+// in normal, go-prompt is used as prompt.
 type Prompt struct {
 	prompt Prompter
 	config *config.Config

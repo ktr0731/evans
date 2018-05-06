@@ -10,26 +10,25 @@ import (
 	multierror "github.com/ktr0731/go-multierror"
 )
 
-func NewCLIInteractor(cfg *config.Config, env *entity.Env, inputter port.Inputter) (*usecase.Interactor, error) {
-	return newInteractor(cfg, env, inputter)
+func NewCLIInteractorParams(cfg *config.Config, env *entity.Env, inputter port.Inputter) (*usecase.InteractorParams, error) {
+	return newInteractorParams(cfg, env, inputter)
 }
 
-func NewREPLInteractor(cfg *config.Config, env *entity.Env) (*usecase.Interactor, error) {
-	inputter := gateway.NewPrompt(cfg, env)
-	return newInteractor(cfg, env, inputter)
+func NewREPLInteractorParams(cfg *config.Config, env *entity.Env) (*usecase.InteractorParams, error) {
+	return newInteractorParams(cfg, env, gateway.NewPrompt(cfg, env))
 }
 
-func newInteractor(cfg *config.Config, env *entity.Env, inputter port.Inputter) (*usecase.Interactor, error) {
+func newInteractorParams(cfg *config.Config, env *entity.Env, inputter port.Inputter) (*usecase.InteractorParams, error) {
 	var result error
 	grpcAdapter, err := gateway.NewGRPCClient(cfg)
 	if err != nil {
 		result = multierror.Append(result, err)
 	}
-	return usecase.NewInteractor(&usecase.InteractorParams{
+	return &usecase.InteractorParams{
 		Env:            env,
 		OutputPort:     presenter.NewJSONCLIPresenterWithIndent(),
 		InputterPort:   inputter,
 		GRPCPort:       grpcAdapter,
 		DynamicBuilder: gateway.NewDynamicBuilder(),
-	}), result
+	}, result
 }

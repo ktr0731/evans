@@ -9,7 +9,15 @@ import (
 	"github.com/ktr0731/evans/entity"
 )
 
-// NewPromptForE2E exports newPrompt to other packages.
-func NewPromptForE2E(cfg *config.Config, env entity.Environment, prompt Prompter) *Prompt {
-	return newPrompt(prompt, cfg, env)
+// SetPromptForE2E replaces NewPrompt var by newPrompt which is prompter injected.
+// SetPromptForE2E returns cleanup func as the result.
+// caller must call cleanup after each tests.
+func SetPromptForE2E(prompt Prompter) func() {
+	old := NewPrompt
+	NewPrompt = func(cfg *config.Config, env entity.Environment) *Prompt {
+		return newPrompt(prompt, cfg, env)
+	}
+	return func() {
+		NewPrompt = old
+	}
 }
