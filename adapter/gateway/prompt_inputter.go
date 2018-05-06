@@ -21,6 +21,7 @@ var (
 
 // for mocking
 type Prompter interface {
+	Run()
 	Input() string
 	Select(msg string, opts []string) (string, error)
 	SetPrefix(prefix string)
@@ -32,16 +33,29 @@ type RealPrompter struct {
 	currentPrefix string
 }
 
-func newRealPrompter() *RealPrompter {
-	executor := func(in string) {
-		return
+// NewRealPrompter instantiates a prompt which satisfied Prompter with go-prompt.
+// NewRealPrompter will be replace by a mock when e2e testing.
+//
+// NewRealPrompter is called to create REPL-CLI and REPL field inputter.
+// NewPrompt is the short-hand method to create *Prompt with no params NewRealPrompter.
+var NewRealPrompter = func(executor func(string), completer func(prompt.Document) []prompt.Suggest, opt ...prompt.Option) Prompter {
+	if executor == nil {
+		executor = func(in string) {
+			return
+		}
 	}
-	completer := func(d prompt.Document) []prompt.Suggest {
-		return nil
+	if completer == nil {
+		completer = func(d prompt.Document) []prompt.Suggest {
+			return nil
+		}
 	}
 	p := &RealPrompter{}
-	p.fieldPrompter = prompt.New(executor, completer, prompt.OptionLivePrefix(p.livePrefix))
+	p.fieldPrompter = prompt.New(executor, completer, append(opt, prompt.OptionLivePrefix(p.livePrefix))...)
 	return p
+}
+
+func (p *RealPrompter) Run() {
+	p.fieldPrompter.Run()
 }
 
 func (p *RealPrompter) Input() string {
@@ -69,9 +83,10 @@ func (p *RealPrompter) livePrefix() (string, bool) {
 	return p.currentPrefix, true
 }
 
-// mixin go-prompt
-var NewPrompt = func(config *config.Config, env entity.Environment) *Prompt {
-	return newPrompt(newRealPrompter(), config, env)
+// NewPrompt instantiates new *Prompt with newPrompter func signature.
+// if newPrompter is nil, NewPrompt uses newRealPrompter instead.
+func NewPrompt(config *config.Config, env entity.Environment) *Prompt {
+	return newPrompt(NewRealPrompter(nil, nil), config, env)
 }
 
 // Prompt has common logic to input fields interactively.

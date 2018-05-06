@@ -3,8 +3,6 @@ package controller
 import (
 	"os"
 	"strings"
-
-	prompt "github.com/c-bata/go-prompt"
 )
 
 type executor struct {
@@ -29,8 +27,5 @@ func (e *executor) execute(l string) {
 	}
 
 	e.repl.ui.Println(result)
-	err = prompt.OptionPrefix(e.repl.getPrompt())(e.repl.prompt)
-	if err != nil {
-		e.repl.ui.ErrPrintln(err.Error())
-	}
+	e.repl.prompt.SetPrefix(e.repl.getPrompt())
 }

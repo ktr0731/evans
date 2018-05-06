@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	prompt "github.com/c-bata/go-prompt"
+	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
@@ -27,7 +28,7 @@ type REPL struct {
 	ui     UI
 	config *config.REPL
 	env    *entity.Env
-	prompt *prompt.Prompt
+	prompt gateway.Prompter
 	cmds   map[string]Commander
 }
 
@@ -51,10 +52,9 @@ func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPo
 	executor := &executor{repl: repl}
 	completer := &completer{cmds: cmds, env: env}
 
-	repl.prompt = prompt.New(
+	repl.prompt = gateway.NewRealPrompter(
 		executor.execute,
 		completer.complete,
-		prompt.OptionPrefix(repl.getPrompt()),
 
 		prompt.OptionSuggestionBGColor(prompt.LightGray),
 		prompt.OptionSuggestionTextColor(prompt.Black),
@@ -66,6 +66,8 @@ func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPo
 		prompt.OptionSelectedDescriptionBGColor(prompt.Blue),
 		prompt.OptionSelectedDescriptionTextColor(prompt.Black),
 	)
+
+	repl.prompt.SetPrefix(repl.getPrompt())
 
 	return repl
 }

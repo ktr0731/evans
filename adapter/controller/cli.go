@@ -56,6 +56,7 @@ Positional arguments:
 
 Options:
 	--edit, -e		%s
+	--repl			%s
 	--host HOST		%s
 	--port PORT, -p PORT	%s
 	--package PACKAGE	%s
@@ -71,6 +72,7 @@ Options:
 func (c *CLI) parseFlags(args []string) *options {
 	const (
 		edit    = "edit config file using by $EDITOR"
+		repl    = "start with REPL mode"
 		host    = "gRPC server host"
 		port    = "gRPC server port"
 		pkg     = "default package"
@@ -92,6 +94,7 @@ func (c *CLI) parseFlags(args []string) *options {
 			usageFormat,
 			c.name,
 			edit,
+			repl,
 			host,
 			port,
 			pkg,
@@ -109,6 +112,7 @@ func (c *CLI) parseFlags(args []string) *options {
 
 	f.BoolVar(&opts.editConfig, "edit", false, edit)
 	f.BoolVar(&opts.editConfig, "e", false, edit)
+	f.BoolVar(&opts.repl, "repl", false, repl)
 	f.StringVar(&opts.host, "host", "", host)
 	f.StringVar(&opts.port, "port", "50051", port)
 	f.StringVar(&opts.port, "p", "50051", port)
@@ -135,6 +139,7 @@ type options struct {
 	editConfig bool
 
 	// config options
+	repl    bool
 	host    string
 	port    string
 	pkg     string
@@ -162,6 +167,9 @@ type wrappedConfig struct {
 	// used as a input for CLI mode
 	// if input is stdin, file is empty
 	file string
+
+	// explicit using REPL mode
+	repl bool
 }
 
 type CLI struct {
@@ -203,6 +211,7 @@ func (c *CLI) init(opts *options, proto []string) error {
 			cfg:  cfg,
 			call: opts.call,
 			file: opts.file,
+			repl: opts.repl,
 		}
 
 		err = checkPrecondition(c.wcfg)
@@ -498,7 +507,7 @@ func isCallable(w *wrappedConfig) error {
 }
 
 func isCommandLineMode(w *wrappedConfig) bool {
-	return !isatty.IsTerminal(os.Stdin.Fd()) || w.file != ""
+	return !w.repl && (!isatty.IsTerminal(os.Stdin.Fd()) || w.file != "")
 }
 
 func setupEnv(cfg *config.Config) (*entity.Env, error) {
