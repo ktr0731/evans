@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"context"
 	"strings"
 
 	"github.com/AlecAivazis/survey"
@@ -23,7 +22,7 @@ var (
 // for mocking
 type Prompter interface {
 	// Run is called from REPL input prompter
-	Run(context.Context)
+	Run()
 	Input() string
 	Select(msg string, opts []string) (string, error)
 	SetPrefix(prefix string)

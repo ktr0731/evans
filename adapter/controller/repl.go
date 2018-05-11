@@ -30,6 +30,10 @@ type REPL struct {
 	env    *entity.Env
 	prompt gateway.Prompter
 	cmds   map[string]Commander
+
+	// exitCh receives exit signal from executor or
+	// goroutine which wrapping Run method.
+	exitCh chan struct{}
 }
 
 func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPort) *REPL {
@@ -47,6 +51,7 @@ func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPo
 		config: config,
 		env:    env,
 		cmds:   cmds,
+		exitCh: make(chan struct{}),
 	}
 
 	executor := &executor{repl: repl}
@@ -56,6 +61,7 @@ func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPo
 		executor.execute,
 		completer.complete,
 
+		prompt.OptionPrefix(repl.getPrompt()),
 		prompt.OptionSuggestionBGColor(prompt.LightGray),
 		prompt.OptionSuggestionTextColor(prompt.Black),
 		prompt.OptionDescriptionBGColor(prompt.White),
@@ -109,7 +115,13 @@ func (r *REPL) eval(l string) (string, error) {
 
 func (r *REPL) Start() error {
 	r.printSplash(r.config.SplashTextPath)
-	r.prompt.Run()
+
+	go func() {
+		r.prompt.Run()
+		r.exitCh <- struct{}{}
+	}()
+
+	<-r.exitCh
 
 	r.ui.InfoPrintln("Good Bye :)")
 	return nil

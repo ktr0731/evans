@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"os"
 	"strings"
 )
 
@@ -11,7 +10,7 @@ type executor struct {
 
 func (e *executor) execute(l string) {
 	if l == "quit" || l == "exit" {
-		os.Exit(0)
+		e.repl.exitCh <- struct{}{}
 		return
 	}
 
