@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	prompt "github.com/c-bata/go-prompt"
+	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
@@ -27,8 +28,12 @@ type REPL struct {
 	ui     UI
 	config *config.REPL
 	env    *entity.Env
-	prompt *prompt.Prompt
+	prompt gateway.Prompter
 	cmds   map[string]Commander
+
+	// exitCh receives exit signal from executor or
+	// goroutine which wrapping Run method.
+	exitCh chan struct{}
 }
 
 func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPort) *REPL {
@@ -46,15 +51,15 @@ func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPo
 		config: config,
 		env:    env,
 		cmds:   cmds,
+		exitCh: make(chan struct{}),
 	}
 
 	executor := &executor{repl: repl}
 	completer := &completer{cmds: cmds, env: env}
 
-	repl.prompt = prompt.New(
+	repl.prompt = gateway.NewRealPrompter(
 		executor.execute,
 		completer.complete,
-		prompt.OptionPrefix(repl.getPrompt()),
 
 		prompt.OptionSuggestionBGColor(prompt.LightGray),
 		prompt.OptionSuggestionTextColor(prompt.Black),
@@ -66,6 +71,8 @@ func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPo
 		prompt.OptionSelectedDescriptionBGColor(prompt.Blue),
 		prompt.OptionSelectedDescriptionTextColor(prompt.Black),
 	)
+
+	repl.prompt.SetPrefix(repl.getPrompt())
 
 	return repl
 }
@@ -106,10 +113,18 @@ func (r *REPL) eval(l string) (string, error) {
 }
 
 func (r *REPL) Start() error {
-	r.printSplash(r.config.SplashTextPath)
-	r.prompt.Run()
+	if r.config.ShowSplashText {
+		r.printSplash(r.config.SplashTextPath)
+		defer r.ui.InfoPrintln("Good Bye :)")
+	}
 
-	r.ui.InfoPrintln("Good Bye :)")
+	go func() {
+		r.prompt.Run()
+		r.exitCh <- struct{}{}
+	}()
+
+	<-r.exitCh
+
 	return nil
 }
 
@@ -159,10 +174,6 @@ const defaultSplashText = `
 `
 
 func (r *REPL) printSplash(p string) {
-	if !r.config.ShowSplashText {
-		return
-	}
-
 	if p == "" {
 		r.ui.Println(defaultSplashText)
 		return

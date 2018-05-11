@@ -104,10 +104,8 @@ type ColoredREPLUI struct {
 	*REPLUI
 }
 
-func newColoredREPLUI(prompt string) *ColoredREPLUI {
-	return &ColoredREPLUI{
-		newREPLUI(prompt),
-	}
+func newColoredREPLUI(ui *REPLUI) *ColoredREPLUI {
+	return &ColoredREPLUI{ui}
 }
 
 func (u *ColoredREPLUI) InfoPrintln(s string) {
