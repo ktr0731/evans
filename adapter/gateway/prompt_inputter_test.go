@@ -17,7 +17,7 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/simple", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
 
-		prompt := helper.NewMockPrompt([]string{"foo"}, nil)
+		prompt := helper.NewMockPrompt([]string{"rin", "shima"}, nil)
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("SayHello")
@@ -29,13 +29,13 @@ func TestPrompt_Input(t *testing.T) {
 		msg, ok := dmsg.(*dynamic.Message)
 		require.True(t, ok)
 
-		require.Equal(t, `name:"foo" message:"foo"`, msg.String())
+		require.Equal(t, `name:"rin" message:"shima"`, msg.String())
 	})
 
 	t.Run("normal/nested_message", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
 
-		prompt := helper.NewMockPrompt([]string{"foo"}, nil)
+		prompt := helper.NewMockPrompt([]string{"eriri", "spencer", "sawamura"}, nil)
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("BorrowBook")
@@ -47,7 +47,7 @@ func TestPrompt_Input(t *testing.T) {
 		msg, ok := dmsg.(*dynamic.Message)
 		require.True(t, ok)
 
-		require.Equal(t, `person:<name:"foo"> book:<title:"foo" author:"foo">`, msg.String())
+		require.Equal(t, `person:<name:"eriri"> book:<title:"spencer" author:"sawamura">`, msg.String())
 	})
 
 	t.Run("normal/enum", func(t *testing.T) {
@@ -89,7 +89,7 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/oneof", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 
-		prompt := helper.NewMockPrompt([]string{"bar"}, []string{"book"})
+		prompt := helper.NewMockPrompt([]string{"utaha", "kasumigaoka"}, []string{"book"})
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
@@ -106,7 +106,7 @@ func TestPrompt_Input(t *testing.T) {
 		msg, ok := dmsg.(*dynamic.Message)
 		require.True(t, ok)
 
-		require.Equal(t, `book:<title:"bar" author:"bar">`, msg.String())
+		require.Equal(t, `book:<title:"utaha" author:"kasumigaoka">`, msg.String())
 	})
 
 	t.Run("error/oneof:invalid oneof field name", func(t *testing.T) {

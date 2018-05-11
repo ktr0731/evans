@@ -4,7 +4,11 @@ import (
 	prompt "github.com/c-bata/go-prompt"
 )
 
+// MockPrompt implements gateway.Prompter
 type MockPrompt struct {
+	Executor  func(string)
+	Completer func(prompt.Document) []prompt.Suggest
+
 	iq []string
 	sq []string
 }
@@ -16,10 +20,23 @@ func NewMockPrompt(iq, sq []string) *MockPrompt {
 	}
 }
 
+func (p *MockPrompt) Run() {
+	for {
+		p.Executor(p.Input())
+	}
+}
+
 func (p *MockPrompt) Input() string {
+	if len(p.iq) == 0 {
+		// input terminated but the test is pending, ignore
+		return ""
+	}
+
 	in := p.iq[0]
 	if len(p.iq) > 1 {
 		p.iq = p.iq[1:]
+	} else {
+		p.iq = []string{}
 	}
 	return in
 }

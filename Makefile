@@ -29,7 +29,7 @@ unit-test:
 
 .PHONY: e2e-test
 e2e-test:
-	go test -race -tags e2e ./tests/...
+	go test -race ./tests/...
 
 .PHONY: coverage
 coverage:

@@ -58,7 +58,7 @@ imports:
 - name: github.com/ktr0731/go-semver
   version: 1c7a2ae67b5e66420549b0128c36ccdeab903636
 - name: github.com/ktr0731/go-shellstring
-  version: 1ce8b8bf5b06ae1ff26aa02fa393084bcb2f4b62
+  version: 1b2bf0a2055df1a9cbea8f57e1d8cb96a6b1086e
 - name: github.com/ktr0731/go-updater
   version: abec08c84ffb3888ebec425c16bd8a5afacefaee
   subpackages:

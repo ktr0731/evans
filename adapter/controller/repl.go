@@ -113,7 +113,10 @@ func (r *REPL) eval(l string) (string, error) {
 }
 
 func (r *REPL) Start() error {
-	r.printSplash(r.config.SplashTextPath)
+	if r.config.ShowSplashText {
+		r.printSplash(r.config.SplashTextPath)
+		defer r.ui.InfoPrintln("Good Bye :)")
+	}
 
 	go func() {
 		r.prompt.Run()
@@ -122,7 +125,6 @@ func (r *REPL) Start() error {
 
 	<-r.exitCh
 
-	r.ui.InfoPrintln("Good Bye :)")
 	return nil
 }
 
@@ -172,10 +174,6 @@ const defaultSplashText = `
 `
 
 func (r *REPL) printSplash(p string) {
-	if !r.config.ShowSplashText {
-		return
-	}
-
 	if p == "" {
 		r.ui.Println(defaultSplashText)
 		return
