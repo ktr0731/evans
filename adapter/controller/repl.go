@@ -61,7 +61,6 @@ func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPo
 		executor.execute,
 		completer.complete,
 
-		prompt.OptionPrefix(repl.getPrompt()),
 		prompt.OptionSuggestionBGColor(prompt.LightGray),
 		prompt.OptionSuggestionTextColor(prompt.Black),
 		prompt.OptionDescriptionBGColor(prompt.White),

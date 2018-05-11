@@ -57,6 +57,7 @@ Positional arguments:
 Options:
 	--edit, -e		%s
 	--repl			%s
+	--silent, -s		%s
 	--host HOST		%s
 	--port PORT, -p PORT	%s
 	--package PACKAGE	%s
@@ -73,6 +74,7 @@ func (c *CLI) parseFlags(args []string) *options {
 	const (
 		edit    = "edit config file using by $EDITOR"
 		repl    = "start with REPL mode"
+		silent  = "hide splash"
 		host    = "gRPC server host"
 		port    = "gRPC server port"
 		pkg     = "default package"
@@ -95,6 +97,7 @@ func (c *CLI) parseFlags(args []string) *options {
 			c.name,
 			edit,
 			repl,
+			silent,
 			host,
 			port,
 			pkg,
@@ -113,6 +116,8 @@ func (c *CLI) parseFlags(args []string) *options {
 	f.BoolVar(&opts.editConfig, "edit", false, edit)
 	f.BoolVar(&opts.editConfig, "e", false, edit)
 	f.BoolVar(&opts.repl, "repl", false, repl)
+	f.BoolVar(&opts.silent, "silent", false, silent)
+	f.BoolVar(&opts.silent, "s", false, silent)
 	f.StringVar(&opts.host, "host", "", host)
 	f.StringVar(&opts.port, "port", "50051", port)
 	f.StringVar(&opts.port, "p", "50051", port)
@@ -140,6 +145,7 @@ type options struct {
 
 	// config options
 	repl    bool
+	silent  bool
 	host    string
 	port    string
 	pkg     string
@@ -324,7 +330,7 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 }
 
 // for e2e testing
-var DefaultREPLUI UI = newREPLUI("")
+var DefaultREPLUI *REPLUI = newREPLUI("")
 
 func (c *CLI) runAsREPL(env *entity.Env) int {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -356,7 +362,7 @@ func (c *CLI) runAsREPL(env *entity.Env) int {
 
 	var ui UI
 	if c.wcfg.cfg.REPL.ColoredOutput {
-		ui = newColoredREPLUI("")
+		ui = newColoredREPLUI(DefaultREPLUI)
 	} else {
 		ui = DefaultREPLUI
 	}
@@ -467,7 +473,9 @@ func mergeConfig(cfg *config.Config, opt *options, proto []string) (*config.Conf
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to map config and option")
 	}
-	return ic.(*config.Config), nil
+	c := ic.(*config.Config)
+	c.REPL.ShowSplashText = !opt.silent
+	return c, nil
 }
 
 func checkPrecondition(w *wrappedConfig) error {
