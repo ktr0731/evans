@@ -82,6 +82,6 @@ func (h *replHelper) run(args []string) int {
 
 	h.reseted = false
 
-	return newCLI(controller.NewBasicUI()).
+	return newCLI(controller.NewUI(os.Stdin, ioutil.Discard, ioutil.Discard)).
 		Run(append(h.commonArgs, args...))
 }
