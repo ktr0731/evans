@@ -6,8 +6,8 @@ import (
 	"github.com/ktr0731/evans/tests/helper"
 )
 
-// SetPromptForE2E replaces NewPrompt var by newPrompt which is prompter injected.
-// SetPromptForE2E returns cleanup func as the result.
+// SetPrompt replaces NewPrompt var by newPrompt which is prompter injected.
+// SetPrompt returns cleanup func as the result.
 // caller must call cleanup after each tests.
 func SetPrompt(pmt *helper.MockPrompt) func() {
 	old := gateway.NewRealPrompter
