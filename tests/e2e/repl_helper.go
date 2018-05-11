@@ -67,7 +67,8 @@ func (h *replHelper) run(args []string) int {
 		h.w = ioutil.Discard
 	}
 	if h.ew == nil {
-		h.ew = ioutil.Discard
+		// h.ew = ioutil.Discard
+		h.ew = os.Stderr
 	}
 
 	controller.DefaultREPLUI = &controller.REPLUI{
