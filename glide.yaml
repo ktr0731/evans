@@ -15,3 +15,4 @@ import:
 - package: github.com/peterh/liner
 - package: github.com/pkg/errors
 - package: google.golang.org/grpc
+- package: github.com/ktr0731/go-updater
