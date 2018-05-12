@@ -89,7 +89,7 @@ func init() {
 	conf := Config{
 		Request: &Request{
 			Header: []Header{
-				{"user-agent", "evans"},
+				{"grpc-client", "evans"},
 			},
 		},
 		// to show items in initial config file, set an empty value
