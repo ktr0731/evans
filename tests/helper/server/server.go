@@ -2,12 +2,14 @@ package server
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/ktr0731/evans/tests/helper/server/helloworld"
+	stream "github.com/ktr0731/evans/tests/helper/server/stream"
 	context "golang.org/x/net/context"
 )
 
-// unaryServer is an implementation of Greeter service
+// UnaryServer is an implementation of Greeter service
 // in tests/e2e/testdata/helloworld.proto
 type UnaryServer struct{}
 
@@ -19,4 +21,30 @@ func (s *UnaryServer) SayHello(ctx context.Context, req *helloworld.HelloRequest
 	return &helloworld.HelloResponse{
 		Message: fmt.Sprintf("Hello, %s!", req.GetName()),
 	}, nil
+}
+
+// StreamingServer is an implementation of Greeter service
+// in tests/e2e/testdata/stream.proto
+type StreamingServer struct{}
+
+func NewStreaming() stream.GreeterServer {
+	return &StreamingServer{}
+}
+
+func (s *StreamingServer) SayHelloClientStreaming(stm stream.Greeter_SayHelloClientStreamingServer) error {
+	var t int
+	var name string
+	for {
+		req, err := stm.Recv()
+		if err == io.EOF {
+			return stm.SendAndClose(&stream.HelloResponse{
+				Message: fmt.Sprintf(`%s, you greet %d times.`, name, t),
+			})
+		}
+		if err != nil {
+			return err
+		}
+		name = req.GetName()
+		t++
+	}
 }

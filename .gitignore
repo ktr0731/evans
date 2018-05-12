@@ -30,7 +30,7 @@ coverage.out
 vendor/
 .wercker/
 *.pb.go
-!tests/helper/server/helloworld/*.pb.go
+!tests/helper/server/*/*.pb.go
 .evans.toml
 
 pkg
