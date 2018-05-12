@@ -5,4 +5,6 @@ type RPC interface {
 	FQRN() string
 	RequestMessage() Message
 	ResponseMessage() Message
+	IsServerStreaming() bool
+	IsClientStreaming() bool
 }
