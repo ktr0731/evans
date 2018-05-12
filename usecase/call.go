@@ -30,7 +30,9 @@ func Call(
 
 	data := map[string]string{}
 	for _, pair := range env.Headers() {
-		data[pair.Key] = pair.Val
+		if pair.Key != "user-agent" {
+			data[pair.Key] = pair.Val
+		}
 	}
 	ctx := metadata.NewOutgoingContext(context.Background(), metadata.New(data))
 
