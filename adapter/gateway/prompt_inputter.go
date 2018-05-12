@@ -91,7 +91,7 @@ func NewPrompt(config *config.Config, env entity.Environment) *Prompt {
 }
 
 // Prompt has common logic to input fields interactively.
-// prompt is an implementation of inputting method.
+// prompt is an implementation of inputting method (port.Inputter).
 // in normal, go-prompt is used as prompt.
 type Prompt struct {
 	prompt Prompter

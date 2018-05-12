@@ -27,7 +27,7 @@ func NewGRPCClient(config *config.Config) (*GRPCClient, error) {
 	case connectivity.TransientFailure:
 		return nil, errors.Errorf("connection transient failure, is the gRPC server running?: %s", s)
 	case connectivity.Shutdown:
-		return nil, errors.Errorf("the gRPC server is closed: %s", s)
+		return nil, errors.Errorf("the gRPC server was closed: %s", s)
 	}
 	return &GRPCClient{
 		config: config,
