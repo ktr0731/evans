@@ -21,12 +21,6 @@ func Call(
 	if err != nil {
 		return nil, err
 	}
-	req, err := inputter.Input(rpc.RequestMessage())
-	if err != nil {
-		return nil, err
-	}
-
-	res := builder.NewMessage(rpc.ResponseMessage())
 
 	data := map[string]string{}
 	for _, pair := range env.Headers() {
@@ -35,6 +29,13 @@ func Call(
 		}
 	}
 	ctx := metadata.NewOutgoingContext(context.Background(), metadata.New(data))
+
+	req, err := inputter.Input(rpc.RequestMessage())
+	if err != nil {
+		return nil, err
+	}
+
+	res := builder.NewMessage(rpc.ResponseMessage())
 
 	if err := grpcPort.Invoke(ctx, rpc.FQRN(), req, res); err != nil {
 		return nil, err
