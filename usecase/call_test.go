@@ -9,7 +9,7 @@ import (
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/usecase/port"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -62,23 +62,29 @@ func TestCall(t *testing.T) {
 
 	t.Run("normal", func(t *testing.T) {
 		res, err := Call(params, presenter, inputter, grpcClient, builder, env)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
-		require.Equal(t, nil, res)
+		assert.Equal(t, nil, res)
 	})
 
 	t.Run("with headers", func(t *testing.T) {
 		env.headers = []*entity.Header{
 			{"foo", "bar", false},
 			{"hoge", "fuga", false},
+			{"user-agent", "evans", false},
 		}
 		res, err := Call(params, presenter, inputter, grpcClient, builder, env)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 
-		require.Equal(t, nil, res)
+		assert.Equal(t, nil, res)
 
 		md, ok := metadata.FromOutgoingContext(grpcClient.actualCtx)
-		require.True(t, ok)
-		require.Len(t, md, 2)
+		assert.True(t, ok)
+		assert.Len(t, md, 2)
+
+		// user cannot set "user-agent" header.
+		// ref. #47
+		_, ok = md["user-agent"]
+		assert.False(t, ok)
 	})
 }
