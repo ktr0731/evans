@@ -28,10 +28,12 @@ func (e *callEnv) Headers() []*entity.Header {
 	return e.headers
 }
 
-type callInputter struct{}
+type callInputter struct {
+	err error
+}
 
 func (i *callInputter) Input(_ entity.Message) (proto.Message, error) {
-	return nil, nil
+	return nil, i.err
 }
 
 type callGRPCClient struct {
@@ -86,5 +88,33 @@ func TestCall(t *testing.T) {
 		// ref. #47
 		_, ok = md["user-agent"]
 		assert.False(t, ok)
+	})
+}
+
+type callClientStream struct{}
+
+func (s *callClientStream) Send(req proto.Message) error { return nil }
+
+func (s *callClientStream) CloseAndReceive(res proto.Message) error { return nil }
+
+func (c *callGRPCClient) NewClientStream(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
+	return &callClientStream{}, nil
+}
+
+func TestCall_ClientStream(t *testing.T) {
+	params := &port.CallParams{"SayHello"}
+	presenter := &presenter.StubPresenter{}
+
+	rpc := testentity.NewRPC()
+	rpc.FIsClientStreaming = true
+	env := &callEnv{rpc: rpc}
+	inputter := &callInputter{err: EOS}
+	grpcClient := &callGRPCClient{}
+	builder := &callDynamicBuilder{}
+
+	t.Run("normal", func(t *testing.T) {
+		res, err := Call(params, presenter, inputter, grpcClient, builder, env)
+		assert.NoError(t, err)
+		assert.Equal(t, nil, res)
 	})
 }
