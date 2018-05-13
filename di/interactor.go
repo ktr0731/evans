@@ -28,7 +28,7 @@ func newInteractorParams(cfg *config.Config, env *entity.Env, inputter port.Inpu
 		Env:            env,
 		OutputPort:     presenter.NewJSONCLIPresenterWithIndent(),
 		InputterPort:   inputter,
-		GRPCPort:       grpcAdapter,
+		GRPCClient:     grpcAdapter,
 		DynamicBuilder: gateway.NewDynamicBuilder(),
 	}, result
 }

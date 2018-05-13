@@ -12,7 +12,7 @@ type Interactor struct {
 
 	outputPort     port.OutputPort
 	inputterPort   port.Inputter
-	grpcPort       port.GRPCPort
+	grpcPort       entity.GRPCClient
 	dynamicBuilder port.DynamicBuilder
 }
 
@@ -21,8 +21,8 @@ type InteractorParams struct {
 
 	OutputPort     port.OutputPort
 	InputterPort   port.Inputter
-	GRPCPort       port.GRPCPort
 	DynamicBuilder port.DynamicBuilder
+	GRPCClient     entity.GRPCClient
 }
 
 func NewInteractor(params *InteractorParams) *Interactor {
@@ -30,7 +30,7 @@ func NewInteractor(params *InteractorParams) *Interactor {
 		env:            params.Env,
 		outputPort:     params.OutputPort,
 		inputterPort:   params.InputterPort,
-		grpcPort:       params.GRPCPort,
+		grpcPort:       params.GRPCClient,
 		dynamicBuilder: params.DynamicBuilder,
 	}
 }
