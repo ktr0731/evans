@@ -3,12 +3,15 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/config"
+	"github.com/ktr0731/evans/entity"
 	"github.com/pkg/errors"
 )
 
@@ -41,6 +44,34 @@ func (c *GRPCClient) Invoke(ctx context.Context, fqrn string, req, res interface
 		return err
 	}
 	return grpc.Invoke(ctx, endpoint, req, res, c.conn)
+}
+
+type clientStream struct {
+	cs grpc.ClientStream
+}
+
+func (s *clientStream) Send(m proto.Message) error {
+	return s.cs.SendMsg(m)
+}
+
+func (s *clientStream) CloseAndReceive(res proto.Message) error {
+	err := s.cs.RecvMsg(res)
+	if err != nil && err != io.EOF {
+		return errors.Wrap(err, "failed to close and receive response")
+	}
+	return nil
+}
+
+func (c *GRPCClient) NewClientStream(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
+	endpoint, err := c.fqrnToEndpoint(rpc.FQRN())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to convert fqrn to endpoint")
+	}
+	cs, err := grpc.NewClientStream(ctx, rpc.StreamDesc(), c.conn, endpoint)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to instantiate gRPC client stream")
+	}
+	return &clientStream{cs}, nil
 }
 
 // fqrnToEndpoint converts FullQualifiedRPCName to endpoint
