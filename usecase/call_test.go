@@ -3,12 +3,14 @@ package usecase
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/usecase/port"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
 )
@@ -116,5 +118,37 @@ func TestCall_ClientStream(t *testing.T) {
 		res, err := Call(params, presenter, inputter, grpcClient, builder, env)
 		assert.NoError(t, err)
 		assert.Equal(t, nil, res)
+	})
+}
+
+type callServerStream struct{}
+
+func (s *callServerStream) Send(_ proto.Message) error { return nil }
+
+func (s *callServerStream) Receive(req proto.Message) error { return nil }
+
+func (c *callGRPCClient) NewServerStream(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
+	return &callServerStream{}, nil
+}
+
+func TestCall_ServerStream(t *testing.T) {
+	rpc := testentity.NewRPC()
+	rpc.FIsServerStreaming = true
+	builder := &callDynamicBuilder{}
+
+	grpcClient := &callGRPCClient{}
+
+	t.Run("normal", func(t *testing.T) {
+		inputter := &callInputter{}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
+		defer cancel()
+		_, err := callServerStreaming(ctx, inputter, grpcClient, builder, rpc)
+		assert.NoError(t, err)
+	})
+
+	t.Run("inputting canceled", func(t *testing.T) {
+		inputter := &callInputter{err: EOS}
+		_, err := callServerStreaming(context.Background(), inputter, grpcClient, builder, rpc)
+		assert.Equal(t, EOS, errors.Cause(err))
 	})
 }

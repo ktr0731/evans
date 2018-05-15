@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/entity"
@@ -112,6 +113,35 @@ func callClientStreaming(
 	return res, nil
 }
 
+type serverStreamingResult struct {
+	res []proto.Message
+}
+
+func (r *serverStreamingResult) Append(m proto.Message) {
+	r.res = append(r.res, m)
+}
+
+func (r *serverStreamingResult) Reset() {
+	for i := range r.res {
+		r.res[i].Reset()
+	}
+}
+
+func (r *serverStreamingResult) String() string {
+	var b *strings.Builder
+	for i := range r.res {
+		io.WriteString(b, r.res[i].String())
+		b.WriteRune('\n')
+	}
+	return b.String()
+}
+
+func (r *serverStreamingResult) ProtoMessage() {
+	for i := range r.res {
+		r.res[i].ProtoMessage()
+	}
+}
+
 func callServerStreaming(
 	ctx context.Context,
 	inputter port.Inputter,
@@ -122,16 +152,17 @@ func callServerStreaming(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	st, err := grpcClient.NewClientStream(ctx, rpc)
+	st, err := grpcClient.NewServerStream(ctx, rpc)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create client stream")
 	}
 	req, err := inputter.Input(rpc.RequestMessage())
-	if err := errors.Cause(err); err == EOS {
-		return nil, err
-	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to input request message")
+	}
+
+	if err := st.Send(req); err != nil {
+		return nil, errors.Wrap(err, "failed to send server streaming request")
 	}
 
 	sigCh := make(chan os.Signal)
@@ -140,7 +171,30 @@ func callServerStreaming(
 		<-sigCh
 		cancel()
 	}()
+
+	resCh := make(chan proto.Message)
+	go func() {
+		defer cancel()
+		for {
+			res := builder.NewMessage(rpc.ResponseMessage())
+			if err := st.Receive(res); err != nil {
+				return
+			}
+			resCh <- res
+		}
+	}()
+
+	// TODO: 動的に出力する
+	res := &serverStreamingResult{
+		res: []proto.Message{},
+	}
 	for {
-		// TODO:
+		select {
+		case <-ctx.Done():
+			return res, nil
+		case r := <-resCh:
+			res.Append(r)
+		default:
+		}
 	}
 }
