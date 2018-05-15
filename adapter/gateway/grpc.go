@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc/connectivity"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/pkg/errors"
@@ -68,12 +67,27 @@ func (c *GRPCClient) NewClientStream(ctx context.Context, rpc entity.RPC) (entit
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert fqrn to endpoint")
 	}
-	grpcdynamic.ClientStream
 	cs, err := c.conn.NewStream(ctx, rpc.StreamDesc(), endpoint)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to instantiate gRPC client stream")
+		return nil, errors.Wrap(err, "failed to instantiate gRPC stream")
 	}
 	return &clientStream{cs}, nil
+}
+
+type serverStream struct {
+	*clientStream
+}
+
+func (s *serverStream) Receive(res proto.Message) error {
+	return s.cs.RecvMsg(res)
+}
+
+func (c *GRPCClient) NewServerStream(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
+	s, err := c.NewClientStream(ctx, rpc)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create server stream")
+	}
+	return &serverStream{s.(*clientStream)}, nil
 }
 
 // fqrnToEndpoint converts FullQualifiedRPCName to endpoint
