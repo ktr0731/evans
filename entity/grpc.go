@@ -9,9 +9,15 @@ import (
 type GRPCClient interface {
 	Invoke(ctx context.Context, fqrn string, req, res interface{}) error
 	NewClientStream(ctx context.Context, rpc RPC) (ClientStream, error)
+	NewServerStream(ctx context.Context, rpc RPC) (ServerStream, error)
 }
 
 type ClientStream interface {
 	Send(req proto.Message) error
 	CloseAndReceive(res proto.Message) error
+}
+
+type ServerStream interface {
+	Send(req proto.Message) error
+	Receive(res proto.Message) error
 }
