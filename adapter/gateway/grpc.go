@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/connectivity"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/pkg/errors"
@@ -24,7 +25,7 @@ func NewGRPCClient(config *config.Config) (*GRPCClient, error) {
 	// TODO: secure option
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port), grpc.WithInsecure())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to dial to gRPC server")
 	}
 	switch s := conn.GetState(); s {
 	case connectivity.TransientFailure:
@@ -67,7 +68,8 @@ func (c *GRPCClient) NewClientStream(ctx context.Context, rpc entity.RPC) (entit
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert fqrn to endpoint")
 	}
-	cs, err := grpc.NewClientStream(ctx, rpc.StreamDesc(), c.conn, endpoint)
+	grpcdynamic.ClientStream
+	cs, err := c.conn.NewStream(ctx, rpc.StreamDesc(), endpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to instantiate gRPC client stream")
 	}

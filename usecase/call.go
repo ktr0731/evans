@@ -3,6 +3,8 @@ package usecase
 import (
 	"context"
 	"io"
+	"os"
+	"os/signal"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/entity"
@@ -42,7 +44,7 @@ func Call(
 	case rpc.IsClientStreaming():
 		res, err = callClientStreaming(ctx, inputter, grpcClient, builder, rpc)
 	case rpc.IsServerStreaming():
-		panic("not implemented yet: IsServerStreaming")
+		res, err = callServerStreaming(ctx, inputter, grpcClient, builder, rpc)
 	default:
 		res, err = callUnary(ctx, inputter, grpcClient, builder, rpc)
 	}
@@ -108,4 +110,37 @@ func callClientStreaming(
 		return nil, errors.Wrap(err, "stream closed with abnormal status")
 	}
 	return res, nil
+}
+
+func callServerStreaming(
+	ctx context.Context,
+	inputter port.Inputter,
+	grpcClient entity.GRPCClient,
+	builder port.DynamicBuilder,
+	rpc entity.RPC,
+) (proto.Message, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	st, err := grpcClient.NewClientStream(ctx, rpc)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create client stream")
+	}
+	req, err := inputter.Input(rpc.RequestMessage())
+	if err := errors.Cause(err); err == EOS {
+		return nil, err
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to input request message")
+	}
+
+	sigCh := make(chan os.Signal)
+	signal.Notify(sigCh, os.Interrupt)
+	go func() {
+		<-sigCh
+		cancel()
+	}()
+	for {
+		// TODO:
+	}
 }
