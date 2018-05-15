@@ -3,11 +3,17 @@ package server
 import (
 	"fmt"
 	"io"
+	"math/rand"
+	"time"
 
 	"github.com/ktr0731/evans/tests/helper/server/helloworld"
 	stream "github.com/ktr0731/evans/tests/helper/server/stream"
 	context "golang.org/x/net/context"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 // UnaryServer is an implementation of Greeter service
 // in tests/e2e/testdata/helloworld.proto
@@ -47,4 +53,17 @@ func (s *StreamingServer) SayHelloClientStreaming(stm stream.Greeter_SayHelloCli
 		name = req.GetName()
 		t++
 	}
+}
+
+func (s *StreamingServer) SayHelloServerStreaming(req *stream.HelloRequest, stm stream.Greeter_SayHelloServerStreamingServer) error {
+	n := rand.Intn(10)
+	for i := 0; i < n; i++ {
+		err := stm.Send(&stream.HelloResponse{
+			Message: fmt.Sprintf(`hello %s, I greet %d times.`, req.GetName(), i),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
