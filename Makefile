@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-VERSION := $(shell grep 'Version = ' < meta/meta.go | sed -r 's/\sVersion = .*\("(.*)"\).*/\1/')
+VERSION := $(shell bump show meta/meta.go)
 
 .PHONY: version
 version:
