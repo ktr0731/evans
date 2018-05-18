@@ -65,12 +65,18 @@ var NewRealPrompter = func(executor func(string), completer func(prompt.Document
 		}
 	}
 	p := &RealPrompter{}
-	p.fieldPrompter = prompt.New(executor, completer, append(opt, prompt.OptionLivePrefix(p.livePrefix), prompt.OptionAddKeyBind(prompt.KeyBind{
-		Key: prompt.Enter,
-		Fn: func(_ *prompt.Buffer) {
-			p.entered = true
-		},
-	}))...)
+	p.fieldPrompter = prompt.New(
+		executor,
+		completer,
+		append(opt,
+			prompt.OptionLivePrefix(p.livePrefix),
+			prompt.OptionAddKeyBind(prompt.KeyBind{
+				Key: prompt.Enter,
+				Fn: func(_ *prompt.Buffer) {
+					p.entered = true
+				},
+			}),
+		)...)
 	return p
 }
 
