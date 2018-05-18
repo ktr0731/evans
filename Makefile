@@ -1,20 +1,20 @@
 SHELL := /bin/bash
-VERSION := $(shell grep 'Version = ' < meta/meta.go | sed -r 's/\sVersion = .*\("(.*)"\).*/\1/')
+VERSION := $(shell bump show meta/meta.go)
 
 .PHONY: version
 version:
 	@echo "evans: $(VERSION)"
 
 
-.PHONY: glide
-glide:
-ifeq ($(shell which glide 2>/dev/null),)
-	curl https://glide.sh/get | sh
+.PHONY: dep
+dep:
+ifeq ($(shell which dep 2>/dev/null),)
+	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 endif
 
 .PHONY: deps
-deps: glide
-	glide install
+deps: dep
+	dep ensure
 
 .PHONY: build
 build: deps
@@ -25,7 +25,7 @@ test: unit-test e2e-test
 
 .PHONY: unit-test
 unit-test:
-	go test -race $(shell glide novendor | grep -v tests)
+	go test -race $(shell go list ./... | grep -v tests)
 
 .PHONY: e2e-test
 e2e-test:

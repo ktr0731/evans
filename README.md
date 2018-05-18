@@ -53,7 +53,7 @@ service = "UserService"
 Then, the command will be more clear.  
 
 ## Installation
-highly recommended methods are GitHub Releases or HomeBrew because these can be software update automatically by the built-in feature in Evans.  
+highly recommended methods are GitHub Releases or Homebrew because these can be software update automatically by the built-in feature in Evans.  
 
 ### from GitHub Releases
 please see [GitHub Releases](https://github.com/ktr0731/evans/releases).  

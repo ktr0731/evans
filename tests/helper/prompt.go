@@ -22,14 +22,15 @@ func NewMockPrompt(iq, sq []string) *MockPrompt {
 
 func (p *MockPrompt) Run() {
 	for {
-		p.Executor(p.Input())
+		in, _ := p.Input()
+		p.Executor(in)
 	}
 }
 
-func (p *MockPrompt) Input() string {
+func (p *MockPrompt) Input() (string, error) {
 	if len(p.iq) == 0 {
 		// input terminated but the test is pending, ignore
-		return ""
+		return "", nil
 	}
 
 	in := p.iq[0]
@@ -38,7 +39,7 @@ func (p *MockPrompt) Input() string {
 	} else {
 		p.iq = []string{}
 	}
-	return in
+	return in, nil
 }
 
 func (p *MockPrompt) Select(_ string, _ []string) (string, error) {
@@ -70,7 +71,7 @@ func NewMockRepeatedPrompt(iq [][]string, sq []string) *MockRepeatedPrompt {
 	}
 }
 
-func (p *MockRepeatedPrompt) Input() string {
+func (p *MockRepeatedPrompt) Input() (string, error) {
 	line := p.iq[0]
 	if len(line) == 0 {
 		p.iq = p.iq[1:]
@@ -79,5 +80,5 @@ func (p *MockRepeatedPrompt) Input() string {
 	if len(p.iq[0]) > 1 {
 		p.iq[0] = p.iq[0][1:]
 	}
-	return in
+	return in, nil
 }

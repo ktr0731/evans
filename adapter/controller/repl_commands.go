@@ -169,6 +169,9 @@ func (c *callCommand) Validate(args []string) error {
 func (c *callCommand) Run(args []string) (string, error) {
 	params := &port.CallParams{args[0]}
 	res, err := c.inputPort.Call(params)
+	if err == io.EOF {
+		return "inputting canceled\n", nil
+	}
 	if err != nil {
 		return "", err
 	}

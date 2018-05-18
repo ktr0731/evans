@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	prompt "github.com/c-bata/go-prompt"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
 	"github.com/ktr0731/evans/adapter/protobuf"
@@ -17,8 +18,8 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/simple", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
 
-		prompt := helper.NewMockPrompt([]string{"rin", "shima"}, nil)
-		inputter := newPrompt(prompt, helper.TestConfig(), env)
+		p := helper.NewMockPrompt([]string{"rin", "shima"}, nil)
+		inputter := newPrompt(p, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("SayHello")
 		require.NoError(t, err)
@@ -35,8 +36,8 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/nested_message", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
 
-		prompt := helper.NewMockPrompt([]string{"eriri", "spencer", "sawamura"}, nil)
-		inputter := newPrompt(prompt, helper.TestConfig(), env)
+		p := helper.NewMockPrompt([]string{"eriri", "spencer", "sawamura"}, nil)
+		inputter := newPrompt(p, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("BorrowBook")
 		require.NoError(t, err)
@@ -53,13 +54,13 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/enum", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 
-		prompt := helper.NewMockPrompt(nil, []string{"PHILOSOPHY"})
-		inputter := newPrompt(prompt, helper.TestConfig(), env)
+		p := helper.NewMockPrompt(nil, []string{"PHILOSOPHY"})
+		inputter := newPrompt(p, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "enum.proto")
-		p, err := protobuf.ToEntitiesFrom(descs)
+		packages, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
-		m := p[0].Messages[0]
+		m := packages[0].Messages[0]
 
 		dmsg, err := inputter.Input(m)
 		require.NoError(t, err)
@@ -73,13 +74,13 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("error/enum:invalid enum name", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 
-		prompt := helper.NewMockPrompt(nil, []string{"kumiko"})
-		inputter := newPrompt(prompt, helper.TestConfig(), env)
+		p := helper.NewMockPrompt(nil, []string{"kumiko"})
+		inputter := newPrompt(p, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "enum.proto")
-		p, err := protobuf.ToEntitiesFrom(descs)
+		packages, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
-		m := p[0].Messages[0]
+		m := packages[0].Messages[0]
 
 		_, err = inputter.Input(m)
 		e := errors.Cause(err)
@@ -89,14 +90,14 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/oneof", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 
-		prompt := helper.NewMockPrompt([]string{"utaha", "kasumigaoka"}, []string{"book"})
-		inputter := newPrompt(prompt, helper.TestConfig(), env)
+		p := helper.NewMockPrompt([]string{"utaha", "kasumigaoka"}, []string{"book"})
+		inputter := newPrompt(p, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
-		p, err := protobuf.ToEntitiesFrom(descs)
+		packages, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
 
-		m := p[0].Messages[2]
+		m := packages[0].Messages[2]
 		require.Equal(t, m.Name(), "BorrowRequest")
 		require.Len(t, m.Fields(), 1)
 
@@ -112,13 +113,13 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("error/oneof:invalid oneof field name", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 
-		prompt := helper.NewMockPrompt([]string{"bar"}, []string{"Book"})
-		inputter := newPrompt(prompt, helper.TestConfig(), env)
+		p := helper.NewMockPrompt([]string{"bar"}, []string{"Book"})
+		inputter := newPrompt(p, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
-		p, err := protobuf.ToEntitiesFrom(descs)
+		packages, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
-		m := p[0].Messages[2]
+		m := packages[0].Messages[2]
 
 		_, err = inputter.Input(m)
 
@@ -129,15 +130,19 @@ func TestPrompt_Input(t *testing.T) {
 	t.Run("normal/repeated", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "repeated.proto", "helloworld", "")
 
-		prompt := helper.NewMockRepeatedPrompt([][]string{
+		p := helper.NewMockRepeatedPrompt([][]string{
 			{"foo", "", "bar", "", ""},
 		}, nil)
-		inputter := newPrompt(prompt, helper.TestConfig(), env)
+
+		cleanup := injectNewRealPrompter(p)
+		defer cleanup()
+
+		inputter := newPrompt(p, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "repeated.proto")
-		p, err := protobuf.ToEntitiesFrom(descs)
+		packages, err := protobuf.ToEntitiesFrom(descs)
 		require.NoError(t, err)
-		m := p[0].Messages[0]
+		m := packages[0].Messages[0]
 		require.Equal(t, "HelloRequest", m.Name())
 
 		msg, err := inputter.Input(m)
@@ -152,6 +157,10 @@ func TestPrompt_Input(t *testing.T) {
 		prompt := helper.NewMockRepeatedPrompt([][]string{
 			{"foo", "", "bar", "", ""},
 		}, nil)
+
+		cleanup := injectNewRealPrompter(prompt)
+		defer cleanup()
+
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "map.proto")
@@ -172,6 +181,10 @@ func TestPrompt_Input(t *testing.T) {
 		prompt := helper.NewMockRepeatedPrompt([][]string{
 			{"key", "", "val1", "3", "", ""},
 		}, nil)
+
+		cleanup := injectNewRealPrompter(prompt)
+		defer cleanup()
+
 		inputter := newPrompt(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "map.proto")
@@ -233,4 +246,14 @@ func Test_makePrefix(t *testing.T) {
 		actual := makePrefix(prefix, f, []string{"Foo", "Bar"}, true)
 		require.Equal(t, expected, actual, false)
 	})
+}
+
+func injectNewRealPrompter(p Prompter) func() {
+	old := NewRealPrompter
+	NewRealPrompter = func(_ func(string), _ func(prompt.Document) []prompt.Suggest, _ ...prompt.Option) Prompter {
+		return p
+	}
+	return func() {
+		NewRealPrompter = old
+	}
 }
