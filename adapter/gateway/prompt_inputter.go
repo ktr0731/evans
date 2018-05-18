@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"io"
 	"strings"
 
 	"github.com/AlecAivazis/survey"
@@ -23,7 +24,8 @@ var (
 type Prompter interface {
 	// Run is called from REPL input prompter
 	Run()
-	Input() string
+
+	Input() (string, error)
 	Select(msg string, opts []string) (string, error)
 	SetPrefix(prefix string)
 	SetPrefixColor(color prompt.Color) error
@@ -32,6 +34,18 @@ type Prompter interface {
 type RealPrompter struct {
 	fieldPrompter *prompt.Prompt
 	currentPrefix string
+
+	// entered is changed from prompt.Enter key bind of c-bata/go-prompt.
+	// c-bata/go-prompt doesn't return EOF (ctrl+d), only returns empty string.
+	// so Evans cannot determine whether empty input is EOF or just entered.
+	// therefore, Evans uses a tricky method to know EOF.
+	//
+	// 1. register key bind for enter at NewRealPrompter.
+	// 2. the key bind changes entered variable from  KeyBindFunc.
+	// 3. RealPrompter.Input checks entered field.
+	//    if the input is empty string and entered field is false, it is EOF.
+	// 4. Input returns io.EOF as a error.
+	entered bool
 }
 
 // NewRealPrompter instantiates a prompt which satisfied Prompter with go-prompt.
@@ -51,7 +65,18 @@ var NewRealPrompter = func(executor func(string), completer func(prompt.Document
 		}
 	}
 	p := &RealPrompter{}
-	p.fieldPrompter = prompt.New(executor, completer, append(opt, prompt.OptionLivePrefix(p.livePrefix))...)
+	p.fieldPrompter = prompt.New(
+		executor,
+		completer,
+		append(opt,
+			prompt.OptionLivePrefix(p.livePrefix),
+			prompt.OptionAddKeyBind(prompt.KeyBind{
+				Key: prompt.Enter,
+				Fn: func(_ *prompt.Buffer) {
+					p.entered = true
+				},
+			}),
+		)...)
 	return p
 }
 
@@ -59,8 +84,14 @@ func (p *RealPrompter) Run() {
 	p.fieldPrompter.Run()
 }
 
-func (p *RealPrompter) Input() string {
-	return p.fieldPrompter.Input()
+func (p *RealPrompter) Input() (string, error) {
+	p.entered = false
+	in := p.fieldPrompter.Input()
+	// ctrl+d
+	if !p.entered && in == "" {
+		return "", io.EOF
+	}
+	return in, nil
 }
 
 func (p *RealPrompter) Select(msg string, opts []string) (string, error) {
@@ -84,14 +115,13 @@ func (p *RealPrompter) livePrefix() (string, bool) {
 	return p.currentPrefix, true
 }
 
-// NewPrompt instantiates new *Prompt with newPrompter func signature.
-// if newPrompter is nil, NewPrompt uses newRealPrompter instead.
+// NewPrompt instantiates new *Prompt with NewRealPrompter.
 func NewPrompt(config *config.Config, env entity.Environment) *Prompt {
 	return newPrompt(NewRealPrompter(nil, nil), config, env)
 }
 
-// Prompt has common logic to input fields interactively.
-// prompt is an implementation of inputting method (port.Inputter).
+// Prompt is an implementation of inputting method.
+// it has common logic to input fields interactively.
 // in normal, go-prompt is used as prompt.
 type Prompt struct {
 	prompt Prompter
@@ -171,14 +201,9 @@ func (i *fieldInputter) Input(fields []entity.Field) (proto.Message, error) {
 
 	for _, field := range fields {
 		if field.IsRepeated() {
-			for {
-				if err := i.inputField(field); err == EORF {
-					break
-				} else if err != nil {
-					return nil, err
-				}
+			if err := i.inputRepeatedField(field); err != nil {
+				return nil, err
 			}
-			i.enteredEmptyInput = false
 		} else {
 			// if oneof, choose one from selection
 			if oneof, ok := field.(entity.OneOfField); ok {
@@ -278,8 +303,35 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 	return nil
 }
 
+func (i *fieldInputter) inputRepeatedField(f entity.Field) error {
+	old := i.prompt
+	defer func() {
+		i.prompt = old
+	}()
+	// if repeated fields, create new prompt.
+	// and the prompt will be terminate with ctrl+d.
+	for {
+		i.prompt = NewRealPrompter(nil, nil)
+		i.prompt.SetPrefixColor(i.color)
+
+		if err := i.inputField(f); err == EORF || err == io.EOF {
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		i.color = (i.color + 1) % 16
+	}
+	i.enteredEmptyInput = false
+	return nil
+}
+
 func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{}, error) {
-	l := i.prompt.Input()
+	l, err := i.prompt.Input()
+	if err != nil {
+		return "", err
+	}
+
 	part, err := shellstring.Parse(l)
 	if err != nil {
 		return "", err
