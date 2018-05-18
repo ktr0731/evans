@@ -302,17 +302,19 @@ func (i *fieldInputter) inputRepeatedField(f entity.Field) error {
 	defer func() {
 		i.prompt = old
 	}()
-	i.prompt = NewRealPrompter(nil, nil)
-	i.prompt.SetPrefixColor(i.color)
-
 	// if repeated fields, create new prompt.
 	// and the prompt will be terminate with ctrl+d.
 	for {
+		i.prompt = NewRealPrompter(nil, nil)
+		i.prompt.SetPrefixColor(i.color)
+
 		if err := i.inputField(f); err == EORF || err == io.EOF {
 			return nil
 		} else if err != nil {
 			return err
 		}
+
+		i.color = (i.color + 1) % 16
 	}
 	i.enteredEmptyInput = false
 	return nil
