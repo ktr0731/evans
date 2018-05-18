@@ -16,8 +16,7 @@
 [[projects]]
   name = "github.com/c-bata/go-prompt"
   packages = ["."]
-  revision = "e99fbc797b795e0a7a94affc8d44f6a0350d85f0"
-  version = "v0.2.1"
+  revision = "2f3ee57cf5d006ef778e5fab923ed0022eba2168"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
