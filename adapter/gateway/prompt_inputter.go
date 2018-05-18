@@ -109,8 +109,7 @@ func (p *RealPrompter) livePrefix() (string, bool) {
 	return p.currentPrefix, true
 }
 
-// NewPrompt instantiates new *Prompt with newPrompter func signature.
-// if newPrompter is nil, NewPrompt uses newRealPrompter instead.
+// NewPrompt instantiates new *Prompt with NewRealPrompter.
 func NewPrompt(config *config.Config, env entity.Environment) *Prompt {
 	return newPrompt(NewRealPrompter(nil, nil), config, env)
 }
