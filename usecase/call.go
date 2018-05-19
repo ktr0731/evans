@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/entity"
@@ -113,33 +112,15 @@ func callClientStreaming(
 	return res, nil
 }
 
-type serverStreamingResult struct {
-	res []proto.Message
+type ServerStreamingResult struct {
+	Res []proto.Message
+
+	// used only satisfy the interface
+	proto.Message
 }
 
-func (r *serverStreamingResult) Append(m proto.Message) {
-	r.res = append(r.res, m)
-}
-
-func (r *serverStreamingResult) Reset() {
-	for i := range r.res {
-		r.res[i].Reset()
-	}
-}
-
-func (r *serverStreamingResult) String() string {
-	var b *strings.Builder
-	for i := range r.res {
-		io.WriteString(b, r.res[i].String())
-		b.WriteRune('\n')
-	}
-	return b.String()
-}
-
-func (r *serverStreamingResult) ProtoMessage() {
-	for i := range r.res {
-		r.res[i].ProtoMessage()
-	}
+func (r *ServerStreamingResult) Append(m proto.Message) {
+	r.Res = append(r.Res, m)
 }
 
 func callServerStreaming(
@@ -185,8 +166,8 @@ func callServerStreaming(
 	}()
 
 	// TODO: 動的に出力する
-	res := &serverStreamingResult{
-		res: []proto.Message{},
+	res := &ServerStreamingResult{
+		Res: []proto.Message{},
 	}
 	for {
 		select {
