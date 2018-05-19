@@ -61,6 +61,7 @@ func (s *StreamingServer) SayHelloServerStreaming(req *stream.HelloRequest, stm 
 		err := stm.Send(&stream.HelloResponse{
 			Message: fmt.Sprintf(`hello %s, I greet %d times.`, req.GetName(), i),
 		})
+		time.Sleep(1 * time.Second)
 		if err != nil {
 			return err
 		}

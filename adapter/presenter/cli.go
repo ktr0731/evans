@@ -8,6 +8,7 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/jhump/protoreflect/dynamic"
+	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
 )
 
@@ -80,6 +81,19 @@ func (m *jsonMarshaler) Marshal(out io.Writer, pb proto.Message) error {
 		}
 		_, err = out.Write(b)
 		return err
+	}
+	if ssr, ok := pb.(*usecase.ServerStreamingResult); ok {
+		for i, res := range ssr.Res {
+			if err := m.Marshal(out, res); err != nil {
+				return err
+			}
+			if i == len(ssr.Res)-1 {
+				io.WriteString(out, "\n")
+			} else {
+				io.WriteString(out, "\n\n")
+			}
+		}
+		return nil
 	}
 	return m.Marshaler.Marshal(out, pb)
 }
