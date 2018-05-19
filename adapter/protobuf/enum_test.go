@@ -7,8 +7,10 @@ import (
 )
 
 func TestEnum(t *testing.T) {
-	d := parseFile(t, "enum.proto")
-	enum := d.GetEnumTypes()
+	d := parseFile(t, []string{"enum.proto"}, nil)
+	require.Len(t, d, 1)
+
+	enum := d[0].GetEnumTypes()
 	require.Len(t, enum, 1)
 
 	e := newEnum(enum[0])

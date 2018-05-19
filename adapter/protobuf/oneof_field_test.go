@@ -8,9 +8,10 @@ import (
 )
 
 func TestOneOfField(t *testing.T) {
-	d := parseFile(t, "oneof.proto")
+	d := parseFile(t, []string{"oneof.proto"}, nil)
+	require.Len(t, d, 1)
 
-	m := newMessage(d.GetMessageTypes()[0])
+	m := newMessage(d[0].GetMessageTypes()[0])
 	require.Equal(t, m.Name(), "Example")
 
 	require.Len(t, m.Fields(), 1)

@@ -1,7 +1,6 @@
 package protobuf
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -12,8 +11,10 @@ import (
 
 func TestMessage(t *testing.T) {
 	t.Run("normal", func(t *testing.T) {
-		d := parseFile(t, "message.proto")
-		msgs := d.GetMessageTypes()
+		d := parseFile(t, []string{"message.proto"}, nil)
+		require.Len(t, d, 1)
+
+		msgs := d[0].GetMessageTypes()
 		require.Len(t, msgs, 2)
 
 		stringType := descriptor.FieldDescriptorProto_Type_name[int32(descriptor.FieldDescriptorProto_TYPE_STRING)]
@@ -57,15 +58,13 @@ func TestMessage(t *testing.T) {
 	})
 
 	t.Run("self", func(t *testing.T) {
-		d := parseFile(t, "self.proto")
-		msgs := d.GetMessageTypes()
+		d := parseFile(t, []string{"self.proto"}, nil)
+		require.Len(t, d, 1)
+
+		msgs := d[0].GetMessageTypes()
 		require.Len(t, msgs, 1)
 
 		msg := newMessage(msgs[0])
 		require.Equal(t, "Foo", msg.Name())
 	})
-}
-
-func testdata(s ...string) string {
-	return filepath.Join(append([]string{"testdata"}, s...)...)
 }
