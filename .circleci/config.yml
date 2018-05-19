@@ -25,8 +25,8 @@ jobs:
       - checkout
 
       - run:
-        name: install bump command
-        command: go get github.com/ktr0731/go-semver/cmd/bump
+          name: install bump command
+          command: go get github.com/ktr0731/go-semver/cmd/bump
 
       - run:
           name: install deps
