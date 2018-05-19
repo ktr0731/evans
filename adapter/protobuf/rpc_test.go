@@ -5,14 +5,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRPC_stream(t *testing.T) {
-	d := parseFile(t, "stream.proto")
-	svcs := d.GetServices()
+	d := parseFile(t, []string{"stream.proto"}, nil)
+	require.Len(t, d, 1)
+
+	svcs := d[0].GetServices()
 	assert.Len(t, svcs, 1)
 
-	msgs := d.GetMessageTypes()
+	msgs := d[0].GetMessageTypes()
 	assert.Len(t, msgs, 2)
 
 	reqMsg := msgs[0]
