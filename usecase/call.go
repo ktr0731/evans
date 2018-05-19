@@ -1,12 +1,14 @@
 package usecase
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"io"
-	"os"
-	"os/signal"
+	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
@@ -44,7 +46,7 @@ func Call(
 	case rpc.IsClientStreaming():
 		res, err = callClientStreaming(ctx, inputter, grpcClient, builder, rpc)
 	case rpc.IsServerStreaming():
-		res, err = callServerStreaming(ctx, inputter, grpcClient, builder, rpc)
+		return callServerStreaming(ctx, outputPort, inputter, grpcClient, builder, rpc)
 	default:
 		res, err = callUnary(ctx, inputter, grpcClient, builder, rpc)
 	}
@@ -112,27 +114,114 @@ func callClientStreaming(
 	return res, nil
 }
 
-type ServerStreamingResult struct {
-	Res []proto.Message
+type serverStreamingResultWriter struct {
+	ctx    context.Context
+	cancel func()
+	s      entity.ServerStream
 
-	// used only satisfy the interface
-	proto.Message
+	output func(proto.Message) (io.Reader, error)
+
+	newMessage func() proto.Message
+
+	r *bufio.Reader
+	w *bytes.Buffer
+
+	isFinished bool
 }
 
-func (r *ServerStreamingResult) Append(m proto.Message) {
-	r.Res = append(r.Res, m)
+func newServerStramingResultWriter(
+	ctx context.Context,
+	s entity.ServerStream,
+	outputPort func(proto.Message) (io.Reader, error),
+	newMessage func() proto.Message,
+) *serverStreamingResultWriter {
+	buf := bytes.NewBuffer(make([]byte, 0, 2048))
+	w := &serverStreamingResultWriter{
+		s:          s,
+		output:     outputPort,
+		newMessage: newMessage,
+		r:          bufio.NewReader(buf),
+		w:          buf,
+	}
+	w.ctx, w.cancel = context.WithCancel(ctx)
+	go w.receive()
+	return w
+}
+
+func (w *serverStreamingResultWriter) receive() {
+	pp.Println("waiting...")
+	resCh := make(chan proto.Message)
+	go func() {
+		defer w.cancel()
+		for {
+			res := w.newMessage()
+			err := w.s.Receive(res)
+			if err == io.EOF {
+				w.isFinished = true
+			}
+			if err != nil {
+				return
+			}
+			resCh <- res
+		}
+	}()
+
+	for {
+		select {
+		case <-w.ctx.Done():
+			return
+		case r := <-resCh:
+			pp.Println("received")
+			res, err := w.output(r)
+			if err != nil {
+				// return 0, errors.Wrap(err, "failed to output server streaming response")
+				panic(err)
+			}
+			_, err = io.Copy(w.w, res)
+			if err != nil {
+				// return 0, errors.Wrap(err, "failed to write server streaming response")
+				panic(err)
+			}
+			_, err = io.WriteString(w.w, "\n")
+			if err != nil {
+				// return 0, err
+				panic(err)
+			}
+			pp.Println("wrote")
+		default:
+		}
+	}
+
+}
+
+func (w *serverStreamingResultWriter) Read(b []byte) (int, error) {
+	// sigCh := make(chan os.Signal)
+	// signal.Notify(sigCh, os.Interrupt)
+	// go func() {
+	// 	<-sigCh
+	// 	w.cancel()
+	// }()
+
+	for w.w.Len() == 0 && !w.isFinished {
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	n, err := w.r.Read(b)
+	if err == io.EOF {
+		pp.Println("END")
+		w.cancel()
+	}
+	return n, err
 }
 
 func callServerStreaming(
 	ctx context.Context,
+	outputPort port.OutputPort,
 	inputter port.Inputter,
 	grpcClient entity.GRPCClient,
 	builder port.DynamicBuilder,
 	rpc entity.RPC,
-) (proto.Message, error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
+) (io.Reader, error) {
 	st, err := grpcClient.NewServerStream(ctx, rpc)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create client stream")
@@ -146,36 +235,11 @@ func callServerStreaming(
 		return nil, errors.Wrap(err, "failed to send server streaming request")
 	}
 
-	sigCh := make(chan os.Signal)
-	signal.Notify(sigCh, os.Interrupt)
-	go func() {
-		<-sigCh
-		cancel()
-	}()
-
-	resCh := make(chan proto.Message)
-	go func() {
-		defer cancel()
-		for {
-			res := builder.NewMessage(rpc.ResponseMessage())
-			if err := st.Receive(res); err != nil {
-				return
-			}
-			resCh <- res
-		}
-	}()
-
-	// TODO: 動的に出力する
-	res := &ServerStreamingResult{
-		Res: []proto.Message{},
-	}
-	for {
-		select {
-		case <-ctx.Done():
-			return res, nil
-		case r := <-resCh:
-			res.Append(r)
-		default:
-		}
-	}
+	return newServerStramingResultWriter(
+		ctx,
+		st,
+		outputPort.Call,
+		func() proto.Message {
+			return builder.NewMessage(rpc.ResponseMessage())
+		}), nil
 }
