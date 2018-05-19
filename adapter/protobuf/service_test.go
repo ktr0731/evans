@@ -7,8 +7,10 @@ import (
 )
 
 func TestService(t *testing.T) {
-	d := parseFile(t, "helloworld.proto")
-	svcs := d.GetServices()
+	d := parseFile(t, []string{"helloworld.proto"}, nil)
+	require.Len(t, d, 1)
+
+	svcs := d[0].GetServices()
 	require.Len(t, svcs, 1)
 
 	svc := newService(svcs[0])

@@ -8,8 +8,10 @@ import (
 )
 
 func TestPrimitiveField(t *testing.T) {
-	d := parseFile(t, "message.proto")
-	msgs := d.GetMessageTypes()
+	d := parseFile(t, []string{"message.proto"}, nil)
+	require.Len(t, d, 1)
+
+	msgs := d[0].GetMessageTypes()
 	require.Len(t, msgs, 2)
 
 	m := newMessage(msgs[0])

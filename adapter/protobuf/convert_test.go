@@ -7,7 +7,7 @@ import (
 )
 
 func TestToEntitiesFrom(t *testing.T) {
-	d := parseDependFiles(t, "helloworld.proto")
+	d := parseFile(t, []string{"helloworld.proto"}, nil)
 	p, err := ToEntitiesFrom(d)
 	require.NoError(t, err)
 
