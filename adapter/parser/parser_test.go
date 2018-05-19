@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -16,9 +15,6 @@ func TestParseFile(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, pkgs, 1)
 		assert.Len(t, pkgs[0].Messages, 4)
-		for _, m := range pkgs[0].Messages {
-			fmt.Println(m.Name())
-		}
 	})
 }
 

@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/ktr0731/evans/adapter/internal/protoparser"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -41,15 +43,17 @@ func TestMessage(t *testing.T) {
 	})
 
 	t.Run("importing", func(t *testing.T) {
-		libraryProto := filepath.Join("importing", "library.proto")
-		d := parseDependFiles(t, libraryProto, filepath.Join("testdata", "importing"))
+		libraryProto := testdata("importing", "library.proto")
+		d, err := protoparser.ParseFile([]string{libraryProto}, nil)
+		require.NoError(t, err)
 
+		d = append(d, d[0].GetDependencies()...)
 		require.Len(t, d, 2)
 
-		bookMsgs := d[0].GetMessageTypes()
-		libraryMsgs := d[1].GetMessageTypes()
+		libMsgs := d[0].GetMessageTypes()
+		bookMsgs := d[1].GetMessageTypes()
 
-		require.Equal(t, len(bookMsgs)+len(libraryMsgs), 4)
+		assert.Equal(t, len(libMsgs)+len(bookMsgs), 4)
 	})
 
 	t.Run("self", func(t *testing.T) {
@@ -60,4 +64,8 @@ func TestMessage(t *testing.T) {
 		msg := newMessage(msgs[0])
 		require.Equal(t, "Foo", msg.Name())
 	})
+}
+
+func testdata(s ...string) string {
+	return filepath.Join(append([]string{"testdata"}, s...)...)
 }

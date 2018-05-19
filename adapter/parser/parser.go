@@ -11,5 +11,10 @@ func ParseFile(filename []string, paths []string) ([]*entity.Package, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// collect dependency file descriptors
+	for _, d := range set {
+		set = append(set, d.GetDependencies()...)
+	}
 	return protobuf.ToEntitiesFrom(set)
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/jhump/protoreflect/desc/protoparse"
 )
 
-// ParseFile parses proto files to []*desc.FileDescriptor
 func ParseFile(fnames []string, paths []string) ([]*desc.FileDescriptor, error) {
 	encountered := map[string]bool{}
 	paths = append(paths, ".")
