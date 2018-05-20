@@ -1,14 +1,12 @@
 package usecase
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"io"
-	"time"
+	"os"
+	"os/signal"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
@@ -123,10 +121,8 @@ type serverStreamingResultWriter struct {
 
 	newMessage func() proto.Message
 
-	r *bufio.Reader
-	w *bytes.Buffer
-
-	isFinished bool
+	r *io.PipeReader
+	w *io.PipeWriter
 }
 
 func newServerStramingResultWriter(
@@ -135,31 +131,39 @@ func newServerStramingResultWriter(
 	outputPort func(proto.Message) (io.Reader, error),
 	newMessage func() proto.Message,
 ) *serverStreamingResultWriter {
-	buf := bytes.NewBuffer(make([]byte, 0, 2048))
-	w := &serverStreamingResultWriter{
+	r, w := io.Pipe()
+	writer := &serverStreamingResultWriter{
 		s:          s,
 		output:     outputPort,
 		newMessage: newMessage,
-		r:          bufio.NewReader(buf),
-		w:          buf,
+		r:          r,
+		w:          w,
 	}
-	w.ctx, w.cancel = context.WithCancel(ctx)
-	go w.receive()
-	return w
+	writer.ctx, writer.cancel = context.WithCancel(ctx)
+	go writer.receiveResponse()
+	return writer
 }
 
-func (w *serverStreamingResultWriter) receive() {
-	pp.Println("waiting...")
+func (w *serverStreamingResultWriter) receiveResponse() {
+	sigCh := make(chan os.Signal)
+	signal.Notify(sigCh, os.Interrupt)
+	go func() {
+		defer w.cancel()
+		for range sigCh {
+			w.w.CloseWithError(io.EOF)
+			return
+		}
+	}()
+
 	resCh := make(chan proto.Message)
 	go func() {
 		defer w.cancel()
 		for {
 			res := w.newMessage()
 			err := w.s.Receive(res)
-			if err == io.EOF {
-				w.isFinished = true
-			}
 			if err != nil {
+				w.w.CloseWithError(err)
+				close(resCh)
 				return
 			}
 			resCh <- res
@@ -170,24 +174,27 @@ func (w *serverStreamingResultWriter) receive() {
 		select {
 		case <-w.ctx.Done():
 			return
-		case r := <-resCh:
-			pp.Println("received")
+		case r, ok := <-resCh:
+			if !ok {
+				w.w.CloseWithError(io.EOF)
+				return
+			}
+
 			res, err := w.output(r)
 			if err != nil {
-				// return 0, errors.Wrap(err, "failed to output server streaming response")
-				panic(err)
+				w.w.CloseWithError(errors.Wrap(err, "failed to output server streaming response"))
+				return
 			}
 			_, err = io.Copy(w.w, res)
 			if err != nil {
-				// return 0, errors.Wrap(err, "failed to write server streaming response")
-				panic(err)
+				w.w.CloseWithError(errors.Wrap(err, "failed to write server streaming response"))
+				return
 			}
 			_, err = io.WriteString(w.w, "\n")
 			if err != nil {
-				// return 0, err
-				panic(err)
+				w.w.CloseWithError(err)
+				return
 			}
-			pp.Println("wrote")
 		default:
 		}
 	}
@@ -195,20 +202,8 @@ func (w *serverStreamingResultWriter) receive() {
 }
 
 func (w *serverStreamingResultWriter) Read(b []byte) (int, error) {
-	// sigCh := make(chan os.Signal)
-	// signal.Notify(sigCh, os.Interrupt)
-	// go func() {
-	// 	<-sigCh
-	// 	w.cancel()
-	// }()
-
-	for w.w.Len() == 0 && !w.isFinished {
-		time.Sleep(100 * time.Millisecond)
-	}
-
 	n, err := w.r.Read(b)
-	if err == io.EOF {
-		pp.Println("END")
+	if err != nil {
 		w.cancel()
 	}
 	return n, err

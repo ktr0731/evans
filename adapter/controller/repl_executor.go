@@ -2,8 +2,6 @@ package controller
 
 import (
 	"strings"
-
-	"github.com/k0kubun/pp"
 )
 
 type executor struct {
@@ -27,7 +25,6 @@ func (e *executor) execute(l string) {
 		return
 	}
 
-	pp.Println("returned")
 	e.repl.ui.Println(result)
 	e.repl.prompt.SetPrefix(e.repl.getPrompt())
 }
