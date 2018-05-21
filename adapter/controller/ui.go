@@ -9,9 +9,9 @@ import (
 )
 
 type UI interface {
-	Println(s string)
-	InfoPrintln(s string)
-	ErrPrintln(s string)
+	Println(a interface{})
+	InfoPrintln(a interface{})
+	ErrPrintln(a interface{})
 
 	Writer() io.Writer
 	ErrWriter() io.Writer
@@ -38,16 +38,24 @@ func NewBasicUI() *BaseUI {
 	}
 }
 
-func (u *BaseUI) Println(s string) {
-	fmt.Fprintln(u.writer, s)
+func (u *BaseUI) fprintln(w io.Writer, a interface{}) {
+	if i, ok := a.(io.Reader); ok {
+		io.Copy(u.writer, i)
+	} else {
+		fmt.Fprintln(w, a)
+	}
 }
 
-func (u *BaseUI) InfoPrintln(s string) {
-	fmt.Fprintln(u.writer, s)
+func (u *BaseUI) Println(a interface{}) {
+	u.fprintln(u.writer, a)
 }
 
-func (u *BaseUI) ErrPrintln(s string) {
-	fmt.Fprintln(u.errWriter, s)
+func (u *BaseUI) InfoPrintln(a interface{}) {
+	u.fprintln(u.writer, a)
+}
+
+func (u *BaseUI) ErrPrintln(a interface{}) {
+	u.fprintln(u.errWriter, a)
 }
 
 func (u *BaseUI) Writer() io.Writer {
@@ -70,16 +78,16 @@ func newREPLUI(prompt string) *REPLUI {
 	}
 }
 
-func (u *REPLUI) Println(s string) {
-	u.UI.Println(s)
+func (u *REPLUI) Println(a interface{}) {
+	u.UI.Println(a)
 }
 
-func (u *REPLUI) InfoPrintln(s string) {
-	u.UI.InfoPrintln(s)
+func (u *REPLUI) InfoPrintln(a interface{}) {
+	u.UI.InfoPrintln(a)
 }
 
-func (u *REPLUI) ErrPrintln(s string) {
-	u.UI.ErrPrintln(s)
+func (u *REPLUI) ErrPrintln(a interface{}) {
+	u.UI.ErrPrintln(a)
 }
 
 type ColoredUI struct {
@@ -92,12 +100,27 @@ func newColoredUI() *ColoredUI {
 	}
 }
 
-func (u *ColoredUI) InfoPrintln(s string) {
-	u.UI.InfoPrintln(color.BlueString(s))
+func (u *ColoredUI) printWithColor(
+	w func(a interface{}),
+	color func(format string, a ...interface{}) string,
+	a interface{},
+) {
+	switch t := a.(type) {
+	case string:
+		w(color(t))
+	case fmt.Stringer:
+		w(color(t.String()))
+	default:
+		w(t)
+	}
 }
 
-func (u *ColoredUI) ErrPrintln(s string) {
-	u.UI.ErrPrintln(color.RedString(s))
+func (u *ColoredUI) InfoPrintln(a interface{}) {
+	u.printWithColor(u.UI.InfoPrintln, color.BlueString, a)
+}
+
+func (u *ColoredUI) ErrPrintln(a interface{}) {
+	u.printWithColor(u.UI.ErrPrintln, color.RedString, a)
 }
 
 type ColoredREPLUI struct {
@@ -105,13 +128,14 @@ type ColoredREPLUI struct {
 }
 
 func newColoredREPLUI(ui *REPLUI) *ColoredREPLUI {
+	ui.UI = &ColoredUI{ui.UI}
 	return &ColoredREPLUI{ui}
 }
 
-func (u *ColoredREPLUI) InfoPrintln(s string) {
-	u.UI.InfoPrintln(color.BlueString(s))
+func (u *ColoredREPLUI) InfoPrintln(a interface{}) {
+	u.UI.InfoPrintln(a)
 }
 
-func (u *ColoredREPLUI) ErrPrintln(s string) {
-	u.UI.ErrPrintln(color.RedString(s))
+func (u *ColoredREPLUI) ErrPrintln(a interface{}) {
+	u.UI.ErrPrintln(a)
 }

@@ -2,13 +2,16 @@ package usecase
 
 import (
 	"context"
+	"io"
 	"testing"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/usecase/port"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
 )
@@ -28,10 +31,12 @@ func (e *callEnv) Headers() []*entity.Header {
 	return e.headers
 }
 
-type callInputter struct{}
+type callInputter struct {
+	err error
+}
 
 func (i *callInputter) Input(_ entity.Message) (proto.Message, error) {
-	return nil, nil
+	return nil, i.err
 }
 
 type callGRPCClient struct {
@@ -86,5 +91,92 @@ func TestCall(t *testing.T) {
 		// ref. #47
 		_, ok = md["user-agent"]
 		assert.False(t, ok)
+	})
+}
+
+type callClientStream struct{}
+
+func (s *callClientStream) Send(req proto.Message) error { return nil }
+
+func (s *callClientStream) CloseAndReceive(res proto.Message) error { return nil }
+
+func (c *callGRPCClient) NewClientStream(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
+	return &callClientStream{}, nil
+}
+
+func TestCall_ClientStream(t *testing.T) {
+	params := &port.CallParams{"SayHello"}
+	presenter := &presenter.StubPresenter{}
+
+	rpc := testentity.NewRPC()
+	rpc.FIsClientStreaming = true
+	env := &callEnv{rpc: rpc}
+	inputter := &callInputter{err: io.EOF}
+	grpcClient := &callGRPCClient{}
+	builder := &callDynamicBuilder{}
+
+	t.Run("normal", func(t *testing.T) {
+		res, err := Call(params, presenter, inputter, grpcClient, builder, env)
+		assert.NoError(t, err)
+		assert.Equal(t, nil, res)
+	})
+}
+
+type callServerStream struct{}
+
+func (s *callServerStream) Send(_ proto.Message) error { return nil }
+
+func (s *callServerStream) Receive(req proto.Message) error { return nil }
+
+func (c *callGRPCClient) NewServerStream(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
+	return &callServerStream{}, nil
+}
+
+func TestCall_ServerStream(t *testing.T) {
+	presenter := &presenter.StubPresenter{}
+	rpc := testentity.NewRPC()
+	rpc.FIsServerStreaming = true
+	builder := &callDynamicBuilder{}
+	grpcClient := &callGRPCClient{}
+
+	t.Run("normal", func(t *testing.T) {
+		inputter := &callInputter{}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
+		defer cancel()
+		_, err := callServerStreaming(ctx, presenter, inputter, grpcClient, builder, rpc)
+		assert.NoError(t, err)
+	})
+
+	t.Run("inputting canceled", func(t *testing.T) {
+		inputter := &callInputter{err: io.EOF}
+		_, err := callServerStreaming(context.Background(), presenter, inputter, grpcClient, builder, rpc)
+		assert.Equal(t, io.EOF, errors.Cause(err))
+	})
+}
+
+type callBidiStream struct{}
+
+func (s *callBidiStream) Send(req proto.Message) error    { return nil }
+func (s *callBidiStream) Receive(res proto.Message) error { return nil }
+func (s *callBidiStream) Close() error                    { return nil }
+
+func (c *callGRPCClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
+	return &callBidiStream{}, nil
+}
+
+func TestCall_BidiStream(t *testing.T) {
+	presenter := &presenter.StubPresenter{}
+	rpc := testentity.NewRPC()
+	rpc.FIsServerStreaming = true
+	rpc.FIsClientStreaming = true
+	builder := &callDynamicBuilder{}
+	grpcClient := &callGRPCClient{}
+
+	t.Run("client end", func(t *testing.T) {
+		inputter := &callInputter{}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
+		defer cancel()
+		_, err := callBidiStreaming(ctx, presenter, inputter, grpcClient, builder, rpc)
+		assert.NoError(t, err)
 	})
 }

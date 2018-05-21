@@ -19,12 +19,14 @@ type CLIPresenter struct {
 	marshaler marshaler
 }
 
+var emptyResult = strings.NewReader("")
+
 func (p *CLIPresenter) Package() (io.Reader, error) {
-	return nil, nil
+	return emptyResult, nil
 }
 
 func (p *CLIPresenter) Service() (io.Reader, error) {
-	return nil, nil
+	return emptyResult, nil
 }
 
 func (p *CLIPresenter) Describe(showable port.Showable) (io.Reader, error) {
@@ -36,7 +38,7 @@ func (p *CLIPresenter) Show(showable port.Showable) (io.Reader, error) {
 }
 
 func (p *CLIPresenter) Header() (io.Reader, error) {
-	return nil, nil
+	return emptyResult, nil
 }
 
 func (p *CLIPresenter) Call(res proto.Message) (io.Reader, error) {
