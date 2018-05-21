@@ -37,7 +37,7 @@ func Call(
 	var res proto.Message
 	switch {
 	case rpc.IsClientStreaming() && rpc.IsServerStreaming():
-		panic("not implemented yet: bidirection")
+		return callBidiStreaming(ctx, outputPort, inputter, grpcClient, builder, rpc)
 	case rpc.IsClientStreaming():
 		res, err = callClientStreaming(ctx, inputter, grpcClient, builder, rpc)
 	case rpc.IsServerStreaming():
@@ -234,4 +234,47 @@ func callServerStreaming(
 		func() proto.Message {
 			return builder.NewMessage(rpc.ResponseMessage())
 		}), nil
+}
+
+func callBidiStreaming(
+	ctx context.Context,
+	outputPort port.OutputPort,
+	inputter port.Inputter,
+	grpcClient entity.GRPCClient,
+	builder port.DynamicBuilder,
+	rpc entity.RPC,
+) (io.Reader, error) {
+	st, err := grpcClient.NewBidiStream(ctx, rpc)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create client stream")
+	}
+
+	w := newServerStramingResultWriter(
+		ctx,
+		st,
+		outputPort.Call,
+		func() proto.Message {
+			return builder.NewMessage(rpc.ResponseMessage())
+		})
+
+	go func() {
+		for {
+			req, err := inputter.Input(rpc.RequestMessage())
+			if err == io.EOF {
+				st.Close()
+				return
+			}
+			if err != nil {
+				w.w.CloseWithError(errors.Wrap(err, "failed to input request message"))
+				return
+			}
+
+			if err := st.Send(req); err != nil {
+				w.w.CloseWithError(errors.Wrap(err, "failed to send server streaming request"))
+				return
+			}
+		}
+	}()
+
+	return w, nil
 }

@@ -10,6 +10,7 @@ type GRPCClient interface {
 	Invoke(ctx context.Context, fqrn string, req, res interface{}) error
 	NewClientStream(ctx context.Context, rpc RPC) (ClientStream, error)
 	NewServerStream(ctx context.Context, rpc RPC) (ServerStream, error)
+	NewBidiStream(ctx context.Context, rpc RPC) (BidiStream, error)
 }
 
 type ClientStream interface {
@@ -20,4 +21,10 @@ type ClientStream interface {
 type ServerStream interface {
 	Send(req proto.Message) error
 	Receive(res proto.Message) error
+}
+
+type BidiStream interface {
+	Send(req proto.Message) error
+	Receive(res proto.Message) error
+	Close() error
 }

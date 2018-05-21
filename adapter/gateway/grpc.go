@@ -94,6 +94,30 @@ func (c *GRPCClient) NewServerStream(ctx context.Context, rpc entity.RPC) (entit
 	return &serverStream{s.(*clientStream)}, nil
 }
 
+type bidiStream struct {
+	s *serverStream
+}
+
+func (s *bidiStream) Send(res proto.Message) error {
+	return s.s.cs.SendMsg(res)
+}
+
+func (s *bidiStream) Receive(res proto.Message) error {
+	return s.s.cs.RecvMsg(res)
+}
+
+func (s *bidiStream) Close() error {
+	return s.s.cs.CloseSend()
+}
+
+func (c *GRPCClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
+	s, err := c.NewServerStream(ctx, rpc)
+	if err != nil {
+		return nil, err
+	}
+	return &bidiStream{s.(*serverStream)}, nil
+}
+
 // fqrnToEndpoint converts FullQualifiedRPCName to endpoint
 //
 // e.g.
