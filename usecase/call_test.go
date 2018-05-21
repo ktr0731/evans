@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"io"
 	"testing"
 	"time"
 
@@ -110,7 +111,7 @@ func TestCall_ClientStream(t *testing.T) {
 	rpc := testentity.NewRPC()
 	rpc.FIsClientStreaming = true
 	env := &callEnv{rpc: rpc}
-	inputter := &callInputter{err: EOS}
+	inputter := &callInputter{err: io.EOF}
 	grpcClient := &callGRPCClient{}
 	builder := &callDynamicBuilder{}
 
@@ -147,8 +148,8 @@ func TestCall_ServerStream(t *testing.T) {
 	})
 
 	t.Run("inputting canceled", func(t *testing.T) {
-		inputter := &callInputter{err: EOS}
+		inputter := &callInputter{err: io.EOF}
 		_, err := callServerStreaming(context.Background(), presenter, inputter, grpcClient, builder, rpc)
-		assert.Equal(t, EOS, errors.Cause(err))
+		assert.Equal(t, io.EOF, errors.Cause(err))
 	})
 }
