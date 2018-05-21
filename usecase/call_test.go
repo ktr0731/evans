@@ -153,3 +153,30 @@ func TestCall_ServerStream(t *testing.T) {
 		assert.Equal(t, io.EOF, errors.Cause(err))
 	})
 }
+
+type callBidiStream struct{}
+
+func (s *callBidiStream) Send(req proto.Message) error    { return nil }
+func (s *callBidiStream) Receive(res proto.Message) error { return nil }
+func (s *callBidiStream) Close() error                    { return nil }
+
+func (c *callGRPCClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
+	return &callBidiStream{}, nil
+}
+
+func TestCall_BidiStream(t *testing.T) {
+	presenter := &presenter.StubPresenter{}
+	rpc := testentity.NewRPC()
+	rpc.FIsServerStreaming = true
+	rpc.FIsClientStreaming = true
+	builder := &callDynamicBuilder{}
+	grpcClient := &callGRPCClient{}
+
+	t.Run("client end", func(t *testing.T) {
+		inputter := &callInputter{}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
+		defer cancel()
+		_, err := callBidiStreaming(ctx, presenter, inputter, grpcClient, builder, rpc)
+		assert.NoError(t, err)
+	})
+}
