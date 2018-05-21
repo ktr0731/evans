@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"bytes"
 	"io"
 	"strings"
 	"unicode"
@@ -203,17 +202,4 @@ func (c *headerCommand) Run(args []string) (io.Reader, error) {
 	}
 	params := &port.HeaderParams{headers}
 	return c.inputPort.Header(params)
-}
-
-func read(r io.Reader) (string, error) {
-	if r == nil {
-		return "", nil
-	}
-
-	b := new(bytes.Buffer)
-	_, err := b.ReadFrom(r)
-	if err != nil {
-		return "", err
-	}
-	return b.String(), nil
 }
