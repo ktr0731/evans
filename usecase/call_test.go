@@ -132,23 +132,23 @@ func (c *callGRPCClient) NewServerStream(ctx context.Context, rpc entity.RPC) (e
 }
 
 func TestCall_ServerStream(t *testing.T) {
+	presenter := &presenter.StubPresenter{}
 	rpc := testentity.NewRPC()
 	rpc.FIsServerStreaming = true
 	builder := &callDynamicBuilder{}
-
 	grpcClient := &callGRPCClient{}
 
 	t.Run("normal", func(t *testing.T) {
 		inputter := &callInputter{}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
 		defer cancel()
-		_, err := callServerStreaming(ctx, inputter, grpcClient, builder, rpc)
+		_, err := callServerStreaming(ctx, presenter, inputter, grpcClient, builder, rpc)
 		assert.NoError(t, err)
 	})
 
 	t.Run("inputting canceled", func(t *testing.T) {
 		inputter := &callInputter{err: EOS}
-		_, err := callServerStreaming(context.Background(), inputter, grpcClient, builder, rpc)
+		_, err := callServerStreaming(context.Background(), presenter, inputter, grpcClient, builder, rpc)
 		assert.Equal(t, EOS, errors.Cause(err))
 	})
 }
