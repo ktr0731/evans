@@ -13,9 +13,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// EOS is return when inputting for streaming request is finished.
-var EOS = errors.New("end of stream")
-
 func Call(
 	params *port.CallParams,
 	outputPort port.OutputPort,
@@ -92,7 +89,7 @@ func callClientStreaming(
 	}
 	for {
 		req, err := inputter.Input(rpc.RequestMessage())
-		if err := errors.Cause(err); err == EOS {
+		if err := errors.Cause(err); err == io.EOF {
 			break
 		}
 

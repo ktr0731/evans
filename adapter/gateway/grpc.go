@@ -55,6 +55,10 @@ func (s *clientStream) Send(m proto.Message) error {
 }
 
 func (s *clientStream) CloseAndReceive(res proto.Message) error {
+	if err := s.cs.CloseSend(); err != nil {
+		return errors.Wrap(err, "failed to close client stream")
+	}
+
 	err := s.cs.RecvMsg(res)
 	if err != nil && err != io.EOF {
 		return errors.Wrap(err, "failed to close and receive response")
