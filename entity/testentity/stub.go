@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/ktr0731/evans/entity"
+	"google.golang.org/grpc"
 )
 
 var names []string = []string{
@@ -54,11 +55,11 @@ func (f *Fld) IsRepeated() bool {
 }
 
 type RPC struct {
-	entity.RPC
-
 	name     string
 	req, res entity.Message
 	fqrn     string
+
+	FIsClientStreaming, FIsServerStreaming bool
 }
 
 func NewRPC() *RPC {
@@ -84,6 +85,18 @@ func (r *RPC) ResponseMessage() entity.Message {
 
 func (r *RPC) FQRN() string {
 	return r.fqrn
+}
+
+func (r *RPC) IsClientStreaming() bool {
+	return r.FIsClientStreaming
+}
+
+func (r *RPC) IsServerStreaming() bool {
+	return r.FIsServerStreaming
+}
+
+func (r *RPC) StreamDesc() *grpc.StreamDesc {
+	return nil
 }
 
 type Svc struct {

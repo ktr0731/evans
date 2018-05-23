@@ -35,7 +35,7 @@
 
 [[constraint]]
   name = "github.com/c-bata/go-prompt"
-  version = "0.2.1"
+  revision = "2f3ee57cf5d006ef778e5fab923ed0022eba2168"
 
 [[constraint]]
   name = "github.com/fatih/color"

@@ -2,12 +2,18 @@ package server
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/ktr0731/evans/tests/helper/server/helloworld"
 	context "golang.org/x/net/context"
 )
 
-// unaryServer is an implementation of Greeter service
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+// UnaryServer is an implementation of Greeter service
 // in tests/e2e/testdata/helloworld.proto
 type UnaryServer struct{}
 

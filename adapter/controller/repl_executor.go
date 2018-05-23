@@ -19,6 +19,9 @@ func (e *executor) execute(l string) {
 		return
 	}
 
+	// break one line
+	defer e.repl.ui.Println("")
+
 	result, err := e.repl.eval(l)
 	if err != nil {
 		e.repl.ui.ErrPrintln(err.Error())

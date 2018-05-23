@@ -1,33 +1,56 @@
 package protobuf
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestRPC(t *testing.T) {
-	d := parseFile(t, []string{"helloworld.proto"}, nil)
+func TestRPC_stream(t *testing.T) {
+	d := parseFile(t, []string{"stream.proto"}, nil)
 	require.Len(t, d, 1)
 
 	svcs := d[0].GetServices()
-	require.Len(t, svcs, 1)
+	assert.Len(t, svcs, 1)
 
 	msgs := d[0].GetMessageTypes()
-	require.Len(t, msgs, 2)
+	assert.Len(t, msgs, 2)
 
 	reqMsg := msgs[0]
 	resMsg := msgs[1]
-
 	svc := newService(svcs[0])
-	require.Len(t, svc.RPCs(), 1)
 
-	rpc := svc.RPCs()[0]
+	cases := []struct {
+		name                                 string
+		isClientStreaming, isServerStreaming bool
+	}{
+		{name: "SayHelloUnary"},
+		{name: "SayHelloClientStreaming", isClientStreaming: true},
+	}
 
-	require.Equal(t, "SayHello", rpc.Name())
-	require.Equal(t, "helloworld.Greeter.SayHello", rpc.FQRN())
-	require.Equal(t, reqMsg.GetName(), rpc.RequestMessage().Name())
-	require.Equal(t, len(reqMsg.GetFields()), len(rpc.RequestMessage().Fields()))
-	require.Equal(t, resMsg.GetName(), rpc.ResponseMessage().Name())
-	require.Equal(t, len(resMsg.GetFields()), len(rpc.ResponseMessage().Fields()))
+	assert.Len(t, svc.RPCs(), len(cases))
+
+	for i, c := range cases {
+		rpc := svc.RPCs()[i]
+		assert.Equal(t, c.name, rpc.Name())
+		assert.Equal(t, fmt.Sprintf("helloworld.Greeter.%s", c.name), rpc.FQRN())
+		assert.Equal(t, reqMsg.GetName(), rpc.RequestMessage().Name())
+		assert.Equal(t, len(reqMsg.GetFields()), len(rpc.RequestMessage().Fields()))
+		assert.Equal(t, resMsg.GetName(), rpc.ResponseMessage().Name())
+		assert.Equal(t, len(resMsg.GetFields()), len(rpc.ResponseMessage().Fields()))
+		assert.Equal(t, c.isClientStreaming, rpc.IsClientStreaming())
+		assert.Equal(t, c.isServerStreaming, rpc.IsServerStreaming())
+
+		if !c.isClientStreaming && !c.isServerStreaming {
+			assert.Panics(t, func() {
+				rpc.StreamDesc()
+			})
+		} else {
+			assert.NotPanics(t, func() {
+				rpc.StreamDesc()
+			})
+		}
+	}
 }

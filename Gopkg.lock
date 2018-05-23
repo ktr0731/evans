@@ -286,7 +286,7 @@
     "protobuf/ptype",
     "protobuf/source_context"
   ]
-  revision = "7bb2a897381c9c5ab2aeb8614f758d7766af68ff"
+  revision = "11a468237815f3a3ddf9f7c6e8b6b3b382a24d15"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -325,8 +325,8 @@
     "core",
     "terminal"
   ]
-  revision = "e752db451e07e09c7d7dc8cada807a44bdb0fd47"
-  version = "v1.5.3"
+  revision = "64f26f793f7ee7c0de1a3bb814fcf0aad99e429e"
+  version = "v1.5.2"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
@@ -337,6 +337,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "02e2a23d8e9c589e0ba8a89a7824f3ce7dd00aeda882ddd115f36cbd37d91bba"
+  inputs-digest = "6fb15b3ee22678ec49de8595d091e97d3e543cf80c5487ba6271ed13e69d33ae"
   solver-name = "gps-cdcl"
   solver-version = 1

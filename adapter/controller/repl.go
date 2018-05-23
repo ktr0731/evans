@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -77,7 +78,7 @@ func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPo
 	return repl
 }
 
-func (r *REPL) eval(l string) (string, error) {
+func (r *REPL) eval(l string) (io.Reader, error) {
 	// trim quote
 	// e.g. key='foo' is interpreted to `foo`
 	//      key='foo bar' is `foo bar`
@@ -85,29 +86,29 @@ func (r *REPL) eval(l string) (string, error) {
 	//      key=foo bar is also `foo bar`
 	part, err := shellstring.Parse(l)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if part[0] == "help" {
 		r.showHelp(r.cmds)
-		return "", nil
+		return nil, nil
 	}
 
 	cmd, ok := r.cmds[part[0]]
 	if !ok {
-		return "", ErrUnknownCommand
+		return nil, ErrUnknownCommand
 	}
 
 	var args []string
 	if len(part) != 1 {
 		if part[1] == "-h" || part[1] == "--help" {
-			return cmd.Help(), nil
+			return strings.NewReader(cmd.Help()), nil
 		}
 		args = part[1:]
 	}
 
 	if err := cmd.Validate(args); err != nil {
-		return "", err
+		return nil, err
 	}
 	return cmd.Run(args)
 }

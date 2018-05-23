@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"bytes"
-	"fmt"
 	"io"
 	"strings"
 	"unicode"
@@ -16,7 +14,7 @@ type Commander interface {
 	Help() string
 	Synopsis() string
 	Validate(args []string) error
-	Run(args []string) (string, error)
+	Run(args []string) (io.Reader, error)
 }
 
 type descCommand struct {
@@ -38,13 +36,9 @@ func (c *descCommand) Validate(args []string) error {
 	return nil
 }
 
-func (c *descCommand) Run(args []string) (string, error) {
+func (c *descCommand) Run(args []string) (io.Reader, error) {
 	params := &port.DescribeParams{MsgName: args[0]}
-	res, err := c.inputPort.Describe(params)
-	if err != nil {
-		return "", err
-	}
-	return read(res)
+	return c.inputPort.Describe(params)
 }
 
 type packageCommand struct {
@@ -66,13 +60,13 @@ func (c *packageCommand) Validate(args []string) error {
 	return nil
 }
 
-func (c *packageCommand) Run(args []string) (string, error) {
+func (c *packageCommand) Run(args []string) (io.Reader, error) {
 	params := &port.PackageParams{PkgName: args[0]}
 	res, err := c.inputPort.Package(params)
 	if err != nil {
-		return "", errors.Wrapf(err, "package: %s", args[0])
+		return nil, errors.Wrapf(err, "package: %s", args[0])
 	}
-	return read(res)
+	return res, nil
 }
 
 type serviceCommand struct {
@@ -94,13 +88,9 @@ func (c *serviceCommand) Validate(args []string) error {
 	return nil
 }
 
-func (c *serviceCommand) Run(args []string) (string, error) {
+func (c *serviceCommand) Run(args []string) (io.Reader, error) {
 	params := &port.ServiceParams{SvcName: args[0]}
-	res, err := c.inputPort.Service(params)
-	if err != nil {
-		return "", err
-	}
-	return read(res)
+	return c.inputPort.Service(params)
 }
 
 type showCommand struct {
@@ -122,7 +112,7 @@ func (c *showCommand) Validate(args []string) error {
 	return nil
 }
 
-func (c *showCommand) Run(args []string) (string, error) {
+func (c *showCommand) Run(args []string) (io.Reader, error) {
 	target := args[0]
 
 	params := &port.ShowParams{}
@@ -138,13 +128,9 @@ func (c *showCommand) Run(args []string) (string, error) {
 	case "h", "header", "headers":
 		params.Type = port.ShowTypeHeader
 	default:
-		return "", errors.Wrap(ErrUnknownTarget, target)
+		return nil, errors.Wrap(ErrUnknownTarget, target)
 	}
-	res, err := c.inputPort.Show(params)
-	if err != nil {
-		return "", err
-	}
-	return read(res)
+	return c.inputPort.Show(params)
 }
 
 type callCommand struct {
@@ -166,16 +152,13 @@ func (c *callCommand) Validate(args []string) error {
 	return nil
 }
 
-func (c *callCommand) Run(args []string) (string, error) {
+func (c *callCommand) Run(args []string) (io.Reader, error) {
 	params := &port.CallParams{RPCName: args[0]}
 	res, err := c.inputPort.Call(params)
 	if err == io.EOF {
-		return "inputting canceled\n", nil
+		return strings.NewReader("inputting canceled\n"), nil
 	}
-	if err != nil {
-		return "", err
-	}
-	return read(res)
+	return res, err
 }
 
 type headerCommand struct {
@@ -197,7 +180,7 @@ func (c *headerCommand) Validate(args []string) error {
 	return nil
 }
 
-func (c *headerCommand) Run(args []string) (string, error) {
+func (c *headerCommand) Run(args []string) (io.Reader, error) {
 	headers := []*entity.Header{}
 	for _, h := range args {
 		sp := strings.SplitN(h, "=", 2)
@@ -206,7 +189,7 @@ func (c *headerCommand) Run(args []string) (string, error) {
 		}
 		for _, r := range sp[0] {
 			if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-' && r != '_' && r != '.' {
-				return "", fmt.Errorf("invalid char in key: %c", r)
+				return nil, errors.Errorf("invalid char in key: %c", r)
 			}
 		}
 		// remove the key
@@ -218,22 +201,5 @@ func (c *headerCommand) Run(args []string) (string, error) {
 		headers = append(headers, header)
 	}
 	params := &port.HeaderParams{Headers: headers}
-	res, err := c.inputPort.Header(params)
-	if err != nil {
-		return "", err
-	}
-	return read(res)
-}
-
-func read(r io.Reader) (string, error) {
-	if r == nil {
-		return "", nil
-	}
-
-	b := new(bytes.Buffer)
-	_, err := b.ReadFrom(r)
-	if err != nil {
-		return "", err
-	}
-	return b.String(), nil
+	return c.inputPort.Header(params)
 }
