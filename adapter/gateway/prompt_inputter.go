@@ -312,7 +312,9 @@ func (i *fieldInputter) inputRepeatedField(f entity.Field) error {
 	// and the prompt will be terminate with ctrl+d.
 	for {
 		i.prompt = NewRealPrompter(nil, nil)
-		i.prompt.SetPrefixColor(i.color)
+		if err := i.prompt.SetPrefixColor(i.color); err != nil {
+			return err
+		}
 
 		if err := i.inputField(f); err == EORF || err == io.EOF {
 			return nil
@@ -322,8 +324,6 @@ func (i *fieldInputter) inputRepeatedField(f entity.Field) error {
 
 		i.color = (i.color + 1) % 16
 	}
-	i.enteredEmptyInput = false
-	return nil
 }
 
 func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{}, error) {

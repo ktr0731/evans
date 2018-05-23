@@ -21,7 +21,7 @@ build: deps
 	go build
 
 .PHONY: test
-test: unit-test e2e-test
+test: vet lint unit-test e2e-test
 
 .PHONY: unit-test
 unit-test:
@@ -30,6 +30,14 @@ unit-test:
 .PHONY: e2e-test
 e2e-test:
 	go test -race ./tests/...
+
+.PHONY: vet
+vet:
+	go vet ./...
+
+.PHONY: lint
+lint:
+	gometalinter --disable-all --enable=golint --exclude="should have comment" $(shell go list ./...)
 
 .PHONY: coverage
 coverage:

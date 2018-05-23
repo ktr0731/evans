@@ -52,7 +52,7 @@ func (b *callDynamicBuilder) NewMessage(_ entity.Message) proto.Message {
 }
 
 func TestCall(t *testing.T) {
-	params := &port.CallParams{"SayHello"}
+	params := &port.CallParams{RPCName: "SayHello"}
 	presenter := &presenter.StubPresenter{}
 
 	env := &callEnv{rpc: testentity.NewRPC()}

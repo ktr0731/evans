@@ -305,7 +305,7 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 	}
 	interactor := usecase.NewInteractor(p)
 
-	res, err := interactor.Call(&port.CallParams{c.wcfg.call})
+	res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
 	if err != nil {
 		c.Error(err)
 		return 1
