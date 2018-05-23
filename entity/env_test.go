@@ -10,7 +10,7 @@ import (
 func TestNewEnv(t *testing.T) {
 	cfg := &config.Config{
 		Request: &config.Request{
-			Header: []config.Header{{"foo", "bar"}},
+			Header: []config.Header{{Key: "foo", Val: "bar"}},
 		},
 	}
 	env, err := NewEnv(nil, cfg)

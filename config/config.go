@@ -159,15 +159,16 @@ func getLocalConfig() (*Config, error) {
 			defer f.Close()
 		}
 		return nil, err
-	} else {
-		f, err = os.Open(localConfigName)
-		if err != nil {
-			return nil, err
-		}
-		defer f.Close()
 	}
+
+	f, err := os.Open(localConfigName)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
 	var conf Config
-	_, err := toml.DecodeReader(f, &conf)
+	_, err = toml.DecodeReader(f, &conf)
 	return &conf, err
 }
 

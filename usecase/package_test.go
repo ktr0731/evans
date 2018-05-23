@@ -22,7 +22,7 @@ func (e *packageEnv) UsePackage(pkgName string) error {
 
 func TestPackage(t *testing.T) {
 	expected := "example_package"
-	params := &port.PackageParams{expected}
+	params := &port.PackageParams{PkgName: expected}
 	presenter := &presenter.StubPresenter{}
 	env := &packageEnv{}
 

@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var names []string = []string{
+var names = []string{
 	"ayatsuji",
 	"sakurai",
 	"tanamachi",

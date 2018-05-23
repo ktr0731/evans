@@ -37,7 +37,7 @@ func (c *descCommand) Validate(args []string) error {
 }
 
 func (c *descCommand) Run(args []string) (io.Reader, error) {
-	params := &port.DescribeParams{args[0]}
+	params := &port.DescribeParams{MsgName: args[0]}
 	return c.inputPort.Describe(params)
 }
 
@@ -61,7 +61,7 @@ func (c *packageCommand) Validate(args []string) error {
 }
 
 func (c *packageCommand) Run(args []string) (io.Reader, error) {
-	params := &port.PackageParams{args[0]}
+	params := &port.PackageParams{PkgName: args[0]}
 	res, err := c.inputPort.Package(params)
 	if err != nil {
 		return nil, errors.Wrapf(err, "package: %s", args[0])
@@ -89,7 +89,7 @@ func (c *serviceCommand) Validate(args []string) error {
 }
 
 func (c *serviceCommand) Run(args []string) (io.Reader, error) {
-	params := &port.ServiceParams{args[0]}
+	params := &port.ServiceParams{SvcName: args[0]}
 	return c.inputPort.Service(params)
 }
 
@@ -153,7 +153,7 @@ func (c *callCommand) Validate(args []string) error {
 }
 
 func (c *callCommand) Run(args []string) (io.Reader, error) {
-	params := &port.CallParams{args[0]}
+	params := &port.CallParams{RPCName: args[0]}
 	res, err := c.inputPort.Call(params)
 	if err == io.EOF {
 		return strings.NewReader("inputting canceled\n"), nil
@@ -200,6 +200,6 @@ func (c *headerCommand) Run(args []string) (io.Reader, error) {
 		}
 		headers = append(headers, header)
 	}
-	params := &port.HeaderParams{headers}
+	params := &port.HeaderParams{Headers: headers}
 	return c.inputPort.Header(params)
 }

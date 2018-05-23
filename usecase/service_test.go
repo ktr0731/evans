@@ -22,7 +22,7 @@ func (e *serviceEnv) UseService(pkgName string) error {
 
 func TestService(t *testing.T) {
 	expected := "example_service"
-	params := &port.ServiceParams{expected}
+	params := &port.ServiceParams{SvcName: expected}
 	presenter := &presenter.StubPresenter{}
 	env := &serviceEnv{}
 
