@@ -33,11 +33,11 @@ e2e-test:
 
 .PHONY: vet
 vet:
-	go vet ./...
+	gometalinter --vendor --disable-all --enable=vet ./...
 
 .PHONY: lint
 lint:
-	gometalinter --disable-all --enable=golint --exclude="should have comment" $(shell go list ./...)
+	gometalinter --vendor --disable-all --enable=golint --exclude="should have comment" ./...
 
 .PHONY: coverage
 coverage:
