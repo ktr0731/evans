@@ -37,7 +37,9 @@ vet:
 
 .PHONY: lint
 lint:
-	gometalinter --vendor --disable-all --enable=golint --exclude="should have comment" ./...
+	# ignore comments for exported objects
+	# ignore Err prefix
+	gometalinter --vendor --disable-all --enable=golint --exclude="(should have comment|ErrFoo)" ./...
 
 .PHONY: coverage
 coverage:

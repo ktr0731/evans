@@ -20,7 +20,7 @@ var (
 	EORF                     = errors.New("end of repeated field")
 )
 
-// for mocking
+// Prompter represents prompter which display inputters or selectors.
 type Prompter interface {
 	// Run is called from REPL input prompter
 	Run()
@@ -137,7 +137,7 @@ func newPrompt(prompt Prompter, config *config.Config, env entity.Environment) *
 	}
 }
 
-// impl of port.Inputter
+// Input is an implementation of port.Inputter
 func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
 	setter := protobuf.NewMessageSetter(reqType)
 	fields := reqType.Fields()

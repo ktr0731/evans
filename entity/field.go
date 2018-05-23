@@ -9,6 +9,7 @@ const (
 	FieldTypeMessage
 )
 
+// Field represents base field features.
 // fieldable types:
 //	enum, oneof, message, primitive
 type Field interface {

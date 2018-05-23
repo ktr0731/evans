@@ -329,8 +329,8 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 	return 0
 }
 
-// for e2e testing
-var DefaultREPLUI *REPLUI = newREPLUI("")
+// DefaultREPLUI is used for e2e testing
+var DefaultREPLUI = newREPLUI("")
 
 func (c *CLI) runAsREPL(env *entity.Env) int {
 	ctx, cancel := context.WithCancel(context.Background())
