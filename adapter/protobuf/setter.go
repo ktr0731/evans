@@ -30,6 +30,9 @@ func NewMessageSetter(m entity.Message) *MessageSetter {
 func (s *MessageSetter) SetField(field entity.Field, v interface{}) error {
 	switch f := field.(type) {
 	case *enumField:
+		if f.IsRepeated() {
+			return s.m.TryAddRepeatedField(f.d, v)
+		}
 		return s.m.TrySetField(f.d, v)
 	case *messageField:
 		if f.IsRepeated() {
