@@ -10,6 +10,8 @@ import (
 	"github.com/ktr0731/evans/usecase/port"
 )
 
+// StubPresenter returns no decorated response.
+// it is used for test only.
 type StubPresenter struct{}
 
 func (p *StubPresenter) Package() (io.Reader, error) {
@@ -22,12 +24,10 @@ func (p *StubPresenter) Service() (io.Reader, error) {
 
 func (p *StubPresenter) Describe(showable port.Showable) (io.Reader, error) {
 	panic("not supported yet")
-	return nil, nil
 }
 
 func (p *StubPresenter) Show(showable port.Showable) (io.Reader, error) {
 	panic("not supported yet")
-	return nil, nil
 }
 
 func (p *StubPresenter) Header() (io.Reader, error) {

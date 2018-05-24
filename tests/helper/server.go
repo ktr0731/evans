@@ -11,21 +11,21 @@ import (
 	"google.golang.org/grpc"
 )
 
-type server struct {
+type Server struct {
 	t *testing.T
 	s *grpc.Server
 }
 
-func NewServer(t *testing.T) *server {
+func NewServer(t *testing.T) *Server {
 	s := grpc.NewServer()
 	helloworld.RegisterGreeterServer(s, srv.NewUnary())
-	return &server{
+	return &Server{
 		t: t,
 		s: s,
 	}
 }
 
-func (s *server) Start() *server {
+func (s *Server) Start() *Server {
 	go func() {
 		l, err := net.Listen("tcp", ":50051")
 		require.NoError(s.t, err)
@@ -35,6 +35,6 @@ func (s *server) Start() *server {
 	return s
 }
 
-func (s *server) Stop() {
+func (s *Server) Stop() {
 	s.s.GracefulStop()
 }

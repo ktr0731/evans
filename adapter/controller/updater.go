@@ -109,7 +109,7 @@ func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater)
 	}
 }
 
-var updateInfoFormat string = `
+var updateInfoFormat = `
 new update available:
   current version: %s
    latest version: %s

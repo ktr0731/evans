@@ -305,7 +305,7 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 	}
 	interactor := usecase.NewInteractor(p)
 
-	res, err := interactor.Call(&port.CallParams{c.wcfg.call})
+	res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
 	if err != nil {
 		c.Error(err)
 		return 1
@@ -329,8 +329,8 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 	return 0
 }
 
-// for e2e testing
-var DefaultREPLUI *REPLUI = newREPLUI("")
+// DefaultREPLUI is used for e2e testing
+var DefaultREPLUI = newREPLUI("")
 
 func (c *CLI) runAsREPL(env *entity.Env) int {
 	ctx, cancel := context.WithCancel(context.Background())
