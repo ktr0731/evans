@@ -90,8 +90,7 @@ func (r *REPL) eval(l string) (io.Reader, error) {
 	}
 
 	if part[0] == "help" {
-		r.showHelp(r.cmds)
-		return nil, nil
+		return strings.NewReader(r.help(r.cmds) + "\n"), nil
 	}
 
 	cmd, ok := r.cmds[part[0]]
@@ -102,7 +101,7 @@ func (r *REPL) eval(l string) (io.Reader, error) {
 	var args []string
 	if len(part) != 1 {
 		if part[1] == "-h" || part[1] == "--help" {
-			return strings.NewReader(cmd.Help()), nil
+			return strings.NewReader(cmd.Help() + "\n"), nil
 		}
 		args = part[1:]
 	}
@@ -129,7 +128,7 @@ func (r *REPL) Start() error {
 	return nil
 }
 
-func (r *REPL) showHelp(cmds map[string]Commander) {
+func (r *REPL) help(cmds map[string]Commander) string {
 	var maxLen int
 	// slice of [name, synopsis]
 	text := make([][]string, len(cmds))
@@ -147,11 +146,10 @@ func (r *REPL) showHelp(cmds map[string]Commander) {
 	msg := fmt.Sprintf(`
 Available commands:
 %s
-
 Show more details:
   <command> --help
 `, cmdText)
-	r.ui.Println(strings.TrimRight(msg, "\n"))
+	return strings.TrimRight(msg, "\n")
 }
 
 func (r *REPL) getPrompt() string {

@@ -100,7 +100,10 @@ func (p *RealPrompter) Select(msg string, opts []string) (string, error) {
 		Message: msg,
 		Options: opts,
 	}, &choice, nil)
-	return choice, err
+	if err != nil {
+		return "", io.EOF
+	}
+	return choice, nil
 }
 
 func (p *RealPrompter) SetPrefix(prefix string) {
@@ -279,7 +282,14 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		setter := protobuf.NewMessageSetter(f)
 		fields := f.Fields()
 
-		msg, err := newFieldInputter(i.prompt, i.prefixFormat, setter, append(i.ancestor, f.FieldName()), i.hasAncestorAndHasRepeatedField || f.IsRepeated(), i.color).Input(fields)
+		msg, err := newFieldInputter(
+			i.prompt,
+			i.prefixFormat,
+			setter,
+			append(i.ancestor, f.FieldName()),
+			i.hasAncestorAndHasRepeatedField || f.IsRepeated(),
+			i.color,
+		).Input(fields)
 		if err != nil {
 			return err
 		}

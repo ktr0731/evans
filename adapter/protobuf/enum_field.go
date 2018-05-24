@@ -40,7 +40,7 @@ func (e *enumField) Type() entity.FieldType {
 }
 
 func (e *enumField) IsRepeated() bool {
-	return false
+	return e.d.IsRepeated()
 }
 
 func (e *enumField) PBType() string {

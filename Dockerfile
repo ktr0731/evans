@@ -8,4 +8,5 @@ RUN go get github.com/golang/protobuf/protoc-gen-go && \
       go get github.com/tcnksm/ghr
 
 RUN go get -u gopkg.in/alecthomas/gometalinter.v2 && \
-      gometalinter.v2 --install
+      ln -sf $GOPATH/bin/gometalinter.v2 $GOPATH/bin/gometalinter && \
+      gometalinter --install

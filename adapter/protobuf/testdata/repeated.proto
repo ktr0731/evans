@@ -5,6 +5,7 @@ package helloworld;
 service Greeter {
   rpc SayHello (HelloRequest) returns (HelloResponse) {}
   rpc SayHello2 (HelloRequest2) returns (HelloResponse) {}
+  rpc Enum (RepeatedEnum) returns (HelloResponse) {}
 }
 
 message HelloRequest {
@@ -22,4 +23,14 @@ message Person {
 
 message HelloRequest2 {
   repeated Person persons = 1;
+}
+
+enum Enum {
+  FOO = 0;
+  BAR = 1;
+  BAZ = 2;
+}
+
+message RepeatedEnum {
+  repeated Enum enums = 1;
 }
