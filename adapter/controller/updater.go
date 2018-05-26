@@ -73,7 +73,6 @@ func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache, errCh 
 	}
 
 	errCh <- nil
-	return
 }
 
 func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater) error {

@@ -23,6 +23,7 @@ import (
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
+	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
 	"github.com/ktr0731/mapstruct"
 	isatty "github.com/mattn/go-isatty"
@@ -394,6 +395,11 @@ func (c *CLI) runAsREPL(env *entity.Env) int {
 func (c *CLI) processUpdate(ctx context.Context) error {
 	if !c.cache.UpdateAvailable {
 		return nil
+	}
+
+	v := semver.MustParse(c.cache.LatestVersion)
+	if v.LessThan(meta.Version) || v.Equal(meta.Version) {
+		return cache.Clear()
 	}
 
 	m, err := newMeans(c.cache)
