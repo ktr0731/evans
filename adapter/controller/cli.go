@@ -25,9 +25,9 @@ import (
 	"github.com/ktr0731/evans/usecase/port"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
-	"github.com/ktr0731/mapstruct"
 	isatty "github.com/mattn/go-isatty"
 	shellwords "github.com/mattn/go-shellwords"
+	"github.com/mitchellh/copystructure"
 	"github.com/pkg/errors"
 
 	"io"
@@ -459,29 +459,55 @@ func mergeConfig(cfg *config.Config, opt *options, proto []string) (*config.Conf
 		return nil, errors.Wrap(err, "failed to merge config and option")
 	}
 
-	optCfg := &config.Config{
-		Default: &config.Default{
-			Package:   opt.pkg,
-			Service:   opt.service,
-			ProtoPath: opt.path,
-			ProtoFile: proto,
-		},
-		Server: &config.Server{
-			Host: opt.host,
-			Port: opt.port,
-		},
-		Request: &config.Request{
-			Header: headers,
-		},
+	mergeString := func(s1, s2 string) string {
+		if s2 != "" {
+			return s2
+		}
+		return s1
 	}
 
-	ic, err := mapstruct.Map(cfg, optCfg)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to map config and option")
+	mergeSlice := func(s1, s2 []string) []string {
+		slice := make([]string, 0, len(s1)+len(s2))
+		encountered := map[string]bool{}
+		for _, s := range append(s1, s2...) {
+			if !encountered[s] {
+				slice = append(slice, s)
+				encountered[s] = true
+			}
+		}
+		return slice
 	}
-	c := ic.(*config.Config)
-	c.REPL.ShowSplashText = !opt.silent
-	return c, nil
+
+	mergeHeader := func(s1, s2 []config.Header) []config.Header {
+		slice := make([]config.Header, 0, len(s1)+len(s2))
+		encountered := map[string]bool{}
+		for _, s := range append(s1, s2...) {
+			if !encountered[s.Key] {
+				slice = append(slice, s)
+				encountered[s.Key] = true
+			}
+		}
+		return slice
+	}
+
+	mc := copystructure.Must(copystructure.Copy(cfg)).(*config.Config)
+
+	mc.Default.Package = mergeString(cfg.Default.Package, opt.pkg)
+	mc.Default.Service = mergeString(cfg.Default.Service, opt.service)
+	mc.Default.ProtoPath = mergeSlice(cfg.Default.ProtoPath, opt.path)
+	mc.Default.ProtoFile = mergeSlice(cfg.Default.ProtoFile, proto)
+
+	mc.Server.Host = mergeString(cfg.Server.Host, opt.host)
+	mc.Server.Port = mergeString(cfg.Server.Port, opt.port)
+
+	mc.Request.Header = mergeHeader(cfg.Request.Header, headers)
+
+	if opt.silent {
+		mc.REPL.ShowSplashText = false
+	}
+
+	config.SetupConfig(mc)
+	return mc, nil
 }
 
 func checkPrecondition(w *wrappedConfig) error {
