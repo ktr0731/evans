@@ -109,7 +109,7 @@ func init() {
 	}
 }
 
-func setupConfig(c *Config) {
+func SetupConfig(c *Config) {
 	c.REPL.Server = c.Server
 	c.Env.Server = c.Server
 }
@@ -128,7 +128,7 @@ func Get() *Config {
 
 	// if local config missing, return global config
 	if local == nil {
-		setupConfig(&global)
+		SetupConfig(&global)
 		return &global
 	}
 
@@ -138,7 +138,7 @@ func Get() *Config {
 	}
 
 	c := ic.(*Config)
-	setupConfig(c)
+	SetupConfig(c)
 
 	return c
 }

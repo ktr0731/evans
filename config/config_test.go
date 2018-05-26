@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,5 +32,12 @@ func TestConfig_Get(t *testing.T) {
 		localConfigName = f.Name()
 
 		checkValues()
+	})
+
+	t.Run("REPL.Server and Env.Server are same as top-level Server", func(t *testing.T) {
+		checkValues()
+		c := Get()
+		assert.Equal(t, c.Server, c.Env.Server)
+		assert.Equal(t, c.Server, c.REPL.Server)
 	})
 }
