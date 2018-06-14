@@ -43,6 +43,7 @@ lint:
 
 .PHONY: coverage
 coverage:
+	go test -coverprofile=coverage.out -race $(shell go list ./... | grep -v tests)
 	go tool cover -html=coverage.out
 
 .PHONY: brew-update
