@@ -2,6 +2,7 @@ package controller
 
 import (
 	"strings"
+	"time"
 )
 
 type executor struct {
@@ -11,10 +12,15 @@ type executor struct {
 func (e *executor) execute(l string) {
 	if l == "quit" || l == "exit" {
 		e.repl.exitCh <- struct{}{}
-		return
+
+		// do nothing, block execute method until Evans is finished Evans.
+		//
+		// if no sleep, c-bata/go-prompt will call Setup method within Run method.
+		// then, tty's config is changed to raw mode.
+		time.Sleep(10 * time.Minute)
 	}
 
-	// Ignroe spaces
+	// ignore spaces
 	if len(strings.TrimSpace(l)) == 0 {
 		return
 	}
