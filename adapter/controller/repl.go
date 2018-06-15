@@ -123,6 +123,8 @@ func (r *REPL) Start() error {
 		r.exitCh <- struct{}{}
 	}()
 
+	// wait until input exit or quit command or
+	// above goroutine finished.
 	<-r.exitCh
 
 	return nil
