@@ -74,6 +74,16 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/inconshreveable/go-update"
+  packages = [
+    ".",
+    "internal/binarydist",
+    "internal/osext"
+  ]
+  revision = "8152e7eb6ccf8679a64582a66b78519688d156ad"
+
+[[projects]]
+  branch = "master"
   name = "github.com/jhump/protoreflect"
   packages = [
     "desc",
@@ -83,12 +93,6 @@
     "internal"
   ]
   revision = "2970d65171506756b3068ab51390f50a0614f076"
-
-[[projects]]
-  name = "github.com/k0kubun/pp"
-  packages = ["."]
-  revision = "027a6d1765d673d337e687394dbe780dd64e2a1e"
-  version = "v2.3.0"
 
 [[projects]]
   name = "github.com/kelseyhightower/envconfig"
@@ -127,8 +131,8 @@
     "brew",
     "github"
   ]
-  revision = "dab0fabff54a81f4d5eb10b59c61b771f84a6958"
-  version = "0.1.0"
+  revision = "9857da19db4f69b9426c998074ddf00f34e9fd8c"
+  version = "0.1.1"
 
 [[projects]]
   branch = "master"
@@ -180,6 +184,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/mitchellh/copystructure"
+  packages = ["."]
+  revision = "d23ffcb85de31694d6ccaa23ccb4a03e55c1303f"
+
+[[projects]]
+  branch = "master"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
   revision = "b8bc1bf767474819792c23f32d8286a45736f1c6"
@@ -189,6 +199,12 @@
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   revision = "bb74f1db0675b241733089d5a1faa5dd8b0ef57b"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mitchellh/reflectwalk"
+  packages = ["."]
+  revision = "63d60e9d0dbc60cf9164e6510889b0db6683d98c"
 
 [[projects]]
   branch = "master"
@@ -337,6 +353,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6fb15b3ee22678ec49de8595d091e97d3e543cf80c5487ba6271ed13e69d33ae"
+  inputs-digest = "5f8378d70eed6028d8cb74b491f5f1540b0abf070ba031836bbc1d415af6982f"
   solver-name = "gps-cdcl"
   solver-version = 1
