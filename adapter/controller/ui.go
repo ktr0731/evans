@@ -94,12 +94,6 @@ type ColoredUI struct {
 	UI
 }
 
-func newColoredUI() *ColoredUI {
-	return &ColoredUI{
-		NewBasicUI(),
-	}
-}
-
 func (u *ColoredUI) printWithColor(
 	w func(a interface{}),
 	color func(format string, a ...interface{}) string,

@@ -35,6 +35,10 @@ e2e-test:
 vet:
 	gometalinter --vendor --disable-all --enable=vet ./...
 
+.PHONY: deadcode
+deadcode:
+	gometalinter --vendor --disable-all --enable=deadcode ./...
+
 .PHONY: lint
 lint:
 	# ignore comments for exported objects
