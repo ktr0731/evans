@@ -105,7 +105,7 @@ func (c *callGRPCClient) NewClientStream(ctx context.Context, rpc entity.RPC) (e
 }
 
 func TestCall_ClientStream(t *testing.T) {
-	params := &port.CallParams{"SayHello"}
+	params := &port.CallParams{RPCName: "SayHello"}
 	presenter := &presenter.StubPresenter{}
 
 	rpc := testentity.NewRPC()

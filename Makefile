@@ -35,6 +35,10 @@ e2e-test:
 vet:
 	gometalinter --vendor --disable-all --enable=vet ./...
 
+.PHONY: deadcode
+deadcode:
+	gometalinter --vendor --disable-all --enable=deadcode ./...
+
 .PHONY: lint
 lint:
 	# ignore comments for exported objects
@@ -43,6 +47,7 @@ lint:
 
 .PHONY: coverage
 coverage:
+	go test -coverprofile=coverage.out -race $(shell go list ./... | grep -v tests)
 	go tool cover -html=coverage.out
 
 .PHONY: brew-update

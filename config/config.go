@@ -81,10 +81,6 @@ type Log struct {
 	Prefix string `default:"[evans] " toml:"prefix"`
 }
 
-type localConfig struct {
-	Default *Default `toml:"default"`
-}
-
 func init() {
 	conf := Config{
 		Request: &Request{
