@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/ktr0731/evans/config"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,16 +61,28 @@ func TestEnv(t *testing.T) {
 
 	env := setup(t, nil)
 
+	t.Run("DSN with no current package", func(t *testing.T) {
+		assert.Equal(t, "", env.DSN())
+	})
+
 	t.Run("HasCurrentPackage", func(t *testing.T) {
 		require.False(t, env.HasCurrentPackage())
 		env.UsePackage("helloworld")
 		require.True(t, env.HasCurrentPackage())
 	})
 
+	t.Run("DSN with no current service", func(t *testing.T) {
+		assert.Equal(t, "helloworld", env.DSN())
+	})
+
 	t.Run("HasCurrentService", func(t *testing.T) {
 		require.False(t, env.HasCurrentService())
 		env.UseService("Greeter")
 		require.True(t, env.HasCurrentService())
+	})
+
+	t.Run("DSN", func(t *testing.T) {
+		assert.Equal(t, "helloworld.Greeter", env.DSN())
 	})
 
 	t.Run("Packages", func(t *testing.T) {
