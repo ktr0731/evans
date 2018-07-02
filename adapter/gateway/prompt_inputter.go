@@ -1,13 +1,13 @@
 package gateway
 
 import (
+	"fmt"
 	"io"
 	"strings"
 
 	"github.com/AlecAivazis/survey"
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/golang/protobuf/proto"
-	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
@@ -281,8 +281,22 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		}
 	case entity.MessageField:
 		if f.IsCycled() {
-			pp.Println(f.FQRN())
-			panic("not implemented yet. break point")
+			prefix := strings.Join(i.ancestor, ancestorDelimiter)
+			if prefix != "" {
+				prefix += ancestorDelimiter
+			}
+			prefix += f.FieldName()
+			var choice string
+			err := survey.AskOne(&survey.Select{
+				Message: fmt.Sprintf("circulated field was found. dig down or finish?\nfield: %s (%s)", prefix, f.FQRN()),
+				Options: []string{"dig down", "finish"},
+			}, &choice, nil)
+			if err != nil {
+				return err
+			}
+			if choice == "finish" {
+				return nil
+			}
 		}
 		setter := protobuf.NewMessageSetter(f)
 		fields := f.Fields()

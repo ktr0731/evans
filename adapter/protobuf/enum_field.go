@@ -42,9 +42,6 @@ func (e *enumField) Type() entity.FieldType {
 func (e *enumField) IsRepeated() bool {
 	return e.d.IsRepeated()
 }
-func (e *enumField) IsCycled() bool {
-	return false
-}
 
 func (e *enumField) PBType() string {
 	return descriptor.FieldDescriptorProto_TYPE_ENUM.String()

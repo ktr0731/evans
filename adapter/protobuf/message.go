@@ -24,7 +24,7 @@ type messageBuilder struct {
 	usedMessage map[string]entity.Message
 }
 
-func (b *messageBuilder) nextMessageField(f *desc.FieldDescriptor) {
+func (b *messageBuilder) processMessageField(f *desc.FieldDescriptor) {
 	field := &messageField{
 		d: f,
 	}
@@ -84,12 +84,7 @@ func (b *messageBuilder) build() entity.Message {
 		}
 
 		if isMessageType(f.GetType()) {
-			// self-referenced field
-			if f.GetMessageType().GetName() == b.d.GetName() {
-				b.add(&messageField{d: f, Message: b.m})
-			} else {
-				b.nextMessageField(f)
-			}
+			b.processMessageField(f)
 		} else {
 			b.add(newField(f))
 		}

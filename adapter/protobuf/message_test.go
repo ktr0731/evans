@@ -62,7 +62,7 @@ func TestMessage(t *testing.T) {
 		assert.Len(t, d, 1)
 
 		msgs := d[0].GetMessageTypes()
-		assert.Len(t, msgs, 1)
+		assert.Len(t, msgs, 3)
 
 		msg := newMessage(msgs[0])
 		assert.Equal(t, "Foo", msg.Name())
