@@ -19,11 +19,18 @@ type messageBuilder struct {
 	d *desc.MessageDescriptor
 
 	// used to detect cycle fields
-	usedMessage map[string]bool
+	usedMessage map[string]entity.Message
 }
 
 func (b *messageBuilder) nextMessageField(f *desc.FieldDescriptor) {
-	b.usedMessage[f.GetMessageType().GetName()] = true
+	field := &messageField{
+		d: f,
+	}
+	if m, ok := b.usedMessage[f.GetMessageType().GetName()]; ok {
+		field.Message = m
+		b.add(field)
+		return
+	}
 	msg := &message{
 		d: f.GetMessageType(),
 	}
@@ -32,11 +39,9 @@ func (b *messageBuilder) nextMessageField(f *desc.FieldDescriptor) {
 		d:           f.GetMessageType(),
 		usedMessage: b.usedMessage,
 	}
-	m := b2.build()
-	b.add(&messageField{
-		d:       f,
-		Message: m,
-	})
+	field.Message = b2.build()
+	b.usedMessage[f.GetMessageType().GetName()] = field.Message
+	b.add(field)
 }
 
 func (b *messageBuilder) add(f entity.Field) {
@@ -95,8 +100,8 @@ func newMessage(d *desc.MessageDescriptor) entity.Message {
 		d:      d,
 		fields: make([]entity.Field, 0, len(d.GetFields())),
 	}
-	usedMessage := make(map[string]bool)
-	usedMessage[msg.Name()] = true
+	usedMessage := make(map[string]entity.Message)
+	usedMessage[msg.Name()] = msg
 	b := &messageBuilder{
 		m:           msg,
 		d:           d,
