@@ -12,6 +12,8 @@ type message struct {
 
 	nestedMessages []entity.Message
 	nestedEnums    []entity.Enum
+
+	isCycled bool
 }
 
 type messageBuilder struct {
@@ -27,6 +29,7 @@ func (b *messageBuilder) nextMessageField(f *desc.FieldDescriptor) {
 		d: f,
 	}
 	if m, ok := b.usedMessage[f.GetMessageType().GetName()]; ok {
+		b.m.isCycled = true
 		field.Message = m
 		b.add(field)
 		return
@@ -116,4 +119,8 @@ func (m *message) Name() string {
 
 func (m *message) Fields() []entity.Field {
 	return m.fields
+}
+
+func (m *message) IsCycled() bool {
+	return m.isCycled
 }

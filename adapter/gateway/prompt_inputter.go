@@ -7,6 +7,7 @@ import (
 	"github.com/AlecAivazis/survey"
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/golang/protobuf/proto"
+	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
@@ -279,6 +280,10 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 			return err
 		}
 	case entity.MessageField:
+		if f.IsCycled() {
+			pp.Println(f.FQRN())
+			panic("not implemented yet. break point")
+		}
 		setter := protobuf.NewMessageSetter(f)
 		fields := f.Fields()
 
