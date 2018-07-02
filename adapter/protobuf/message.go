@@ -14,51 +14,95 @@ type message struct {
 	nestedEnums    []entity.Enum
 }
 
-func newMessage(m *desc.MessageDescriptor) entity.Message {
-	msg := message{
-		d: m,
-	}
+type messageBuilder struct {
+	m *message
+	d *desc.MessageDescriptor
 
-	msgs := make([]entity.Message, 0, len(m.GetNestedMessageTypes()))
-	for _, d := range m.GetNestedMessageTypes() {
+	// used to detect cycle fields
+	usedMessage map[string]bool
+}
+
+func (b *messageBuilder) nextMessageField(f *desc.FieldDescriptor) {
+	b.usedMessage[f.GetMessageType().GetName()] = true
+	msg := &message{
+		d: f.GetMessageType(),
+	}
+	b2 := &messageBuilder{
+		m:           msg,
+		d:           f.GetMessageType(),
+		usedMessage: b.usedMessage,
+	}
+	m := b2.build()
+	b.add(&messageField{
+		d:       f,
+		Message: m,
+	})
+}
+
+func (b *messageBuilder) add(f entity.Field) {
+	b.m.fields = append(b.m.fields, f)
+}
+
+func (b *messageBuilder) build() entity.Message {
+	// collect messages and enums which declared in the target message
+
+	msgs := make([]entity.Message, 0, len(b.d.GetNestedMessageTypes()))
+	for _, d := range b.d.GetNestedMessageTypes() {
 		msgs = append(msgs, newMessage(d))
 	}
-	msg.nestedMessages = msgs
+	b.m.nestedMessages = msgs
 
-	enums := make([]entity.Enum, 0, len(m.GetNestedEnumTypes()))
-	for _, d := range m.GetNestedEnumTypes() {
+	enums := make([]entity.Enum, 0, len(b.d.GetNestedEnumTypes()))
+	for _, d := range b.d.GetNestedEnumTypes() {
 		enums = append(enums, newEnum(d))
 	}
-	msg.nestedEnums = enums
+	b.m.nestedEnums = enums
 
 	// it need to resolve oneofs before resolve other fields.
 	// GetFields contains fields of oneofs.
 	encounteredOneOfFields := map[string]bool{}
-	fields := make([]entity.Field, 0, len(m.GetFields()))
-	for _, o := range m.GetOneOfs() {
+	for _, o := range b.d.GetOneOfs() {
 		for _, c := range o.GetChoices() {
 			encounteredOneOfFields[c.GetFullyQualifiedName()] = true
 		}
-		fields = append(fields, newOneOfField(o))
+		b.add(newOneOfField(o))
 	}
 
-	// TODO: label, map, options
-	for _, f := range m.GetFields() {
+	// TODO: label, options
+	for _, f := range b.d.GetFields() {
 		// skip fields of oneofs
 		if encounteredOneOfFields[f.GetFullyQualifiedName()] {
 			continue
 		}
 
-		// self-referenced field
-		if isMessageType(f.GetType()) && f.GetMessageType().GetName() == m.GetName() {
-			fields = append(fields, &messageField{d: f, Message: &msg})
+		if isMessageType(f.GetType()) {
+			// self-referenced field
+			if f.GetMessageType().GetName() == b.d.GetName() {
+				b.add(&messageField{d: f, Message: b.m})
+			} else {
+				b.nextMessageField(f)
+			}
 		} else {
-			fields = append(fields, newField(f))
+			b.add(newField(f))
 		}
 	}
-	msg.fields = fields
 
-	return &msg
+	return b.m
+}
+
+func newMessage(d *desc.MessageDescriptor) entity.Message {
+	msg := &message{
+		d:      d,
+		fields: make([]entity.Field, 0, len(d.GetFields())),
+	}
+	usedMessage := make(map[string]bool)
+	usedMessage[msg.Name()] = true
+	b := &messageBuilder{
+		m:           msg,
+		d:           d,
+		usedMessage: usedMessage,
+	}
+	return b.build()
 }
 
 func (m *message) Name() string {

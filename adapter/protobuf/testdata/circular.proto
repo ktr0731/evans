@@ -1,0 +1,12 @@
+syntax = "proto3";
+package example;
+
+service Example {}
+
+message A {
+  B b = 1;
+}
+
+message B {
+  A a = 1;
+}

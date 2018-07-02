@@ -12,34 +12,34 @@ import (
 func TestMessage(t *testing.T) {
 	t.Run("normal", func(t *testing.T) {
 		d := parseFile(t, []string{"message.proto"}, nil)
-		require.Len(t, d, 1)
+		assert.Len(t, d, 1)
 
 		msgs := d[0].GetMessageTypes()
-		require.Len(t, msgs, 2)
+		assert.Len(t, msgs, 2)
 
 		stringType := descriptor.FieldDescriptorProto_Type_name[int32(descriptor.FieldDescriptorProto_TYPE_STRING)]
 
 		t.Run("Person message", func(t *testing.T) {
 			personMsg := newMessage(msgs[0])
-			require.Equal(t, "Person", personMsg.Name())
+			assert.Equal(t, "Person", personMsg.Name())
 
-			require.Len(t, personMsg.Fields(), 1)
+			assert.Len(t, personMsg.Fields(), 1)
 			personField := personMsg.Fields()[0]
-			require.Equal(t, personField.FieldName(), "name")
+			assert.Equal(t, personField.FieldName(), "name")
 
-			require.Equal(t, personField.PBType(), stringType)
+			assert.Equal(t, personField.PBType(), stringType)
 		})
 
 		t.Run("Nested message", func(t *testing.T) {
 			nestedMsg := newMessage(msgs[1])
-			require.Equal(t, "Nested", nestedMsg.Name())
+			assert.Equal(t, "Nested", nestedMsg.Name())
 
-			require.Len(t, nestedMsg.Fields(), 1)
+			assert.Len(t, nestedMsg.Fields(), 1)
 			nestedMsgField := nestedMsg.Fields()[0]
-			require.Equal(t, nestedMsgField.FieldName(), "person")
+			assert.Equal(t, nestedMsgField.FieldName(), "person")
 
 			msgType := descriptor.FieldDescriptorProto_Type_name[int32(descriptor.FieldDescriptorProto_TYPE_MESSAGE)]
-			require.Equal(t, nestedMsgField.PBType(), msgType)
+			assert.Equal(t, nestedMsgField.PBType(), msgType)
 		})
 	})
 
@@ -49,7 +49,7 @@ func TestMessage(t *testing.T) {
 		require.NoError(t, err)
 
 		d = append(d, d[0].GetDependencies()...)
-		require.Len(t, d, 2)
+		assert.Len(t, d, 2)
 
 		libMsgs := d[0].GetMessageTypes()
 		bookMsgs := d[1].GetMessageTypes()
@@ -59,12 +59,26 @@ func TestMessage(t *testing.T) {
 
 	t.Run("self", func(t *testing.T) {
 		d := parseFile(t, []string{"self.proto"}, nil)
-		require.Len(t, d, 1)
+		assert.Len(t, d, 1)
 
 		msgs := d[0].GetMessageTypes()
-		require.Len(t, msgs, 1)
+		assert.Len(t, msgs, 1)
 
 		msg := newMessage(msgs[0])
-		require.Equal(t, "Foo", msg.Name())
+		assert.Equal(t, "Foo", msg.Name())
+	})
+
+	t.Run("circular", func(t *testing.T) {
+		d := parseFile(t, []string{"circular.proto"}, nil)
+		assert.Len(t, d, 1)
+
+		msgs := d[0].GetMessageTypes()
+		assert.Len(t, msgs, 2)
+
+		msgA, msgB := newMessage(msgs[0]), newMessage(msgs[1])
+		assert.Equal(t, "A", msgA.Name())
+		assert.Equal(t, "B", msgB.Name())
+		assert.Len(t, msgA.Fields(), 1)
+		assert.Len(t, msgB.Fields(), 1)
 	})
 }
