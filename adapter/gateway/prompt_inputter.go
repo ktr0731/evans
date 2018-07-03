@@ -286,11 +286,11 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 				prefix += ancestorDelimiter
 			}
 			prefix += f.FieldName()
-			var choice string
-			err := survey.AskOne(&survey.Select{
-				Message: fmt.Sprintf("circulated field was found. dig down or finish?\nfield: %s (%s)", prefix, f.FQRN()),
-				Options: []string{"dig down", "finish"},
-			}, &choice, nil)
+
+			choice, err := i.prompt.Select(
+				fmt.Sprintf("circulated field was found. dig down or finish?\nfield: %s (%s)", prefix, f.FQRN()),
+				[]string{"dig down", "finish"},
+			)
 			if err != nil {
 				return err
 			}
