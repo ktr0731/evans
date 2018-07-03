@@ -1,8 +1,6 @@
 package protobuf
 
 import (
-	"fmt"
-
 	"github.com/jhump/protoreflect/desc"
 	"github.com/ktr0731/evans/entity"
 )
@@ -32,16 +30,18 @@ func (b *messageBuilder) processMessageField(f *desc.FieldDescriptor) {
 	field := &messageField{
 		d: f,
 	}
+
 	// self-referenced
 	if f.GetMessageType().GetName() == b.m.Name() {
 		b.m.isCycled = true
 		field.Message = b.m
 		b.add(field)
 		return
-	} else if m, ok := b.usedMessage[f.GetMessageType().GetName()]; ok {
+	}
+
+	if m, ok := b.usedMessage[f.GetMessageType().GetName()]; ok {
 		b.m.isCycled = true
 		field.Message = m
-		fmt.Printf("%#v %v\n", field, m)
 		b.add(field)
 		return
 	}

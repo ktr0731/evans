@@ -82,7 +82,7 @@ func TestMessage(t *testing.T) {
 		assert.Len(t, d, 1)
 
 		msgs := d[0].GetMessageTypes()
-		assert.Len(t, msgs, 4)
+		assert.Len(t, msgs, 7)
 
 		msgA, msgB := newMessage(msgs[0]), newMessage(msgs[1])
 		assert.Equal(t, "A", msgA.Name())
@@ -102,7 +102,14 @@ func TestMessage(t *testing.T) {
 
 			selfSelfField := selfField.Fields()[1].(entity.MessageField)
 			assert.NotNil(t, selfSelfField.Fields())
-			assert.False(t, selfSelfField.IsCycled())
+			assert.True(t, selfSelfField.IsCycled())
+		})
+
+		t.Run("three messages", func(t *testing.T) {
+			msgHoge, msgFuga, msgPiyo := newMessage(msgs[4]), newMessage(msgs[5]), newMessage(msgs[6])
+			assert.Equal(t, "Hoge", msgHoge.Name())
+			assert.Equal(t, "Fuga", msgFuga.Name())
+			assert.Equal(t, "Piyo", msgPiyo.Name())
 		})
 	})
 }
