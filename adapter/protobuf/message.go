@@ -1,6 +1,8 @@
 package protobuf
 
 import (
+	"fmt"
+
 	"github.com/jhump/protoreflect/desc"
 	"github.com/ktr0731/evans/entity"
 )
@@ -20,6 +22,8 @@ type messageBuilder struct {
 	m *message
 	d *desc.MessageDescriptor
 
+	dependOn map[string]bool
+
 	// used to detect cycle fields
 	usedMessage map[string]entity.Message
 }
@@ -28,21 +32,30 @@ func (b *messageBuilder) processMessageField(f *desc.FieldDescriptor) {
 	field := &messageField{
 		d: f,
 	}
-	if m, ok := b.usedMessage[f.GetMessageType().GetName()]; ok {
+	// self-referenced
+	if f.GetMessageType().GetName() == b.m.Name() {
+		b.m.isCycled = true
+		field.Message = b.m
+		b.add(field)
+		return
+	} else if m, ok := b.usedMessage[f.GetMessageType().GetName()]; ok {
 		b.m.isCycled = true
 		field.Message = m
+		fmt.Printf("%#v %v\n", field, m)
 		b.add(field)
 		return
 	}
-	msg := &message{
-		d: f.GetMessageType(),
-	}
+
 	b2 := &messageBuilder{
-		m:           msg,
+		m: &message{
+			d: f.GetMessageType(),
+		},
 		d:           f.GetMessageType(),
 		usedMessage: b.usedMessage,
 	}
+
 	field.Message = b2.build()
+
 	b.usedMessage[f.GetMessageType().GetName()] = field.Message
 	b.add(field)
 }
@@ -82,6 +95,8 @@ func (b *messageBuilder) build() entity.Message {
 		if encounteredOneOfFields[f.GetFullyQualifiedName()] {
 			continue
 		}
+
+		// self
 
 		if isMessageType(f.GetType()) {
 			b.processMessageField(f)

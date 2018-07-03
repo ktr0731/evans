@@ -3,6 +3,7 @@ package example;
 
 service Example {
   rpc Request (A) returns (B) {}
+  rpc Request2 (Foo) returns (B) {}
 }
 
 message A {
@@ -11,4 +12,13 @@ message A {
 
 message B {
   A a = 1;
+}
+
+message Foo {
+  Self self = 1;
+}
+
+message Self {
+  string hoge = 1;
+  Self self = 2;
 }
