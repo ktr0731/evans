@@ -7,5 +7,5 @@ import (
 const AppName = "evans"
 
 var (
-	Version = semver.MustParse("0.4.5")
+	Version = semver.MustParse("0.4.6")
 )
