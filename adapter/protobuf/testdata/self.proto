@@ -2,6 +2,18 @@ syntax = "proto3";
 
 package example;
 
+service Example {
+  rpc Request (Foo) returns (Empty) {}
+  rpc Request2 (Bar) returns (Empty) {}
+}
+
 message Foo {
   Foo foo = 1;
 }
+
+message Bar {
+  Bar bar = 1;
+  string baz = 2;
+}
+
+message Empty {}
