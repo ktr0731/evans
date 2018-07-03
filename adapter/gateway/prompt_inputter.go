@@ -29,7 +29,7 @@ type Prompter interface {
 	Input() (string, error)
 	Select(msg string, opts []string) (string, error)
 	SetPrefix(prefix string)
-	SetPrefixColor(color prompt.Color) error
+	SetPrefixColor(color color) error
 }
 
 type RealPrompter struct {
@@ -111,8 +111,8 @@ func (p *RealPrompter) SetPrefix(prefix string) {
 	p.currentPrefix = prefix
 }
 
-func (p *RealPrompter) SetPrefixColor(color prompt.Color) error {
-	return prompt.OptionPrefixTextColor(color)(p.fieldPrompter)
+func (p *RealPrompter) SetPrefixColor(color color) error {
+	return prompt.OptionPrefixTextColor(prompt.Color(color))(p.fieldPrompter)
 }
 
 func (p *RealPrompter) livePrefix() (string, bool) {
@@ -147,7 +147,17 @@ func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
 	fields := reqType.Fields()
 
 	// DarkGreen is the initial color
-	return newFieldInputter(i.prompt, i.config.Input.PromptFormat, setter, []string{}, false, prompt.DarkGreen).Input(fields)
+	return newFieldInputter(i.prompt, i.config.Input.PromptFormat, setter, []string{}, false, color(prompt.DarkGreen)).Input(fields)
+}
+
+type color prompt.Color
+
+func (c *color) next() {
+	*c = (*c + 1) % 16
+}
+
+func (c *color) prev() {
+	*c = (*c - 1) % 16
 }
 
 // fieldInputter inputs each fields of req in interactively
@@ -159,7 +169,7 @@ type fieldInputter struct {
 	prefixFormat string
 	ancestor     []string
 
-	color prompt.Color
+	color color
 
 	// enteredEmptyInput is used to terminate repeated field inputting
 	// if input is empty and enteredEmptyInput is true, exit repeated input prompt
@@ -175,7 +185,7 @@ func newFieldInputter(
 	setter *protobuf.MessageSetter,
 	ancestor []string,
 	hasAncestorAndHasRepeatedField bool,
-	color prompt.Color,
+	color color,
 ) *fieldInputter {
 	return &fieldInputter{
 		prompt:       prompter,
@@ -297,6 +307,8 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 			if choice == "finish" {
 				return nil
 			}
+			// TODO: coloring
+			// i.color.next()
 		}
 		setter := protobuf.NewMessageSetter(f)
 		fields := f.Fields()
@@ -315,8 +327,7 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 		if err := i.setter.SetField(f, msg); err != nil {
 			return err
 		}
-		// increment prompt color to next one
-		i.color = (i.color + 1) % 16
+		i.color.next()
 	case entity.PrimitiveField:
 		i.prompt.SetPrefix(i.makePrefix(field))
 		v, err := i.inputPrimitiveField(f)
@@ -351,7 +362,7 @@ func (i *fieldInputter) inputRepeatedField(f entity.Field) error {
 			return err
 		}
 
-		i.color = (i.color + 1) % 16
+		i.color.next()
 	}
 }
 
