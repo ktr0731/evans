@@ -1,0 +1,40 @@
+syntax = "proto3";
+package example;
+
+service Example {
+  rpc Request (A) returns (B) {}
+  rpc Request2 (Foo) returns (B) {}
+  rpc Request3 (Hoge) returns (B) {}
+}
+
+message A {
+  B b = 1;
+}
+
+message B {
+  A a = 1;
+}
+
+message Foo {
+  Self self = 1;
+}
+
+message Self {
+  string hoge = 1;
+  Self self = 2;
+}
+
+message Hoge {
+  Fuga fuga = 1;
+  string dummy1 = 2;
+}
+
+message Fuga {
+  Piyo piyo = 1;
+  string dummy2 = 2;
+}
+
+message Piyo {
+  Hoge hoge = 1;
+  string dummy3 = 2;
+}

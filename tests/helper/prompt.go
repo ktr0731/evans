@@ -2,6 +2,7 @@ package helper
 
 import (
 	prompt "github.com/c-bata/go-prompt"
+	"github.com/ktr0731/evans/color"
 )
 
 // MockPrompt implements gateway.Prompter
@@ -52,7 +53,7 @@ func (p *MockPrompt) Select(_ string, _ []string) (string, error) {
 
 func (p *MockPrompt) SetPrefix(_ string) {}
 
-func (p *MockPrompt) SetPrefixColor(_ prompt.Color) error {
+func (p *MockPrompt) SetPrefixColor(_ color.Color) error {
 	return nil
 }
 

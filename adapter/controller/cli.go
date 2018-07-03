@@ -67,6 +67,8 @@ Options:
 	--file FILE, -f FILE	%s
 	--path PATH		%s
 	--header HEADER		%s
+	--web			%s
+
 	--help, -h		%s
 	--version, -v		%s
 `
@@ -84,6 +86,7 @@ func (c *CLI) parseFlags(args []string) *options {
 		file    = "the script file which will be executed by (used only CLI mode)"
 		path    = "proto file paths"
 		header  = "default headers which set to each requests (example: foo=bar)"
+		web     = "use gRPC Web protocol"
 
 		version = "display version and exit"
 		help    = "display this help and exit"
@@ -107,6 +110,7 @@ func (c *CLI) parseFlags(args []string) *options {
 			file,
 			path,
 			header,
+			web,
 			version,
 			help,
 		)
@@ -129,6 +133,7 @@ func (c *CLI) parseFlags(args []string) *options {
 	f.StringVar(&opts.file, "f", "", file)
 	f.Var(&opts.path, "path", path)
 	f.Var(&opts.header, "header", header)
+	f.BoolVar(&opts.web, "web", false, web)
 	f.BoolVar(&opts.version, "version", false, version)
 	f.BoolVar(&opts.version, "v", false, version)
 
@@ -155,6 +160,7 @@ type options struct {
 	file    string
 	path    optStrSlice
 	header  optStrSlice
+	web     bool
 
 	// meta options
 	version bool
@@ -504,6 +510,10 @@ func mergeConfig(cfg *config.Config, opt *options, proto []string) (*config.Conf
 
 	if opt.silent {
 		mc.REPL.ShowSplashText = false
+	}
+
+	if opt.web {
+		mc.Request.Web = true
 	}
 
 	config.SetupConfig(mc)
