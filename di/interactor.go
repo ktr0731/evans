@@ -20,7 +20,13 @@ func NewREPLInteractorParams(cfg *config.Config, env *entity.Env) (*usecase.Inte
 
 func newInteractorParams(cfg *config.Config, env *entity.Env, inputter port.Inputter) (*usecase.InteractorParams, error) {
 	var result error
-	grpcAdapter, err := gateway.NewGRPCClient(cfg)
+	var grpcAdapter entity.GRPCClient
+	var err error
+	if cfg.Request.Web {
+		grpcAdapter = gateway.NewGRPCWebClient(cfg)
+	} else {
+		grpcAdapter, err = gateway.NewGRPCClient(cfg)
+	}
 	if err != nil {
 		result = multierror.Append(result, err)
 	}
