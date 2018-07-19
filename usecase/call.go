@@ -120,6 +120,8 @@ type serverStreamingResultWriter struct {
 
 	r *io.PipeReader
 	w *io.PipeWriter
+
+	closeCh chan struct{}
 }
 
 func newServerStramingResultWriter(
@@ -135,6 +137,7 @@ func newServerStramingResultWriter(
 		newMessage: newMessage,
 		r:          r,
 		w:          w,
+		closeCh:    make(chan struct{}),
 	}
 	writer.ctx, writer.cancel = context.WithCancel(ctx)
 	go writer.receiveResponse()
@@ -144,10 +147,16 @@ func newServerStramingResultWriter(
 func (w *serverStreamingResultWriter) receiveResponse() {
 	sigCh := make(chan os.Signal)
 	signal.Notify(sigCh, os.Interrupt)
+	defer close(sigCh)
+
 	go func() {
 		defer w.cancel()
-		for range sigCh {
-			w.w.CloseWithError(io.EOF)
+		for {
+			select {
+			case <-sigCh:
+				w.w.CloseWithError(io.EOF)
+			case <-w.closeCh:
+			}
 			return
 		}
 	}()
@@ -156,20 +165,29 @@ func (w *serverStreamingResultWriter) receiveResponse() {
 	go func() {
 		defer w.cancel()
 		for {
-			res := w.newMessage()
-			err := w.s.Receive(res)
-			if err != nil {
-				w.w.CloseWithError(err)
-				close(resCh)
+			select {
+			case <-sigCh:
 				return
+			case <-w.closeCh:
+				return
+			default:
+				res := w.newMessage()
+				err := w.s.Receive(res)
+				if err != nil {
+					w.w.CloseWithError(err)
+					close(resCh)
+					return
+				}
+				resCh <- res
 			}
-			resCh <- res
 		}
 	}()
 
 	for {
 		select {
 		case <-w.ctx.Done():
+			return
+		case <-w.closeCh:
 			return
 		case r, ok := <-resCh:
 			if !ok {
@@ -257,6 +275,7 @@ func callBidiStreaming(
 			return builder.NewMessage(rpc.ResponseMessage())
 		})
 
+	// TODO: resolve goroutine leak
 	go func() {
 		for {
 			req, err := inputter.Input(rpc.RequestMessage())
