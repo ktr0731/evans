@@ -27,7 +27,11 @@ func NewGRPCWebClient(config *config.Config) *GRPCWebClient {
 }
 
 func (c *GRPCWebClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {
-	request, err := grpcweb.NewRequest(fqrn, req.(proto.Message), res.(proto.Message))
+	endpoint, err := fqrnToEndpoint(fqrn)
+	if err != nil {
+		return errors.Wrap(err, "failed to convert FQRN to endpoint")
+	}
+	request, err := grpcweb.NewRequest(endpoint, req.(proto.Message), res.(proto.Message))
 	if err != nil {
 		return errors.Wrap(err, "failed to make new gRPC Web request")
 	}

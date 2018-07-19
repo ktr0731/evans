@@ -39,7 +39,7 @@ func NewGRPCClient(config *config.Config) (*GRPCClient, error) {
 }
 
 func (c *GRPCClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {
-	endpoint, err := c.fqrnToEndpoint(fqrn)
+	endpoint, err := fqrnToEndpoint(fqrn)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (s *clientStream) CloseAndReceive(res proto.Message) error {
 }
 
 func (c *GRPCClient) NewClientStream(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
-	endpoint, err := c.fqrnToEndpoint(rpc.FQRN())
+	endpoint, err := fqrnToEndpoint(rpc.FQRN())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert fqrn to endpoint")
 	}
@@ -122,7 +122,7 @@ func (c *GRPCClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (entity.
 //
 // e.g.
 //	pkg_name.svc_name.rpc_name -> /pkg_name.svc_name/rpc_name
-func (c *GRPCClient) fqrnToEndpoint(fqrn string) (string, error) {
+func fqrnToEndpoint(fqrn string) (string, error) {
 	sp := strings.Split(fqrn, ".")
 	if len(sp) < 3 {
 		return "", errors.New("invalid FQRN format")
