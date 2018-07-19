@@ -25,19 +25,19 @@ test: vet lint unit-test e2e-test
 
 .PHONY: unit-test
 unit-test:
-	go test -race $(shell go list ./... | grep -v tests)
+	@go test -race $(shell go list ./... | grep -v tests)
 
 .PHONY: e2e-test
 e2e-test:
-	go test -race ./tests/...
+	@go test -race ./tests/...
 
 .PHONY: vet
 vet:
-	gometalinter --vendor --disable-all --enable=vet ./...
+	@gometalinter --vendor --disable-all --enable=vet ./...
 
 .PHONY: deadcode
 deadcode:
-	gometalinter --vendor --disable-all --enable=deadcode ./...
+	@gometalinter --vendor --disable-all --enable=deadcode ./...
 
 .PHONY: lint
 lint:
