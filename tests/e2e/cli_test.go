@@ -64,18 +64,20 @@ func TestCLI(t *testing.T) {
 
 		for _, r := range cases {
 			for _, c := range r.expected {
-				in := strings.NewReader(r.in)
-				controller.DefaultCLIReader = in
+				t.Run(c.args, func(t *testing.T) {
+					in := strings.NewReader(r.in)
+					controller.DefaultCLIReader = in
 
-				out := new(bytes.Buffer)
-				ui := controller.NewUI(in, out, ioutil.Discard)
+					out := new(bytes.Buffer)
+					ui := controller.NewUI(in, out, ioutil.Discard)
 
-				code := newCLI(ui).Run(strings.Split(c.args, " "))
-				require.Equal(t, c.code, code)
+					code := newCLI(ui).Run(strings.Split(c.args, " "))
+					require.Equal(t, c.code, code)
 
-				if c.code == 0 {
-					assert.Equal(t, c.out, flatten(out.String()))
-				}
+					if c.code == 0 {
+						assert.Equal(t, c.out, flatten(out.String()))
+					}
+				})
 			}
 		}
 	})
@@ -101,18 +103,20 @@ func TestCLI(t *testing.T) {
 
 		for _, r := range cases {
 			for _, c := range r.expected {
-				in := strings.NewReader(r.in)
-				controller.DefaultCLIReader = in
+				t.Run(c.args, func(t *testing.T) {
+					in := strings.NewReader(r.in)
+					controller.DefaultCLIReader = in
 
-				out := new(bytes.Buffer)
-				ui := controller.NewUI(in, out, ioutil.Discard)
+					out := new(bytes.Buffer)
+					ui := controller.NewUI(in, out, ioutil.Discard)
 
-				code := newCLI(ui).Run(strings.Split(c.args, " "))
-				require.Equal(t, c.code, code)
+					code := newCLI(ui).Run(strings.Split(c.args, " "))
+					require.Equal(t, c.code, code)
 
-				if c.code == 0 {
-					assert.Equal(t, c.out, flatten(out.String()))
-				}
+					if c.code == 0 {
+						assert.Equal(t, c.out, flatten(out.String()))
+					}
+				})
 			}
 		}
 	})
