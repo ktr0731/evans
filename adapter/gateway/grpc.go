@@ -8,8 +8,10 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/jhump/protoreflect/grpcreflect"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/pkg/errors"
@@ -32,6 +34,11 @@ func NewGRPCClient(config *config.Config) (*GRPCClient, error) {
 	case connectivity.Shutdown:
 		return nil, errors.Errorf("the gRPC server was closed: %s", s)
 	}
+
+	if config.Server.Reflection {
+		c := grpcreflect.NewClient(context.Background(), grpc_reflection_v1alpha.NewServerReflectionClient(conn))
+	}
+
 	return &GRPCClient{
 		config: config,
 		conn:   conn,
