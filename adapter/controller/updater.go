@@ -20,9 +20,8 @@ import (
 	spin "github.com/tj/go-spin"
 )
 
-func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache, errCh chan error) {
-	doneCh := make(chan struct{})
-
+func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache) error {
+	errCh := make(chan error)
 	go func() {
 		var m updater.Means
 		var err error
@@ -70,13 +69,13 @@ func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache, errCh 
 		}
 
 		errCh <- nil
-		doneCh <- struct{}{}
 	}()
 
 	select {
 	case <-ctx.Done():
-		errCh <- nil
-	case <-doneCh:
+		return nil
+	case err := <-errCh:
+		return err
 	}
 }
 

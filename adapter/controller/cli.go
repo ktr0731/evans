@@ -29,6 +29,7 @@ import (
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/mitchellh/copystructure"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 
 	"io"
 	"os"
@@ -289,6 +290,8 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 
 	errCh := make(chan error)
 	go func() {
+		defer cancel()
+
 		in := DefaultCLIReader
 		if c.wcfg.file != "" {
 			f, err := os.Open(c.wcfg.file)
@@ -323,23 +326,17 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 		c.ui.Println(b.String())
 	}()
 
+	var err error
 	select {
-	case err := <-errCh:
-		if err != nil {
-			c.Error(err)
-			return 1
-		}
-		return 0
-	case err := <-checkUpdateErrCh:
-		if err != nil {
-			c.Error(err)
-			return 1
-		}
-		return 0
 	case <-ctx.Done():
 		return 0
+	case err = <-errCh:
+	case err = <-checkUpdateErrCh:
 	}
-
+	if err != nil {
+		c.Error(err)
+		return 1
+	}
 	return 0
 }
 
@@ -350,51 +347,59 @@ func (c *CLI) runAsREPL(env *entity.Env) int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// if AutoUpdate enabled, do update asynchronously
-	puCh := make(chan error, 1)
-	if c.wcfg.cfg.Meta.AutoUpdate {
-		go func() {
-			puCh <- c.processUpdate(ctx)
-		}()
-	} else {
-		err := c.processUpdate(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
+
+	eg.Go(func() error {
+		return checkUpdate(ctx, c.wcfg.cfg, c.cache)
+	})
+
+	errCh := make(chan error)
+	go func() {
+		defer cancel()
+
+		// if AutoUpdate enabled, do update asynchronously
+		if c.wcfg.cfg.Meta.AutoUpdate {
+			eg.Go(func() error {
+				return c.processUpdate(ctx)
+			})
+		} else {
+			err := c.processUpdate(ctx)
+			if err != nil {
+				errCh <- err
+				return
+			}
+		}
+
+		p, err := di.NewREPLInteractorParams(c.wcfg.cfg, env)
 		if err != nil {
-			c.Error(err)
-			return 1
+			errCh <- err
+			return
 		}
+		interactor := usecase.NewInteractor(p)
+
+		var ui UI
+		if c.wcfg.cfg.REPL.ColoredOutput {
+			ui = newColoredREPLUI(DefaultREPLUI)
+		} else {
+			ui = DefaultREPLUI
+		}
+		r := NewREPL(c.wcfg.cfg.REPL, env, ui, interactor)
+		if err := r.Start(); err != nil {
+			errCh <- err
+			return
+		}
+	}()
+
+	eg.Wait()
+
+	var err error
+	select {
+	case <-ctx.Done():
+		return 0
+	case err = <-errCh:
 	}
 
-	cuCh := make(chan error, 1)
-	go checkUpdate(ctx, c.wcfg.cfg, c.cache, cuCh)
-
-	p, err := di.NewREPLInteractorParams(c.wcfg.cfg, env)
 	if err != nil {
-		c.Error(err)
-		return 1
-	}
-	interactor := usecase.NewInteractor(p)
-
-	var ui UI
-	if c.wcfg.cfg.REPL.ColoredOutput {
-		ui = newColoredREPLUI(DefaultREPLUI)
-	} else {
-		ui = DefaultREPLUI
-	}
-	r := NewREPL(c.wcfg.cfg.REPL, env, ui, interactor)
-	if err := r.Start(); err != nil {
-		c.Error(err)
-		return 1
-	}
-
-	cancel()
-	<-ctx.Done()
-	if c.wcfg.cfg.Meta.AutoUpdate {
-		if err := <-puCh; err != nil {
-			c.Error(err)
-			return 1
-		}
-	}
-	if err := <-cuCh; err != nil {
 		c.Error(err)
 		return 1
 	}
