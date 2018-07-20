@@ -246,6 +246,57 @@ func callServerStreaming(
 		}), nil
 }
 
+type bidiStreamSendWriter struct {
+	*serverStreamingResultWriter
+
+	s        entity.BidiStream
+	inputter port.Inputter
+	rpc      entity.RPC
+}
+
+func (sw *bidiStreamSendWriter) sendRequest(ctx context.Context) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		req, err := sw.inputter.Input(sw.rpc.RequestMessage())
+		if err == io.EOF {
+			sw.s.Close()
+			return
+		}
+		if err != nil {
+			sw.serverStreamingResultWriter.w.CloseWithError(errors.Wrap(err, "failed to input request message"))
+			return
+		}
+
+		if err := sw.s.Send(req); err != nil {
+			sw.serverStreamingResultWriter.w.CloseWithError(errors.Wrap(err, "failed to send server streaming request"))
+			return
+		}
+	}
+}
+
+func newBidiStramingResultWriter(
+	ctx context.Context,
+	s entity.BidiStream,
+	outputPort func(proto.Message) (io.Reader, error),
+	newMessage func() proto.Message,
+	inputter port.Inputter,
+	rpc entity.RPC,
+) *bidiStreamSendWriter {
+	ssw := newServerStramingResultWriter(ctx, s, outputPort, newMessage)
+
+	return &bidiStreamSendWriter{
+		serverStreamingResultWriter: ssw,
+	}
+}
+
 func callBidiStreaming(
 	ctx context.Context,
 	outputPort port.OutputPort,
@@ -259,33 +310,16 @@ func callBidiStreaming(
 		return nil, errors.Wrap(err, "failed to create client stream")
 	}
 
-	w := newServerStramingResultWriter(
+	w := newBidiStramingResultWriter(
 		ctx,
 		st,
 		outputPort.Call,
 		func() proto.Message {
 			return builder.NewMessage(rpc.ResponseMessage())
-		})
-
-	// TODO: resolve goroutine leak
-	go func() {
-		for {
-			req, err := inputter.Input(rpc.RequestMessage())
-			if err == io.EOF {
-				st.Close()
-				return
-			}
-			if err != nil {
-				w.w.CloseWithError(errors.Wrap(err, "failed to input request message"))
-				return
-			}
-
-			if err := st.Send(req); err != nil {
-				w.w.CloseWithError(errors.Wrap(err, "failed to send server streaming request"))
-				return
-			}
-		}
-	}()
+		},
+		inputter,
+		rpc,
+	)
 
 	return w, nil
 }
