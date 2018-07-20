@@ -284,48 +284,61 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 
-	errCh := make(chan error, 1)
-	go checkUpdate(ctx, c.wcfg.cfg, c.cache, errCh)
+	checkUpdateErrCh := make(chan error)
+	go checkUpdate(ctx, c.wcfg.cfg, c.cache, checkUpdateErrCh)
 
-	in := DefaultCLIReader
-	if c.wcfg.file != "" {
-		f, err := os.Open(c.wcfg.file)
+	errCh := make(chan error)
+	go func() {
+		in := DefaultCLIReader
+		if c.wcfg.file != "" {
+			f, err := os.Open(c.wcfg.file)
+			if err != nil {
+				errCh <- err
+				return
+			}
+			defer f.Close()
+			in = f
+		}
+
+		inputter := gateway.NewJSONFileInputter(in)
+		p, err := di.NewCLIInteractorParams(c.wcfg.cfg, env, inputter)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		interactor := usecase.NewInteractor(p)
+
+		res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
+		if err != nil {
+			errCh <- err
+			return
+		}
+
+		b := new(bytes.Buffer)
+		if _, err := b.ReadFrom(res); err != nil {
+			errCh <- err
+			return
+		}
+
+		c.ui.Println(b.String())
+	}()
+
+	select {
+	case err := <-errCh:
 		if err != nil {
 			c.Error(err)
 			return 1
 		}
-		defer f.Close()
-		in = f
+		return 0
+	case err := <-checkUpdateErrCh:
+		if err != nil {
+			c.Error(err)
+			return 1
+		}
+		return 0
+	case <-ctx.Done():
+		return 0
 	}
-
-	inputter := gateway.NewJSONFileInputter(in)
-	p, err := di.NewCLIInteractorParams(c.wcfg.cfg, env, inputter)
-	if err != nil {
-		c.Error(err)
-		return 1
-	}
-	interactor := usecase.NewInteractor(p)
-
-	res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
-	if err != nil {
-		c.Error(err)
-		return 1
-	}
-
-	b := new(bytes.Buffer)
-	if _, err := b.ReadFrom(res); err != nil {
-		c.Error(err)
-		return 1
-	}
-
-	c.ui.Println(b.String())
-
-	cancel()
-	if err := <-errCh; err != nil {
-		c.Error(err)
-		return 1
-	}
-	<-ctx.Done()
 
 	return 0
 }
