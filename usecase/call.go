@@ -110,9 +110,7 @@ func callClientStreaming(
 }
 
 type serverStreamingResultWriter struct {
-	ctx    context.Context
-	cancel func()
-	s      entity.ServerStream
+	s entity.ServerStream
 
 	output func(proto.Message) (io.Reader, error)
 
@@ -120,8 +118,6 @@ type serverStreamingResultWriter struct {
 
 	r *io.PipeReader
 	w *io.PipeWriter
-
-	closeCh chan struct{}
 }
 
 func newServerStramingResultWriter(
@@ -137,25 +133,27 @@ func newServerStramingResultWriter(
 		newMessage: newMessage,
 		r:          r,
 		w:          w,
-		closeCh:    make(chan struct{}),
 	}
-	writer.ctx, writer.cancel = context.WithCancel(ctx)
-	go writer.receiveResponse()
+	go writer.receiveResponse(ctx)
 	return writer
 }
 
-func (w *serverStreamingResultWriter) receiveResponse() {
+func (w *serverStreamingResultWriter) receiveResponse(ctx context.Context) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	sigCh := make(chan os.Signal)
 	signal.Notify(sigCh, os.Interrupt)
 	defer close(sigCh)
 
 	go func() {
-		defer w.cancel()
+		defer cancel()
 		for {
 			select {
 			case <-sigCh:
 				w.w.CloseWithError(io.EOF)
-			case <-w.closeCh:
+			case <-ctx.Done():
+				w.w.CloseWithError(io.EOF)
 			}
 			return
 		}
@@ -163,12 +161,12 @@ func (w *serverStreamingResultWriter) receiveResponse() {
 
 	resCh := make(chan proto.Message)
 	go func() {
-		defer w.cancel()
+		defer cancel()
 		for {
 			select {
 			case <-sigCh:
 				return
-			case <-w.closeCh:
+			case <-ctx.Done():
 				return
 			default:
 				res := w.newMessage()
@@ -185,9 +183,7 @@ func (w *serverStreamingResultWriter) receiveResponse() {
 
 	for {
 		select {
-		case <-w.ctx.Done():
-			return
-		case <-w.closeCh:
+		case <-ctx.Done():
 			return
 		case r, ok := <-resCh:
 			if !ok {
@@ -217,11 +213,7 @@ func (w *serverStreamingResultWriter) receiveResponse() {
 }
 
 func (w *serverStreamingResultWriter) Read(b []byte) (int, error) {
-	n, err := w.r.Read(b)
-	if err != nil {
-		w.cancel()
-	}
-	return n, err
+	return w.r.Read(b)
 }
 
 func callServerStreaming(
