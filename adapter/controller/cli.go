@@ -62,23 +62,26 @@ Options:
 	--file FILE, -f FILE	%s
 	--path PATH		%s
 	--header HEADER		%s
+	--reflection, -r	%s
+
 	--help, -h		%s
 	--version, -v		%s
 `
 
 func (c *CLI) parseFlags(args []string) *options {
 	const (
-		edit    = "edit config file using by $EDITOR"
-		repl    = "start with REPL mode"
-		silent  = "hide splash"
-		host    = "gRPC server host"
-		port    = "gRPC server port"
-		pkg     = "default package"
-		service = "default service"
-		call    = "call specified RPC by CLI mode"
-		file    = "the script file which will be executed by (used only CLI mode)"
-		path    = "proto file paths"
-		header  = "default headers which set to each requests (example: foo=bar)"
+		edit       = "edit config file using by $EDITOR"
+		repl       = "start with REPL mode"
+		silent     = "hide splash"
+		host       = "gRPC server host"
+		port       = "gRPC server port"
+		pkg        = "default package"
+		service    = "default service"
+		call       = "call specified RPC by CLI mode"
+		file       = "the script file which will be executed by (used only CLI mode)"
+		path       = "proto file paths"
+		header     = "default headers which set to each requests (example: foo=bar)"
+		reflection = "use gRPC reflection"
 
 		version = "display version and exit"
 		help    = "display this help and exit"
@@ -102,6 +105,7 @@ func (c *CLI) parseFlags(args []string) *options {
 			file,
 			path,
 			header,
+			reflection,
 			version,
 			help,
 		)
@@ -124,6 +128,8 @@ func (c *CLI) parseFlags(args []string) *options {
 	f.StringVar(&opts.file, "f", "", file)
 	f.Var(&opts.path, "path", path)
 	f.Var(&opts.header, "header", header)
+	f.BoolVar(&opts.reflection, "reflection", false, reflection)
+	f.BoolVar(&opts.reflection, "r", false, reflection)
 	f.BoolVar(&opts.version, "version", false, version)
 	f.BoolVar(&opts.version, "v", false, version)
 
@@ -140,16 +146,17 @@ type options struct {
 	editConfig bool
 
 	// config options
-	repl    bool
-	silent  bool
-	host    string
-	port    string
-	pkg     string
-	service string
-	call    string
-	file    string
-	path    optStrSlice
-	header  optStrSlice
+	repl       bool
+	silent     bool
+	host       string
+	port       string
+	pkg        string
+	service    string
+	call       string
+	file       string
+	path       optStrSlice
+	header     optStrSlice
+	reflection bool
 
 	// meta options
 	version bool
@@ -539,6 +546,10 @@ func mergeConfig(cfg *config.Config, opt *options, proto []string) (*config.Conf
 
 	if opt.silent {
 		mc.REPL.ShowSplashText = false
+	}
+
+	if opt.reflection {
+		mc.Server.Reflection = true
 	}
 
 	config.SetupConfig(mc)
