@@ -28,3 +28,8 @@ type BidiStream interface {
 	Receive(res proto.Message) error
 	Close() error
 }
+
+type GRPCReflectionClient interface {
+	Enabled() bool
+	ListServices() []Service
+}
