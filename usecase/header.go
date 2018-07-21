@@ -16,9 +16,7 @@ func Header(
 		if h.NeedToRemove {
 			env.RemoveHeader(h.Key)
 		} else {
-			if err := env.AddHeader(h); err != nil {
-				return nil, err
-			}
+			env.AddHeader(h)
 		}
 	}
 	return outputPort.Header()

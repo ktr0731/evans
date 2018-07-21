@@ -26,9 +26,9 @@ func NewServer(t *testing.T) *Server {
 }
 
 func (s *Server) Start() *Server {
+	l, err := net.Listen("tcp", ":50051")
+	require.NoError(s.t, err)
 	go func() {
-		l, err := net.Listen("tcp", ":50051")
-		require.NoError(s.t, err)
 		err = s.s.Serve(l)
 		require.NoError(s.t, err)
 	}()

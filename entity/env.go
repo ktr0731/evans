@@ -1,8 +1,9 @@
 package entity
 
 import (
-	"fmt"
+	"sort"
 	"strings"
+	"sync"
 
 	"github.com/ktr0731/evans/config"
 	"github.com/pkg/errors"
@@ -28,7 +29,7 @@ type Environment interface {
 	RPC(name string) (RPC, error)
 
 	Headers() []*Header
-	AddHeader(header *Header) error
+	AddHeader(header *Header)
 	RemoveHeader(key string)
 
 	UsePackage(name string) error
@@ -50,7 +51,7 @@ type state struct {
 }
 
 type option struct {
-	headers []*Header
+	headers sync.Map
 }
 
 type Env struct {
@@ -61,24 +62,20 @@ type Env struct {
 	cache  cache
 }
 
-func NewEnv(pkgs []*Package, config *config.Config) (*Env, error) {
+func NewEnv(pkgs []*Package, config *config.Config) *Env {
 	env := &Env{
 		pkgs:   pkgs,
 		config: config.Env,
 		cache: cache{
 			pkg: map[string]*Package{},
 		},
-		option: option{
-			headers: make([]*Header, 0, len(config.Request.Header)),
-		},
 	}
 
 	for _, h := range config.Request.Header {
-		if err := env.AddHeader(&Header{Key: h.Key, Val: h.Val}); err != nil {
-			return nil, err
-		}
+		env.AddHeader(&Header{Key: h.Key, Val: h.Val})
 	}
-	return env, nil
+
+	return env
 }
 
 func (e *Env) HasCurrentPackage() bool {
@@ -150,44 +147,23 @@ func (e *Env) Message(name string) (Message, error) {
 }
 
 func (e *Env) Headers() (headers []*Header) {
-	headers = make([]*Header, 0, len(e.option.headers))
-	for _, header := range e.option.headers {
-		headers = append(headers, &Header{Key: header.Key, Val: header.Val})
-	}
-
-	return headers
-}
-
-func (e *Env) AddHeader(h *Header) error {
-	_, header := e.findHeader(h.Key)
-	if header != nil {
-		return fmt.Errorf("already registered key: %s", h.Key)
-	}
-	e.option.headers = append(e.option.headers, h)
-	return nil
-}
-
-func (e *Env) RemoveHeader(key string) {
-	i, h := e.findHeader(key)
-	// not found
-	if h == nil {
-		return
-	}
-	if len(e.option.headers) == i+1 {
-		e.option.headers = e.option.headers[:i]
-	} else {
-		e.option.headers = append(e.option.headers[:i], e.option.headers[i+1:]...)
-	}
+	e.option.headers.Range(func(k, v interface{}) bool {
+		h := v.(*Header)
+		headers = append(headers, &Header{Key: h.Key, Val: h.Val})
+		return true
+	})
+	sort.Slice(headers, func(i, j int) bool {
+		return headers[i].Key < headers[j].Key
+	})
 	return
 }
 
-func (e *Env) findHeader(key string) (int, *Header) {
-	for i, pair := range e.option.headers {
-		if pair.Key == key {
-			return i, pair
-		}
-	}
-	return 0, nil
+func (e *Env) AddHeader(h *Header) {
+	e.option.headers.Store(h.Key, h)
+}
+
+func (e *Env) RemoveHeader(key string) {
+	e.option.headers.Delete(key)
 }
 
 func (e *Env) RPC(name string) (RPC, error) {

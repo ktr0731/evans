@@ -1,25 +1,26 @@
 package usecase
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type headerEnv struct {
 	entity.Environment
-	err error
+
+	removeCalled bool
 }
 
-func (e *headerEnv) AddHeader(_ *entity.Header) error {
-	return e.err
-}
+func (e *headerEnv) AddHeader(_ *entity.Header) {}
 
-func (e *headerEnv) RemoveHeader(_ string) {}
+func (e *headerEnv) RemoveHeader(_ string) {
+	e.removeCalled = true
+}
 
 func TestHeader(t *testing.T) {
 	params := &port.HeaderParams{
@@ -33,9 +34,7 @@ func TestHeader(t *testing.T) {
 
 	r, err := Header(params, presenter, env)
 	require.NoError(t, err)
-	require.Equal(t, r, nil)
+	assert.Equal(t, r, nil)
 
-	env.err = errors.New("an error")
-	r, err = Header(params, presenter, env)
-	require.Error(t, err)
+	assert.True(t, env.removeCalled)
 }
