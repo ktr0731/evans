@@ -306,7 +306,7 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 	}
 
 	inputter := gateway.NewJSONFileInputter(in)
-	p, err := di.NewCLIInteractorParams(c.wcfg.cfg, env, inputter)
+	p, err := di.NewCLIInteractorParams(c.wcfg.cfg)
 	if err != nil {
 		c.Error(err)
 		return 1

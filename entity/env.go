@@ -158,7 +158,7 @@ func (e *Env) Headers() (headers []*Header) {
 	return headers
 }
 
-func (e *Env) AddHeader(h *Header) error {
+func (e *Env) AddHeader(h *Header) {
 	_, header := e.findHeader(h.Key)
 	if header != nil {
 		return fmt.Errorf("already registered key: %s", h.Key)
