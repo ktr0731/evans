@@ -44,13 +44,13 @@ func TestCLI(t *testing.T) {
 			args string
 			code int
 		}{
-			// {args: "", code: 1},
+			{args: "", code: 1},
 			{args: "testdata/helloworld.proto", code: 1},
-			// {args: "--package helloworld testdata/helloworld.proto", code: 1},
-			// {args: "--package helloworld --service Greeter testdata/helloworld.proto", code: 1},
-			// {args: "--package helloworld --call SayHello testdata/helloworld.proto", code: 1},
-			// {args: "--package helloworld --service Greeter --call SayHello", code: 1},
-			// {args: "--package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
+			{args: "--package helloworld testdata/helloworld.proto", code: 1},
+			{args: "--package helloworld --service Greeter testdata/helloworld.proto", code: 1},
+			{args: "--package helloworld --call SayHello testdata/helloworld.proto", code: 1},
+			{args: "--package helloworld --service Greeter --call SayHello", code: 1},
+			{args: "--package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
 		}
 
 		for _, c := range cases {
