@@ -276,7 +276,7 @@ func (c *CLI) runAsCLI() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 
-	checkUpdateErrCh := make(chan error)
+	checkUpdateErrCh := make(chan error, 1)
 	go func() {
 		checkUpdateErrCh <- checkUpdate(ctx, c.wcfg.cfg, c.cache)
 	}()
@@ -350,12 +350,12 @@ func (c *CLI) runAsREPL() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	checkUpdateErrCh := make(chan error)
+	checkUpdateErrCh := make(chan error, 1)
 	go func() {
 		checkUpdateErrCh <- checkUpdate(ctx, c.wcfg.cfg, c.cache)
 	}()
 
-	processUpdateErrCh := make(chan error)
+	processUpdateErrCh := make(chan error, 1)
 	errCh := make(chan error)
 	go func() {
 		defer cancel()

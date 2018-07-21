@@ -13,7 +13,7 @@ func (e *executor) execute(l string) {
 	if l == "quit" || l == "exit" {
 		e.repl.exitCh <- struct{}{}
 
-		// do nothing, block execute method until Evans is finished Evans.
+		// do nothing, block execute method until Evans will be finished.
 		//
 		// if no sleep, c-bata/go-prompt will call Setup method within Run method.
 		// then, tty's config is changed to raw mode.

@@ -1,11 +1,10 @@
 package helper
 
-import srv "github.com/ktr0731/evans/tests/helper/server"
-
 import (
 	"net"
 	"testing"
 
+	srv "github.com/ktr0731/evans/tests/helper/server"
 	"github.com/ktr0731/evans/tests/helper/server/helloworld"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
