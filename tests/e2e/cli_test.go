@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/controller"
+	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
@@ -28,6 +29,8 @@ func flatten(s string) string {
 
 func TestCLI(t *testing.T) {
 	in := strings.NewReader(`{ "name": "maho" }`)
+
+	cleanup := di.Reset
 
 	controller.DefaultCLIReader = in
 	defer func() {
@@ -52,14 +55,17 @@ func TestCLI(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
+				defer cleanup()
+
 				out := new(bytes.Buffer)
-				ui := controller.NewUI(in, out, ioutil.Discard)
+				errOut := new(bytes.Buffer)
+				ui := controller.NewUI(in, out, errOut)
 
 				code := newCLI(ui).Run(strings.Split(c.args, " "))
-				require.Equal(t, c.code, code)
+				require.Equal(t, c.code, code, errOut.String())
 
 				if c.code == 0 {
-					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
+					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()), errOut.String())
 				}
 			})
 		}
@@ -80,15 +86,18 @@ func TestCLI(t *testing.T) {
 		}
 
 		for _, c := range cases {
-			out := new(bytes.Buffer)
-			ui := controller.NewUI(in, out, ioutil.Discard)
+			t.Run(c.args, func(t *testing.T) {
+				defer cleanup()
+				out := new(bytes.Buffer)
+				ui := controller.NewUI(in, out, ioutil.Discard)
 
-			code := newCLI(ui).Run(strings.Split(c.args, " "))
-			require.Equal(t, c.code, code)
+				code := newCLI(ui).Run(strings.Split(c.args, " "))
+				require.Equal(t, c.code, code)
 
-			if c.code == 0 {
-				assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
-			}
+				if c.code == 0 {
+					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
+				}
+			})
 		}
 	})
 }

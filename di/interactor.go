@@ -129,11 +129,11 @@ func initJSONCLIPresenter() error {
 
 var (
 	jsonFileInputter     *gateway.JSONFileInputter
-	jsonFIleInputterOnce sync.Once
+	jsonFileInputterOnce sync.Once
 )
 
 func initJSONFileInputter(in io.Reader) error {
-	jsonFIleInputterOnce.Do(func() {
+	jsonFileInputterOnce.Do(func() {
 		jsonFileInputter = gateway.NewJSONFileInputter(in)
 	})
 	return nil

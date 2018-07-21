@@ -29,7 +29,7 @@ unit-test: deadcode-test
 
 .PHONY: e2e-test
 e2e-test: deadcode-test
-	go test -race ./tests/...
+	go test -tags e2e -race ./tests/...
 
 # to find uninitialized dependencies
 .PHONY: deadcode-test
