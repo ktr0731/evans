@@ -9,7 +9,7 @@ import (
 
 type completer struct {
 	cmds map[string]Commander
-	env  *entity.Env
+	env  entity.Environment
 }
 
 func (c *completer) complete(d prompt.Document) []prompt.Suggest {

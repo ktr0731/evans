@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/controller"
+	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
@@ -28,6 +29,8 @@ func flatten(s string) string {
 
 func TestCLI(t *testing.T) {
 	in := strings.NewReader(`{ "name": "maho" }`)
+
+	cleanup := di.Reset
 
 	controller.DefaultCLIReader = in
 	defer func() {
@@ -51,42 +54,50 @@ func TestCLI(t *testing.T) {
 		}
 
 		for _, c := range cases {
-			out := new(bytes.Buffer)
-			ui := controller.NewUI(in, out, ioutil.Discard)
+			t.Run(c.args, func(t *testing.T) {
+				defer cleanup()
 
-			code := newCLI(ui).Run(strings.Split(c.args, " "))
-			require.Equal(t, c.code, code)
+				out := new(bytes.Buffer)
+				errOut := new(bytes.Buffer)
+				ui := controller.NewUI(in, out, errOut)
 
-			if c.code == 0 {
-				assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
-			}
+				code := newCLI(ui).Run(strings.Split(c.args, " "))
+				require.Equal(t, c.code, code, errOut.String())
+
+				if c.code == 0 {
+					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()), errOut.String())
+				}
+			})
 		}
 	})
 
-	// t.Run("from file", func(t *testing.T) {
-	// 	cases := []struct {
-	// 		args string
-	// 		code int
-	// 	}{
-	// 		{args: "--file testdata/in.json", code: 1},
-	// 		{args: "--file testdata/in.json testdata/helloworld.proto", code: 1},
-	// 		{args: "--file testdata/in.json --package helloworld testdata/helloworld.proto", code: 1},
-	// 		{args: "--file testdata/in.json --package helloworld --service Greeter testdata/helloworld.proto", code: 1},
-	// 		{args: "--file testdata/in.json --package helloworld --call SayHello testdata/helloworld.proto", code: 1},
-	// 		{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello", code: 1},
-	// 		{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
-	// 	}
-	//
-	// 	for _, c := range cases {
-	// 		out := new(bytes.Buffer)
-	// 		ui := controller.NewUI(in, out, ioutil.Discard)
-	//
-	// 		code := newCLI(ui).Run(strings.Split(c.args, " "))
-	// 		require.Equal(t, c.code, code)
-	//
-	// 		if c.code == 0 {
-	// 			assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
-	// 		}
-	// 	}
-	// })
+	t.Run("from file", func(t *testing.T) {
+		cases := []struct {
+			args string
+			code int
+		}{
+			{args: "--file testdata/in.json", code: 1},
+			{args: "--file testdata/in.json testdata/helloworld.proto", code: 1},
+			{args: "--file testdata/in.json --package helloworld testdata/helloworld.proto", code: 1},
+			{args: "--file testdata/in.json --package helloworld --service Greeter testdata/helloworld.proto", code: 1},
+			{args: "--file testdata/in.json --package helloworld --call SayHello testdata/helloworld.proto", code: 1},
+			{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello", code: 1},
+			{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
+		}
+
+		for _, c := range cases {
+			t.Run(c.args, func(t *testing.T) {
+				defer cleanup()
+				out := new(bytes.Buffer)
+				ui := controller.NewUI(in, out, ioutil.Discard)
+
+				code := newCLI(ui).Run(strings.Split(c.args, " "))
+				require.Equal(t, c.code, code)
+
+				if c.code == 0 {
+					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
+				}
+			})
+		}
+	})
 }
