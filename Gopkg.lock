@@ -131,8 +131,8 @@
     "brew",
     "github"
   ]
-  revision = "cbfcfd0ace8d22119e483a3b5081bd3d01f10969"
-  version = "0.1.2"
+  revision = "9baaa64c414e3a13a61d23bb5e8408655ceaacb7"
+  version = "0.1.3"
 
 [[projects]]
   branch = "master"

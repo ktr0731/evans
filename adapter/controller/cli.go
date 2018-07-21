@@ -318,11 +318,10 @@ func (c *CLI) runAsCLI() int {
 		c.ui.Println(b.String())
 	}()
 
-	var err error
 	select {
 	case <-ctx.Done():
 		return 0
-	case err = <-errCh:
+	case err := <-errCh:
 		// first, cancel
 		cancel()
 
