@@ -28,7 +28,7 @@ type Environment interface {
 	RPC(name string) (RPC, error)
 
 	Headers() []*Header
-	AddHeader(header *Header) error
+	AddHeader(header *Header)
 	RemoveHeader(key string)
 
 	UsePackage(name string) error
@@ -61,7 +61,7 @@ type Env struct {
 	cache  cache
 }
 
-func NewEnv(pkgs []*Package, config *config.Config) (*Env, error) {
+func NewEnv(pkgs []*Package, config *config.Config) *Env {
 	env := &Env{
 		pkgs:   pkgs,
 		config: config.Env,
@@ -73,7 +73,8 @@ func NewEnv(pkgs []*Package, config *config.Config) (*Env, error) {
 	for _, h := range config.Request.Header {
 		env.AddHeader(&Header{Key: h.Key, Val: h.Val})
 	}
-	return env, nil
+
+	return env
 }
 
 func (e *Env) HasCurrentPackage() bool {
