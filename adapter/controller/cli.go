@@ -14,7 +14,6 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
-	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
@@ -259,20 +258,17 @@ func (c *CLI) Run(args []string) int {
 
 	c.init(opts, proto)
 
-	env, err := setupEnv(c.wcfg.cfg)
-	if err == ErrProtoFileRequired {
+	if len(c.wcfg.cfg.Default.ProtoFile) == 0 {
 		c.Usage()
-	}
-	if err != nil {
-		c.Error(err)
+		c.Error(ErrProtoFileRequired)
 		return 1
 	}
 
 	var status int
 	if isCommandLineMode(c.wcfg) {
-		status = c.runAsCLI(env)
+		status = c.runAsCLI()
 	} else {
-		status = c.runAsREPL(env)
+		status = c.runAsREPL()
 	}
 
 	return status
@@ -280,7 +276,7 @@ func (c *CLI) Run(args []string) int {
 
 var DefaultCLIReader io.Reader = os.Stdin
 
-func (c *CLI) runAsCLI(env *entity.Env) int {
+func (c *CLI) runAsCLI() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 
@@ -298,8 +294,7 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 		in = f
 	}
 
-	inputter := gateway.NewJSONFileInputter(in)
-	p, err := di.NewCLIInteractorParams(c.wcfg.cfg, env, inputter)
+	p, err := di.NewCLIInteractorParams(c.wcfg.cfg, in)
 	if err != nil {
 		c.Error(err)
 		return 1
@@ -333,7 +328,7 @@ func (c *CLI) runAsCLI(env *entity.Env) int {
 // DefaultREPLUI is used for e2e testing
 var DefaultREPLUI = newREPLUI("")
 
-func (c *CLI) runAsREPL(env *entity.Env) int {
+func (c *CLI) runAsREPL() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -354,7 +349,7 @@ func (c *CLI) runAsREPL(env *entity.Env) int {
 	cuCh := make(chan error, 1)
 	go checkUpdate(ctx, c.wcfg.cfg, c.cache, cuCh)
 
-	p, err := di.NewREPLInteractorParams(c.wcfg.cfg, env)
+	p, err := di.NewREPLInteractorParams(c.wcfg.cfg, DefaultCLIReader)
 	if err != nil {
 		c.Error(err)
 		return 1
@@ -367,6 +362,7 @@ func (c *CLI) runAsREPL(env *entity.Env) int {
 	} else {
 		ui = DefaultREPLUI
 	}
+	// TODO:
 	r := NewREPL(c.wcfg.cfg.REPL, env, ui, interactor)
 	if err := r.Start(); err != nil {
 		c.Error(err)
