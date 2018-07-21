@@ -1,7 +1,6 @@
 package di
 
 import (
-	"errors"
 	"io"
 	"path/filepath"
 	"sync"
@@ -14,6 +13,7 @@ import (
 	"github.com/ktr0731/evans/usecase"
 	multierror "github.com/ktr0731/go-multierror"
 	shellwords "github.com/mattn/go-shellwords"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -37,9 +37,32 @@ func initEnv(cfg *config.Config) (rerr error) {
 		}
 
 		env = entity.NewEnv(desc, cfg)
+
+		if pkg := cfg.Default.Package; pkg != "" {
+			if err := env.UsePackage(pkg); err != nil {
+				rerr = errors.Wrapf(err, "failed to set package to env as a default package: %s", pkg)
+				return
+			}
+		}
+
+		if svc := cfg.Default.Service; svc != "" {
+			if err := env.UseService(svc); err != nil {
+				rerr = errors.Wrapf(err, "failed to set service to env as a default service: %s", svc)
+				return
+			}
+		}
+
 	})
 	return
 }
+
+func Env(cfg *config.Config) (entity.Environment, error) {
+	if err := initEnv(cfg); err != nil {
+		return nil, err
+	}
+	return env, nil
+}
+
 func resolveProtoPaths(cfg *config.Config) ([]string, error) {
 	paths := make([]string, 0, len(cfg.Default.ProtoPath))
 	encountered := map[string]bool{}
@@ -117,6 +140,20 @@ func initJSONFileInputter(in io.Reader) error {
 }
 
 var (
+	promptInputter     *gateway.Prompt
+	promptInputterOnce sync.Once
+)
+
+func initPromptInputter(cfg *config.Config) (err error) {
+	promptInputterOnce.Do(func() {
+		var e entity.Environment
+		e, err = Env(cfg)
+		promptInputter = gateway.NewPrompt(cfg, e)
+	})
+	return
+}
+
+var (
 	gRPCClient     *gateway.GRPCClient
 	gRPCClientOnce sync.Once
 )
@@ -135,13 +172,11 @@ var (
 )
 
 func initDynamicBuilder() error {
-	dynamicBuilder = gateway.NewDynamicBuilder()
+	dynamicBuilderOnce.Do(func() {
+		dynamicBuilder = gateway.NewDynamicBuilder()
+	})
 	return nil
 }
-
-var (
-	initOnce sync.Once
-)
 
 type initializer struct {
 	f []func() error
@@ -180,6 +215,7 @@ func initDependencies(cfg *config.Config, in io.Reader) error {
 		initer = &initializer{}
 		initer.register(
 			func() error { return initJSONFileInputter(in) },
+			func() error { return initPromptInputter(cfg) },
 			func() error { return initGRPCClient(cfg) },
 			func() error { return initEnv(cfg) },
 			initJSONCLIPresenter,
@@ -209,7 +245,7 @@ func NewREPLInteractorParams(cfg *config.Config, in io.Reader) (param *usecase.I
 	return &usecase.InteractorParams{
 		Env:            env,
 		OutputPort:     jsonCLIPresenter,
-		InputterPort:   jsonFileInputter,
+		InputterPort:   promptInputter,
 		GRPCClient:     gRPCClient,
 		DynamicBuilder: dynamicBuilder,
 	}, nil
