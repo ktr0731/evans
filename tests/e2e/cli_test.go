@@ -51,15 +51,17 @@ func TestCLI(t *testing.T) {
 		}
 
 		for _, c := range cases {
-			out := new(bytes.Buffer)
-			ui := controller.NewUI(in, out, ioutil.Discard)
+			t.Run(c.args, func(t *testing.T) {
+				out := new(bytes.Buffer)
+				ui := controller.NewUI(in, out, ioutil.Discard)
 
-			code := newCLI(ui).Run(strings.Split(c.args, " "))
-			require.Equal(t, c.code, code)
+				code := newCLI(ui).Run(strings.Split(c.args, " "))
+				require.Equal(t, c.code, code)
 
-			if c.code == 0 {
-				assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
-			}
+				if c.code == 0 {
+					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
+				}
+			})
 		}
 	})
 
