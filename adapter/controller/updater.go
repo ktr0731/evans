@@ -21,7 +21,7 @@ import (
 )
 
 func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache) error {
-	errCh := make(chan error)
+	errCh := make(chan error, 1)
 	go func() {
 		var m updater.Means
 		var err error

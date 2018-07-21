@@ -323,15 +323,20 @@ func (c *CLI) runAsCLI() int {
 	case <-ctx.Done():
 		return 0
 	case err = <-errCh:
-		if err != nil {
-			c.Error(err)
-			return 1
-		}
-
+		// first, cancel
 		cancel()
 
-		if err := <-checkUpdateErrCh; err != nil {
+		// receive the REPL result
+		if err != nil {
 			c.Error(err)
+		}
+
+		cuErr := <-checkUpdateErrCh
+		if cuErr != nil {
+			c.Error(cuErr)
+		}
+
+		if err != nil || cuErr != nil {
 			return 1
 		}
 	}
