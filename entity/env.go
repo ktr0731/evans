@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"sort"
 	"strings"
 	"sync"
 
@@ -150,6 +151,9 @@ func (e *Env) Headers() (headers []*Header) {
 		h := v.(*Header)
 		headers = append(headers, &Header{Key: h.Key, Val: h.Val})
 		return true
+	})
+	sort.Slice(headers, func(i, j int) bool {
+		return headers[i].Key < headers[j].Key
 	})
 	return
 }

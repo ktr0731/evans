@@ -14,8 +14,7 @@ func TestNewEnv(t *testing.T) {
 			Header: []config.Header{{Key: "foo", Val: "bar"}},
 		},
 	}
-	env, err := NewEnv(nil, cfg)
-	require.NoError(t, err)
+	env := NewEnv(nil, cfg)
 	h := env.Headers()
 	require.Len(t, h, 1)
 	require.Equal(t, h[0].Key, "foo")
@@ -54,9 +53,7 @@ func TestEnv(t *testing.T) {
 				},
 			}
 		}
-		env, err := NewEnv(pkgs, cfg)
-		require.NoError(t, err)
-		return env
+		return NewEnv(pkgs, cfg)
 	}
 
 	env := setup(t, nil)
@@ -173,22 +170,28 @@ func TestEnv(t *testing.T) {
 		headers := []struct {
 			k, v string
 		}{
+			{"hazuki", "katou"},
 			{"kumiko", "oumae"},
 			{"reina", "kousaka"},
 			{"sapphire", "kawashima"},
-			{"hazuki", "katou"},
 		}
 		for _, h := range headers {
 			env.AddHeader(&Header{h.k, h.v, false})
 		}
 		assert.Len(t, env.Headers(), 4)
 
+		// Headers must be return slice which ordered by key with ASC
+		assert.Equal(t, env.Headers()[0].Key, "hazuki")
+		assert.Equal(t, env.Headers()[1].Key, "kumiko")
+		assert.Equal(t, env.Headers()[2].Key, "reina")
+		assert.Equal(t, env.Headers()[3].Key, "sapphire")
+
 		env.RemoveHeader("foo")
 		assert.Len(t, env.Headers(), 4)
 
 		env.RemoveHeader("sapphire")
 		assert.Len(t, env.Headers(), 3)
-		assert.Equal(t, env.Headers()[2].Key, "hazuki")
+		assert.Equal(t, env.Headers()[2].Key, "reina")
 
 		env.RemoveHeader("hazuki")
 		assert.Len(t, env.Headers(), 2)
