@@ -28,7 +28,7 @@ var (
 type REPL struct {
 	ui     UI
 	config *config.REPL
-	env    *entity.Env
+	env    entity.Environment
 	prompt gateway.Prompter
 	cmds   map[string]Commander
 
@@ -37,7 +37,7 @@ type REPL struct {
 	exitCh chan struct{}
 }
 
-func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPort) *REPL {
+func NewREPL(config *config.REPL, env entity.Environment, ui UI, inputPort port.InputPort) *REPL {
 	cmds := map[string]Commander{
 		"call":    &callCommand{inputPort},
 		"desc":    &descCommand{inputPort},
@@ -52,7 +52,7 @@ func NewREPL(config *config.REPL, env *entity.Env, ui UI, inputPort port.InputPo
 		config: config,
 		env:    env,
 		cmds:   cmds,
-		exitCh: make(chan struct{}),
+		exitCh: make(chan struct{}, 2), // for goroutines which manage quit command and CTRL+D
 	}
 
 	executor := &executor{repl: repl}

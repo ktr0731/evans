@@ -107,6 +107,12 @@ func init() {
 }
 
 func SetupConfig(c *Config) {
+	if len(c.Default.ProtoFile) == 1 && c.Default.ProtoFile[0] == "" {
+		c.Default.ProtoFile = []string{}
+	}
+	if len(c.Default.ProtoPath) == 1 && c.Default.ProtoPath[0] == "" {
+		c.Default.ProtoPath = []string{}
+	}
 	c.REPL.Server = c.Server
 	c.Env.Server = c.Server
 }

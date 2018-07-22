@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ktr0731/evans/di"
 	cmd "github.com/ktr0731/evans/tests/e2e/repl"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ func TestREPL(t *testing.T) {
 			code   int  // exit code, 1 when precondition failed
 			hasErr bool // error was occurred in REPL, false if precondition failed
 		}{
-			{args: "", code: 1},
+			{args: "", code: 1}, // cannot launch REPL case
 			{args: "--package helloworld", code: 1},
 			{args: "--service Greeter", code: 1},
 			{args: "testdata/helloworld.proto", hasErr: true},
@@ -34,9 +35,14 @@ func TestREPL(t *testing.T) {
 
 		rh := newREPLHelper([]string{"--silent", "--repl"})
 
+		cleanup := func() {
+			rh.reset()
+			di.Reset()
+		}
+
 		for i, c := range cases {
 			t.Run(fmt.Sprintf("#%d", i), func(t *testing.T) {
-				defer rh.reset()
+				defer cleanup()
 
 				out, eout := new(bytes.Buffer), new(bytes.Buffer)
 				rh.w = out
@@ -47,14 +53,14 @@ func TestREPL(t *testing.T) {
 				)
 
 				code := rh.run(strings.Split(c.args, " "))
-				assert.Equal(t, c.code, code)
+				assert.Equal(t, c.code, code, eout.String())
 
 				if c.hasErr {
-					assert.NotEmpty(t, eout.String())
+					assert.NotEmpty(t, eout.String(), eout.String())
 				}
 				// normal case
 				if c.code == 0 && !c.hasErr {
-					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
+					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()), eout.String())
 				}
 			})
 		}
