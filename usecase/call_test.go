@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"io"
+	"sync"
 	"testing"
 	"time"
 
@@ -32,10 +33,13 @@ func (e *callEnv) Headers() []*entity.Header {
 }
 
 type callInputter struct {
+	mu  sync.Mutex
 	err error
 }
 
 func (i *callInputter) Input(_ entity.Message) (proto.Message, error) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
 	return nil, i.err
 }
 

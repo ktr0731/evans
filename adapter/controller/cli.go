@@ -276,48 +276,69 @@ func (c *CLI) runAsCLI() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 
-	errCh := make(chan error, 1)
-	go checkUpdate(ctx, c.wcfg.cfg, c.cache, errCh)
+	checkUpdateErrCh := make(chan error, 1)
+	go func() {
+		checkUpdateErrCh <- checkUpdate(ctx, c.wcfg.cfg, c.cache)
+	}()
 
-	in := DefaultCLIReader
-	if c.wcfg.file != "" {
-		f, err := os.Open(c.wcfg.file)
+	errCh := make(chan error)
+	go func() {
+		defer cancel()
+
+		in := DefaultCLIReader
+		if c.wcfg.file != "" {
+			f, err := os.Open(c.wcfg.file)
+			if err != nil {
+				errCh <- err
+				return
+			}
+			defer f.Close()
+			in = f
+		}
+
+		p, err := di.NewCLIInteractorParams(c.wcfg.cfg, in)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		interactor := usecase.NewInteractor(p)
+
+		res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
+		if err != nil {
+			errCh <- err
+			return
+		}
+
+		b := new(bytes.Buffer)
+		if _, err := b.ReadFrom(res); err != nil {
+			errCh <- err
+			return
+		}
+
+		c.ui.Println(b.String())
+	}()
+
+	select {
+	case <-ctx.Done():
+		return 0
+	case err := <-errCh:
+		// first, cancel
+		cancel()
+
+		// receive the REPL result
 		if err != nil {
 			c.Error(err)
+		}
+
+		cuErr := <-checkUpdateErrCh
+		if cuErr != nil {
+			c.Error(cuErr)
+		}
+
+		if err != nil || cuErr != nil {
 			return 1
 		}
-		defer f.Close()
-		in = f
 	}
-
-	p, err := di.NewCLIInteractorParams(c.wcfg.cfg, in)
-	if err != nil {
-		c.Error(err)
-		return 1
-	}
-	interactor := usecase.NewInteractor(p)
-
-	res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
-	if err != nil {
-		c.Error(err)
-		return 1
-	}
-
-	b := new(bytes.Buffer)
-	if _, err := b.ReadFrom(res); err != nil {
-		c.Error(err)
-		return 1
-	}
-
-	c.ui.Println(b.String())
-
-	cancel()
-	if err := <-errCh; err != nil {
-		c.Error(err)
-		return 1
-	}
-	<-ctx.Done()
-
 	return 0
 }
 
@@ -328,60 +349,76 @@ func (c *CLI) runAsREPL() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// if AutoUpdate enabled, do update asynchronously
-	puCh := make(chan error, 1)
-	if c.wcfg.cfg.Meta.AutoUpdate {
-		go func() {
-			puCh <- c.processUpdate(ctx)
-		}()
-	} else {
-		err := c.processUpdate(ctx)
+	checkUpdateErrCh := make(chan error, 1)
+	go func() {
+		checkUpdateErrCh <- checkUpdate(ctx, c.wcfg.cfg, c.cache)
+	}()
+
+	processUpdateErrCh := make(chan error, 1)
+	errCh := make(chan error)
+	go func() {
+		defer cancel()
+
+		// if AutoUpdate enabled, do update asynchronously
+		if c.wcfg.cfg.Meta.AutoUpdate {
+			go func() {
+				processUpdateErrCh <- c.processUpdate(ctx)
+			}()
+		} else {
+			err := c.processUpdate(ctx)
+			if err != nil {
+				errCh <- err
+				return
+			}
+		}
+
+		p, err := di.NewREPLInteractorParams(c.wcfg.cfg, DefaultCLIReader)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		interactor := usecase.NewInteractor(p)
+
+		var ui UI
+		if c.wcfg.cfg.REPL.ColoredOutput {
+			ui = newColoredREPLUI(DefaultREPLUI)
+		} else {
+			ui = DefaultREPLUI
+		}
+
+		env, err := di.Env(c.wcfg.cfg)
+		if err != nil {
+			errCh <- err
+			return
+		}
+
+		r := NewREPL(c.wcfg.cfg.REPL, env, ui, interactor)
+		if err := r.Start(); err != nil {
+			errCh <- err
+			return
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return 0
+	case err := <-errCh:
 		if err != nil {
 			c.Error(err)
 			return 1
 		}
-	}
 
-	cuCh := make(chan error, 1)
-	go checkUpdate(ctx, c.wcfg.cfg, c.cache, cuCh)
+		cancel()
 
-	p, err := di.NewREPLInteractorParams(c.wcfg.cfg, DefaultCLIReader)
-	if err != nil {
-		c.Error(err)
-		return 1
-	}
-	interactor := usecase.NewInteractor(p)
+		select {
+		case err = <-processUpdateErrCh:
+		case err = <-checkUpdateErrCh:
+		}
 
-	var ui UI
-	if c.wcfg.cfg.REPL.ColoredOutput {
-		ui = newColoredREPLUI(DefaultREPLUI)
-	} else {
-		ui = DefaultREPLUI
-	}
-
-	env, err := di.Env(c.wcfg.cfg)
-	if err != nil {
-		c.Error(err)
-		return 1
-	}
-
-	r := NewREPL(c.wcfg.cfg.REPL, env, ui, interactor)
-	if err := r.Start(); err != nil {
-		c.Error(err)
-		return 1
-	}
-
-	cancel()
-	<-ctx.Done()
-	if c.wcfg.cfg.Meta.AutoUpdate {
-		if err := <-puCh; err != nil {
+		if err != nil {
 			c.Error(err)
 			return 1
 		}
-	}
-	if err := <-cuCh; err != nil {
-		c.Error(err)
-		return 1
 	}
 
 	return 0

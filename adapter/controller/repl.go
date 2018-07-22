@@ -52,7 +52,7 @@ func NewREPL(config *config.REPL, env entity.Environment, ui UI, inputPort port.
 		config: config,
 		env:    env,
 		cmds:   cmds,
-		exitCh: make(chan struct{}),
+		exitCh: make(chan struct{}, 2), // for goroutines which manage quit command and CTRL+D
 	}
 
 	executor := &executor{repl: repl}
