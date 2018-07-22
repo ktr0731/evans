@@ -292,9 +292,17 @@ func newBidiStramingResultWriter(
 ) *bidiStreamSendWriter {
 	ssw := newServerStramingResultWriter(ctx, s, outputPort, newMessage)
 
-	return &bidiStreamSendWriter{
+	w := &bidiStreamSendWriter{
 		serverStreamingResultWriter: ssw,
+
+		s:        s,
+		inputter: inputter,
+		rpc:      rpc,
 	}
+
+	go w.sendRequest(ctx)
+
+	return w
 }
 
 func callBidiStreaming(
