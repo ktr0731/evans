@@ -6,6 +6,7 @@ service Example {
   rpc Request2 (Foo) returns (B) {}
   rpc Request3 (Hoge) returns (B) {}
   rpc Request4 (C) returns (B) {}
+  rpc Request5 (D) returns (B) {}
 }
 
 message A {
@@ -42,8 +43,8 @@ message Piyo {
 
 message C {
   oneof oneof {
-    C a = 1;
-    ListC list = 2;
+    ListC list = 1;
+    string str = 2;
   }
 }
 
