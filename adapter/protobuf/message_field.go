@@ -10,14 +10,6 @@ type messageField struct {
 	entity.Message
 }
 
-func newMessageField(d *desc.FieldDescriptor) entity.MessageField {
-	m := newMessage(d.GetMessageType())
-	return &messageField{
-		d:       d,
-		Message: m,
-	}
-}
-
 func (f *messageField) FieldName() string {
 	return f.d.GetName()
 }

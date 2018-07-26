@@ -5,6 +5,8 @@ import (
 	"github.com/ktr0731/evans/entity"
 )
 
+// messageBuilder builds entity.Message from *desc.MessageDescriptor.
+// process* methods are used to convert each field descriptors to entity.Field.
 type messageBuilder struct {
 	m *message
 	d *desc.MessageDescriptor
@@ -13,7 +15,11 @@ type messageBuilder struct {
 	usedMessage map[string]entity.Message
 }
 
-func (b *messageBuilder) buildMessageField(f *desc.FieldDescriptor) entity.Field {
+func (b *messageBuilder) add(f entity.Field) {
+	b.m.fields = append(b.m.fields, f)
+}
+
+func (b *messageBuilder) processMessageField(f *desc.FieldDescriptor) entity.Field {
 	field := &messageField{
 		d: f,
 	}
@@ -45,18 +51,10 @@ func (b *messageBuilder) buildMessageField(f *desc.FieldDescriptor) entity.Field
 	return field
 }
 
-func (b *messageBuilder) processMessageField(f *desc.FieldDescriptor) {
-	b.add(b.buildMessageField(f))
-}
-
-func (b *messageBuilder) add(f entity.Field) {
-	b.m.fields = append(b.m.fields, f)
-}
-
-func (b *messageBuilder) processOneOfField(d *desc.OneOfDescriptor) {
+func (b *messageBuilder) addOneOfField(d *desc.OneOfDescriptor) {
 	choices := make([]entity.Field, 0, len(d.GetChoices()))
 	for _, c := range d.GetChoices() {
-		choices = append(choices, b.newField(c))
+		choices = append(choices, b.processField(c))
 	}
 	b.add(&oneOfField{
 		choices: choices,
@@ -64,19 +62,22 @@ func (b *messageBuilder) processOneOfField(d *desc.OneOfDescriptor) {
 	})
 }
 
-// TODO: naming
-// root of all field type
-func (b *messageBuilder) newField(d *desc.FieldDescriptor) entity.Field {
+// processField converts passed field which is other than oneOfFields to entity.Field.
+func (b *messageBuilder) processField(d *desc.FieldDescriptor) entity.Field {
 	var f entity.Field
 	switch {
 	case isMessageType(d.AsFieldDescriptorProto().GetType()):
-		f = b.buildMessageField(d)
+		f = b.processMessageField(d)
 	case isEnumType(d):
 		f = newEnumField(d)
 	default: // primitive field
 		f = newPrimitiveField(d)
 	}
 	return f
+}
+
+func (b *messageBuilder) addField(d *desc.FieldDescriptor) {
+	b.add(b.processField(d))
 }
 
 func (b *messageBuilder) build() entity.Message {
@@ -95,10 +96,13 @@ func (b *messageBuilder) build() entity.Message {
 	b.m.nestedEnums = enums
 
 	// it need to resolve oneofs before resolve other fields.
-	// GetFields contains fields of oneofs.
+	// because GetFields contains fields of oneofs.
 	encounteredOneOfFields := map[string]bool{}
 	for _, o := range b.d.GetOneOfs() {
-		b.processOneOfField(o)
+		for _, c := range o.GetChoices() {
+			encounteredOneOfFields[c.GetFullyQualifiedName()] = true
+		}
+		b.addOneOfField(o)
 	}
 
 	// TODO: label, options
@@ -108,13 +112,7 @@ func (b *messageBuilder) build() entity.Message {
 			continue
 		}
 
-		// self
-
-		if isMessageType(f.GetType()) {
-			b.processMessageField(f)
-		} else {
-			b.add(newField(f))
-		}
+		b.addField(f)
 	}
 
 	return b.m
