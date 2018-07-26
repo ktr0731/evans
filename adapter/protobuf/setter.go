@@ -27,8 +27,8 @@ func NewMessageSetter(m entity.Message) *MessageSetter {
 	}
 }
 
-func (s *MessageSetter) SetField(field entity.Field, v interface{}) error {
-	switch f := field.(type) {
+func (s *MessageSetter) SetField(f entity.Field, v interface{}) error {
+	switch f := f.(type) {
 	case *enumField:
 		if f.IsRepeated() {
 			return s.m.TryAddRepeatedField(f.d, v)

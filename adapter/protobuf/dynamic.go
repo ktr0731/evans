@@ -7,8 +7,8 @@ import (
 )
 
 // NewDynamicMessage is used from DynamicBuilder
-// for extract *desc.MessageDescriptor from msg
-func NewDynamicMessage(msg entity.Message) proto.Message {
-	m := msg.(*message)
-	return dynamic.NewMessage(m.d)
+// for extract *desc.MessageDescriptor from m
+func NewDynamicMessage(m entity.Message) proto.Message {
+	msg := m.(*message)
+	return dynamic.NewMessage(msg.d)
 }

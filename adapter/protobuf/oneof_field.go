@@ -10,17 +10,6 @@ type oneOfField struct {
 	choices []entity.Field
 }
 
-func newOneOfField(d *desc.OneOfDescriptor) entity.OneOfField {
-	choices := make([]entity.Field, 0, len(d.GetChoices()))
-	for _, c := range d.GetChoices() {
-		choices = append(choices, newField(c))
-	}
-	return &oneOfField{
-		choices: choices,
-		d:       d,
-	}
-}
-
 func (o *oneOfField) FieldName() string {
 	return o.d.GetName()
 }

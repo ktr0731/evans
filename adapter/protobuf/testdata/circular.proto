@@ -5,6 +5,8 @@ service Example {
   rpc Request (A) returns (B) {}
   rpc Request2 (Foo) returns (B) {}
   rpc Request3 (Hoge) returns (B) {}
+  rpc Request4 (C) returns (B) {}
+  rpc Request5 (D) returns (B) {}
 }
 
 message A {
@@ -37,4 +39,19 @@ message Fuga {
 message Piyo {
   Hoge hoge = 1;
   string dummy3 = 2;
+}
+
+message C {
+  oneof oneof {
+    ListC list = 1;
+    string str = 2;
+  }
+}
+
+message ListC {
+  repeated C a = 1;
+}
+
+message D {
+  map<string, C> fields = 1;
 }
