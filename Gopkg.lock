@@ -90,6 +90,7 @@
     "desc/internal",
     "desc/protoparse",
     "dynamic",
+    "grpcreflect",
     "internal"
   ]
   revision = "dec7efff960aff9689f61d913a23286a260ac875"
@@ -311,7 +312,7 @@
     "protobuf/ptype",
     "protobuf/source_context"
   ]
-  revision = "fedd2861243fd1a8152376292b921b394c7bef7e"
+  revision = "02b4e95473316948020af0b7a4f0f22c73929b0e"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -334,6 +335,7 @@
     "metadata",
     "naming",
     "peer",
+    "reflection/grpc_reflection_v1alpha",
     "resolver",
     "resolver/dns",
     "resolver/passthrough",
@@ -363,6 +365,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "aaf6e6bc7d7f7859da7bba8d71fca92217027633177c2e4cb72185066e243a06"
+  inputs-digest = "ee4eab7c877c8c95e1996ad8c700f3b81f47c20725c9bd831a920732b075786e"
   solver-name = "gps-cdcl"
   solver-version = 1
