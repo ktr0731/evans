@@ -41,7 +41,8 @@ message Piyo {
 
 message C {
   oneof oneof {
-    ListC list = 1;
+    C a = 1;
+    ListC list = 2;
   }
 }
 
