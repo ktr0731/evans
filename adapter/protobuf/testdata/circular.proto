@@ -38,3 +38,13 @@ message Piyo {
   Hoge hoge = 1;
   string dummy3 = 2;
 }
+
+message C {
+  oneof oneof {
+    ListC list = 1;
+  }
+}
+
+message ListC {
+  repeated C a = 1;
+}
