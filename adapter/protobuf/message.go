@@ -17,18 +17,7 @@ type message struct {
 }
 
 func newMessage(d *desc.MessageDescriptor) entity.Message {
-	msg := &message{
-		d:      d,
-		fields: make([]entity.Field, 0, len(d.GetFields())),
-	}
-	usedMessage := make(map[string]entity.Message)
-	usedMessage[msg.Name()] = msg
-	b := &messageBuilder{
-		m:           msg,
-		d:           d,
-		usedMessage: usedMessage,
-	}
-	return b.build()
+	return newMessageBuilder(d).build()
 }
 
 func (m *message) Name() string {

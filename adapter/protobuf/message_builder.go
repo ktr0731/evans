@@ -11,14 +11,32 @@ type messageBuilder struct {
 	m *message
 	d *desc.MessageDescriptor
 
-	// used to detect cycle fields
+	// used to detect cycle fields.
+	// if top-level message has message fields, messageBuilder calls newMessageBuilder recursively.
+	// at that time, new messageBuilder takes over the value of usedMessage of top-level messageBuilder.
 	usedMessage map[string]entity.Message
+}
+
+func newMessageBuilder(d *desc.MessageDescriptor) *messageBuilder {
+	msg := &message{
+		d:      d,
+		fields: make([]entity.Field, 0, len(d.GetFields())),
+	}
+	usedMessage := make(map[string]entity.Message)
+	usedMessage[msg.Name()] = msg
+	return &messageBuilder{
+		m:           msg,
+		d:           d,
+		usedMessage: usedMessage,
+	}
 }
 
 func (b *messageBuilder) add(f entity.Field) {
 	b.m.fields = append(b.m.fields, f)
 }
 
+// maps are also interpret as a repeated message type.
+// ref. https://developers.google.com/protocol-buffers/docs/proto#backwards-compatibility
 func (b *messageBuilder) processMessageField(f *desc.FieldDescriptor) entity.Field {
 	field := &messageField{
 		d: f,
@@ -37,13 +55,9 @@ func (b *messageBuilder) processMessageField(f *desc.FieldDescriptor) entity.Fie
 		return field
 	}
 
-	b2 := &messageBuilder{
-		m: &message{
-			d: f.GetMessageType(),
-		},
-		d:           f.GetMessageType(),
-		usedMessage: b.usedMessage,
-	}
+	b2 := newMessageBuilder(f.GetMessageType())
+	b2.usedMessage = b.usedMessage
+	b2.usedMessage[b2.m.Name()] = b2.m
 
 	field.Message = b2.build()
 

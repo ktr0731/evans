@@ -5,6 +5,7 @@ service Example {
   rpc Request (A) returns (B) {}
   rpc Request2 (Foo) returns (B) {}
   rpc Request3 (Hoge) returns (B) {}
+  rpc Request4 (C) returns (B) {}
 }
 
 message A {
@@ -48,4 +49,8 @@ message C {
 
 message ListC {
   repeated C a = 1;
+}
+
+message D {
+  map<string, C> fields = 1;
 }

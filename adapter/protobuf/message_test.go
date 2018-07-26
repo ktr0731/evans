@@ -82,7 +82,7 @@ func TestMessage(t *testing.T) {
 		assert.Len(t, d, 1)
 
 		msgs := d[0].GetMessageTypes()
-		assert.Len(t, msgs, 9)
+		assert.Len(t, msgs, 10)
 
 		msgA, msgB := newMessage(msgs[0]), newMessage(msgs[1])
 		assert.Equal(t, "A", msgA.Name())
@@ -115,6 +115,11 @@ func TestMessage(t *testing.T) {
 		t.Run("self-referenced with oneof fields", func(t *testing.T) {
 			msgC := newMessage(msgs[7])
 			assert.Equal(t, "C", msgC.Name())
+		})
+
+		t.Run("self-referenced with map fields", func(t *testing.T) {
+			msgC := newMessage(msgs[9])
+			assert.Equal(t, "D", msgC.Name())
 		})
 	})
 }
