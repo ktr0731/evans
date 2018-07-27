@@ -7,6 +7,7 @@ service Example {
   rpc Request3 (Hoge) returns (B) {}
   rpc Request4 (C) returns (B) {}
   rpc Request5 (D) returns (B) {}
+  rpc Request6 (E) returns (B) {}
 }
 
 message A {
@@ -53,5 +54,20 @@ message ListC {
 }
 
 message D {
-  map<string, C> fields = 1;
+  map<string, C> m = 1;
+}
+
+// field m1 and m2 have the same structure.
+message E {
+  map<string, F> m1 = 1;
+
+  message M {
+    string key = 1;
+    F val = 2;
+  }
+  repeated M m2 = 2;
+}
+
+message F {
+  E e = 1;
 }
