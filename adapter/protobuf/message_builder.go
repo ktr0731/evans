@@ -13,7 +13,8 @@ type messageBuilder struct {
 
 	// used to detect cycle fields.
 	// if top-level message has message fields, messageBuilder calls newMessageBuilder recursively.
-	// at that time, new messageBuilder takes over the value of usedMessage of top-level messageBuilder.
+	// at that time, new messageBuilder takes over
+	// the value of usedMessage of top-level messageBuilder. (see newMessageBuilderFromParent)
 	usedMessage map[string]entity.Message
 }
 
@@ -55,9 +56,7 @@ func (b *messageBuilder) processMessageField(f *desc.FieldDescriptor) entity.Fie
 		return field
 	}
 
-	b2 := newMessageBuilder(f.GetMessageType())
-	b2.usedMessage = b.usedMessage
-	b2.usedMessage[b2.m.Name()] = b2.m
+	b2 := newMessageBuilderFromParent(b, f.GetMessageType())
 
 	field.Message = b2.build()
 
@@ -99,7 +98,7 @@ func (b *messageBuilder) build() entity.Message {
 
 	msgs := make([]entity.Message, 0, len(b.d.GetNestedMessageTypes()))
 	for _, d := range b.d.GetNestedMessageTypes() {
-		msgs = append(msgs, newMessage(d))
+		msgs = append(msgs, newMessageBuilderFromParent(b, d).build())
 	}
 	b.m.nestedMessages = msgs
 
@@ -130,4 +129,12 @@ func (b *messageBuilder) build() entity.Message {
 	}
 
 	return b.m
+}
+
+// newMessageBuilderFromParent takes over b's fields.
+func newMessageBuilderFromParent(b *messageBuilder, d *desc.MessageDescriptor) *messageBuilder {
+	b2 := newMessageBuilder(d)
+	b2.usedMessage = b.usedMessage
+	b2.usedMessage[b2.m.Name()] = b2.m
+	return b2
 }

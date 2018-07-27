@@ -82,7 +82,7 @@ func TestMessage(t *testing.T) {
 		assert.Len(t, d, 1)
 
 		msgs := d[0].GetMessageTypes()
-		assert.Len(t, msgs, 10)
+		assert.Len(t, msgs, 12)
 
 		msgA, msgB := newMessage(msgs[0]), newMessage(msgs[1])
 		assert.Equal(t, "A", msgA.Name())
@@ -118,8 +118,13 @@ func TestMessage(t *testing.T) {
 		})
 
 		t.Run("self-referenced with map fields", func(t *testing.T) {
-			msgC := newMessage(msgs[9])
-			assert.Equal(t, "D", msgC.Name())
+			msgD := newMessage(msgs[9])
+			assert.Equal(t, "D", msgD.Name())
+		})
+
+		t.Run("self-referenced with nested messages", func(t *testing.T) {
+			msgE := newMessage(msgs[10])
+			assert.Equal(t, "E", msgE.Name())
 		})
 	})
 }
