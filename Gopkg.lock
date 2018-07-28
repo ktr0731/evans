@@ -93,7 +93,13 @@
     "grpcreflect",
     "internal"
   ]
-  revision = "dec7efff960aff9689f61d913a23286a260ac875"
+  revision = "b80e5424a171178ae7d2aa2a8fbce1dd0c494be1"
+
+[[projects]]
+  name = "github.com/k0kubun/pp"
+  packages = ["."]
+  revision = "027a6d1765d673d337e687394dbe780dd64e2a1e"
+  version = "v2.3.0"
 
 [[projects]]
   name = "github.com/kelseyhightower/envconfig"
@@ -273,13 +279,13 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "a680a1efc54dd51c040b3b5ce4939ea3cf2ea0d1"
+  revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
+  revision = "bd9dbc187b6e1dacfdd2722a87e83093c2d7bd6e"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -312,7 +318,7 @@
     "protobuf/ptype",
     "protobuf/source_context"
   ]
-  revision = "02b4e95473316948020af0b7a4f0f22c73929b0e"
+  revision = "2a72893556e4d1f6c795a4c039314c9fa751eedb"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -335,6 +341,7 @@
     "metadata",
     "naming",
     "peer",
+    "reflection",
     "reflection/grpc_reflection_v1alpha",
     "resolver",
     "resolver/dns",
@@ -365,6 +372,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ee4eab7c877c8c95e1996ad8c700f3b81f47c20725c9bd831a920732b075786e"
+  inputs-digest = "d343237f2409cd6b12e77a46f33f8f32e0914404ff19185b4995c2938b81162c"
   solver-name = "gps-cdcl"
   solver-version = 1
