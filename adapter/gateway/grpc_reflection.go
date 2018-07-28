@@ -12,6 +12,8 @@ import (
 	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 )
 
+const reflectionServiceName = "grpc.reflection.v1alpha.ServerReflection"
+
 type gRPCReflectoinClient struct {
 	client *grpcreflect.Client
 }
@@ -32,8 +34,11 @@ func (c *gRPCReflectoinClient) ListServices() ([]entity.Service, error) {
 		return nil, errors.Wrap(err, "failed to list services from reflecton enabled gRPC server")
 	}
 
-	svcs := make([]*desc.ServiceDescriptor, 0, len(ssvcs))
+	svcs := make([]*desc.ServiceDescriptor, 0, len(ssvcs)-1)
 	for _, s := range ssvcs {
+		if s == reflectionServiceName {
+			continue
+		}
 		svc, err := c.client.ResolveService(s)
 		if err != nil {
 			return nil, err
