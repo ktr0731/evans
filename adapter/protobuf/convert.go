@@ -84,10 +84,10 @@ func ConvertValue(pv string, field entity.PrimitiveField) (interface{}, error) {
 // ToEntitiesFrom normalizes descriptors to entities
 //
 // package
-// ├ messages
-// ├ enums
-// └ services
-//   └ rpcs
+// - messages
+// - enums
+// - services
+//   - rpcs
 //
 func ToEntitiesFrom(files []*desc.FileDescriptor) ([]*entity.Package, error) {
 	pkgNames := map[string]bool{}
@@ -112,4 +112,16 @@ func ToEntitiesFrom(files []*desc.FileDescriptor) ([]*entity.Package, error) {
 	}
 
 	return pkgs, nil
+}
+
+// ToEntitiesFromServiceDescriptors normalizes service descriptors to entities.
+// this API is called if the target server has enabled gRPC reflection.
+// reflection service returns available services, so Evans needs to convert to entities
+// from service descriptors, not file descriptors.
+func ToEntitiesFromServiceDescriptors(services []*desc.ServiceDescriptor) []entity.Service {
+	svcs := make([]entity.Service, 0, len(services))
+	for _, s := range services {
+		svcs = append(svcs, newService(s))
+	}
+	return svcs
 }
