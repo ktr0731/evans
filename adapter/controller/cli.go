@@ -261,7 +261,7 @@ func (c *CLI) Run(args []string) int {
 
 	c.init(opts, proto)
 
-	if len(c.wcfg.cfg.Default.ProtoFile) == 0 {
+	if len(c.wcfg.cfg.Default.ProtoFile) == 0 && !c.wcfg.cfg.Server.Reflection {
 		c.Usage()
 		c.Error(ErrProtoFileRequired)
 		return 1
