@@ -1,6 +1,7 @@
 package di
 
 import (
+	"fmt"
 	"io"
 	"path/filepath"
 	"sync"
@@ -36,6 +37,32 @@ func initEnv(cfg *config.Config) (rerr error) {
 			return
 		}
 
+		// var svcs []entity.Service
+		{
+			gRPCClient, err := GRPCClient(cfg)
+			if err != nil {
+				rerr = err
+				return
+			}
+
+			if gRPCClient.ReflectionEnabled() {
+				svcs, err := gRPCClient.ListServices()
+				if err != nil {
+					rerr = err
+					return
+				}
+				for _, s := range svcs {
+					pp.Println(s.FQRN())
+					for _, r := range s.RPCs() {
+						fmt.Printf("  %s - (%s, %s)\n", r.Name(), r.RequestMessage().Name(), r.ResponseMessage().Name())
+					}
+				}
+			}
+		}
+
+		// TODO: reflection のときはロードしない
+		// package どうするか？
+
 		env = entity.NewEnv(desc, cfg)
 
 		if pkg := cfg.Default.Package; pkg != "" {
@@ -49,18 +76,6 @@ func initEnv(cfg *config.Config) (rerr error) {
 			if err := env.UseService(svc); err != nil {
 				rerr = errors.Wrapf(err, "failed to set service to env as a default service: %s", svc)
 				return
-			}
-		}
-
-		gRPCClient, err := GRPCClient(cfg)
-		if err != nil {
-			rerr = err
-			return
-		}
-
-		if gRPCClient.ReflectionEnabled() {
-			for _, s := range gRPCClient.ListServices() {
-				pp.Println(s.FQRN())
 			}
 		}
 	})
