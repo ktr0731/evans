@@ -8,6 +8,7 @@ import (
 	"github.com/ktr0731/evans/tests/helper/server/helloworld"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 type Server struct {
@@ -15,9 +16,12 @@ type Server struct {
 	s *grpc.Server
 }
 
-func NewServer(t *testing.T) *Server {
+func NewServer(t *testing.T, enableReflection bool) *Server {
 	s := grpc.NewServer()
 	helloworld.RegisterGreeterServer(s, srv.NewUnary())
+	if enableReflection {
+		reflection.Register(s)
+	}
 	return &Server{
 		t: t,
 		s: s,

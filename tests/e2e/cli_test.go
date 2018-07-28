@@ -37,12 +37,11 @@ func TestCLI(t *testing.T) {
 		controller.DefaultCLIReader = os.Stdin
 	}()
 
-	defer helper.NewServer(t).Start().Stop()
-
 	t.Run("from stdin", func(t *testing.T) {
 		cases := []struct {
-			args string
-			code int
+			args          string
+			code          int
+			useReflection bool
 		}{
 			{args: "", code: 1},
 			{args: "testdata/helloworld.proto", code: 1},
@@ -51,10 +50,13 @@ func TestCLI(t *testing.T) {
 			{args: "--package helloworld --call SayHello testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service Greeter --call SayHello", code: 1},
 			{args: "--package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
+			{args: "--call SayHello", code: 0, useReflection: true},
 		}
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
+				defer helper.NewServer(t, c.useReflection).Start().Stop()
+
 				defer cleanup()
 
 				out := new(bytes.Buffer)

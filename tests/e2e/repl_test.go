@@ -13,7 +13,7 @@ import (
 )
 
 func TestREPL(t *testing.T) {
-	defer helper.NewServer(t).Start().Stop()
+	defer helper.NewServer(t, false).Start().Stop()
 
 	t.Run("from stdin", func(t *testing.T) {
 		cases := []struct {
