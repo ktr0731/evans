@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/adapter/presenter"
@@ -51,6 +52,17 @@ func initEnv(cfg *config.Config) (rerr error) {
 			}
 		}
 
+		gRPCClient, err := GRPCClient(cfg)
+		if err != nil {
+			rerr = err
+			return
+		}
+
+		if gRPCClient.ReflectionEnabled() {
+			for _, s := range gRPCClient.ListServices() {
+				pp.Println(s.FQRN())
+			}
+		}
 	})
 	return
 }
@@ -163,6 +175,13 @@ func initGRPCClient(cfg *config.Config) error {
 		gRPCClient, err = gateway.NewGRPCClient(cfg)
 	})
 	return err
+}
+
+func GRPCClient(cfg *config.Config) (*gateway.GRPCClient, error) {
+	if err := initGRPCClient(cfg); err != nil {
+		return nil, err
+	}
+	return gRPCClient, nil
 }
 
 var (

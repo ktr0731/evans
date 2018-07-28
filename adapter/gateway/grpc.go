@@ -8,10 +8,8 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
-	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/jhump/protoreflect/grpcreflect"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/pkg/errors"
@@ -20,6 +18,8 @@ import (
 type GRPCClient struct {
 	config *config.Config
 	conn   *grpc.ClientConn
+
+	*gRPCReflectoinClient
 }
 
 func NewGRPCClient(config *config.Config) (*GRPCClient, error) {
@@ -35,14 +35,16 @@ func NewGRPCClient(config *config.Config) (*GRPCClient, error) {
 		return nil, errors.Errorf("the gRPC server was closed: %s", s)
 	}
 
-	if config.Server.Reflection {
-		c := grpcreflect.NewClient(context.Background(), grpc_reflection_v1alpha.NewServerReflectionClient(conn))
-	}
-
-	return &GRPCClient{
+	client := &GRPCClient{
 		config: config,
 		conn:   conn,
-	}, nil
+	}
+
+	if config.Server.Reflection {
+		client.gRPCReflectoinClient = newGRPCReflectionClient(conn)
+	}
+
+	return client, nil
 }
 
 func (c *GRPCClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {
