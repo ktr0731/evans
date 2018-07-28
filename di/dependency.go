@@ -1,12 +1,10 @@
 package di
 
 import (
-	"fmt"
 	"io"
 	"path/filepath"
 	"sync"
 
-	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/adapter/presenter"
@@ -37,38 +35,28 @@ func initEnv(cfg *config.Config) (rerr error) {
 			return
 		}
 
-		// var svcs []entity.Service
-		{
-			gRPCClient, err := GRPCClient(cfg)
-			if err != nil {
-				rerr = err
-				return
-			}
-
-			if gRPCClient.ReflectionEnabled() {
-				svcs, err := gRPCClient.ListServices()
-				if err != nil {
-					rerr = err
-					return
-				}
-				for _, s := range svcs {
-					pp.Println(s.FQRN())
-					for _, r := range s.RPCs() {
-						fmt.Printf("  %s - (%s, %s)\n", r.Name(), r.RequestMessage().Name(), r.ResponseMessage().Name())
-					}
-				}
-			}
+		var svcs []entity.Service
+		gRPCClient, err := GRPCClient(cfg)
+		if err != nil {
+			rerr = err
+			return
 		}
 
-		// TODO: reflection のときはロードしない
-		// package どうするか？
-
-		env = entity.NewEnv(desc, cfg)
-
-		if pkg := cfg.Default.Package; pkg != "" {
-			if err := env.UsePackage(pkg); err != nil {
-				rerr = errors.Wrapf(err, "failed to set package to env as a default package: %s", pkg)
+		if gRPCClient.ReflectionEnabled() {
+			svcs, err = gRPCClient.ListServices()
+			if err != nil {
+				rerr = errors.Wrap(err, "failed to list services by gRPC reflection")
 				return
+			}
+			env = entity.NewEnvFromServices(svcs, cfg)
+		} else {
+			env = entity.NewEnv(desc, cfg)
+
+			if pkg := cfg.Default.Package; pkg != "" {
+				if err := env.UsePackage(pkg); err != nil {
+					rerr = errors.Wrapf(err, "failed to set package to env as a default package: %s", pkg)
+					return
+				}
 			}
 		}
 
