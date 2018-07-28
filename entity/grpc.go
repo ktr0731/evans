@@ -11,6 +11,7 @@ type GRPCClient interface {
 	NewClientStream(ctx context.Context, rpc RPC) (ClientStream, error)
 	NewServerStream(ctx context.Context, rpc RPC) (ServerStream, error)
 	NewBidiStream(ctx context.Context, rpc RPC) (BidiStream, error)
+	Close(ctx context.Context) error
 }
 
 type ClientStream interface {
