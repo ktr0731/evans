@@ -92,7 +92,7 @@
     "dynamic",
     "internal"
   ]
-  revision = "dec7efff960aff9689f61d913a23286a260ac875"
+  revision = "86d31fcaca06045b722f08bae124c96548404121"
 
 [[projects]]
   name = "github.com/kelseyhightower/envconfig"
@@ -272,13 +272,13 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "a680a1efc54dd51c040b3b5ce4939ea3cf2ea0d1"
+  revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
+  revision = "bd9dbc187b6e1dacfdd2722a87e83093c2d7bd6e"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -311,7 +311,7 @@
     "protobuf/ptype",
     "protobuf/source_context"
   ]
-  revision = "fedd2861243fd1a8152376292b921b394c7bef7e"
+  revision = "2a72893556e4d1f6c795a4c039314c9fa751eedb"
 
 [[projects]]
   name = "google.golang.org/grpc"
