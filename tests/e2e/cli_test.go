@@ -50,7 +50,7 @@ func TestCLI(t *testing.T) {
 			{args: "--package helloworld --call SayHello testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service Greeter --call SayHello", code: 1},
 			{args: "--package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
-			{args: "--call SayHello", code: 0, useReflection: true},
+			{args: "--reflection --service Greeter --call SayHello", code: 0, useReflection: true},
 		}
 
 		for _, c := range cases {

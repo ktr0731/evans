@@ -65,7 +65,6 @@ func callUnary(
 	if err != nil {
 		return nil, err
 	}
-
 	res := builder.NewMessage(rpc.ResponseMessage())
 	if err := grpcClient.Invoke(ctx, rpc.FQRN(), req, res); err != nil {
 		return nil, err
