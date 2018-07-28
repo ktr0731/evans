@@ -90,16 +90,9 @@
     "desc/internal",
     "desc/protoparse",
     "dynamic",
-    "grpcreflect",
     "internal"
   ]
-  revision = "b80e5424a171178ae7d2aa2a8fbce1dd0c494be1"
-
-[[projects]]
-  name = "github.com/k0kubun/pp"
-  packages = ["."]
-  revision = "027a6d1765d673d337e687394dbe780dd64e2a1e"
-  version = "v2.3.0"
+  revision = "86d31fcaca06045b722f08bae124c96548404121"
 
 [[projects]]
   name = "github.com/kelseyhightower/envconfig"
@@ -341,8 +334,6 @@
     "metadata",
     "naming",
     "peer",
-    "reflection",
-    "reflection/grpc_reflection_v1alpha",
     "resolver",
     "resolver/dns",
     "resolver/passthrough",
@@ -372,6 +363,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d343237f2409cd6b12e77a46f33f8f32e0914404ff19185b4995c2938b81162c"
+  inputs-digest = "aaf6e6bc7d7f7859da7bba8d71fca92217027633177c2e4cb72185066e243a06"
   solver-name = "gps-cdcl"
   solver-version = 1
