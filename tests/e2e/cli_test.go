@@ -28,11 +28,8 @@ func flatten(s string) string {
 }
 
 func TestCLI(t *testing.T) {
-	in := strings.NewReader(`{ "name": "maho" }`)
-
 	cleanup := di.Reset
 
-	controller.DefaultCLIReader = in
 	defer func() {
 		controller.DefaultCLIReader = os.Stdin
 	}()
@@ -50,7 +47,6 @@ func TestCLI(t *testing.T) {
 			{args: "--package helloworld --call SayHello testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service Greeter --call SayHello", code: 1},
 			{args: "--package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
-			// {args: "--reflection --service Greeter --call SayHello", code: 0, useReflection: true},
 			{args: "--reflection", code: 1, useReflection: true},
 			{args: "--reflection --service Greeter", code: 1, useReflection: true},
 			{args: "--reflection --call SayHello", code: 1, useReflection: true},
@@ -60,8 +56,10 @@ func TestCLI(t *testing.T) {
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
 				defer helper.NewServer(t, c.useReflection).Start().Stop()
-
 				defer cleanup()
+
+				in := strings.NewReader(`{ "name": "maho" }`)
+				controller.DefaultCLIReader = in
 
 				out := new(bytes.Buffer)
 				errOut := new(bytes.Buffer)
@@ -79,8 +77,9 @@ func TestCLI(t *testing.T) {
 
 	t.Run("from file", func(t *testing.T) {
 		cases := []struct {
-			args string
-			code int
+			args          string
+			code          int
+			useReflection bool
 		}{
 			{args: "--file testdata/in.json", code: 1},
 			{args: "--file testdata/in.json testdata/helloworld.proto", code: 1},
@@ -89,11 +88,20 @@ func TestCLI(t *testing.T) {
 			{args: "--file testdata/in.json --package helloworld --call SayHello testdata/helloworld.proto", code: 1},
 			{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello", code: 1},
 			{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
+			{args: "--reflection --file testdata/in.json", code: 1, useReflection: true},
+			{args: "--reflection --file testdata/in.json --service Greeter", code: 1, useReflection: true},
+			{args: "--reflection --file testdata/in.json --call SayHello", code: 1, useReflection: true},
+			{args: "--reflection --file testdata/in.json --service Greeter --call SayHello", code: 0, useReflection: true},
 		}
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
+				defer helper.NewServer(t, c.useReflection).Start().Stop()
 				defer cleanup()
+
+				in := strings.NewReader(`{ "name": "maho" }`)
+				controller.DefaultCLIReader = in
+
 				out := new(bytes.Buffer)
 				ui := controller.NewUI(in, out, ioutil.Discard)
 
