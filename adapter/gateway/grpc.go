@@ -12,6 +12,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
+	multierror "github.com/ktr0731/go-multierror"
 	"github.com/pkg/errors"
 )
 
@@ -53,6 +54,25 @@ func (c *GRPCClient) Invoke(ctx context.Context, fqrn string, req, res interface
 		return err
 	}
 	return grpc.Invoke(ctx, endpoint, req, res, c.conn)
+}
+
+func (c *GRPCClient) Close(ctx context.Context) error {
+	doneCh := make(chan error)
+	go func() {
+		var result error
+		c.gRPCReflectoinClient.Close()
+		if err := c.conn.Close(); err != nil {
+			result = multierror.Append(result, errors.Wrap(err, "failed to close gRPC client"))
+		}
+		doneCh <- result
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil
+	case err := <-doneCh:
+		return err
+	}
 }
 
 type clientStream struct {

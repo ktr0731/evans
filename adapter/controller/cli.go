@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
@@ -309,6 +310,9 @@ func (c *CLI) runAsCLI() int {
 			return
 		}
 		interactor := usecase.NewInteractor(p)
+		closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer closeCancel()
+		defer interactor.Close(closeCtx)
 
 		res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
 		if err != nil {
@@ -385,6 +389,9 @@ func (c *CLI) runAsREPL() int {
 			return
 		}
 		interactor := usecase.NewInteractor(p)
+		closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer closeCancel()
+		defer interactor.Close(closeCtx)
 
 		var ui UI
 		if c.wcfg.cfg.REPL.ColoredOutput {
@@ -594,6 +601,20 @@ func isCallable(w *wrappedConfig) error {
 
 func isCommandLineMode(w *wrappedConfig) bool {
 	return !w.repl && (!isatty.IsTerminal(os.Stdin.Fd()) || w.file != "")
+	// if w.repl {
+	// 	return false
+	// }
+	//
+	// // pipe or files are passed as input
+	// if !isatty.IsTerminal(os.Stdin.Fd()) || w.file != "" {
+	// 	return true
+	// }
+	//
+	// if w.cfg.Server.Reflection {
+	//
+	// }
+	//
+	// return true
 }
 
 func toHeader(sh optStrSlice) ([]config.Header, error) {

@@ -45,5 +45,13 @@ func (c *gRPCReflectoinClient) ListServices() ([]entity.Service, error) {
 		}
 		svcs = append(svcs, svc)
 	}
+
 	return protobuf.ToEntitiesFromServiceDescriptors(svcs), nil
+}
+
+func (c *gRPCReflectoinClient) Close() {
+	if c == nil {
+		return
+	}
+	c.client.Reset()
 }

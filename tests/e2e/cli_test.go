@@ -50,6 +50,10 @@ func TestCLI(t *testing.T) {
 			{args: "--package helloworld --call SayHello testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service Greeter --call SayHello", code: 1},
 			{args: "--package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
+			// {args: "--reflection --service Greeter --call SayHello", code: 0, useReflection: true},
+			{args: "--reflection", code: 1, useReflection: true},
+			{args: "--reflection --service Greeter", code: 1, useReflection: true},
+			{args: "--reflection --call SayHello", code: 1, useReflection: true},
 			{args: "--reflection --service Greeter --call SayHello", code: 0, useReflection: true},
 		}
 
