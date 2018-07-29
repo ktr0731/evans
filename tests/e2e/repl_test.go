@@ -17,9 +17,10 @@ func TestREPL(t *testing.T) {
 
 	t.Run("from stdin", func(t *testing.T) {
 		cases := []struct {
-			args   string
-			code   int  // exit code, 1 when precondition failed
-			hasErr bool // error was occurred in REPL, false if precondition failed
+			args          string
+			code          int  // exit code, 1 when precondition failed
+			hasErr        bool // error was occurred in REPL, false if precondition failed
+			useReflection bool
 		}{
 			{args: "", code: 1}, // cannot launch REPL case
 			{args: "--package helloworld", code: 1},
@@ -31,6 +32,8 @@ func TestREPL(t *testing.T) {
 			{args: "--package foo testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service foo testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service Greeter testdata/helloworld.proto"},
+			{args: "--reflection", code: 1, useReflection: true},
+			{args: "--reflection --service Greeter", code: 0, useReflection: true},
 		}
 
 		rh := newREPLHelper([]string{"--silent", "--repl"})
@@ -52,7 +55,9 @@ func TestREPL(t *testing.T) {
 					cmd.Call("SayHello", "maho"),
 				)
 
-				code := rh.run(strings.Split(c.args, " "))
+				args := strings.Split(c.args, " ")
+				args = append(args, "--repl")
+				code := rh.run(args)
 				assert.Equal(t, c.code, code, eout.String())
 
 				if c.hasErr {
