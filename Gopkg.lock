@@ -90,9 +90,14 @@
     "desc/internal",
     "desc/protoparse",
     "dynamic",
+    "grpcreflect",
     "internal"
   ]
+<<<<<<< HEAD
   revision = "dec7efff960aff9689f61d913a23286a260ac875"
+=======
+  revision = "86d31fcaca06045b722f08bae124c96548404121"
+>>>>>>> master
 
 [[projects]]
   name = "github.com/kelseyhightower/envconfig"
@@ -131,8 +136,8 @@
     "brew",
     "github"
   ]
-  revision = "9857da19db4f69b9426c998074ddf00f34e9fd8c"
-  version = "0.1.1"
+  revision = "9baaa64c414e3a13a61d23bb5e8408655ceaacb7"
+  version = "0.1.3"
 
 [[projects]]
   branch = "master"
@@ -252,6 +257,15 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "go.uber.org/goleak"
+  packages = [
+    ".",
+    "internal/stack"
+  ]
+  revision = "1ac8aeca0a53163331564467638f6ffb639636bf"
+  version = "v0.10.0"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = [
@@ -263,13 +277,21 @@
     "internal/timeseries",
     "trace"
   ]
+<<<<<<< HEAD
   revision = "81d44fd177a98d09fe3bc40a5a78d495d3f042ea"
+=======
+  revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
+>>>>>>> master
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
+<<<<<<< HEAD
   revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
+=======
+  revision = "bd9dbc187b6e1dacfdd2722a87e83093c2d7bd6e"
+>>>>>>> master
 
 [[projects]]
   name = "golang.org/x/text"
@@ -302,7 +324,11 @@
     "protobuf/ptype",
     "protobuf/source_context"
   ]
+<<<<<<< HEAD
   revision = "fedd2861243fd1a8152376292b921b394c7bef7e"
+=======
+  revision = "2a72893556e4d1f6c795a4c039314c9fa751eedb"
+>>>>>>> master
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -325,6 +351,8 @@
     "metadata",
     "naming",
     "peer",
+    "reflection",
+    "reflection/grpc_reflection_v1alpha",
     "resolver",
     "resolver/dns",
     "resolver/passthrough",
@@ -354,6 +382,10 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
+<<<<<<< HEAD
   inputs-digest = "8677357ac00c576c2859e2066899f99382babb7576cc060e69d56b36a02d368c"
+=======
+  inputs-digest = "82e88f613715be36e822f3df57ccafb1a100a3f6ad8c3ebec0573f3e764bcee7"
+>>>>>>> master
   solver-name = "gps-cdcl"
   solver-version = 1

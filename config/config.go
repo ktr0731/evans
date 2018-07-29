@@ -22,8 +22,9 @@ var (
 var mConfig *configure.Configure
 
 type Server struct {
-	Host string `default:"127.0.0.1" toml:"host"`
-	Port string `default:"50051" toml:"port"`
+	Host       string `default:"127.0.0.1" toml:"host"`
+	Port       string `default:"50051" toml:"port"`
+	Reflection bool   `default:"false" toml:"reflection"`
 }
 
 type Header struct {
@@ -107,6 +108,12 @@ func init() {
 }
 
 func SetupConfig(c *Config) {
+	if len(c.Default.ProtoFile) == 1 && c.Default.ProtoFile[0] == "" {
+		c.Default.ProtoFile = []string{}
+	}
+	if len(c.Default.ProtoPath) == 1 && c.Default.ProtoPath[0] == "" {
+		c.Default.ProtoPath = []string{}
+	}
 	c.REPL.Server = c.Server
 	c.Env.Server = c.Server
 }

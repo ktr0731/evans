@@ -20,59 +20,63 @@ import (
 	spin "github.com/tj/go-spin"
 )
 
-func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache, errCh chan<- error) {
+func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache) error {
+	errCh := make(chan error, 1)
 	go func() {
-		<-ctx.Done()
+		var m updater.Means
+		var err error
+		switch c.InstalledBy {
+		case cache.MeansTypeUndefined:
+			m, err = updater.SelectAvailableMeansFrom(
+				ctx,
+				brew.HomebrewMeans("ktr0731/evans", "evans"),
+				github.GitHubReleaseMeans("ktr0731", "evans", github.TarDecompresser),
+			)
+			// if ErrUnavailable, user installed Evans by manually, ignore
+			if err == updater.ErrUnavailable {
+				errCh <- nil
+				return
+			} else if err != nil {
+				errCh <- errors.Wrap(err, "failed to instantiate new means, available means not found")
+				return
+			}
+			if err := cache.SetInstalledBy(cache.MeansType(m.Type())); err != nil {
+				errCh <- err
+				return
+			}
+		default:
+			m, err = newMeans(c)
+			if err == updater.ErrUnavailable {
+				errCh <- nil
+				return
+			} else if err != nil {
+				errCh <- errors.Wrapf(err, "failed to instantiate new means, installed by %s", c.InstalledBy)
+				return
+			}
+		}
+
+		u := newUpdater(cfg, meta.Version, m)
+		updatable, latest, err := u.Updatable(ctx)
+		if errors.Cause(err) != context.Canceled && err != nil {
+			errCh <- errors.Wrap(err, "failed to check updatable")
+			return
+		}
+		if updatable {
+			if err := cache.SetUpdateInfo(latest); err != nil {
+				errCh <- errors.Wrap(err, "failed to write update info to cache")
+				return
+			}
+		}
+
 		errCh <- nil
-		return
 	}()
 
-	var m updater.Means
-	var err error
-	switch c.InstalledBy {
-	case cache.MeansTypeUndefined:
-		m, err = updater.SelectAvailableMeansFrom(
-			ctx,
-			brew.HomebrewMeans("ktr0731/evans", "evans"),
-			github.GitHubReleaseMeans("ktr0731", "evans", github.TarDecompresser),
-		)
-		// if ErrUnavailable, user installed Evans by manually, ignore
-		if err == updater.ErrUnavailable {
-			errCh <- nil
-			return
-		} else if err != nil {
-			errCh <- errors.Wrap(err, "failed to instantiate new means, available means not found")
-			return
-		}
-		if err := cache.SetInstalledBy(cache.MeansType(m.Type())); err != nil {
-			errCh <- err
-			return
-		}
-	default:
-		m, err = newMeans(c)
-		if err == updater.ErrUnavailable {
-			errCh <- nil
-			return
-		} else if err != nil {
-			errCh <- errors.Wrapf(err, "failed to instantiate new means, installed by %s", c.InstalledBy)
-			return
-		}
+	select {
+	case <-ctx.Done():
+		return nil
+	case err := <-errCh:
+		return err
 	}
-
-	u := newUpdater(cfg, meta.Version, m)
-	updatable, latest, err := u.Updatable(ctx)
-	if errors.Cause(err) != context.Canceled && err != nil {
-		errCh <- errors.Wrap(err, "failed to check updatable")
-		return
-	}
-	if updatable {
-		if err := cache.SetUpdateInfo(latest); err != nil {
-			errCh <- errors.Wrap(err, "failed to write update info to cache")
-			return
-		}
-	}
-
-	errCh <- nil
 }
 
 func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater) error {
@@ -88,6 +92,7 @@ func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater)
 	}()
 
 	s := spin.New()
+	tick := time.Tick(100 * time.Millisecond)
 	for {
 		select {
 		case <-sigCh:
@@ -101,9 +106,8 @@ func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater)
 			// update successful
 			fmt.Fprintf(infoWriter, "\r             \r✔ updated!\n\n")
 			return cache.Clear()
-		default:
+		case <-tick:
 			fmt.Fprintf(infoWriter, "\r%s updating...", s.Next())
-			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }

@@ -3,11 +3,13 @@ package e2e
 import (
 	"bytes"
 	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/controller"
+	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
@@ -25,99 +27,93 @@ func flatten(s string) string {
 	return re.ReplaceAllString(s, " ")
 }
 
-type expected struct {
-	args string
-	code int
-	out  string
-}
-
 func TestCLI(t *testing.T) {
-	setup := func() func() {
-		old := controller.DefaultCLIReader
-		return func() {
-			controller.DefaultCLIReader = old
-		}
-	}
-	cleanup := setup()
-	defer cleanup()
+	cleanup := di.Reset
 
-	defer helper.NewServer(t).Start().Stop()
+	defer func() {
+		controller.DefaultCLIReader = os.Stdin
+	}()
 
 	t.Run("from stdin", func(t *testing.T) {
 		cases := []struct {
-			in       string
-			expected []expected
+			args          string
+			code          int
+			useReflection bool
 		}{
-			{
-				in: `{ "name": "maho" }`,
-				expected: []expected{
-					{args: "", code: 1},
-					{args: "testdata/helloworld.proto", code: 1},
-					{args: "--package helloworld testdata/helloworld.proto", code: 1},
-					{args: "--package helloworld --service Greeter testdata/helloworld.proto", code: 1},
-					{args: "--package helloworld --call SayHello testdata/helloworld.proto", code: 1},
-					{args: "--package helloworld --service Greeter --call SayHello", code: 1},
-					{args: "--package helloworld --service Greeter --call SayHello testdata/helloworld.proto", out: `{ "message": "Hello, maho!" }`},
-				},
-			},
+			{args: "", code: 1},
+			{args: "testdata/helloworld.proto", code: 1},
+			{args: "--package helloworld testdata/helloworld.proto", code: 1},
+			{args: "--package helloworld --service Greeter testdata/helloworld.proto", code: 1},
+			{args: "--package helloworld --call SayHello testdata/helloworld.proto", code: 1},
+			{args: "--package helloworld --service Greeter --call SayHello", code: 1},
+			{args: "--package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
+			{args: "--reflection", code: 1, useReflection: true},
+			{args: "--reflection --service Greeter", code: 1, useReflection: true},
+			{args: "--reflection --call SayHello", code: 1, useReflection: true},
+			{args: "--reflection --service Greeter --call SayHello", code: 0, useReflection: true},
 		}
 
-		for _, r := range cases {
-			for _, c := range r.expected {
-				t.Run(c.args, func(t *testing.T) {
-					in := strings.NewReader(r.in)
-					controller.DefaultCLIReader = in
+		for _, c := range cases {
+			t.Run(c.args, func(t *testing.T) {
+				defer helper.NewServer(t, c.useReflection).Start().Stop()
+				defer cleanup()
 
-					out := new(bytes.Buffer)
-					ui := controller.NewUI(in, out, ioutil.Discard)
+				in := strings.NewReader(`{ "name": "maho" }`)
+				controller.DefaultCLIReader = in
 
-					code := newCLI(ui).Run(strings.Split(c.args, " "))
-					require.Equal(t, c.code, code)
+				out := new(bytes.Buffer)
+				errOut := new(bytes.Buffer)
+				ui := controller.NewUI(in, out, errOut)
 
-					if c.code == 0 {
-						assert.Equal(t, c.out, flatten(out.String()))
-					}
-				})
-			}
+				args := strings.Split(c.args, " ")
+				args = append([]string{"--cli"}, args...)
+				code := newCLI(ui).Run(args)
+				require.Equal(t, c.code, code, errOut.String())
+
+				if c.code == 0 {
+					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()), errOut.String())
+				}
+			})
 		}
 	})
 
 	t.Run("from file", func(t *testing.T) {
 		cases := []struct {
-			in       string
-			expected []expected
+			args          string
+			code          int
+			useReflection bool
 		}{
-			{
-				in: `{ "name": "maho" }`,
-				expected: []expected{
-					{args: "--file testdata/in.json", code: 1},
-					{args: "--file testdata/in.json testdata/helloworld.proto", code: 1},
-					{args: "--file testdata/in.json --package helloworld testdata/helloworld.proto", code: 1},
-					{args: "--file testdata/in.json --package helloworld --service Greeter testdata/helloworld.proto", code: 1},
-					{args: "--file testdata/in.json --package helloworld --call SayHello testdata/helloworld.proto", code: 1},
-					{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello", code: 1},
-					{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", out: `{ "message": "Hello, maho!" }`},
-				},
-			},
+			{args: "--file testdata/in.json", code: 1},
+			{args: "--file testdata/in.json testdata/helloworld.proto", code: 1},
+			{args: "--file testdata/in.json --package helloworld testdata/helloworld.proto", code: 1},
+			{args: "--file testdata/in.json --package helloworld --service Greeter testdata/helloworld.proto", code: 1},
+			{args: "--file testdata/in.json --package helloworld --call SayHello testdata/helloworld.proto", code: 1},
+			{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello", code: 1},
+			{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
+			{args: "--reflection --file testdata/in.json", code: 1, useReflection: true},
+			{args: "--reflection --file testdata/in.json --service Greeter", code: 1, useReflection: true},
+			{args: "--reflection --file testdata/in.json --call SayHello", code: 1, useReflection: true},
+			{args: "--reflection --file testdata/in.json --service Greeter --call SayHello", code: 0, useReflection: true},
 		}
 
-		for _, r := range cases {
-			for _, c := range r.expected {
-				t.Run(c.args, func(t *testing.T) {
-					in := strings.NewReader(r.in)
-					controller.DefaultCLIReader = in
+		for _, c := range cases {
+			t.Run(c.args, func(t *testing.T) {
+				defer helper.NewServer(t, c.useReflection).Start().Stop()
+				defer cleanup()
 
-					out := new(bytes.Buffer)
-					ui := controller.NewUI(in, out, ioutil.Discard)
+				in := strings.NewReader(`{ "name": "maho" }`)
+				controller.DefaultCLIReader = in
 
-					code := newCLI(ui).Run(strings.Split(c.args, " "))
-					require.Equal(t, c.code, code)
+				out := new(bytes.Buffer)
+				ui := controller.NewUI(in, out, ioutil.Discard)
 
-					if c.code == 0 {
-						assert.Equal(t, c.out, flatten(out.String()))
-					}
-				})
-			}
+				code := newCLI(ui).Run(strings.Split(c.args, " "))
+				require.Equal(t, c.code, code)
+
+				if c.code == 0 {
+					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
+				}
+			})
 		}
 	})
 }

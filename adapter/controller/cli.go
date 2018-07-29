@@ -6,27 +6,23 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
-	"github.com/ktr0731/evans/adapter/gateway"
-	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/di"
-	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
 	isatty "github.com/mattn/go-isatty"
-	shellwords "github.com/mattn/go-shellwords"
 	"github.com/mitchellh/copystructure"
 	"github.com/pkg/errors"
 
@@ -58,6 +54,7 @@ Positional arguments:
 Options:
 	--edit, -e		%s
 	--repl			%s
+	--cli			%s
 	--silent, -s		%s
 	--host HOST		%s
 	--port PORT, -p PORT	%s
@@ -68,6 +65,7 @@ Options:
 	--path PATH		%s
 	--header HEADER		%s
 	--web			%s
+	--reflection, -r	%s
 
 	--help, -h		%s
 	--version, -v		%s
@@ -75,18 +73,20 @@ Options:
 
 func (c *CLI) parseFlags(args []string) *options {
 	const (
-		edit    = "edit config file using by $EDITOR"
-		repl    = "start with REPL mode"
-		silent  = "hide splash"
-		host    = "gRPC server host"
-		port    = "gRPC server port"
-		pkg     = "default package"
-		service = "default service"
-		call    = "call specified RPC by CLI mode"
-		file    = "the script file which will be executed by (used only CLI mode)"
-		path    = "proto file paths"
-		header  = "default headers which set to each requests (example: foo=bar)"
-		web     = "use gRPC Web protocol"
+		edit       = "edit config file using by $EDITOR"
+		repl       = "start as REPL mode"
+		cli        = "start as CLI mode"
+		silent     = "hide splash"
+		host       = "gRPC server host"
+		port       = "gRPC server port"
+		pkg        = "default package"
+		service    = "default service"
+		call       = "call specified RPC by CLI mode"
+		file       = "the script file which will be executed by (used only CLI mode)"
+		path       = "proto file paths"
+		header     = "default headers which set to each requests (example: foo=bar)"
+		web        = "use gRPC Web protocol"
+		reflection = "use gRPC reflection"
 
 		version = "display version and exit"
 		help    = "display this help and exit"
@@ -101,6 +101,7 @@ func (c *CLI) parseFlags(args []string) *options {
 			c.name,
 			edit,
 			repl,
+			cli,
 			silent,
 			host,
 			port,
@@ -111,6 +112,7 @@ func (c *CLI) parseFlags(args []string) *options {
 			path,
 			header,
 			web,
+			reflection,
 			version,
 			help,
 		)
@@ -121,6 +123,7 @@ func (c *CLI) parseFlags(args []string) *options {
 	f.BoolVar(&opts.editConfig, "edit", false, edit)
 	f.BoolVar(&opts.editConfig, "e", false, edit)
 	f.BoolVar(&opts.repl, "repl", false, repl)
+	f.BoolVar(&opts.cli, "cli", false, cli)
 	f.BoolVar(&opts.silent, "silent", false, silent)
 	f.BoolVar(&opts.silent, "s", false, silent)
 	f.StringVar(&opts.host, "host", "", host)
@@ -134,6 +137,8 @@ func (c *CLI) parseFlags(args []string) *options {
 	f.Var(&opts.path, "path", path)
 	f.Var(&opts.header, "header", header)
 	f.BoolVar(&opts.web, "web", false, web)
+	f.BoolVar(&opts.reflection, "reflection", false, reflection)
+	f.BoolVar(&opts.reflection, "r", false, reflection)
 	f.BoolVar(&opts.version, "version", false, version)
 	f.BoolVar(&opts.version, "v", false, version)
 
@@ -150,17 +155,19 @@ type options struct {
 	editConfig bool
 
 	// config options
-	repl    bool
-	silent  bool
-	host    string
-	port    string
-	pkg     string
-	service string
-	call    string
-	file    string
-	path    optStrSlice
-	header  optStrSlice
-	web     bool
+	repl       bool
+	cli        bool
+	silent     bool
+	host       string
+	port       string
+	pkg        string
+	service    string
+	call       string
+	file       string
+	path       optStrSlice
+	header     optStrSlice
+	web        bool
+	reflection bool
 
 	// meta options
 	version bool
@@ -183,6 +190,9 @@ type wrappedConfig struct {
 
 	// explicit using REPL mode
 	repl bool
+
+	// explicit using CLI mode
+	cli bool
 }
 
 type CLI struct {
@@ -225,6 +235,7 @@ func (c *CLI) init(opts *options, proto []string) error {
 			call: opts.call,
 			file: opts.file,
 			repl: opts.repl,
+			cli:  opts.cli,
 		}
 
 		err = checkPrecondition(c.wcfg)
@@ -265,20 +276,17 @@ func (c *CLI) Run(args []string) int {
 
 	c.init(opts, proto)
 
-	env, err := setupEnv(c.wcfg.cfg)
-	if err == ErrProtoFileRequired {
+	if len(c.wcfg.cfg.Default.ProtoFile) == 0 && !c.wcfg.cfg.Server.Reflection {
 		c.Usage()
-	}
-	if err != nil {
-		c.Error(err)
+		c.Error(ErrProtoFileRequired)
 		return 1
 	}
 
 	var status int
 	if isCommandLineMode(c.wcfg) {
-		status = c.runAsCLI(env)
+		status = c.runAsCLI()
 	} else {
-		status = c.runAsREPL(env)
+		status = c.runAsREPL()
 	}
 
 	return status
@@ -286,110 +294,159 @@ func (c *CLI) Run(args []string) int {
 
 var DefaultCLIReader io.Reader = os.Stdin
 
-func (c *CLI) runAsCLI(env *entity.Env) int {
+func (c *CLI) runAsCLI() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 
-	errCh := make(chan error, 1)
-	go checkUpdate(ctx, c.wcfg.cfg, c.cache, errCh)
+	checkUpdateErrCh := make(chan error, 1)
+	go func() {
+		checkUpdateErrCh <- checkUpdate(ctx, c.wcfg.cfg, c.cache)
+	}()
 
-	in := DefaultCLIReader
-	if c.wcfg.file != "" {
-		f, err := os.Open(c.wcfg.file)
+	errCh := make(chan error)
+	go func() {
+		defer cancel()
+
+		in := DefaultCLIReader
+		if c.wcfg.file != "" {
+			f, err := os.Open(c.wcfg.file)
+			if err != nil {
+				errCh <- err
+				return
+			}
+			defer f.Close()
+			in = f
+		}
+
+		p, err := di.NewCLIInteractorParams(c.wcfg.cfg, in)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		interactor := usecase.NewInteractor(p)
+		closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer closeCancel()
+		defer interactor.Close(closeCtx)
+
+		res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
+		if err != nil {
+			errCh <- err
+			return
+		}
+
+		b := new(bytes.Buffer)
+		if _, err := b.ReadFrom(res); err != nil {
+			errCh <- err
+			return
+		}
+
+		c.ui.Println(b.String())
+	}()
+
+	select {
+	case <-ctx.Done():
+		return 0
+	case err := <-errCh:
+		// first, cancel
+		cancel()
+
+		// receive the REPL result
 		if err != nil {
 			c.Error(err)
+		}
+
+		cuErr := <-checkUpdateErrCh
+		if cuErr != nil {
+			c.Error(cuErr)
+		}
+
+		if err != nil || cuErr != nil {
 			return 1
 		}
-		defer f.Close()
-		in = f
 	}
-
-	inputter := gateway.NewJSONFileInputter(in)
-	p, err := di.NewCLIInteractorParams(c.wcfg.cfg, env, inputter)
-	if err != nil {
-		c.Error(err)
-		return 1
-	}
-	interactor := usecase.NewInteractor(p)
-
-	res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
-	if err != nil {
-		c.Error(err)
-		return 1
-	}
-
-	b := new(bytes.Buffer)
-	if _, err := b.ReadFrom(res); err != nil {
-		c.Error(err)
-		return 1
-	}
-
-	c.ui.Println(b.String())
-
-	cancel()
-	if err := <-errCh; err != nil {
-		c.Error(err)
-		return 1
-	}
-	<-ctx.Done()
-
 	return 0
 }
 
 // DefaultREPLUI is used for e2e testing
 var DefaultREPLUI = newREPLUI("")
 
-func (c *CLI) runAsREPL(env *entity.Env) int {
+func (c *CLI) runAsREPL() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// if AutoUpdate enabled, do update asynchronously
-	puCh := make(chan error, 1)
-	if c.wcfg.cfg.Meta.AutoUpdate {
-		go func() {
-			puCh <- c.processUpdate(ctx)
-		}()
-	} else {
-		err := c.processUpdate(ctx)
+	checkUpdateErrCh := make(chan error, 1)
+	go func() {
+		checkUpdateErrCh <- checkUpdate(ctx, c.wcfg.cfg, c.cache)
+	}()
+
+	processUpdateErrCh := make(chan error, 1)
+	errCh := make(chan error)
+	go func() {
+		defer cancel()
+
+		// if AutoUpdate enabled, do update asynchronously
+		if c.wcfg.cfg.Meta.AutoUpdate {
+			go func() {
+				processUpdateErrCh <- c.processUpdate(ctx)
+			}()
+		} else {
+			err := c.processUpdate(ctx)
+			if err != nil {
+				errCh <- err
+				return
+			}
+		}
+
+		p, err := di.NewREPLInteractorParams(c.wcfg.cfg, DefaultCLIReader)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		interactor := usecase.NewInteractor(p)
+		closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer closeCancel()
+		defer interactor.Close(closeCtx)
+
+		var ui UI
+		if c.wcfg.cfg.REPL.ColoredOutput {
+			ui = newColoredREPLUI(DefaultREPLUI)
+		} else {
+			ui = DefaultREPLUI
+		}
+
+		env, err := di.Env(c.wcfg.cfg)
+		if err != nil {
+			errCh <- err
+			return
+		}
+
+		r := NewREPL(c.wcfg.cfg.REPL, env, ui, interactor)
+		if err := r.Start(); err != nil {
+			errCh <- err
+			return
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return 0
+	case err := <-errCh:
 		if err != nil {
 			c.Error(err)
 			return 1
 		}
-	}
 
-	cuCh := make(chan error, 1)
-	go checkUpdate(ctx, c.wcfg.cfg, c.cache, cuCh)
+		cancel()
 
-	p, err := di.NewREPLInteractorParams(c.wcfg.cfg, env)
-	if err != nil {
-		c.Error(err)
-		return 1
-	}
-	interactor := usecase.NewInteractor(p)
+		select {
+		case err = <-processUpdateErrCh:
+		case err = <-checkUpdateErrCh:
+		}
 
-	var ui UI
-	if c.wcfg.cfg.REPL.ColoredOutput {
-		ui = newColoredREPLUI(DefaultREPLUI)
-	} else {
-		ui = DefaultREPLUI
-	}
-	r := NewREPL(c.wcfg.cfg.REPL, env, ui, interactor)
-	if err := r.Start(); err != nil {
-		c.Error(err)
-		return 1
-	}
-
-	cancel()
-	<-ctx.Done()
-	if c.wcfg.cfg.Meta.AutoUpdate {
-		if err := <-puCh; err != nil {
+		if err != nil {
 			c.Error(err)
 			return 1
 		}
-	}
-	if err := <-cuCh; err != nil {
-		c.Error(err)
-		return 1
 	}
 
 	return 0
@@ -516,6 +573,10 @@ func mergeConfig(cfg *config.Config, opt *options, proto []string) (*config.Conf
 		mc.Request.Web = true
 	}
 
+	if opt.reflection {
+		mc.Server.Reflection = true
+	}
+
 	config.SetupConfig(mc)
 	return mc, nil
 }
@@ -528,6 +589,11 @@ func checkPrecondition(w *wrappedConfig) error {
 	if err := isCallable(w); err != nil {
 		return errors.Wrap(err, "not callable")
 	}
+
+	if w.cli && w.repl {
+		return errors.New("cannot use both of --cli and --repl options")
+	}
+
 	return nil
 }
 
@@ -558,97 +624,6 @@ func isCallable(w *wrappedConfig) error {
 
 func isCommandLineMode(w *wrappedConfig) bool {
 	return !w.repl && (!isatty.IsTerminal(os.Stdin.Fd()) || w.file != "")
-}
-
-func setupEnv(cfg *config.Config) (*entity.Env, error) {
-	paths, err := resolveProtoPaths(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	files, err := resolveProtoFiles(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	desc, err := parser.ParseFile(files, paths)
-	if err != nil {
-		return nil, err
-	}
-
-	env, err := entity.NewEnv(desc, cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	if pkg := cfg.Default.Package; pkg != "" {
-		if err := env.UsePackage(pkg); err != nil {
-			return nil, errors.Wrapf(err, "failed to set package to env as a default package: %s", pkg)
-		}
-	}
-
-	if svc := cfg.Default.Service; svc != "" {
-		if err := env.UseService(svc); err != nil {
-			return nil, errors.Wrapf(err, "failed to set service to env as a default service: %s", svc)
-		}
-	}
-
-	return env, nil
-}
-
-func resolveProtoPaths(cfg *config.Config) ([]string, error) {
-	paths := make([]string, 0, len(cfg.Default.ProtoPath))
-	encountered := map[string]bool{}
-	parser := shellwords.NewParser()
-	parser.ParseEnv = true
-
-	parse := func(p string) (string, error) {
-		res, err := parser.Parse(p)
-		if err != nil {
-			return "", err
-		}
-		if len(res) > 1 {
-			return "", errors.New("failed to parse proto path")
-		}
-		// empty path
-		if len(res) == 0 {
-			return "", nil
-		}
-		return res[0], nil
-	}
-
-	fpaths := make([]string, 0, len(cfg.Default.ProtoFile))
-	for _, f := range cfg.Default.ProtoFile {
-		fpaths = append(fpaths, filepath.Dir(f))
-	}
-
-	for _, p := range append(cfg.Default.ProtoPath, fpaths...) {
-		path, err := parse(p)
-		if err != nil {
-			return nil, err
-		}
-
-		if encountered[path] || path == "" {
-			continue
-		}
-		encountered[path] = true
-		paths = append(paths, path)
-	}
-
-	return paths, nil
-}
-
-func resolveProtoFiles(conf *config.Config) ([]string, error) {
-	files := make([]string, 0, len(conf.Default.ProtoFile))
-	for _, f := range conf.Default.ProtoFile {
-		if f != "" {
-			files = append(files, f)
-		}
-	}
-	if len(files) == 0 {
-		return nil, ErrProtoFileRequired
-	}
-	return files, nil
 }
 
 func toHeader(sh optStrSlice) ([]config.Header, error) {

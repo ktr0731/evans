@@ -65,7 +65,6 @@ func callUnary(
 	if err != nil {
 		return nil, err
 	}
-
 	res := builder.NewMessage(rpc.ResponseMessage())
 	if err := grpcClient.Invoke(ctx, rpc.FQRN(), req, res); err != nil {
 		return nil, err
@@ -110,9 +109,7 @@ func callClientStreaming(
 }
 
 type serverStreamingResultWriter struct {
-	ctx    context.Context
-	cancel func()
-	s      entity.ServerStream
+	s entity.ServerStream
 
 	output func(proto.Message) (io.Reader, error)
 
@@ -136,40 +133,56 @@ func newServerStramingResultWriter(
 		r:          r,
 		w:          w,
 	}
-	writer.ctx, writer.cancel = context.WithCancel(ctx)
-	go writer.receiveResponse()
+	go writer.receiveResponse(ctx)
 	return writer
 }
 
-func (w *serverStreamingResultWriter) receiveResponse() {
+func (w *serverStreamingResultWriter) receiveResponse(ctx context.Context) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	sigCh := make(chan os.Signal)
 	signal.Notify(sigCh, os.Interrupt)
+	defer close(sigCh)
+
 	go func() {
-		defer w.cancel()
-		for range sigCh {
-			w.w.CloseWithError(io.EOF)
+		defer cancel()
+		for {
+			select {
+			case <-sigCh:
+				w.w.CloseWithError(io.EOF)
+			case <-ctx.Done():
+				w.w.CloseWithError(io.EOF)
+			}
 			return
 		}
 	}()
 
 	resCh := make(chan proto.Message)
 	go func() {
-		defer w.cancel()
+		defer cancel()
 		for {
-			res := w.newMessage()
-			err := w.s.Receive(res)
-			if err != nil {
-				w.w.CloseWithError(err)
-				close(resCh)
+			select {
+			case <-sigCh:
 				return
+			case <-ctx.Done():
+				return
+			default:
+				res := w.newMessage()
+				err := w.s.Receive(res)
+				if err != nil {
+					w.w.CloseWithError(err)
+					close(resCh)
+					return
+				}
+				resCh <- res
 			}
-			resCh <- res
 		}
 	}()
 
 	for {
 		select {
-		case <-w.ctx.Done():
+		case <-ctx.Done():
 			return
 		case r, ok := <-resCh:
 			if !ok {
@@ -199,11 +212,7 @@ func (w *serverStreamingResultWriter) receiveResponse() {
 }
 
 func (w *serverStreamingResultWriter) Read(b []byte) (int, error) {
-	n, err := w.r.Read(b)
-	if err != nil {
-		w.cancel()
-	}
-	return n, err
+	return w.r.Read(b)
 }
 
 func callServerStreaming(
@@ -236,6 +245,65 @@ func callServerStreaming(
 		}), nil
 }
 
+type bidiStreamSendWriter struct {
+	*serverStreamingResultWriter
+
+	s        entity.BidiStream
+	inputter port.Inputter
+	rpc      entity.RPC
+}
+
+func (sw *bidiStreamSendWriter) sendRequest(ctx context.Context) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		req, err := sw.inputter.Input(sw.rpc.RequestMessage())
+		if err == io.EOF {
+			sw.s.Close()
+			return
+		}
+		if err != nil {
+			sw.serverStreamingResultWriter.w.CloseWithError(errors.Wrap(err, "failed to input request message"))
+			return
+		}
+
+		if err := sw.s.Send(req); err != nil {
+			sw.serverStreamingResultWriter.w.CloseWithError(errors.Wrap(err, "failed to send server streaming request"))
+			return
+		}
+	}
+}
+
+func newBidiStramingResultWriter(
+	ctx context.Context,
+	s entity.BidiStream,
+	outputPort func(proto.Message) (io.Reader, error),
+	newMessage func() proto.Message,
+	inputter port.Inputter,
+	rpc entity.RPC,
+) *bidiStreamSendWriter {
+	ssw := newServerStramingResultWriter(ctx, s, outputPort, newMessage)
+
+	w := &bidiStreamSendWriter{
+		serverStreamingResultWriter: ssw,
+
+		s:        s,
+		inputter: inputter,
+		rpc:      rpc,
+	}
+
+	go w.sendRequest(ctx)
+
+	return w
+}
+
 func callBidiStreaming(
 	ctx context.Context,
 	outputPort port.OutputPort,
@@ -249,32 +317,16 @@ func callBidiStreaming(
 		return nil, errors.Wrap(err, "failed to create client stream")
 	}
 
-	w := newServerStramingResultWriter(
+	w := newBidiStramingResultWriter(
 		ctx,
 		st,
 		outputPort.Call,
 		func() proto.Message {
 			return builder.NewMessage(rpc.ResponseMessage())
-		})
-
-	go func() {
-		for {
-			req, err := inputter.Input(rpc.RequestMessage())
-			if err == io.EOF {
-				st.Close()
-				return
-			}
-			if err != nil {
-				w.w.CloseWithError(errors.Wrap(err, "failed to input request message"))
-				return
-			}
-
-			if err := st.Send(req); err != nil {
-				w.w.CloseWithError(errors.Wrap(err, "failed to send server streaming request"))
-				return
-			}
-		}
-	}()
+		},
+		inputter,
+		rpc,
+	)
 
 	return w, nil
 }

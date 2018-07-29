@@ -24,12 +24,17 @@ build: deps
 test: vet lint unit-test e2e-test
 
 .PHONY: unit-test
-unit-test:
-	@go test -race $(shell go list ./... | grep -v tests)
+unit-test: deadcode-test
+	go test -race $(shell go list ./... | grep -v tests)
 
 .PHONY: e2e-test
-e2e-test:
-	@go test -race ./tests/...
+e2e-test: deadcode-test
+	go test -tags e2e -race ./tests/...
+
+# to find uninitialized dependencies
+.PHONY: deadcode-test
+deadcode-test:
+	gometalinter --vendor --disable-all --enable=deadcode di
 
 .PHONY: vet
 vet:

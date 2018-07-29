@@ -3,6 +3,7 @@ package protobuf
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,4 +25,14 @@ func TestToEntitiesFrom(t *testing.T) {
 
 	require.Len(t, pkg.Messages[0].Fields(), 2)
 	require.Len(t, pkg.Messages[1].Fields(), 2)
+}
+
+func TestToEntitiesFromServiceDescriptors(t *testing.T) {
+	d := parseFile(t, []string{"helloworld.proto"}, nil)
+	require.Len(t, d, 1)
+
+	svcs := ToEntitiesFromServiceDescriptors(d[0].GetServices())
+	assert.Len(t, svcs, len(d))
+
+	assert.Len(t, svcs[0].RPCs(), 1)
 }

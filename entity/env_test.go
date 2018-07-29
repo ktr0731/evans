@@ -14,12 +14,16 @@ func TestNewEnv(t *testing.T) {
 			Header: []config.Header{{Key: "foo", Val: "bar"}},
 		},
 	}
-	env, err := NewEnv(nil, cfg)
-	require.NoError(t, err)
+	env := NewEnv(nil, cfg)
 	h := env.Headers()
 	require.Len(t, h, 1)
 	require.Equal(t, h[0].Key, "foo")
 	require.Equal(t, h[0].Val, "bar")
+
+	t.Run("NewEnvFromServices", func(t *testing.T) {
+		env := NewEnvFromServices(nil, cfg)
+		assert.Equal(t, "default", env.state.currentPackage)
+	})
 }
 
 func TestEnv(t *testing.T) {
@@ -54,9 +58,7 @@ func TestEnv(t *testing.T) {
 				},
 			}
 		}
-		env, err := NewEnv(pkgs, cfg)
-		require.NoError(t, err)
-		return env
+		return NewEnv(pkgs, cfg)
 	}
 
 	env := setup(t, nil)
@@ -142,8 +144,8 @@ func TestEnv(t *testing.T) {
 		cfg.Request.Header = expected
 		env = setup(t, cfg)
 		for i, h := range env.Headers() {
-			require.Equal(t, expected[i].Key, h.Key)
-			require.Equal(t, expected[i].Val, h.Val)
+			assert.Equal(t, expected[i].Key, h.Key)
+			assert.Equal(t, expected[i].Val, h.Val)
 		}
 	})
 
@@ -154,12 +156,11 @@ func TestEnv(t *testing.T) {
 		env := setup(t, cfg)
 		require.Len(t, env.Headers(), 0)
 
-		err := env.AddHeader(&Header{"megumi", "kato", false})
-		require.NoError(t, err)
-		require.Len(t, env.Headers(), 1)
+		env.AddHeader(&Header{"megumi", "kato", false})
+		assert.Len(t, env.Headers(), 1)
 
-		err = env.AddHeader(&Header{"megumi", "kato", false})
-		require.Error(t, err)
+		env.AddHeader(&Header{"megumi", "kato", false})
+		assert.Len(t, env.Headers(), 1)
 	})
 
 	t.Run("RemoveHeader", func(t *testing.T) {
@@ -174,27 +175,32 @@ func TestEnv(t *testing.T) {
 		headers := []struct {
 			k, v string
 		}{
+			{"hazuki", "katou"},
 			{"kumiko", "oumae"},
 			{"reina", "kousaka"},
 			{"sapphire", "kawashima"},
-			{"hazuki", "katou"},
 		}
 		for _, h := range headers {
-			err := env.AddHeader(&Header{h.k, h.v, false})
-			require.NoError(t, err)
+			env.AddHeader(&Header{h.k, h.v, false})
 		}
-		require.Len(t, env.Headers(), 4)
+		assert.Len(t, env.Headers(), 4)
+
+		// Headers must be return slice which ordered by key with ASC
+		assert.Equal(t, env.Headers()[0].Key, "hazuki")
+		assert.Equal(t, env.Headers()[1].Key, "kumiko")
+		assert.Equal(t, env.Headers()[2].Key, "reina")
+		assert.Equal(t, env.Headers()[3].Key, "sapphire")
 
 		env.RemoveHeader("foo")
-		require.Len(t, env.Headers(), 4)
+		assert.Len(t, env.Headers(), 4)
 
 		env.RemoveHeader("sapphire")
-		require.Len(t, env.Headers(), 3)
-		require.Equal(t, env.Headers()[2].Key, "hazuki")
+		assert.Len(t, env.Headers(), 3)
+		assert.Equal(t, env.Headers()[2].Key, "reina")
 
 		env.RemoveHeader("hazuki")
-		require.Len(t, env.Headers(), 2)
-		require.Equal(t, env.Headers()[1].Key, "reina")
+		assert.Len(t, env.Headers(), 2)
+		assert.Equal(t, env.Headers()[1].Key, "reina")
 	})
 }
 

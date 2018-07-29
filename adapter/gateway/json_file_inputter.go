@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/entity"
+	"github.com/pkg/errors"
 )
 
 type JSONFileInputter struct {
@@ -21,5 +22,9 @@ func NewJSONFileInputter(in io.Reader) *JSONFileInputter {
 
 func (i *JSONFileInputter) Input(reqType entity.Message) (proto.Message, error) {
 	req := protobuf.NewDynamicMessage(reqType)
-	return req, i.decoder.Decode(req)
+	err := i.decoder.Decode(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read input from JSON")
+	}
+	return req, nil
 }
