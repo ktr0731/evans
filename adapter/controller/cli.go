@@ -615,20 +615,6 @@ func isCallable(w *wrappedConfig) error {
 
 func isCommandLineMode(w *wrappedConfig) bool {
 	return !w.repl && (!isatty.IsTerminal(os.Stdin.Fd()) || w.file != "")
-	// if w.repl {
-	// 	return false
-	// }
-	//
-	// // pipe or files are passed as input
-	// if !isatty.IsTerminal(os.Stdin.Fd()) || w.file != "" {
-	// 	return true
-	// }
-	//
-	// if w.cfg.Server.Reflection {
-	//
-	// }
-	//
-	// return true
 }
 
 func toHeader(sh optStrSlice) ([]config.Header, error) {
