@@ -66,7 +66,7 @@ func TestCLI(t *testing.T) {
 				ui := controller.NewUI(in, out, errOut)
 
 				args := strings.Split(c.args, " ")
-				args = append(args, "--cli")
+				args = append([]string{"--cli"}, args...)
 				code := newCLI(ui).Run(args)
 				require.Equal(t, c.code, code, errOut.String())
 
