@@ -168,19 +168,23 @@ func initPromptInputter(cfg *config.Config) (err error) {
 }
 
 var (
-	gRPCClient     *gateway.GRPCClient
+	gRPCClient     entity.GRPCClient
 	gRPCClientOnce sync.Once
 )
 
 func initGRPCClient(cfg *config.Config) error {
 	var err error
 	gRPCClientOnce.Do(func() {
-		gRPCClient, err = gateway.NewGRPCClient(cfg)
+		if cfg.Request.Web {
+			gRPCClient = gateway.NewGRPCWebClient(cfg)
+		} else {
+			gRPCClient, err = gateway.NewGRPCClient(cfg)
+		}
 	})
 	return err
 }
 
-func GRPCClient(cfg *config.Config) (*gateway.GRPCClient, error) {
+func GRPCClient(cfg *config.Config) (entity.GRPCClient, error) {
 	if err := initGRPCClient(cfg); err != nil {
 		return nil, err
 	}
