@@ -61,6 +61,12 @@
   revision = "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
 
 [[projects]]
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  revision = "ea4d1f681babbce9545c9c5f3d5194a789c89f5b"
+  version = "v1.2.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/hashicorp/errwrap"
   packages = ["."]
@@ -71,6 +77,12 @@
   name = "github.com/hashicorp/go-multierror"
   packages = ["."]
   revision = "3d5d8f294aa03d8e98859feac328afbdf1ae0703"
+
+[[projects]]
+  name = "github.com/improbable-eng/grpc-web"
+  packages = ["go/grpcweb"]
+  revision = "72eb701d6f320ca324b3347c7925a720b553eae5"
+  version = "0.6.2"
 
 [[projects]]
   branch = "master"
@@ -93,11 +105,13 @@
     "grpcreflect",
     "internal"
   ]
-<<<<<<< HEAD
-  revision = "dec7efff960aff9689f61d913a23286a260ac875"
-=======
   revision = "86d31fcaca06045b722f08bae124c96548404121"
->>>>>>> master
+
+[[projects]]
+  name = "github.com/k0kubun/pp"
+  packages = ["."]
+  revision = "027a6d1765d673d337e687394dbe780dd64e2a1e"
+  version = "v2.3.0"
 
 [[projects]]
   name = "github.com/kelseyhightower/envconfig"
@@ -138,6 +152,12 @@
   ]
   revision = "9baaa64c414e3a13a61d23bb5e8408655ceaacb7"
   version = "0.1.3"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/ktr0731/grpc-web-go-client"
+  packages = ["grpcweb"]
+  revision = "16afe0b0efc633e66a719f0be88e5ad8a46da002"
 
 [[projects]]
   branch = "master"
@@ -242,6 +262,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/rs/cors"
+  packages = ["."]
+  revision = "3fb1b69b103a84de38a19c3c6ec073dd6caa4d3f"
+  version = "v1.5.0"
+
+[[projects]]
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
@@ -277,21 +303,13 @@
     "internal/timeseries",
     "trace"
   ]
-<<<<<<< HEAD
-  revision = "81d44fd177a98d09fe3bc40a5a78d495d3f042ea"
-=======
   revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
->>>>>>> master
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-<<<<<<< HEAD
-  revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
-=======
   revision = "bd9dbc187b6e1dacfdd2722a87e83093c2d7bd6e"
->>>>>>> master
 
 [[projects]]
   name = "golang.org/x/text"
@@ -324,11 +342,7 @@
     "protobuf/ptype",
     "protobuf/source_context"
   ]
-<<<<<<< HEAD
-  revision = "fedd2861243fd1a8152376292b921b394c7bef7e"
-=======
   revision = "2a72893556e4d1f6c795a4c039314c9fa751eedb"
->>>>>>> master
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -382,10 +396,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-<<<<<<< HEAD
-  inputs-digest = "8677357ac00c576c2859e2066899f99382babb7576cc060e69d56b36a02d368c"
-=======
-  inputs-digest = "82e88f613715be36e822f3df57ccafb1a100a3f6ad8c3ebec0573f3e764bcee7"
->>>>>>> master
+  inputs-digest = "d4abc52b31b6071a35f51fd62775b28aed38d498f3273772bfbdcbba28ffca0b"
   solver-name = "gps-cdcl"
   solver-version = 1

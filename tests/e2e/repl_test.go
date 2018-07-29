@@ -18,6 +18,7 @@ func TestREPL(t *testing.T) {
 			code          int  // exit code, 1 when precondition failed
 			hasErr        bool // error was occurred in REPL, false if precondition failed
 			useReflection bool
+			useWeb        bool
 		}{
 			{args: "", code: 1}, // cannot launch REPL case
 			{args: "--package helloworld", code: 1},
@@ -29,8 +30,11 @@ func TestREPL(t *testing.T) {
 			{args: "--package foo testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service foo testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service Greeter testdata/helloworld.proto"},
+
 			{args: "--reflection", hasErr: true, useReflection: true},
 			{args: "--reflection --service Greeter", useReflection: true},
+
+			{args: "--web --package helloworld --service Greeter testdata/helloworld.proto", useWeb: true},
 		}
 
 		rh := newREPLHelper([]string{"--silent", "--repl"})
@@ -42,7 +46,7 @@ func TestREPL(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer helper.NewServer(t, c.useReflection).Start().Stop()
+				defer helper.NewServer(t, c.useReflection).Start(c.useWeb).Stop()
 				defer cleanup()
 
 				out, eout := new(bytes.Buffer), new(bytes.Buffer)

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/grpc-web-go-client/grpcweb"
@@ -20,7 +19,6 @@ type GRPCWebClient struct {
 }
 
 func NewGRPCWebClient(config *config.Config) *GRPCWebClient {
-	pp.Println("WEB!!!")
 	conn := grpcweb.NewClient(fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port))
 	return &GRPCWebClient{
 		config: config,
