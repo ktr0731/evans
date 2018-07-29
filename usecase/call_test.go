@@ -53,6 +53,7 @@ func (c *callGRPCClient) Invoke(ctx context.Context, fqrn string, req, res inter
 	c.actualCtx = ctx
 	return nil
 }
+
 func (c *callGRPCClient) Close(context.Context) error {
 	return nil
 }
