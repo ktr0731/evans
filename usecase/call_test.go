@@ -45,6 +45,8 @@ func (i *callInputter) Input(_ entity.Message) (proto.Message, error) {
 
 type callGRPCClient struct {
 	actualCtx context.Context
+
+	entity.GRPCReflectionClient
 }
 
 func (c *callGRPCClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {

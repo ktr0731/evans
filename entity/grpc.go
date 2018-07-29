@@ -11,9 +11,9 @@ type GRPCClient interface {
 	NewClientStream(ctx context.Context, rpc RPC) (ClientStream, error)
 	NewServerStream(ctx context.Context, rpc RPC) (ServerStream, error)
 	NewBidiStream(ctx context.Context, rpc RPC) (BidiStream, error)
-	ReflectionEnabled() bool
-	ListServices() ([]Service, error)
 	Close(ctx context.Context) error
+
+	GRPCReflectionClient
 }
 
 type ClientStream interface {
@@ -30,4 +30,9 @@ type BidiStream interface {
 	Send(req proto.Message) error
 	Receive(res proto.Message) error
 	Close() error
+}
+
+type GRPCReflectionClient interface {
+	ReflectionEnabled() bool
+	ListServices() ([]Service, error)
 }
