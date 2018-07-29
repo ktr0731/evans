@@ -54,6 +54,7 @@ Positional arguments:
 Options:
 	--edit, -e		%s
 	--repl			%s
+	--cli			%s
 	--silent, -s		%s
 	--host HOST		%s
 	--port PORT, -p PORT	%s
@@ -72,7 +73,8 @@ Options:
 func (c *CLI) parseFlags(args []string) *options {
 	const (
 		edit       = "edit config file using by $EDITOR"
-		repl       = "start with REPL mode"
+		repl       = "start as REPL mode"
+		cli        = "start as CLI mode"
 		silent     = "hide splash"
 		host       = "gRPC server host"
 		port       = "gRPC server port"
@@ -97,6 +99,7 @@ func (c *CLI) parseFlags(args []string) *options {
 			c.name,
 			edit,
 			repl,
+			cli,
 			silent,
 			host,
 			port,
@@ -117,6 +120,7 @@ func (c *CLI) parseFlags(args []string) *options {
 	f.BoolVar(&opts.editConfig, "edit", false, edit)
 	f.BoolVar(&opts.editConfig, "e", false, edit)
 	f.BoolVar(&opts.repl, "repl", false, repl)
+	f.BoolVar(&opts.cli, "cli", false, cli)
 	f.BoolVar(&opts.silent, "silent", false, silent)
 	f.BoolVar(&opts.silent, "s", false, silent)
 	f.StringVar(&opts.host, "host", "", host)
@@ -148,6 +152,7 @@ type options struct {
 
 	// config options
 	repl       bool
+	cli        bool
 	silent     bool
 	host       string
 	port       string
@@ -180,6 +185,9 @@ type wrappedConfig struct {
 
 	// explicit using REPL mode
 	repl bool
+
+	// explicit using CLI mode
+	cli bool
 }
 
 type CLI struct {
@@ -222,6 +230,7 @@ func (c *CLI) init(opts *options, proto []string) error {
 			call: opts.call,
 			file: opts.file,
 			repl: opts.repl,
+			cli:  opts.cli,
 		}
 
 		err = checkPrecondition(c.wcfg)
@@ -571,6 +580,11 @@ func checkPrecondition(w *wrappedConfig) error {
 	if err := isCallable(w); err != nil {
 		return errors.Wrap(err, "not callable")
 	}
+
+	if w.cli && w.repl {
+		return errors.New("cannot use both of --cli and --repl options")
+	}
+
 	return nil
 }
 
