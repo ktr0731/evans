@@ -12,12 +12,15 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
+	multierror "github.com/ktr0731/go-multierror"
 	"github.com/pkg/errors"
 )
 
 type GRPCClient struct {
 	config *config.Config
 	conn   *grpc.ClientConn
+
+	*gRPCReflectoinClient
 }
 
 func NewGRPCClient(config *config.Config) (*GRPCClient, error) {
@@ -32,10 +35,17 @@ func NewGRPCClient(config *config.Config) (*GRPCClient, error) {
 	case connectivity.Shutdown:
 		return nil, errors.Errorf("the gRPC server was closed: %s", s)
 	}
-	return &GRPCClient{
+
+	client := &GRPCClient{
 		config: config,
 		conn:   conn,
-	}, nil
+	}
+
+	if config.Server.Reflection {
+		client.gRPCReflectoinClient = newGRPCReflectionClient(conn)
+	}
+
+	return client, nil
 }
 
 func (c *GRPCClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {
@@ -44,6 +54,25 @@ func (c *GRPCClient) Invoke(ctx context.Context, fqrn string, req, res interface
 		return err
 	}
 	return grpc.Invoke(ctx, endpoint, req, res, c.conn)
+}
+
+func (c *GRPCClient) Close(ctx context.Context) error {
+	doneCh := make(chan error)
+	go func() {
+		var result error
+		c.gRPCReflectoinClient.Close()
+		if err := c.conn.Close(); err != nil {
+			result = multierror.Append(result, errors.Wrap(err, "failed to close gRPC client"))
+		}
+		doneCh <- result
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil
+	case err := <-doneCh:
+		return err
+	}
 }
 
 type clientStream struct {

@@ -19,6 +19,11 @@ func TestNewEnv(t *testing.T) {
 	require.Len(t, h, 1)
 	require.Equal(t, h[0].Key, "foo")
 	require.Equal(t, h[0].Val, "bar")
+
+	t.Run("NewEnvFromServices", func(t *testing.T) {
+		env := NewEnvFromServices(nil, cfg)
+		assert.Equal(t, "default", env.state.currentPackage)
+	})
 }
 
 func TestEnv(t *testing.T) {

@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"io"
 
 	"github.com/ktr0731/evans/entity"
@@ -57,4 +58,9 @@ func (i *Interactor) Header(params *port.HeaderParams) (io.Reader, error) {
 
 func (i *Interactor) Call(params *port.CallParams) (io.Reader, error) {
 	return Call(params, i.outputPort, i.inputterPort, i.grpcPort, i.dynamicBuilder, i.env)
+}
+
+// Close closes all dependencies by each Close method.
+func (i *Interactor) Close(ctx context.Context) error {
+	return i.grpcPort.Close(ctx)
 }

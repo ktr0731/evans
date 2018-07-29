@@ -90,6 +90,7 @@
     "desc/internal",
     "desc/protoparse",
     "dynamic",
+    "grpcreflect",
     "internal"
   ]
   revision = "86d31fcaca06045b722f08bae124c96548404121"
@@ -334,6 +335,8 @@
     "metadata",
     "naming",
     "peer",
+    "reflection",
+    "reflection/grpc_reflection_v1alpha",
     "resolver",
     "resolver/dns",
     "resolver/passthrough",
@@ -363,6 +366,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "aaf6e6bc7d7f7859da7bba8d71fca92217027633177c2e4cb72185066e243a06"
+  inputs-digest = "82e88f613715be36e822f3df57ccafb1a100a3f6ad8c3ebec0573f3e764bcee7"
   solver-name = "gps-cdcl"
   solver-version = 1

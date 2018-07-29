@@ -54,6 +54,10 @@ func (c *callGRPCClient) Invoke(ctx context.Context, fqrn string, req, res inter
 	return nil
 }
 
+func (c *callGRPCClient) Close(context.Context) error {
+	return nil
+}
+
 type callDynamicBuilder struct{}
 
 func (b *callDynamicBuilder) NewMessage(_ entity.Message) proto.Message {

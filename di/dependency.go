@@ -35,12 +35,28 @@ func initEnv(cfg *config.Config) (rerr error) {
 			return
 		}
 
-		env = entity.NewEnv(desc, cfg)
+		var svcs []entity.Service
+		gRPCClient, err := GRPCClient(cfg)
+		if err != nil {
+			rerr = err
+			return
+		}
 
-		if pkg := cfg.Default.Package; pkg != "" {
-			if err := env.UsePackage(pkg); err != nil {
-				rerr = errors.Wrapf(err, "failed to set package to env as a default package: %s", pkg)
+		if gRPCClient.ReflectionEnabled() {
+			svcs, err = gRPCClient.ListServices()
+			if err != nil {
+				rerr = errors.Wrap(err, "failed to list services by gRPC reflection")
 				return
+			}
+			env = entity.NewEnvFromServices(svcs, cfg)
+		} else {
+			env = entity.NewEnv(desc, cfg)
+
+			if pkg := cfg.Default.Package; pkg != "" {
+				if err := env.UsePackage(pkg); err != nil {
+					rerr = errors.Wrapf(err, "failed to set package to env as a default package: %s", pkg)
+					return
+				}
 			}
 		}
 
@@ -50,7 +66,6 @@ func initEnv(cfg *config.Config) (rerr error) {
 				return
 			}
 		}
-
 	})
 	return
 }
@@ -163,6 +178,13 @@ func initGRPCClient(cfg *config.Config) error {
 		gRPCClient, err = gateway.NewGRPCClient(cfg)
 	})
 	return err
+}
+
+func GRPCClient(cfg *config.Config) (*gateway.GRPCClient, error) {
+	if err := initGRPCClient(cfg); err != nil {
+		return nil, err
+	}
+	return gRPCClient, nil
 }
 
 var (

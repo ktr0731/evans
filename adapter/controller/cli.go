@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
@@ -53,6 +54,7 @@ Positional arguments:
 Options:
 	--edit, -e		%s
 	--repl			%s
+	--cli			%s
 	--silent, -s		%s
 	--host HOST		%s
 	--port PORT, -p PORT	%s
@@ -62,23 +64,27 @@ Options:
 	--file FILE, -f FILE	%s
 	--path PATH		%s
 	--header HEADER		%s
+	--reflection, -r	%s
+
 	--help, -h		%s
 	--version, -v		%s
 `
 
 func (c *CLI) parseFlags(args []string) *options {
 	const (
-		edit    = "edit config file using by $EDITOR"
-		repl    = "start with REPL mode"
-		silent  = "hide splash"
-		host    = "gRPC server host"
-		port    = "gRPC server port"
-		pkg     = "default package"
-		service = "default service"
-		call    = "call specified RPC by CLI mode"
-		file    = "the script file which will be executed by (used only CLI mode)"
-		path    = "proto file paths"
-		header  = "default headers which set to each requests (example: foo=bar)"
+		edit       = "edit config file using by $EDITOR"
+		repl       = "start as REPL mode"
+		cli        = "start as CLI mode"
+		silent     = "hide splash"
+		host       = "gRPC server host"
+		port       = "gRPC server port"
+		pkg        = "default package"
+		service    = "default service"
+		call       = "call specified RPC by CLI mode"
+		file       = "the script file which will be executed by (used only CLI mode)"
+		path       = "proto file paths"
+		header     = "default headers which set to each requests (example: foo=bar)"
+		reflection = "use gRPC reflection"
 
 		version = "display version and exit"
 		help    = "display this help and exit"
@@ -93,6 +99,7 @@ func (c *CLI) parseFlags(args []string) *options {
 			c.name,
 			edit,
 			repl,
+			cli,
 			silent,
 			host,
 			port,
@@ -102,6 +109,7 @@ func (c *CLI) parseFlags(args []string) *options {
 			file,
 			path,
 			header,
+			reflection,
 			version,
 			help,
 		)
@@ -112,6 +120,7 @@ func (c *CLI) parseFlags(args []string) *options {
 	f.BoolVar(&opts.editConfig, "edit", false, edit)
 	f.BoolVar(&opts.editConfig, "e", false, edit)
 	f.BoolVar(&opts.repl, "repl", false, repl)
+	f.BoolVar(&opts.cli, "cli", false, cli)
 	f.BoolVar(&opts.silent, "silent", false, silent)
 	f.BoolVar(&opts.silent, "s", false, silent)
 	f.StringVar(&opts.host, "host", "", host)
@@ -124,6 +133,8 @@ func (c *CLI) parseFlags(args []string) *options {
 	f.StringVar(&opts.file, "f", "", file)
 	f.Var(&opts.path, "path", path)
 	f.Var(&opts.header, "header", header)
+	f.BoolVar(&opts.reflection, "reflection", false, reflection)
+	f.BoolVar(&opts.reflection, "r", false, reflection)
 	f.BoolVar(&opts.version, "version", false, version)
 	f.BoolVar(&opts.version, "v", false, version)
 
@@ -140,16 +151,18 @@ type options struct {
 	editConfig bool
 
 	// config options
-	repl    bool
-	silent  bool
-	host    string
-	port    string
-	pkg     string
-	service string
-	call    string
-	file    string
-	path    optStrSlice
-	header  optStrSlice
+	repl       bool
+	cli        bool
+	silent     bool
+	host       string
+	port       string
+	pkg        string
+	service    string
+	call       string
+	file       string
+	path       optStrSlice
+	header     optStrSlice
+	reflection bool
 
 	// meta options
 	version bool
@@ -172,6 +185,9 @@ type wrappedConfig struct {
 
 	// explicit using REPL mode
 	repl bool
+
+	// explicit using CLI mode
+	cli bool
 }
 
 type CLI struct {
@@ -214,6 +230,7 @@ func (c *CLI) init(opts *options, proto []string) error {
 			call: opts.call,
 			file: opts.file,
 			repl: opts.repl,
+			cli:  opts.cli,
 		}
 
 		err = checkPrecondition(c.wcfg)
@@ -254,7 +271,7 @@ func (c *CLI) Run(args []string) int {
 
 	c.init(opts, proto)
 
-	if len(c.wcfg.cfg.Default.ProtoFile) == 0 {
+	if len(c.wcfg.cfg.Default.ProtoFile) == 0 && !c.wcfg.cfg.Server.Reflection {
 		c.Usage()
 		c.Error(ErrProtoFileRequired)
 		return 1
@@ -302,6 +319,9 @@ func (c *CLI) runAsCLI() int {
 			return
 		}
 		interactor := usecase.NewInteractor(p)
+		closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer closeCancel()
+		defer interactor.Close(closeCtx)
 
 		res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
 		if err != nil {
@@ -378,6 +398,9 @@ func (c *CLI) runAsREPL() int {
 			return
 		}
 		interactor := usecase.NewInteractor(p)
+		closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer closeCancel()
+		defer interactor.Close(closeCtx)
 
 		var ui UI
 		if c.wcfg.cfg.REPL.ColoredOutput {
@@ -541,6 +564,10 @@ func mergeConfig(cfg *config.Config, opt *options, proto []string) (*config.Conf
 		mc.REPL.ShowSplashText = false
 	}
 
+	if opt.reflection {
+		mc.Server.Reflection = true
+	}
+
 	config.SetupConfig(mc)
 	return mc, nil
 }
@@ -553,6 +580,11 @@ func checkPrecondition(w *wrappedConfig) error {
 	if err := isCallable(w); err != nil {
 		return errors.Wrap(err, "not callable")
 	}
+
+	if w.cli && w.repl {
+		return errors.New("cannot use both of --cli and --repl options")
+	}
+
 	return nil
 }
 
