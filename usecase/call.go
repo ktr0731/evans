@@ -102,7 +102,7 @@ func callClientStreaming(
 	}
 
 	res := builder.NewMessage(rpc.ResponseMessage())
-	if err := st.CloseAndReceive(res); err != nil {
+	if err := st.CloseAndReceive(&res); err != nil {
 		return nil, errors.Wrap(err, "stream closed with abnormal status")
 	}
 	return res, nil
@@ -169,7 +169,7 @@ func (w *serverStreamingResultWriter) receiveResponse(ctx context.Context) {
 				return
 			default:
 				res := w.newMessage()
-				err := w.s.Receive(res)
+				err := w.s.Receive(&res)
 				if err != nil {
 					w.w.CloseWithError(err)
 					close(resCh)

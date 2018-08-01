@@ -108,12 +108,6 @@
   revision = "86d31fcaca06045b722f08bae124c96548404121"
 
 [[projects]]
-  name = "github.com/k0kubun/pp"
-  packages = ["."]
-  revision = "027a6d1765d673d337e687394dbe780dd64e2a1e"
-  version = "v2.3.0"
-
-[[projects]]
   name = "github.com/kelseyhightower/envconfig"
   packages = ["."]
   revision = "f611eb38b3875cc3bd991ca91c51d06446afa14c"
@@ -157,7 +151,7 @@
   branch = "master"
   name = "github.com/ktr0731/grpc-web-go-client"
   packages = ["grpcweb"]
-  revision = "16afe0b0efc633e66a719f0be88e5ad8a46da002"
+  revision = "6d102fa276c90e728a02c31819953209ea1d5cb6"
 
 [[projects]]
   branch = "master"
@@ -253,7 +247,7 @@
   branch = "master"
   name = "github.com/pkg/term"
   packages = ["termios"]
-  revision = "cda20d4ac917ad418d86e151eff439648b06185b"
+  revision = "bffc007b7fd5a70e20e28f5b7649bb84671ef436"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -303,7 +297,7 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "3673e40ba22529d22c3fd7c93e97b0ce50fa7bdd"
+  revision = "49c15d80dfbc983ea25246ee959d970efe09ec09"
 
 [[projects]]
   branch = "master"
@@ -342,7 +336,7 @@
     "protobuf/ptype",
     "protobuf/source_context"
   ]
-  revision = "2a72893556e4d1f6c795a4c039314c9fa751eedb"
+  revision = "daca94659cb50e9f37c1b834680f2e46358f10b0"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -360,7 +354,9 @@
     "internal",
     "internal/backoff",
     "internal/channelz",
+    "internal/envconfig",
     "internal/grpcrand",
+    "internal/transport",
     "keepalive",
     "metadata",
     "naming",
@@ -372,11 +368,10 @@
     "resolver/passthrough",
     "stats",
     "status",
-    "tap",
-    "transport"
+    "tap"
   ]
-  revision = "168a6198bcb0ef175f7dacec0b8691fc141dc9b8"
-  version = "v1.13.0"
+  revision = "32fb0ac620c32ba40a4626ddf94d90d12cce3455"
+  version = "v1.14.0"
 
 [[projects]]
   name = "gopkg.in/AlecAivazis/survey.v1"
@@ -396,6 +391,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d4abc52b31b6071a35f51fd62775b28aed38d498f3273772bfbdcbba28ffca0b"
+  inputs-digest = "84a0d6e43d3973ca3d3d79bf106de4fb0d4834250f0c0abc65355d73abcb5a5f"
   solver-name = "gps-cdcl"
   solver-version = 1
