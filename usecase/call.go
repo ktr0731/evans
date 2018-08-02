@@ -265,7 +265,7 @@ func (sw *bidiStreamSendWriter) sendRequest(ctx context.Context) {
 		}
 
 		req, err := sw.inputter.Input(sw.rpc.RequestMessage())
-		if err == io.EOF {
+		if errors.Cause(err) == io.EOF {
 			sw.s.Close()
 			return
 		}
