@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"bytes"
 	"context"
 	"flag"
 	"fmt"
@@ -329,13 +328,10 @@ func (c *CLI) runAsCLI() int {
 			return
 		}
 
-		b := new(bytes.Buffer)
-		if _, err := b.ReadFrom(res); err != nil {
+		if _, err := io.Copy(c.ui.Writer(), res); err != nil {
 			errCh <- err
 			return
 		}
-
-		c.ui.Println(b.String())
 	}()
 
 	select {
