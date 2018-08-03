@@ -18,17 +18,17 @@ type GRPCClient interface {
 
 type ClientStream interface {
 	Send(req proto.Message) error
-	CloseAndReceive() (proto.Message, error)
+	CloseAndReceive(res *proto.Message) error
 }
 
 type ServerStream interface {
 	Send(req proto.Message) error
-	Receive() (proto.Message, error)
+	Receive(res *proto.Message) error
 }
 
 type BidiStream interface {
 	Send(req proto.Message) error
-	Receive() (proto.Message, error)
+	Receive(res *proto.Message) error
 	Close() error
 }
 
