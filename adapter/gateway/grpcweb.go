@@ -42,9 +42,52 @@ func (c *GRPCWebClient) Invoke(ctx context.Context, fqrn string, req, res interf
 	return c.conn.Unary(ctx, request)
 }
 
+type webClientStream struct {
+	conn *grpcweb.ClientStreamClient
+
+	newRequest func(req proto.Message) (*grpcweb.Request, error)
+}
+
+func (s *webClientStream) Send(req proto.Message) error {
+	request, err := s.newRequest(req)
+	if err != nil {
+		return err
+	}
+	return s.conn.Send(request)
+}
+
+func (s *webClientStream) CloseAndReceive(res *proto.Message) error {
+	response, err := s.conn.CloseAndReceive()
+	if err != nil {
+		return err
+	}
+	*res = response
+	return nil
+}
+
 func (c *GRPCWebClient) NewClientStream(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
-	panic("not implemented yet")
-	return nil, nil
+	endpoint, err := fqrnToEndpoint(rpc.FQRN())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to convert FQRN to endpoint")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	cc, err := c.conn.ClientStreaming(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &webClientStream{
+		conn: cc,
+		newRequest: func(req proto.Message) (*grpcweb.Request, error) {
+			return grpcweb.NewRequest(
+				endpoint,
+				c.builder.NewMessage(rpc.RequestMessage()),
+				c.builder.NewMessage(rpc.ResponseMessage()),
+			)
+		},
+	}, nil
 }
 
 type webServerStream struct {
@@ -80,7 +123,11 @@ func (c *GRPCWebClient) NewServerStream(ctx context.Context, rpc entity.RPC) (en
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make new server streaming gRPC Web request")
 	}
-	sc, _ := c.conn.ServerStreaming(ctx, request)
+	// TODO
+	sc, err := c.conn.ServerStreaming(ctx, request)
+	if err != nil {
+		return nil, err
+	}
 	return &webServerStream{conn: sc}, nil
 }
 
