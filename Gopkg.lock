@@ -105,7 +105,13 @@
     "grpcreflect",
     "internal"
   ]
-  revision = "86d31fcaca06045b722f08bae124c96548404121"
+  revision = "a9d9a71c09d9851dc70feb751bbeef75f5b55c9d"
+
+[[projects]]
+  name = "github.com/k0kubun/pp"
+  packages = ["."]
+  revision = "027a6d1765d673d337e687394dbe780dd64e2a1e"
+  version = "v2.3.0"
 
 [[projects]]
   name = "github.com/kelseyhightower/envconfig"
@@ -151,7 +157,7 @@
   branch = "master"
   name = "github.com/ktr0731/grpc-web-go-client"
   packages = ["grpcweb"]
-  revision = "6d102fa276c90e728a02c31819953209ea1d5cb6"
+  revision = "1e0fdeba5ff0b9ec0402e7cd9edaa224d6231c24"
 
 [[projects]]
   branch = "master"
@@ -211,7 +217,7 @@
   branch = "master"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
-  revision = "3864e76763d94a6df2f9960b16a20a33da9f9a66"
+  revision = "58046073cbffe2f25d425fe1331102f55cf719de"
 
 [[projects]]
   branch = "master"
@@ -297,13 +303,13 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "49c15d80dfbc983ea25246ee959d970efe09ec09"
+  revision = "f4c29de78a2a91c00474a2e689954305c350adf9"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "bd9dbc187b6e1dacfdd2722a87e83093c2d7bd6e"
+  revision = "0ffbfd41fbef8ffcf9b62b0b0aa3a5873ed7a4fe"
 
 [[projects]]
   name = "golang.org/x/text"
