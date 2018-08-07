@@ -108,12 +108,6 @@
   revision = "95c5cbbeaee7fe3c2b5ecf0a163144140dfb4d61"
 
 [[projects]]
-  name = "github.com/k0kubun/pp"
-  packages = ["."]
-  revision = "027a6d1765d673d337e687394dbe780dd64e2a1e"
-  version = "v2.3.0"
-
-[[projects]]
   name = "github.com/kelseyhightower/envconfig"
   packages = ["."]
   revision = "f611eb38b3875cc3bd991ca91c51d06446afa14c"
@@ -157,7 +151,7 @@
   branch = "master"
   name = "github.com/ktr0731/grpc-web-go-client"
   packages = ["grpcweb"]
-  revision = "d7f894776f7bb439e1aaaddc0793ae780b90af73"
+  revision = "2246cf815c21ffd2fe2db5edd2c5abe1ad3c63b0"
 
 [[projects]]
   branch = "master"
@@ -309,7 +303,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "0718ef2ef256118d53a01598f179001ec2af7626"
+  revision = "90887a55d6e495d6cf02a7f2400e404c16caab1c"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -397,6 +391,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d4abc52b31b6071a35f51fd62775b28aed38d498f3273772bfbdcbba28ffca0b"
+  inputs-digest = "84a0d6e43d3973ca3d3d79bf106de4fb0d4834250f0c0abc65355d73abcb5a5f"
   solver-name = "gps-cdcl"
   solver-version = 1
