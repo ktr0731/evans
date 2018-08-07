@@ -43,7 +43,7 @@ func (c *GRPCWebClient) Invoke(ctx context.Context, fqrn string, req, res interf
 }
 
 type webClientStream struct {
-	conn *grpcweb.ClientStreamClient
+	conn grpcweb.ClientStreamClient
 
 	newRequest func(req proto.Message) (*grpcweb.Request, error)
 }
@@ -83,7 +83,7 @@ func (c *GRPCWebClient) NewClientStream(ctx context.Context, rpc entity.RPC) (en
 		newRequest: func(req proto.Message) (*grpcweb.Request, error) {
 			return grpcweb.NewRequest(
 				endpoint,
-				c.builder.NewMessage(rpc.RequestMessage()),
+				req,
 				c.builder.NewMessage(rpc.ResponseMessage()),
 			)
 		},
@@ -91,18 +91,20 @@ func (c *GRPCWebClient) NewClientStream(ctx context.Context, rpc entity.RPC) (en
 }
 
 type webServerStream struct {
-	req  *grpcweb.Request
-	conn *grpcweb.ServerStreamClient
+	newClient func(req proto.Message) (grpcweb.ServerStreamClient, error)
+	conn      grpcweb.ServerStreamClient
 }
 
-func (s *webServerStream) Send(_ proto.Message) error {
-	// do nothing.
-	// gRPC Web client sends a request at ServerStream method
-	return nil
+func (s *webServerStream) Send(req proto.Message) (err error) {
+	s.conn, err = s.newClient(req)
+	return
 }
 
 func (s *webServerStream) Receive(res *proto.Message) error {
-	resp, err := s.conn.Recv()
+	if s.conn == nil {
+		return errors.New("Receive must be call after Send method")
+	}
+	resp, err := s.conn.Receive()
 	if err != nil {
 		return err
 	}
@@ -115,25 +117,87 @@ func (c *GRPCWebClient) NewServerStream(ctx context.Context, rpc entity.RPC) (en
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert FQRN to endpoint")
 	}
-	request, err := grpcweb.NewRequest(
-		endpoint,
-		c.builder.NewMessage(rpc.RequestMessage()),
-		c.builder.NewMessage(rpc.ResponseMessage()),
-	)
+
+	newClient := func(req proto.Message) (grpcweb.ServerStreamClient, error) {
+		request, err := grpcweb.NewRequest(
+			endpoint,
+			req,
+			c.builder.NewMessage(rpc.ResponseMessage()),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		sc, err := c.conn.ServerStreaming(ctx, request)
+		if err != nil {
+			return nil, err
+		}
+
+		return sc, nil
+	}
+
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make new server streaming gRPC Web request")
 	}
-	// TODO
-	sc, err := c.conn.ServerStreaming(ctx, request)
+	return &webServerStream{newClient: newClient}, nil
+}
+
+type webBidiStream struct {
+	conn grpcweb.BidiStreamClient
+
+	newRequest func(req proto.Message) (*grpcweb.Request, error)
+}
+
+func (s *webBidiStream) Send(req proto.Message) error {
+	request, err := s.newRequest(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &webServerStream{conn: sc}, nil
+	return s.conn.Send(request)
+}
+
+func (s *webBidiStream) Receive(res *proto.Message) error {
+	response, err := s.conn.Receive()
+	if err != nil {
+		return err
+	}
+	*res = response
+	return nil
+}
+
+func (s *webBidiStream) Close() error {
+	return s.conn.Close()
 }
 
 func (c *GRPCWebClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
-	panic("not implemented yet")
-	return nil, nil
+	endpoint, err := fqrnToEndpoint(rpc.FQRN())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to convert FQRN to endpoint")
+	}
+
+	newRequest := func(req proto.Message) (*grpcweb.Request, error) {
+		return grpcweb.NewRequest(
+			endpoint,
+			req,
+			c.builder.NewMessage(rpc.ResponseMessage()),
+		)
+	}
+
+	// TODO
+	req, err := newRequest(c.builder.NewMessage(rpc.RequestMessage()))
+	if err != nil {
+		return nil, err
+	}
+
+	sc, err := c.conn.BidiStreaming(ctx, endpoint, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &webBidiStream{
+		conn:       sc,
+		newRequest: newRequest,
+	}, nil
 }
 
 func (c *GRPCWebClient) Close(ctx context.Context) error {

@@ -105,7 +105,7 @@
     "grpcreflect",
     "internal"
   ]
-  revision = "a9d9a71c09d9851dc70feb751bbeef75f5b55c9d"
+  revision = "95c5cbbeaee7fe3c2b5ecf0a163144140dfb4d61"
 
 [[projects]]
   name = "github.com/k0kubun/pp"
@@ -157,7 +157,7 @@
   branch = "master"
   name = "github.com/ktr0731/grpc-web-go-client"
   packages = ["grpcweb"]
-  revision = "1e0fdeba5ff0b9ec0402e7cd9edaa224d6231c24"
+  revision = "d7f894776f7bb439e1aaaddc0793ae780b90af73"
 
 [[projects]]
   branch = "master"
@@ -303,13 +303,13 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "f4c29de78a2a91c00474a2e689954305c350adf9"
+  revision = "19491d39cadbd9cd33f26ca22cc89ba4ba38251c"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "0ffbfd41fbef8ffcf9b62b0b0aa3a5873ed7a4fe"
+  revision = "0718ef2ef256118d53a01598f179001ec2af7626"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -397,6 +397,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "84a0d6e43d3973ca3d3d79bf106de4fb0d4834250f0c0abc65355d73abcb5a5f"
+  inputs-digest = "d4abc52b31b6071a35f51fd62775b28aed38d498f3273772bfbdcbba28ffca0b"
   solver-name = "gps-cdcl"
   solver-version = 1
