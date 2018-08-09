@@ -182,6 +182,6 @@ func (c *GRPCWebClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (enti
 }
 
 func (c *GRPCWebClient) Close(ctx context.Context) error {
-	// TODO
+	c.gRPCReflectoinClient.Close()
 	return nil
 }
