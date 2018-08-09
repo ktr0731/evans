@@ -148,10 +148,10 @@
   version = "0.1.3"
 
 [[projects]]
-  branch = "master"
   name = "github.com/ktr0731/grpc-web-go-client"
   packages = ["grpcweb"]
-  revision = "2246cf815c21ffd2fe2db5edd2c5abe1ad3c63b0"
+  revision = "f50e8cbabf1e2cbc0319b7666b993d759aa8b48f"
+  version = "0.1.0"
 
 [[projects]]
   branch = "master"
@@ -297,13 +297,13 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "19491d39cadbd9cd33f26ca22cc89ba4ba38251c"
+  revision = "f9ce57c11b242f0f1599cf25c89d8cb02c45295a"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "90887a55d6e495d6cf02a7f2400e404c16caab1c"
+  revision = "904bdc257025c7b3f43c19360ad3ab85783fad78"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -336,7 +336,7 @@
     "protobuf/ptype",
     "protobuf/source_context"
   ]
-  revision = "daca94659cb50e9f37c1b834680f2e46358f10b0"
+  revision = "383e8b2c3b9e36c4076b235b32537292176bae20"
 
 [[projects]]
   name = "google.golang.org/grpc"
