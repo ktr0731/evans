@@ -108,7 +108,7 @@ type callClientStream struct{}
 
 func (s *callClientStream) Send(req proto.Message) error { return nil }
 
-func (s *callClientStream) CloseAndReceive(res proto.Message) error { return nil }
+func (s *callClientStream) CloseAndReceive(res *proto.Message) error { return nil }
 
 func (c *callGRPCClient) NewClientStream(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
 	return &callClientStream{}, nil
@@ -136,7 +136,7 @@ type callServerStream struct{}
 
 func (s *callServerStream) Send(_ proto.Message) error { return nil }
 
-func (s *callServerStream) Receive(req proto.Message) error { return nil }
+func (s *callServerStream) Receive(req *proto.Message) error { return nil }
 
 func (c *callGRPCClient) NewServerStream(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
 	return &callServerStream{}, nil
@@ -166,9 +166,9 @@ func TestCall_ServerStream(t *testing.T) {
 
 type callBidiStream struct{}
 
-func (s *callBidiStream) Send(req proto.Message) error    { return nil }
-func (s *callBidiStream) Receive(res proto.Message) error { return nil }
-func (s *callBidiStream) Close() error                    { return nil }
+func (s *callBidiStream) Send(req proto.Message) error     { return nil }
+func (s *callBidiStream) Receive(res *proto.Message) error { return nil }
+func (s *callBidiStream) Close() error                     { return nil }
 
 func (c *callGRPCClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
 	return &callBidiStream{}, nil
