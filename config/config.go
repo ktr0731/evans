@@ -34,6 +34,7 @@ type Header struct {
 
 type Request struct {
 	Header []Header `toml:"header"`
+	Web    bool     `toml:"web"`
 }
 
 type REPL struct {

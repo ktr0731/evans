@@ -83,12 +83,12 @@ func (s *clientStream) Send(m proto.Message) error {
 	return s.cs.SendMsg(m)
 }
 
-func (s *clientStream) CloseAndReceive(res proto.Message) error {
+func (s *clientStream) CloseAndReceive(res *proto.Message) error {
 	if err := s.cs.CloseSend(); err != nil {
 		return errors.Wrap(err, "failed to close client stream")
 	}
 
-	err := s.cs.RecvMsg(res)
+	err := s.cs.RecvMsg(*res)
 	if err != nil && err != io.EOF {
 		return errors.Wrap(err, "failed to close and receive response")
 	}
@@ -111,8 +111,8 @@ type serverStream struct {
 	*clientStream
 }
 
-func (s *serverStream) Receive(res proto.Message) error {
-	return s.cs.RecvMsg(res)
+func (s *serverStream) Receive(res *proto.Message) error {
+	return s.cs.RecvMsg(*res)
 }
 
 func (c *GRPCClient) NewServerStream(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
@@ -131,8 +131,8 @@ func (s *bidiStream) Send(res proto.Message) error {
 	return s.s.cs.SendMsg(res)
 }
 
-func (s *bidiStream) Receive(res proto.Message) error {
-	return s.s.cs.RecvMsg(res)
+func (s *bidiStream) Receive(res *proto.Message) error {
+	return s.s.cs.RecvMsg(*res)
 }
 
 func (s *bidiStream) Close() error {

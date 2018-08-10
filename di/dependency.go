@@ -10,6 +10,7 @@ import (
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/usecase/port"
 	multierror "github.com/ktr0731/go-multierror"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
@@ -168,19 +169,28 @@ func initPromptInputter(cfg *config.Config) (err error) {
 }
 
 var (
-	gRPCClient     *gateway.GRPCClient
+	gRPCClient     entity.GRPCClient
 	gRPCClientOnce sync.Once
 )
 
 func initGRPCClient(cfg *config.Config) error {
 	var err error
 	gRPCClientOnce.Do(func() {
-		gRPCClient, err = gateway.NewGRPCClient(cfg)
+		if cfg.Request.Web {
+			var b port.DynamicBuilder
+			b, err = DynamicBuilder()
+			if err != nil {
+				return
+			}
+			gRPCClient = gateway.NewGRPCWebClient(cfg, b)
+		} else {
+			gRPCClient, err = gateway.NewGRPCClient(cfg)
+		}
 	})
 	return err
 }
 
-func GRPCClient(cfg *config.Config) (*gateway.GRPCClient, error) {
+func GRPCClient(cfg *config.Config) (entity.GRPCClient, error) {
 	if err := initGRPCClient(cfg); err != nil {
 		return nil, err
 	}
@@ -197,6 +207,13 @@ func initDynamicBuilder() error {
 		dynamicBuilder = gateway.NewDynamicBuilder()
 	})
 	return nil
+}
+
+func DynamicBuilder() (port.DynamicBuilder, error) {
+	if err := initDynamicBuilder(); err != nil {
+		return nil, err
+	}
+	return dynamicBuilder, nil
 }
 
 type initializer struct {

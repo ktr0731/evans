@@ -63,6 +63,7 @@ Options:
 	--file FILE, -f FILE	%s
 	--path PATH		%s
 	--header HEADER		%s
+	--web			%s
 	--reflection, -r	%s
 
 	--help, -h		%s
@@ -83,6 +84,7 @@ func (c *CLI) parseFlags(args []string) *options {
 		file       = "the script file which will be executed by (used only CLI mode)"
 		path       = "proto file paths"
 		header     = "default headers which set to each requests (example: foo=bar)"
+		web        = "use gRPC Web protocol"
 		reflection = "use gRPC reflection"
 
 		version = "display version and exit"
@@ -108,6 +110,7 @@ func (c *CLI) parseFlags(args []string) *options {
 			file,
 			path,
 			header,
+			web,
 			reflection,
 			version,
 			help,
@@ -132,6 +135,7 @@ func (c *CLI) parseFlags(args []string) *options {
 	f.StringVar(&opts.file, "f", "", file)
 	f.Var(&opts.path, "path", path)
 	f.Var(&opts.header, "header", header)
+	f.BoolVar(&opts.web, "web", false, web)
 	f.BoolVar(&opts.reflection, "reflection", false, reflection)
 	f.BoolVar(&opts.reflection, "r", false, reflection)
 	f.BoolVar(&opts.version, "version", false, version)
@@ -161,6 +165,7 @@ type options struct {
 	file       string
 	path       optStrSlice
 	header     optStrSlice
+	web        bool
 	reflection bool
 
 	// meta options
@@ -560,6 +565,10 @@ func mergeConfig(cfg *config.Config, opt *options, proto []string) (*config.Conf
 		mc.REPL.ShowSplashText = false
 	}
 
+	if opt.web {
+		mc.Request.Web = true
+	}
+
 	if opt.reflection {
 		mc.Server.Reflection = true
 	}
@@ -579,6 +588,10 @@ func checkPrecondition(w *wrappedConfig) error {
 
 	if w.cli && w.repl {
 		return errors.New("cannot use both of --cli and --repl options")
+	}
+
+	if w.cfg.Server.Reflection && w.cfg.Request.Web {
+		return errors.New("gRPC Web server reflection is not supported yet")
 	}
 
 	return nil

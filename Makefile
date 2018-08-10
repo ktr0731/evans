@@ -38,11 +38,11 @@ deadcode-test:
 
 .PHONY: vet
 vet:
-	gometalinter --vendor --disable-all --enable=vet ./...
+	@gometalinter --vendor --disable-all --enable=vet ./...
 
 .PHONY: deadcode
 deadcode:
-	gometalinter --vendor --disable-all --enable=deadcode ./...
+	@gometalinter --vendor --disable-all --enable=deadcode ./...
 
 .PHONY: lint
 lint:
