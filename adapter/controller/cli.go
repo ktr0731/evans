@@ -594,6 +594,10 @@ func checkPrecondition(w *wrappedConfig) error {
 		return errors.New("cannot use both of --cli and --repl options")
 	}
 
+	if w.cfg.Server.Reflection && w.cfg.Request.Web {
+		return errors.New("gRPC Web server reflection is not supported yet")
+	}
+
 	return nil
 }
 

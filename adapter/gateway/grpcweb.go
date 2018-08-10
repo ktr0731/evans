@@ -23,11 +23,17 @@ type GRPCWebClient struct {
 
 func NewGRPCWebClient(config *config.Config, builder port.DynamicBuilder) *GRPCWebClient {
 	conn := grpcweb.NewClient(fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port))
-	return &GRPCWebClient{
+	client := &GRPCWebClient{
 		config:  config,
 		conn:    conn,
 		builder: builder,
 	}
+
+	if config.Server.Reflection {
+		// TODO: gRPC Web + gRPC reflection
+	}
+
+	return client
 }
 
 func (c *GRPCWebClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {

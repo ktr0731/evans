@@ -35,6 +35,7 @@ func TestREPL(t *testing.T) {
 			{args: "--reflection --service Greeter", useReflection: true},
 
 			{args: "--web --package helloworld --service Greeter testdata/helloworld.proto", useWeb: true},
+			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true, code: 1},
 		}
 
 		rh := newREPLHelper([]string{"--silent", "--repl"})
