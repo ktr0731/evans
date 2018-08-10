@@ -34,7 +34,17 @@ func TestREPL(t *testing.T) {
 			{args: "--reflection", hasErr: true, useReflection: true},
 			{args: "--reflection --service Greeter", useReflection: true},
 
+			{args: "--web", useWeb: true, code: 1},
+			{args: "--web --package helloworld", useWeb: true, code: 1},
+			{args: "--web --service Greeter", useWeb: true, code: 1},
+			{args: "--web testdata/helloworld.proto", useWeb: true, hasErr: true},
+			{args: "--web --package helloworld --service Greeter", useWeb: true, code: 1},
+			{args: "--web --package helloworld testdata/helloworld.proto", useWeb: true, hasErr: true},
+			{args: "--web --service Greeter testdata/helloworld.proto", useWeb: true, code: 1},
+			{args: "--web --package foo --service Greeter testdata/helloworld.proto", useWeb: true, code: 1},
+			{args: "--web --package helloworld --service foo testdata/helloworld.proto", useWeb: true, code: 1},
 			{args: "--web --package helloworld --service Greeter testdata/helloworld.proto", useWeb: true},
+
 			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true, code: 1},
 		}
 
