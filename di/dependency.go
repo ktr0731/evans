@@ -2,7 +2,6 @@ package di
 
 import (
 	"io"
-	"path/filepath"
 	"sync"
 
 	"github.com/ktr0731/evans/adapter/gateway"
@@ -99,12 +98,7 @@ func resolveProtoPaths(cfg *config.Config) ([]string, error) {
 		return res[0], nil
 	}
 
-	fpaths := make([]string, 0, len(cfg.Default.ProtoFile))
-	for _, f := range cfg.Default.ProtoFile {
-		fpaths = append(fpaths, filepath.Dir(f))
-	}
-
-	for _, p := range append(cfg.Default.ProtoPath, fpaths...) {
+	for _, p := range cfg.Default.ProtoPath {
 		path, err := parse(p)
 		if err != nil {
 			return nil, err

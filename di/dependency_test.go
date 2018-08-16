@@ -36,8 +36,7 @@ func TestInitEnv(t *testing.T) {
 		cfg.Default.ProtoFile = []string{"./hoge", "./foo/bar"}
 		paths, err := resolveProtoPaths(cfg)
 		require.NoError(t, err)
-		require.Len(t, paths, 2)
-		require.Exactly(t, []string{".", "foo"}, paths)
+		require.Len(t, paths, 0)
 	})
 
 	setEnv := func(k, v string) func() {
@@ -57,8 +56,7 @@ func TestInitEnv(t *testing.T) {
 
 		paths, err := resolveProtoPaths(cfg)
 		require.NoError(t, err)
-		require.Len(t, paths, 1)
-		require.Equal(t, "/fuga", paths[0])
+		require.Len(t, paths, 0)
 	})
 
 	t.Run("error/proto path", func(t *testing.T) {

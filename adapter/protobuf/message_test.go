@@ -48,7 +48,7 @@ func TestMessage(t *testing.T) {
 
 	t.Run("importing", func(t *testing.T) {
 		libraryProto := testdata("importing", "library.proto")
-		d, err := protoparser.ParseFile([]string{libraryProto}, nil)
+		d, err := protoparser.ParseFile([]string{libraryProto}, []string{"testdata/importing"})
 		require.NoError(t, err)
 
 		d = append(d, d[0].GetDependencies()...)
