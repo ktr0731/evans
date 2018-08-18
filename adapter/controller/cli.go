@@ -322,10 +322,11 @@ func (c *CLI) runAsCLI() int {
 			errCh <- err
 			return
 		}
-		interactor := usecase.NewInteractor(p)
 		closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer closeCancel()
-		defer interactor.Close(closeCtx)
+		defer p.Cleanup(closeCtx)
+
+		interactor := usecase.NewInteractor(p)
 
 		res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
 		if err != nil {
@@ -398,10 +399,11 @@ func (c *CLI) runAsREPL() int {
 			errCh <- err
 			return
 		}
-		interactor := usecase.NewInteractor(p)
 		closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer closeCancel()
-		defer interactor.Close(closeCtx)
+		defer p.Cleanup(closeCtx)
+
+		interactor := usecase.NewInteractor(p)
 
 		var ui UI
 		if c.wcfg.cfg.REPL.ColoredOutput {

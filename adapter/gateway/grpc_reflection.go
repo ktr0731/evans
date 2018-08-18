@@ -7,6 +7,8 @@ import (
 	"github.com/jhump/protoreflect/grpcreflect"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/grpc-web-go-client/grpcweb"
+	"github.com/ktr0731/grpc-web-go-client/grpcweb/grpcweb_reflection_v1alpha"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
@@ -21,6 +23,12 @@ type gRPCReflectoinClient struct {
 func newGRPCReflectionClient(conn *grpc.ClientConn) *gRPCReflectoinClient {
 	return &gRPCReflectoinClient{
 		client: grpcreflect.NewClient(context.Background(), grpc_reflection_v1alpha.NewServerReflectionClient(conn)),
+	}
+}
+
+func newGRPCWebReflectionClient(conn *grpcweb.Client) *gRPCReflectoinClient {
+	return &gRPCReflectoinClient{
+		client: grpcreflect.NewClient(context.Background(), grpcweb_reflection_v1alpha.NewServerReflectionClient(conn)),
 	}
 }
 

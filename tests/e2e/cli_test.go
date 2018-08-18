@@ -52,9 +52,14 @@ func TestCLI(t *testing.T) {
 			{args: "--reflection", code: 1, useReflection: true},
 			{args: "--reflection --service Greeter", code: 1, useReflection: true},
 			{args: "--reflection --call SayHello", code: 1, useReflection: true},
-			{args: "--reflection --service Greeter --call SayHello", code: 0, useReflection: true},
+			{args: "--reflection --service Greeter --call SayHello", useReflection: true},
 
 			{args: "--web --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useWeb: true},
+
+			{args: "--web --reflection --package foo", useReflection: true, useWeb: true, code: 1},
+			{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
+			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true, code: 1},
+			{args: "--web --reflection --service Greeter --call SayHello", useReflection: true, useWeb: true},
 		}
 
 		for _, c := range cases {

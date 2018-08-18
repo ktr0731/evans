@@ -26,6 +26,13 @@ type InteractorParams struct {
 	GRPCClient     entity.GRPCClient
 }
 
+func (p *InteractorParams) Cleanup(ctx context.Context) error {
+	if p.GRPCClient != nil {
+		return p.GRPCClient.Close(ctx)
+	}
+	return nil
+}
+
 func NewInteractor(params *InteractorParams) *Interactor {
 	return &Interactor{
 		env:            params.Env,
@@ -58,9 +65,4 @@ func (i *Interactor) Header(params *port.HeaderParams) (io.Reader, error) {
 
 func (i *Interactor) Call(params *port.CallParams) (io.Reader, error) {
 	return Call(params, i.outputPort, i.inputterPort, i.grpcPort, i.dynamicBuilder, i.env)
-}
-
-// Close closes all dependencies by each Close method.
-func (i *Interactor) Close(ctx context.Context) error {
-	return i.grpcPort.Close(ctx)
 }
