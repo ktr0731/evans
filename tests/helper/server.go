@@ -34,7 +34,11 @@ func NewServer(t *testing.T, enableReflection bool) *Server {
 
 func (s *Server) Start(web bool) *Server {
 	if web {
-		ws := grpcweb.WrapServer(s.s, grpcweb.WithWebsockets(false))
+		ws := grpcweb.WrapServer(
+			s.s,
+			grpcweb.WithWebsockets(true),
+			grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool { return true }),
+		)
 		mux := http.NewServeMux()
 		mux.Handle("/", ws)
 		s.ws = &http.Server{

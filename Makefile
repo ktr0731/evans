@@ -38,7 +38,7 @@ deadcode-test:
 
 .PHONY: vet
 vet:
-	@gometalinter --vendor --disable-all --enable=vet ./...
+	@gometalinter --vendor --disable-all $(shell go list ./... | grep -v tests)
 
 .PHONY: deadcode
 deadcode:

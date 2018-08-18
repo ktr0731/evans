@@ -11,6 +11,7 @@ func NewCLIInteractorParams(cfg *config.Config, in io.Reader) (*usecase.Interact
 	if err := initDependencies(cfg, in); err != nil {
 		return nil, err
 	}
+
 	return &usecase.InteractorParams{
 		Env:            env,
 		OutputPort:     jsonCLIPresenter,

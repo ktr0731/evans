@@ -1,6 +1,7 @@
 package di
 
 import (
+	"context"
 	"io"
 	"sync"
 
@@ -254,5 +255,9 @@ func initDependencies(cfg *config.Config, in io.Reader) error {
 			initDynamicBuilder,
 		)
 	})
-	return initer.init()
+	if err := initer.init(); err != nil {
+		gRPCClient.Close(context.Background())
+		return err
+	}
+	return nil
 }

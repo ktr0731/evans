@@ -30,7 +30,7 @@ func NewGRPCWebClient(config *config.Config, builder port.DynamicBuilder) *GRPCW
 	}
 
 	if config.Server.Reflection {
-		// TODO: gRPC Web + gRPC reflection
+		client.gRPCReflectoinClient = newGRPCWebReflectionClient(conn)
 	}
 
 	return client
@@ -179,7 +179,10 @@ func (c *GRPCWebClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (enti
 	}
 
 	req := newRequest(c.builder.NewMessage(rpc.RequestMessage()))
-	sc := c.conn.BidiStreaming(ctx, req)
+	sc, err := c.conn.BidiStreaming(ctx, req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to start bidirectional streaming")
+	}
 
 	return &webBidiStream{
 		conn:       sc,
