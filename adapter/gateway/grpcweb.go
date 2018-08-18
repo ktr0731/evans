@@ -30,7 +30,6 @@ func NewGRPCWebClient(config *config.Config, builder port.DynamicBuilder) *GRPCW
 	}
 
 	if config.Server.Reflection {
-		// TODO: gRPC Web + gRPC reflection
 		client.gRPCReflectoinClient = newGRPCWebReflectionClient(conn)
 	}
 
