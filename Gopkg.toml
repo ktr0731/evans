@@ -53,7 +53,7 @@
   branch = "master"
   name = "github.com/jhump/protoreflect"
 
-[[constraint]]
+[[override]]
   name = "github.com/k0kubun/pp"
   version = "2.3.0"
 
