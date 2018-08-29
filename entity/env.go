@@ -81,10 +81,23 @@ func NewEnv(pkgs []*Package, config *config.Config) *Env {
 // NewEnvFromServices is called if the target server has enabled gRPC reflection.
 // gRPC reflection has no packages, so Evans creates pseudo package "default".
 func NewEnvFromServices(svcs []Service, config *config.Config) *Env {
+	mmsgs := map[string]Message{}
+	for _, svc := range svcs {
+		for _, rpc := range svc.RPCs() {
+			mmsgs[rpc.RequestMessage().Name()] = rpc.RequestMessage()
+			mmsgs[rpc.ResponseMessage().Name()] = rpc.ResponseMessage()
+		}
+	}
+	var msgs []Message
+	for _, msg := range mmsgs {
+		msgs = append(msgs, msg)
+	}
+
 	env := NewEnv([]*Package{
 		{
 			Name:     "default",
 			Services: svcs,
+			Messages: msgs,
 		},
 	}, config)
 
