@@ -73,7 +73,7 @@ func (m *jsonMarshaler) Marshal(out io.Writer, pb proto.Message) error {
 		var b []byte
 		var err error
 		if m.hasIndent() {
-			b, err = dmsg.MarshalJSONIndent()
+			b, err = dmsg.MarshalJSONPB(&jsonpb.Marshaler{Indent: "  ", EmitDefaults: true})
 		} else {
 			b, err = dmsg.MarshalJSON()
 		}
