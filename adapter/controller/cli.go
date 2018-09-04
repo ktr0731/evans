@@ -112,8 +112,8 @@ func (c *CLI) parseFlags(args []string) *options {
 			header,
 			web,
 			reflection,
-			version,
 			help,
+			version,
 		)
 	}
 
