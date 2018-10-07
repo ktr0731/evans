@@ -4,6 +4,8 @@
 package entity
 
 import (
+	"context"
+	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 	"sync"
 )
@@ -737,5 +739,706 @@ func (mock *MessageMock) NameCalls() []struct {
 	lockMessageMockName.RLock()
 	calls = mock.calls.Name
 	lockMessageMockName.RUnlock()
+	return calls
+}
+
+var (
+	lockGRPCClientMockClose             sync.RWMutex
+	lockGRPCClientMockInvoke            sync.RWMutex
+	lockGRPCClientMockListServices      sync.RWMutex
+	lockGRPCClientMockNewBidiStream     sync.RWMutex
+	lockGRPCClientMockNewClientStream   sync.RWMutex
+	lockGRPCClientMockNewServerStream   sync.RWMutex
+	lockGRPCClientMockReflectionEnabled sync.RWMutex
+)
+
+// GRPCClientMock is a mock implementation of GRPCClient.
+//
+//     func TestSomethingThatUsesGRPCClient(t *testing.T) {
+//
+//         // make and configure a mocked GRPCClient
+//         mockedGRPCClient := &GRPCClientMock{
+//             CloseFunc: func(ctx context.Context) error {
+// 	               panic("TODO: mock out the Close method")
+//             },
+//             InvokeFunc: func(ctx context.Context, fqrn string, req interface{}, res interface{}) error {
+// 	               panic("TODO: mock out the Invoke method")
+//             },
+//             ListServicesFunc: func() ([]Service, error) {
+// 	               panic("TODO: mock out the ListServices method")
+//             },
+//             NewBidiStreamFunc: func(ctx context.Context, rpc RPC) (BidiStream, error) {
+// 	               panic("TODO: mock out the NewBidiStream method")
+//             },
+//             NewClientStreamFunc: func(ctx context.Context, rpc RPC) (ClientStream, error) {
+// 	               panic("TODO: mock out the NewClientStream method")
+//             },
+//             NewServerStreamFunc: func(ctx context.Context, rpc RPC) (ServerStream, error) {
+// 	               panic("TODO: mock out the NewServerStream method")
+//             },
+//             ReflectionEnabledFunc: func() bool {
+// 	               panic("TODO: mock out the ReflectionEnabled method")
+//             },
+//         }
+//
+//         // TODO: use mockedGRPCClient in code that requires GRPCClient
+//         //       and then make assertions.
+//
+//     }
+type GRPCClientMock struct {
+	// CloseFunc mocks the Close method.
+	CloseFunc func(ctx context.Context) error
+
+	// InvokeFunc mocks the Invoke method.
+	InvokeFunc func(ctx context.Context, fqrn string, req interface{}, res interface{}) error
+
+	// ListServicesFunc mocks the ListServices method.
+	ListServicesFunc func() ([]Service, error)
+
+	// NewBidiStreamFunc mocks the NewBidiStream method.
+	NewBidiStreamFunc func(ctx context.Context, rpc RPC) (BidiStream, error)
+
+	// NewClientStreamFunc mocks the NewClientStream method.
+	NewClientStreamFunc func(ctx context.Context, rpc RPC) (ClientStream, error)
+
+	// NewServerStreamFunc mocks the NewServerStream method.
+	NewServerStreamFunc func(ctx context.Context, rpc RPC) (ServerStream, error)
+
+	// ReflectionEnabledFunc mocks the ReflectionEnabled method.
+	ReflectionEnabledFunc func() bool
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// Close holds details about calls to the Close method.
+		Close []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+		}
+		// Invoke holds details about calls to the Invoke method.
+		Invoke []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Fqrn is the fqrn argument value.
+			Fqrn string
+			// Req is the req argument value.
+			Req interface{}
+			// Res is the res argument value.
+			Res interface{}
+		}
+		// ListServices holds details about calls to the ListServices method.
+		ListServices []struct {
+		}
+		// NewBidiStream holds details about calls to the NewBidiStream method.
+		NewBidiStream []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// RPC is the rpc argument value.
+			RPC RPC
+		}
+		// NewClientStream holds details about calls to the NewClientStream method.
+		NewClientStream []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// RPC is the rpc argument value.
+			RPC RPC
+		}
+		// NewServerStream holds details about calls to the NewServerStream method.
+		NewServerStream []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// RPC is the rpc argument value.
+			RPC RPC
+		}
+		// ReflectionEnabled holds details about calls to the ReflectionEnabled method.
+		ReflectionEnabled []struct {
+		}
+	}
+}
+
+// Close calls CloseFunc.
+func (mock *GRPCClientMock) Close(ctx context.Context) error {
+	if mock.CloseFunc == nil {
+		panic("GRPCClientMock.CloseFunc: method is nil but GRPCClient.Close was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	lockGRPCClientMockClose.Lock()
+	mock.calls.Close = append(mock.calls.Close, callInfo)
+	lockGRPCClientMockClose.Unlock()
+	return mock.CloseFunc(ctx)
+}
+
+// CloseCalls gets all the calls that were made to Close.
+// Check the length with:
+//     len(mockedGRPCClient.CloseCalls())
+func (mock *GRPCClientMock) CloseCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	lockGRPCClientMockClose.RLock()
+	calls = mock.calls.Close
+	lockGRPCClientMockClose.RUnlock()
+	return calls
+}
+
+// Invoke calls InvokeFunc.
+func (mock *GRPCClientMock) Invoke(ctx context.Context, fqrn string, req interface{}, res interface{}) error {
+	if mock.InvokeFunc == nil {
+		panic("GRPCClientMock.InvokeFunc: method is nil but GRPCClient.Invoke was just called")
+	}
+	callInfo := struct {
+		Ctx  context.Context
+		Fqrn string
+		Req  interface{}
+		Res  interface{}
+	}{
+		Ctx:  ctx,
+		Fqrn: fqrn,
+		Req:  req,
+		Res:  res,
+	}
+	lockGRPCClientMockInvoke.Lock()
+	mock.calls.Invoke = append(mock.calls.Invoke, callInfo)
+	lockGRPCClientMockInvoke.Unlock()
+	return mock.InvokeFunc(ctx, fqrn, req, res)
+}
+
+// InvokeCalls gets all the calls that were made to Invoke.
+// Check the length with:
+//     len(mockedGRPCClient.InvokeCalls())
+func (mock *GRPCClientMock) InvokeCalls() []struct {
+	Ctx  context.Context
+	Fqrn string
+	Req  interface{}
+	Res  interface{}
+} {
+	var calls []struct {
+		Ctx  context.Context
+		Fqrn string
+		Req  interface{}
+		Res  interface{}
+	}
+	lockGRPCClientMockInvoke.RLock()
+	calls = mock.calls.Invoke
+	lockGRPCClientMockInvoke.RUnlock()
+	return calls
+}
+
+// ListServices calls ListServicesFunc.
+func (mock *GRPCClientMock) ListServices() ([]Service, error) {
+	if mock.ListServicesFunc == nil {
+		panic("GRPCClientMock.ListServicesFunc: method is nil but GRPCClient.ListServices was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockGRPCClientMockListServices.Lock()
+	mock.calls.ListServices = append(mock.calls.ListServices, callInfo)
+	lockGRPCClientMockListServices.Unlock()
+	return mock.ListServicesFunc()
+}
+
+// ListServicesCalls gets all the calls that were made to ListServices.
+// Check the length with:
+//     len(mockedGRPCClient.ListServicesCalls())
+func (mock *GRPCClientMock) ListServicesCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockGRPCClientMockListServices.RLock()
+	calls = mock.calls.ListServices
+	lockGRPCClientMockListServices.RUnlock()
+	return calls
+}
+
+// NewBidiStream calls NewBidiStreamFunc.
+func (mock *GRPCClientMock) NewBidiStream(ctx context.Context, rpc RPC) (BidiStream, error) {
+	if mock.NewBidiStreamFunc == nil {
+		panic("GRPCClientMock.NewBidiStreamFunc: method is nil but GRPCClient.NewBidiStream was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		RPC RPC
+	}{
+		Ctx: ctx,
+		RPC: rpc,
+	}
+	lockGRPCClientMockNewBidiStream.Lock()
+	mock.calls.NewBidiStream = append(mock.calls.NewBidiStream, callInfo)
+	lockGRPCClientMockNewBidiStream.Unlock()
+	return mock.NewBidiStreamFunc(ctx, rpc)
+}
+
+// NewBidiStreamCalls gets all the calls that were made to NewBidiStream.
+// Check the length with:
+//     len(mockedGRPCClient.NewBidiStreamCalls())
+func (mock *GRPCClientMock) NewBidiStreamCalls() []struct {
+	Ctx context.Context
+	RPC RPC
+} {
+	var calls []struct {
+		Ctx context.Context
+		RPC RPC
+	}
+	lockGRPCClientMockNewBidiStream.RLock()
+	calls = mock.calls.NewBidiStream
+	lockGRPCClientMockNewBidiStream.RUnlock()
+	return calls
+}
+
+// NewClientStream calls NewClientStreamFunc.
+func (mock *GRPCClientMock) NewClientStream(ctx context.Context, rpc RPC) (ClientStream, error) {
+	if mock.NewClientStreamFunc == nil {
+		panic("GRPCClientMock.NewClientStreamFunc: method is nil but GRPCClient.NewClientStream was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		RPC RPC
+	}{
+		Ctx: ctx,
+		RPC: rpc,
+	}
+	lockGRPCClientMockNewClientStream.Lock()
+	mock.calls.NewClientStream = append(mock.calls.NewClientStream, callInfo)
+	lockGRPCClientMockNewClientStream.Unlock()
+	return mock.NewClientStreamFunc(ctx, rpc)
+}
+
+// NewClientStreamCalls gets all the calls that were made to NewClientStream.
+// Check the length with:
+//     len(mockedGRPCClient.NewClientStreamCalls())
+func (mock *GRPCClientMock) NewClientStreamCalls() []struct {
+	Ctx context.Context
+	RPC RPC
+} {
+	var calls []struct {
+		Ctx context.Context
+		RPC RPC
+	}
+	lockGRPCClientMockNewClientStream.RLock()
+	calls = mock.calls.NewClientStream
+	lockGRPCClientMockNewClientStream.RUnlock()
+	return calls
+}
+
+// NewServerStream calls NewServerStreamFunc.
+func (mock *GRPCClientMock) NewServerStream(ctx context.Context, rpc RPC) (ServerStream, error) {
+	if mock.NewServerStreamFunc == nil {
+		panic("GRPCClientMock.NewServerStreamFunc: method is nil but GRPCClient.NewServerStream was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		RPC RPC
+	}{
+		Ctx: ctx,
+		RPC: rpc,
+	}
+	lockGRPCClientMockNewServerStream.Lock()
+	mock.calls.NewServerStream = append(mock.calls.NewServerStream, callInfo)
+	lockGRPCClientMockNewServerStream.Unlock()
+	return mock.NewServerStreamFunc(ctx, rpc)
+}
+
+// NewServerStreamCalls gets all the calls that were made to NewServerStream.
+// Check the length with:
+//     len(mockedGRPCClient.NewServerStreamCalls())
+func (mock *GRPCClientMock) NewServerStreamCalls() []struct {
+	Ctx context.Context
+	RPC RPC
+} {
+	var calls []struct {
+		Ctx context.Context
+		RPC RPC
+	}
+	lockGRPCClientMockNewServerStream.RLock()
+	calls = mock.calls.NewServerStream
+	lockGRPCClientMockNewServerStream.RUnlock()
+	return calls
+}
+
+// ReflectionEnabled calls ReflectionEnabledFunc.
+func (mock *GRPCClientMock) ReflectionEnabled() bool {
+	if mock.ReflectionEnabledFunc == nil {
+		panic("GRPCClientMock.ReflectionEnabledFunc: method is nil but GRPCClient.ReflectionEnabled was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockGRPCClientMockReflectionEnabled.Lock()
+	mock.calls.ReflectionEnabled = append(mock.calls.ReflectionEnabled, callInfo)
+	lockGRPCClientMockReflectionEnabled.Unlock()
+	return mock.ReflectionEnabledFunc()
+}
+
+// ReflectionEnabledCalls gets all the calls that were made to ReflectionEnabled.
+// Check the length with:
+//     len(mockedGRPCClient.ReflectionEnabledCalls())
+func (mock *GRPCClientMock) ReflectionEnabledCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockGRPCClientMockReflectionEnabled.RLock()
+	calls = mock.calls.ReflectionEnabled
+	lockGRPCClientMockReflectionEnabled.RUnlock()
+	return calls
+}
+
+var (
+	lockClientStreamMockCloseAndReceive sync.RWMutex
+	lockClientStreamMockSend            sync.RWMutex
+)
+
+// ClientStreamMock is a mock implementation of ClientStream.
+//
+//     func TestSomethingThatUsesClientStream(t *testing.T) {
+//
+//         // make and configure a mocked ClientStream
+//         mockedClientStream := &ClientStreamMock{
+//             CloseAndReceiveFunc: func(res *proto.Message) error {
+// 	               panic("TODO: mock out the CloseAndReceive method")
+//             },
+//             SendFunc: func(req proto.Message) error {
+// 	               panic("TODO: mock out the Send method")
+//             },
+//         }
+//
+//         // TODO: use mockedClientStream in code that requires ClientStream
+//         //       and then make assertions.
+//
+//     }
+type ClientStreamMock struct {
+	// CloseAndReceiveFunc mocks the CloseAndReceive method.
+	CloseAndReceiveFunc func(res *proto.Message) error
+
+	// SendFunc mocks the Send method.
+	SendFunc func(req proto.Message) error
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// CloseAndReceive holds details about calls to the CloseAndReceive method.
+		CloseAndReceive []struct {
+			// Res is the res argument value.
+			Res *proto.Message
+		}
+		// Send holds details about calls to the Send method.
+		Send []struct {
+			// Req is the req argument value.
+			Req proto.Message
+		}
+	}
+}
+
+// CloseAndReceive calls CloseAndReceiveFunc.
+func (mock *ClientStreamMock) CloseAndReceive(res *proto.Message) error {
+	if mock.CloseAndReceiveFunc == nil {
+		panic("ClientStreamMock.CloseAndReceiveFunc: method is nil but ClientStream.CloseAndReceive was just called")
+	}
+	callInfo := struct {
+		Res *proto.Message
+	}{
+		Res: res,
+	}
+	lockClientStreamMockCloseAndReceive.Lock()
+	mock.calls.CloseAndReceive = append(mock.calls.CloseAndReceive, callInfo)
+	lockClientStreamMockCloseAndReceive.Unlock()
+	return mock.CloseAndReceiveFunc(res)
+}
+
+// CloseAndReceiveCalls gets all the calls that were made to CloseAndReceive.
+// Check the length with:
+//     len(mockedClientStream.CloseAndReceiveCalls())
+func (mock *ClientStreamMock) CloseAndReceiveCalls() []struct {
+	Res *proto.Message
+} {
+	var calls []struct {
+		Res *proto.Message
+	}
+	lockClientStreamMockCloseAndReceive.RLock()
+	calls = mock.calls.CloseAndReceive
+	lockClientStreamMockCloseAndReceive.RUnlock()
+	return calls
+}
+
+// Send calls SendFunc.
+func (mock *ClientStreamMock) Send(req proto.Message) error {
+	if mock.SendFunc == nil {
+		panic("ClientStreamMock.SendFunc: method is nil but ClientStream.Send was just called")
+	}
+	callInfo := struct {
+		Req proto.Message
+	}{
+		Req: req,
+	}
+	lockClientStreamMockSend.Lock()
+	mock.calls.Send = append(mock.calls.Send, callInfo)
+	lockClientStreamMockSend.Unlock()
+	return mock.SendFunc(req)
+}
+
+// SendCalls gets all the calls that were made to Send.
+// Check the length with:
+//     len(mockedClientStream.SendCalls())
+func (mock *ClientStreamMock) SendCalls() []struct {
+	Req proto.Message
+} {
+	var calls []struct {
+		Req proto.Message
+	}
+	lockClientStreamMockSend.RLock()
+	calls = mock.calls.Send
+	lockClientStreamMockSend.RUnlock()
+	return calls
+}
+
+var (
+	lockServerStreamMockReceive sync.RWMutex
+	lockServerStreamMockSend    sync.RWMutex
+)
+
+// ServerStreamMock is a mock implementation of ServerStream.
+//
+//     func TestSomethingThatUsesServerStream(t *testing.T) {
+//
+//         // make and configure a mocked ServerStream
+//         mockedServerStream := &ServerStreamMock{
+//             ReceiveFunc: func(res *proto.Message) error {
+// 	               panic("TODO: mock out the Receive method")
+//             },
+//             SendFunc: func(req proto.Message) error {
+// 	               panic("TODO: mock out the Send method")
+//             },
+//         }
+//
+//         // TODO: use mockedServerStream in code that requires ServerStream
+//         //       and then make assertions.
+//
+//     }
+type ServerStreamMock struct {
+	// ReceiveFunc mocks the Receive method.
+	ReceiveFunc func(res *proto.Message) error
+
+	// SendFunc mocks the Send method.
+	SendFunc func(req proto.Message) error
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// Receive holds details about calls to the Receive method.
+		Receive []struct {
+			// Res is the res argument value.
+			Res *proto.Message
+		}
+		// Send holds details about calls to the Send method.
+		Send []struct {
+			// Req is the req argument value.
+			Req proto.Message
+		}
+	}
+}
+
+// Receive calls ReceiveFunc.
+func (mock *ServerStreamMock) Receive(res *proto.Message) error {
+	if mock.ReceiveFunc == nil {
+		panic("ServerStreamMock.ReceiveFunc: method is nil but ServerStream.Receive was just called")
+	}
+	callInfo := struct {
+		Res *proto.Message
+	}{
+		Res: res,
+	}
+	lockServerStreamMockReceive.Lock()
+	mock.calls.Receive = append(mock.calls.Receive, callInfo)
+	lockServerStreamMockReceive.Unlock()
+	return mock.ReceiveFunc(res)
+}
+
+// ReceiveCalls gets all the calls that were made to Receive.
+// Check the length with:
+//     len(mockedServerStream.ReceiveCalls())
+func (mock *ServerStreamMock) ReceiveCalls() []struct {
+	Res *proto.Message
+} {
+	var calls []struct {
+		Res *proto.Message
+	}
+	lockServerStreamMockReceive.RLock()
+	calls = mock.calls.Receive
+	lockServerStreamMockReceive.RUnlock()
+	return calls
+}
+
+// Send calls SendFunc.
+func (mock *ServerStreamMock) Send(req proto.Message) error {
+	if mock.SendFunc == nil {
+		panic("ServerStreamMock.SendFunc: method is nil but ServerStream.Send was just called")
+	}
+	callInfo := struct {
+		Req proto.Message
+	}{
+		Req: req,
+	}
+	lockServerStreamMockSend.Lock()
+	mock.calls.Send = append(mock.calls.Send, callInfo)
+	lockServerStreamMockSend.Unlock()
+	return mock.SendFunc(req)
+}
+
+// SendCalls gets all the calls that were made to Send.
+// Check the length with:
+//     len(mockedServerStream.SendCalls())
+func (mock *ServerStreamMock) SendCalls() []struct {
+	Req proto.Message
+} {
+	var calls []struct {
+		Req proto.Message
+	}
+	lockServerStreamMockSend.RLock()
+	calls = mock.calls.Send
+	lockServerStreamMockSend.RUnlock()
+	return calls
+}
+
+var (
+	lockBidiStreamMockClose   sync.RWMutex
+	lockBidiStreamMockReceive sync.RWMutex
+	lockBidiStreamMockSend    sync.RWMutex
+)
+
+// BidiStreamMock is a mock implementation of BidiStream.
+//
+//     func TestSomethingThatUsesBidiStream(t *testing.T) {
+//
+//         // make and configure a mocked BidiStream
+//         mockedBidiStream := &BidiStreamMock{
+//             CloseFunc: func() error {
+// 	               panic("TODO: mock out the Close method")
+//             },
+//             ReceiveFunc: func(res *proto.Message) error {
+// 	               panic("TODO: mock out the Receive method")
+//             },
+//             SendFunc: func(req proto.Message) error {
+// 	               panic("TODO: mock out the Send method")
+//             },
+//         }
+//
+//         // TODO: use mockedBidiStream in code that requires BidiStream
+//         //       and then make assertions.
+//
+//     }
+type BidiStreamMock struct {
+	// CloseFunc mocks the Close method.
+	CloseFunc func() error
+
+	// ReceiveFunc mocks the Receive method.
+	ReceiveFunc func(res *proto.Message) error
+
+	// SendFunc mocks the Send method.
+	SendFunc func(req proto.Message) error
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// Close holds details about calls to the Close method.
+		Close []struct {
+		}
+		// Receive holds details about calls to the Receive method.
+		Receive []struct {
+			// Res is the res argument value.
+			Res *proto.Message
+		}
+		// Send holds details about calls to the Send method.
+		Send []struct {
+			// Req is the req argument value.
+			Req proto.Message
+		}
+	}
+}
+
+// Close calls CloseFunc.
+func (mock *BidiStreamMock) Close() error {
+	if mock.CloseFunc == nil {
+		panic("BidiStreamMock.CloseFunc: method is nil but BidiStream.Close was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockBidiStreamMockClose.Lock()
+	mock.calls.Close = append(mock.calls.Close, callInfo)
+	lockBidiStreamMockClose.Unlock()
+	return mock.CloseFunc()
+}
+
+// CloseCalls gets all the calls that were made to Close.
+// Check the length with:
+//     len(mockedBidiStream.CloseCalls())
+func (mock *BidiStreamMock) CloseCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockBidiStreamMockClose.RLock()
+	calls = mock.calls.Close
+	lockBidiStreamMockClose.RUnlock()
+	return calls
+}
+
+// Receive calls ReceiveFunc.
+func (mock *BidiStreamMock) Receive(res *proto.Message) error {
+	if mock.ReceiveFunc == nil {
+		panic("BidiStreamMock.ReceiveFunc: method is nil but BidiStream.Receive was just called")
+	}
+	callInfo := struct {
+		Res *proto.Message
+	}{
+		Res: res,
+	}
+	lockBidiStreamMockReceive.Lock()
+	mock.calls.Receive = append(mock.calls.Receive, callInfo)
+	lockBidiStreamMockReceive.Unlock()
+	return mock.ReceiveFunc(res)
+}
+
+// ReceiveCalls gets all the calls that were made to Receive.
+// Check the length with:
+//     len(mockedBidiStream.ReceiveCalls())
+func (mock *BidiStreamMock) ReceiveCalls() []struct {
+	Res *proto.Message
+} {
+	var calls []struct {
+		Res *proto.Message
+	}
+	lockBidiStreamMockReceive.RLock()
+	calls = mock.calls.Receive
+	lockBidiStreamMockReceive.RUnlock()
+	return calls
+}
+
+// Send calls SendFunc.
+func (mock *BidiStreamMock) Send(req proto.Message) error {
+	if mock.SendFunc == nil {
+		panic("BidiStreamMock.SendFunc: method is nil but BidiStream.Send was just called")
+	}
+	callInfo := struct {
+		Req proto.Message
+	}{
+		Req: req,
+	}
+	lockBidiStreamMockSend.Lock()
+	mock.calls.Send = append(mock.calls.Send, callInfo)
+	lockBidiStreamMockSend.Unlock()
+	return mock.SendFunc(req)
+}
+
+// SendCalls gets all the calls that were made to Send.
+// Check the length with:
+//     len(mockedBidiStream.SendCalls())
+func (mock *BidiStreamMock) SendCalls() []struct {
+	Req proto.Message
+} {
+	var calls []struct {
+		Req proto.Message
+	}
+	lockBidiStreamMockSend.RLock()
+	calls = mock.calls.Send
+	lockBidiStreamMockSend.RUnlock()
 	return calls
 }
