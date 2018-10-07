@@ -22,6 +22,10 @@ ifneq ($(shell git diff entity),)
 	moq -out entity/fake.go entity Field RPC Service Message
 endif
 
+ifneq ($(shell git diff usecase/port),)
+	moq -out usecase/port/fake.go usecase/port InputPort Showable Inputter OutputPort DynamicBuilder
+endif
+
 .PHONY: build
 build: deps
 	go build
