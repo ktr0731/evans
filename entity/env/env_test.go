@@ -1,10 +1,11 @@
-package env
+package env_test
 
 import (
 	"testing"
 
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,15 +16,18 @@ func TestNewEnv(t *testing.T) {
 			Header: []config.Header{{Key: "foo", Val: "bar"}},
 		},
 	}
-	env := NewEnv(nil, cfg)
-	h := env.Headers()
-	require.Len(t, h, 1)
-	require.Equal(t, h[0].Key, "foo")
-	require.Equal(t, h[0].Val, "bar")
+
+	t.Run("NewEnv", func(t *testing.T) {
+		env := env.NewEnv(nil, cfg)
+		h := env.Headers()
+		require.Len(t, h, 1)
+		require.Equal(t, h[0].Key, "foo")
+		require.Equal(t, h[0].Val, "bar")
+	})
 
 	t.Run("NewEnvFromServices", func(t *testing.T) {
-		env := NewEnvFromServices(nil, cfg)
-		assert.Equal(t, "default", env.state.currentPackage)
+		env := env.NewEnvFromServices(nil, cfg)
+		assert.Equal(t, "default", env.DSN())
 	})
 }
 
@@ -50,7 +54,7 @@ func TestEnv(t *testing.T) {
 			},
 		},
 	}
-	setup := func(t *testing.T, cfg *config.Config) *Env {
+	setup := func(t *testing.T, cfg *config.Config) *env.Env {
 		if cfg == nil {
 			cfg = &config.Config{
 				Env: &config.Env{},
@@ -59,7 +63,7 @@ func TestEnv(t *testing.T) {
 				},
 			}
 		}
-		return NewEnv(pkgs, cfg)
+		return env.NewEnv(pkgs, cfg)
 	}
 
 	env := setup(t, nil)
