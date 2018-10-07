@@ -1,9 +1,10 @@
-package entity
+package env
 
 import (
 	"testing"
 
 	"github.com/ktr0731/evans/config"
+	"github.com/ktr0731/evans/entity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,10 +28,10 @@ func TestNewEnv(t *testing.T) {
 }
 
 func TestEnv(t *testing.T) {
-	pkgs := []*Package{
+	pkgs := []*entity.Package{
 		{
 			Name: "helloworld",
-			Services: []Service{
+			Services: []entity.Service{
 				&svc{
 					name: "Greeter",
 					rpcs: []*rpc{
@@ -38,10 +39,10 @@ func TestEnv(t *testing.T) {
 					},
 				},
 			},
-			Messages: []Message{
+			Messages: []entity.Message{
 				&msg{
 					name: "HelloRequest",
-					fields: []Field{
+					fields: []entity.Field{
 						&fld{name: "name"},
 					},
 				},
@@ -156,10 +157,10 @@ func TestEnv(t *testing.T) {
 		env := setup(t, cfg)
 		require.Len(t, env.Headers(), 0)
 
-		env.AddHeader(&Header{"megumi", "kato", false})
+		env.AddHeader(&entity.Header{"megumi", "kato", false})
 		assert.Len(t, env.Headers(), 1)
 
-		env.AddHeader(&Header{"megumi", "kato", false})
+		env.AddHeader(&entity.Header{"megumi", "kato", false})
 		assert.Len(t, env.Headers(), 1)
 	})
 
@@ -181,7 +182,7 @@ func TestEnv(t *testing.T) {
 			{"sapphire", "kawashima"},
 		}
 		for _, h := range headers {
-			env.AddHeader(&Header{h.k, h.v, false})
+			env.AddHeader(&entity.Header{h.k, h.v, false})
 		}
 		assert.Len(t, env.Headers(), 4)
 
@@ -207,7 +208,7 @@ func TestEnv(t *testing.T) {
 // stubs
 
 type fld struct {
-	Field
+	entity.Field
 
 	name string
 }
@@ -217,7 +218,7 @@ func (f *fld) Name() string {
 }
 
 type rpc struct {
-	RPC
+	entity.RPC
 
 	name string
 }
@@ -227,7 +228,7 @@ func (r *rpc) Name() string {
 }
 
 type svc struct {
-	Service
+	entity.Service
 
 	name string
 	rpcs []*rpc
@@ -237,8 +238,8 @@ func (s *svc) Name() string {
 	return s.name
 }
 
-func (s *svc) RPCs() []RPC {
-	rpcs := make([]RPC, 0, len(s.rpcs))
+func (s *svc) RPCs() []entity.RPC {
+	rpcs := make([]entity.RPC, 0, len(s.rpcs))
 	for _, rpc := range s.rpcs {
 		rpcs = append(rpcs, rpc)
 	}
@@ -246,16 +247,16 @@ func (s *svc) RPCs() []RPC {
 }
 
 type msg struct {
-	Message
+	entity.Message
 
 	name   string
-	fields []Field
+	fields []entity.Field
 }
 
 func (m *msg) Name() string {
 	return m.name
 }
 
-func (m *msg) Fields() []Field {
+func (m *msg) Fields() []entity.Field {
 	return m.fields
 }
