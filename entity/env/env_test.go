@@ -36,21 +36,31 @@ func TestEnv(t *testing.T) {
 		{
 			Name: "helloworld",
 			Services: []entity.Service{
-				&svc{
-					name: "Greeter",
-					rpcs: []*rpc{
-						&rpc{name: "SayHello"},
+				&entity.ServiceMock{
+					NameFunc: func() string { return "Greeter" },
+					RPCsFunc: func() []entity.RPC {
+						return []entity.RPC{
+							&entity.RPCMock{
+								NameFunc: func() string { return "SayHello" },
+							},
+						}
 					},
 				},
 			},
 			Messages: []entity.Message{
-				&msg{
-					name: "HelloRequest",
-					fields: []entity.Field{
-						&fld{name: "name"},
+				&entity.MessageMock{
+					FieldsFunc: func() []entity.Field {
+						return []entity.Field{
+							&entity.FieldMock{
+								FieldNameFunc: func() string { return "name" },
+							},
+						}
 					},
+					NameFunc: func() string { return "HelloRequest" },
 				},
-				&msg{name: "HelloResponse"},
+				&entity.MessageMock{
+					NameFunc: func() string { return "HelloResponse" },
+				},
 			},
 		},
 	}
@@ -211,56 +221,56 @@ func TestEnv(t *testing.T) {
 
 // stubs
 
-type fld struct {
-	entity.Field
-
-	name string
-}
-
-func (f *fld) Name() string {
-	return f.name
-}
-
-type rpc struct {
-	entity.RPC
-
-	name string
-}
-
-func (r *rpc) Name() string {
-	return r.name
-}
-
-type svc struct {
-	entity.Service
-
-	name string
-	rpcs []*rpc
-}
-
-func (s *svc) Name() string {
-	return s.name
-}
-
-func (s *svc) RPCs() []entity.RPC {
-	rpcs := make([]entity.RPC, 0, len(s.rpcs))
-	for _, rpc := range s.rpcs {
-		rpcs = append(rpcs, rpc)
-	}
-	return rpcs
-}
-
-type msg struct {
-	entity.Message
-
-	name   string
-	fields []entity.Field
-}
-
-func (m *msg) Name() string {
-	return m.name
-}
-
-func (m *msg) Fields() []entity.Field {
-	return m.fields
-}
+// type fld struct {
+// 	entity.Field
+//
+// 	name string
+// }
+//
+// func (f *fld) Name() string {
+// 	return f.name
+// }
+//
+// type rpc struct {
+// 	entity.RPC
+//
+// 	name string
+// }
+//
+// func (r *rpc) Name() string {
+// 	return r.name
+// }
+//
+// type svc struct {
+// 	entity.Service
+//
+// 	name string
+// 	rpcs []*rpc
+// }
+//
+// func (s *svc) Name() string {
+// 	return s.name
+// }
+//
+// func (s *svc) RPCs() []entity.RPC {
+// 	rpcs := make([]entity.RPC, 0, len(s.rpcs))
+// 	for _, rpc := range s.rpcs {
+// 		rpcs = append(rpcs, rpc)
+// 	}
+// 	return rpcs
+// }
+//
+// type msg struct {
+// 	entity.Message
+//
+// 	name   string
+// 	fields []entity.Field
+// }
+//
+// func (m *msg) Name() string {
+// 	return m.name
+// }
+//
+// func (m *msg) Fields() []entity.Field {
+// 	return m.fields
+// }
