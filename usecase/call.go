@@ -8,6 +8,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/metadata"
@@ -19,7 +20,7 @@ func Call(
 	inputter port.Inputter,
 	grpcClient entity.GRPCClient,
 	builder port.DynamicBuilder,
-	env entity.Environment,
+	env env.Environment,
 ) (io.Reader, error) {
 	rpc, err := env.RPC(params.RPCName)
 	if err != nil {

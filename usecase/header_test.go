@@ -5,13 +5,14 @@ import (
 
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type headerEnv struct {
-	entity.Environment
+	env.Environment
 
 	removeCalled bool
 }

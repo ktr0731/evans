@@ -4,13 +4,13 @@ import (
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/presenter"
-	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/stretchr/testify/require"
 )
 
 type serviceEnv struct {
-	entity.Environment
+	env.Environment
 
 	usedService string
 }

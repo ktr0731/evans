@@ -5,6 +5,7 @@ import (
 
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/ktr0731/evans/usecase/port"
@@ -12,7 +13,7 @@ import (
 )
 
 type describeEnv struct {
-	entity.Environment
+	env.Environment
 
 	expected entity.Message
 }

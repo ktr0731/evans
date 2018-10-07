@@ -6,7 +6,7 @@ import (
 
 	"github.com/jhump/protoreflect/desc"
 	"github.com/ktr0731/evans/adapter/internal/protoparser"
-	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/require"
 )
@@ -33,12 +33,12 @@ func FindMessage(t *testing.T, name string, set []*desc.FileDescriptor) *desc.Me
 	return nil
 }
 
-func SetupEnv(t *testing.T, fpath, pkgName, svcName string) *entity.Env {
+func SetupEnv(t *testing.T, fpath, pkgName, svcName string) *env.Env {
 	t.Helper()
 
 	set := helper.ReadProto(t, fpath)
 
-	env := entity.NewEnv(set, helper.TestConfig())
+	env := env.NewEnv(set, helper.TestConfig())
 
 	err := env.UsePackage(pkgName)
 	require.NoError(t, err)

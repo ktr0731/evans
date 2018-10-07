@@ -5,11 +5,12 @@ import (
 	"io"
 
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/usecase/port"
 )
 
 type Interactor struct {
-	env *entity.Env
+	env env.Environment
 
 	outputPort     port.OutputPort
 	inputterPort   port.Inputter
@@ -18,7 +19,7 @@ type Interactor struct {
 }
 
 type InteractorParams struct {
-	Env *entity.Env
+	Env env.Environment
 
 	OutputPort     port.OutputPort
 	InputterPort   port.Inputter

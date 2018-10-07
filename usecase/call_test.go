@@ -10,6 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
@@ -18,7 +19,7 @@ import (
 )
 
 type callEnv struct {
-	entity.Environment
+	env.Environment
 
 	rpc     entity.RPC
 	headers []*entity.Header
