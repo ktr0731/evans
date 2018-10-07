@@ -50,9 +50,9 @@ func initEnv(cfg *config.Config) (rerr error) {
 				rerr = errors.Wrap(err, "failed to list services by gRPC reflection")
 				return
 			}
-			env = environment.NewEnvFromServices(svcs, cfg)
+			env = environment.NewFromServices(svcs, cfg)
 		} else {
-			env = environment.NewEnv(desc, cfg)
+			env = environment.New(desc, cfg)
 
 			if pkg := cfg.Default.Package; pkg != "" {
 				if err := env.UsePackage(pkg); err != nil {

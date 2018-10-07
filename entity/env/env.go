@@ -63,7 +63,7 @@ type Env struct {
 	cache  cache
 }
 
-func NewEnv(pkgs []*entity.Package, config *config.Config) *Env {
+func New(pkgs []*entity.Package, config *config.Config) *Env {
 	env := &Env{
 		pkgs:   pkgs,
 		config: config.Env,
@@ -79,9 +79,9 @@ func NewEnv(pkgs []*entity.Package, config *config.Config) *Env {
 	return env
 }
 
-// NewEnvFromServices is called if the target server has enabled gRPC reflection.
+// NewFromServices is called if the target server has enabled gRPC reflection.
 // gRPC reflection has no packages, so Evans creates pseudo package "default".
-func NewEnvFromServices(svcs []entity.Service, config *config.Config) *Env {
+func NewFromServices(svcs []entity.Service, config *config.Config) *Env {
 	mmsgs := map[string]entity.Message{}
 	for _, svc := range svcs {
 		for _, rpc := range svc.RPCs() {
@@ -94,7 +94,7 @@ func NewEnvFromServices(svcs []entity.Service, config *config.Config) *Env {
 		msgs = append(msgs, msg)
 	}
 
-	env := NewEnv([]*entity.Package{
+	env := New([]*entity.Package{
 		{
 			Name:     "default",
 			Services: svcs,

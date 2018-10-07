@@ -10,23 +10,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewEnv(t *testing.T) {
+func TestNew(t *testing.T) {
 	cfg := &config.Config{
 		Request: &config.Request{
 			Header: []config.Header{{Key: "foo", Val: "bar"}},
 		},
 	}
 
-	t.Run("NewEnv", func(t *testing.T) {
-		env := env.NewEnv(nil, cfg)
+	t.Run("New", func(t *testing.T) {
+		env := env.New(nil, cfg)
 		h := env.Headers()
 		require.Len(t, h, 1)
 		require.Equal(t, h[0].Key, "foo")
 		require.Equal(t, h[0].Val, "bar")
 	})
 
-	t.Run("NewEnvFromServices", func(t *testing.T) {
-		env := env.NewEnvFromServices(nil, cfg)
+	t.Run("NewFromServices", func(t *testing.T) {
+		env := env.NewFromServices(nil, cfg)
 		assert.Equal(t, "default", env.DSN())
 	})
 }
@@ -63,7 +63,7 @@ func TestEnv(t *testing.T) {
 				},
 			}
 		}
-		return env.NewEnv(pkgs, cfg)
+		return env.New(pkgs, cfg)
 	}
 
 	env := setup(t, nil)

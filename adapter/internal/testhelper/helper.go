@@ -38,7 +38,7 @@ func SetupEnv(t *testing.T, fpath, pkgName, svcName string) *env.Env {
 
 	set := helper.ReadProto(t, fpath)
 
-	env := env.NewEnv(set, helper.TestConfig())
+	env := env.New(set, helper.TestConfig())
 
 	err := env.UsePackage(pkgName)
 	require.NoError(t, err)
