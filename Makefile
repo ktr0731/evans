@@ -16,6 +16,12 @@ endif
 deps: dep
 	dep ensure
 
+.PHONY: generate
+generate:
+ifneq ($(shell git diff entity),)
+	moq -out entity/fake.go entity Field RPC Service Message
+endif
+
 .PHONY: build
 build: deps
 	go build
