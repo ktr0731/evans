@@ -18,21 +18,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type callEnv struct {
-	env.Environment
-
-	rpc     entity.RPC
-	headers []*entity.Header
-}
-
-func (e *callEnv) RPC(rpcName string) (entity.RPC, error) {
-	return e.rpc, nil
-}
-
-func (e *callEnv) Headers() []*entity.Header {
-	return e.headers
-}
-
 type callInputter struct {
 	mu  sync.Mutex
 	err error
@@ -71,12 +56,18 @@ func TestCall(t *testing.T) {
 	params := &port.CallParams{RPCName: "SayHello"}
 	presenter := &presenter.StubPresenter{}
 
-	env := &callEnv{rpc: testentity.NewRPC()}
+	newEnv := func(t *testing.T) *env.EnvironmentMock {
+		return &env.EnvironmentMock{
+			RPCFunc:     func(name string) (entity.RPC, error) { return testentity.NewRPC(), nil },
+			HeadersFunc: func() []*entity.Header { return []*entity.Header{} },
+		}
+	}
 	inputter := &callInputter{}
 	grpcClient := &callGRPCClient{}
 	builder := &callDynamicBuilder{}
 
 	t.Run("normal", func(t *testing.T) {
+		env := newEnv(t)
 		res, err := Call(params, presenter, inputter, grpcClient, builder, env)
 		assert.NoError(t, err)
 
@@ -84,11 +75,15 @@ func TestCall(t *testing.T) {
 	})
 
 	t.Run("with headers", func(t *testing.T) {
-		env.headers = []*entity.Header{
-			{"foo", "bar", false},
-			{"hoge", "fuga", false},
-			{"user-agent", "evans", false},
+		env := newEnv(t)
+		env.HeadersFunc = func() []*entity.Header {
+			return []*entity.Header{
+				{"foo", "bar", false},
+				{"hoge", "fuga", false},
+				{"user-agent", "evans", false},
+			}
 		}
+
 		res, err := Call(params, presenter, inputter, grpcClient, builder, env)
 		assert.NoError(t, err)
 
@@ -121,7 +116,15 @@ func TestCall_ClientStream(t *testing.T) {
 
 	rpc := testentity.NewRPC()
 	rpc.FIsClientStreaming = true
-	env := &callEnv{rpc: rpc}
+
+	newEnv := func(t *testing.T) *env.EnvironmentMock {
+		return &env.EnvironmentMock{
+			RPCFunc:     func(name string) (entity.RPC, error) { return rpc, nil },
+			HeadersFunc: func() []*entity.Header { return []*entity.Header{} },
+		}
+	}
+	env := newEnv(t)
+
 	inputter := &callInputter{err: io.EOF}
 	grpcClient := &callGRPCClient{}
 	builder := &callDynamicBuilder{}
