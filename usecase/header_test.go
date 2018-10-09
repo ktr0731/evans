@@ -11,18 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type headerEnv struct {
-	env.Environment
-
-	removeCalled bool
-}
-
-func (e *headerEnv) AddHeader(_ *entity.Header) {}
-
-func (e *headerEnv) RemoveHeader(_ string) {
-	e.removeCalled = true
-}
-
 func TestHeader(t *testing.T) {
 	params := &port.HeaderParams{
 		Headers: []*entity.Header{
@@ -31,11 +19,14 @@ func TestHeader(t *testing.T) {
 		},
 	}
 	presenter := presenter.NewStubPresenter()
-	env := &headerEnv{}
+	env := &env.EnvironmentMock{
+		AddHeaderFunc:    func(*entity.Header) {},
+		RemoveHeaderFunc: func(string) {},
+	}
 
 	r, err := Header(params, presenter, env)
 	require.NoError(t, err)
 	assert.Equal(t, r, nil)
 
-	assert.True(t, env.removeCalled)
+	assert.Len(t, env.RemoveHeaderCalls(), 1)
 }
