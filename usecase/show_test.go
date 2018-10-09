@@ -11,21 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type showEnv struct {
-	env.Environment
-
-	expected []*entity.Package
-}
-
-func (e *showEnv) Packages() []*entity.Package {
-	return e.expected
-}
-
 func TestShow(t *testing.T) {
 	expected := []*entity.Package{{Name: "example_package"}}
 	params := &port.ShowParams{Type: port.ShowTypePackage}
 	presenter := presenter.NewJSONCLIPresenter()
-	env := &showEnv{expected: expected}
+
+	env := &env.EnvironmentMock{
+		PackagesFunc: func() []*entity.Package { return expected },
+	}
 
 	res, err := Show(params, presenter, env)
 	require.NoError(t, err)
