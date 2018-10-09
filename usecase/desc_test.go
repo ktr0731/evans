@@ -12,22 +12,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type describeEnv struct {
-	env.Environment
-
-	expected entity.Message
-}
-
-func (e *describeEnv) Message(msgName string) (entity.Message, error) {
-	return e.expected, nil
-}
-
 func TestDescribe(t *testing.T) {
 	var expected entity.Message = testentity.NewMsg()
 
 	params := &port.DescribeParams{}
 	presenter := presenter.NewJSONCLIPresenter()
-	env := &describeEnv{expected: expected}
+	env := &env.EnvironmentMock{
+		MessageFunc: func(name string) (entity.Message, error) { return expected, nil },
+	}
 
 	res, err := Describe(params, presenter, env)
 	require.NoError(t, err)
