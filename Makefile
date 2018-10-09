@@ -19,11 +19,15 @@ deps: dep
 .PHONY: generate
 generate:
 ifneq ($(shell git diff entity),)
-	moq -out entity/fake.go entity Field RPC Service Message
+	moq -pkg mockentity -out tests/mock/entity/mock.go entity Field Message Service RPC ClientStream ServerStream BidiStream GRPCClient
+endif
+
+ifneq ($(shell git diff entity/env),)
+	moq -pkg mockenv -out tests/mock/entity/mockenv/mock.go entity/env Environment
 endif
 
 ifneq ($(shell git diff usecase/port),)
-	moq -out usecase/port/fake.go usecase/port InputPort Showable Inputter OutputPort DynamicBuilder
+	moq -pkg mockport -out tests/mock/usecase/mockport/mock.go usecase/port InputPort Showable Inputter OutputPort DynamicBuilder
 endif
 
 .PHONY: build

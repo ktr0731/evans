@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/presenter"
-	"github.com/ktr0731/evans/entity/env"
+	"github.com/ktr0731/evans/tests/mock/entity/mockenv"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +13,7 @@ func TestService(t *testing.T) {
 	expected := "example_service"
 	params := &port.ServiceParams{SvcName: expected}
 	presenter := &presenter.StubPresenter{}
-	env := &env.EnvironmentMock{
+	env := &mockenv.EnvironmentMock{
 		UseServiceFunc: func(string) error { return nil },
 	}
 

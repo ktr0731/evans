@@ -5,7 +5,7 @@ import (
 
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
-	"github.com/ktr0731/evans/entity/env"
+	"github.com/ktr0731/evans/tests/mock/entity/mockenv"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +19,7 @@ func TestHeader(t *testing.T) {
 		},
 	}
 	presenter := presenter.NewStubPresenter()
-	env := &env.EnvironmentMock{
+	env := &mockenv.EnvironmentMock{
 		AddHeaderFunc:    func(*entity.Header) {},
 		RemoveHeaderFunc: func(string) {},
 	}

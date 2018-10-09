@@ -34,3 +34,4 @@ vendor/
 .evans.toml
 
 pkg
+dep.png
