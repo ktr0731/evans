@@ -3,79 +3,77 @@ package usecase
 import (
 	"context"
 	"io"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 )
 
-type callEnv struct {
-	entity.Environment
-
-	rpc     entity.RPC
-	headers []*entity.Header
+func newGRPCClient(t *testing.T) *entity.GRPCClientMock {
+	return &entity.GRPCClientMock{
+		InvokeFunc: func(ctx context.Context, fqrn string, req, res interface{}) error {
+			resText := "this is a response"
+			res = &resText
+			return nil
+		},
+		CloseFunc: func(context.Context) error { return nil },
+		NewClientStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
+			return &entity.ClientStreamMock{
+				SendFunc:            func(req proto.Message) error { return nil },
+				CloseAndReceiveFunc: func(res *proto.Message) error { return nil },
+			}, nil
+		},
+		NewServerStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
+			return &entity.ServerStreamMock{
+				SendFunc:    func(req proto.Message) error { return nil },
+				ReceiveFunc: func(res *proto.Message) error { return nil },
+			}, nil
+		},
+		NewBidiStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
+			return &entity.BidiStreamMock{
+				SendFunc:    func(req proto.Message) error { return nil },
+				ReceiveFunc: func(res *proto.Message) error { return nil },
+				CloseFunc:   func() error { return nil },
+			}, nil
+		},
+	}
 }
 
-func (e *callEnv) RPC(rpcName string) (entity.RPC, error) {
-	return e.rpc, nil
-}
-
-func (e *callEnv) Headers() []*entity.Header {
-	return e.headers
-}
-
-type callInputter struct {
-	mu  sync.Mutex
-	err error
-}
-
-func (i *callInputter) Input(_ entity.Message) (proto.Message, error) {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	return nil, i.err
-}
-
-type callGRPCClient struct {
-	actualCtx context.Context
-
-	entity.GRPCReflectionClient
-}
-
-func (c *callGRPCClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {
-	resText := "this is a response"
-	res = &resText
-	c.actualCtx = ctx
-	return nil
-}
-
-func (c *callGRPCClient) Close(context.Context) error {
-	return nil
-}
-
-type callDynamicBuilder struct{}
-
-func (b *callDynamicBuilder) NewMessage(_ entity.Message) proto.Message {
-	return nil
+func newDynamicBuilder(t *testing.T) *port.DynamicBuilderMock {
+	return &port.DynamicBuilderMock{
+		NewMessageFunc: func(entity.Message) proto.Message {
+			return nil
+		},
+	}
 }
 
 func TestCall(t *testing.T) {
 	params := &port.CallParams{RPCName: "SayHello"}
 	presenter := &presenter.StubPresenter{}
 
-	env := &callEnv{rpc: testentity.NewRPC()}
-	inputter := &callInputter{}
-	grpcClient := &callGRPCClient{}
-	builder := &callDynamicBuilder{}
+	newEnv := func(t *testing.T) *env.EnvironmentMock {
+		return &env.EnvironmentMock{
+			RPCFunc:     func(name string) (entity.RPC, error) { return testentity.NewRPC(), nil },
+			HeadersFunc: func() []*entity.Header { return []*entity.Header{} },
+		}
+	}
+	inputter := &port.InputterMock{
+		InputFunc: func(entity.Message) (proto.Message, error) { return nil, nil },
+	}
+	builder := newDynamicBuilder(t)
 
 	t.Run("normal", func(t *testing.T) {
+		grpcClient := newGRPCClient(t)
+		env := newEnv(t)
 		res, err := Call(params, presenter, inputter, grpcClient, builder, env)
 		assert.NoError(t, err)
 
@@ -83,17 +81,25 @@ func TestCall(t *testing.T) {
 	})
 
 	t.Run("with headers", func(t *testing.T) {
-		env.headers = []*entity.Header{
-			{"foo", "bar", false},
-			{"hoge", "fuga", false},
-			{"user-agent", "evans", false},
+		grpcClient := newGRPCClient(t)
+		env := newEnv(t)
+		env.HeadersFunc = func() []*entity.Header {
+			return []*entity.Header{
+				{"foo", "bar", false},
+				{"hoge", "fuga", false},
+				{"user-agent", "evans", false},
+			}
 		}
+
 		res, err := Call(params, presenter, inputter, grpcClient, builder, env)
 		assert.NoError(t, err)
 
 		assert.Equal(t, nil, res)
 
-		md, ok := metadata.FromOutgoingContext(grpcClient.actualCtx)
+		require.Len(t, grpcClient.InvokeCalls(), 1)
+		actualCtx := grpcClient.InvokeCalls()[0].Ctx
+
+		md, ok := metadata.FromOutgoingContext(actualCtx)
 		assert.True(t, ok)
 		assert.Len(t, md, 2)
 
@@ -104,26 +110,26 @@ func TestCall(t *testing.T) {
 	})
 }
 
-type callClientStream struct{}
-
-func (s *callClientStream) Send(req proto.Message) error { return nil }
-
-func (s *callClientStream) CloseAndReceive(res *proto.Message) error { return nil }
-
-func (c *callGRPCClient) NewClientStream(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
-	return &callClientStream{}, nil
-}
-
 func TestCall_ClientStream(t *testing.T) {
 	params := &port.CallParams{RPCName: "SayHello"}
 	presenter := &presenter.StubPresenter{}
 
 	rpc := testentity.NewRPC()
 	rpc.FIsClientStreaming = true
-	env := &callEnv{rpc: rpc}
-	inputter := &callInputter{err: io.EOF}
-	grpcClient := &callGRPCClient{}
-	builder := &callDynamicBuilder{}
+
+	newEnv := func(t *testing.T) *env.EnvironmentMock {
+		return &env.EnvironmentMock{
+			RPCFunc:     func(name string) (entity.RPC, error) { return rpc, nil },
+			HeadersFunc: func() []*entity.Header { return []*entity.Header{} },
+		}
+	}
+	env := newEnv(t)
+
+	inputter := &port.InputterMock{
+		InputFunc: func(entity.Message) (proto.Message, error) { return nil, io.EOF },
+	}
+	grpcClient := newGRPCClient(t)
+	builder := newDynamicBuilder(t)
 
 	t.Run("normal", func(t *testing.T) {
 		res, err := Call(params, presenter, inputter, grpcClient, builder, env)
@@ -132,25 +138,17 @@ func TestCall_ClientStream(t *testing.T) {
 	})
 }
 
-type callServerStream struct{}
-
-func (s *callServerStream) Send(_ proto.Message) error { return nil }
-
-func (s *callServerStream) Receive(req *proto.Message) error { return nil }
-
-func (c *callGRPCClient) NewServerStream(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
-	return &callServerStream{}, nil
-}
-
 func TestCall_ServerStream(t *testing.T) {
 	presenter := &presenter.StubPresenter{}
 	rpc := testentity.NewRPC()
 	rpc.FIsServerStreaming = true
-	builder := &callDynamicBuilder{}
-	grpcClient := &callGRPCClient{}
+	builder := newDynamicBuilder(t)
+	grpcClient := newGRPCClient(t)
 
 	t.Run("normal", func(t *testing.T) {
-		inputter := &callInputter{}
+		inputter := &port.InputterMock{
+			InputFunc: func(entity.Message) (proto.Message, error) { return nil, nil },
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
 		defer cancel()
 		_, err := callServerStreaming(ctx, presenter, inputter, grpcClient, builder, rpc)
@@ -158,20 +156,12 @@ func TestCall_ServerStream(t *testing.T) {
 	})
 
 	t.Run("inputting canceled", func(t *testing.T) {
-		inputter := &callInputter{err: io.EOF}
+		inputter := &port.InputterMock{
+			InputFunc: func(entity.Message) (proto.Message, error) { return nil, io.EOF },
+		}
 		_, err := callServerStreaming(context.Background(), presenter, inputter, grpcClient, builder, rpc)
 		assert.Equal(t, io.EOF, errors.Cause(err))
 	})
-}
-
-type callBidiStream struct{}
-
-func (s *callBidiStream) Send(req proto.Message) error     { return nil }
-func (s *callBidiStream) Receive(res *proto.Message) error { return nil }
-func (s *callBidiStream) Close() error                     { return nil }
-
-func (c *callGRPCClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
-	return &callBidiStream{}, nil
 }
 
 func TestCall_BidiStream(t *testing.T) {
@@ -179,11 +169,13 @@ func TestCall_BidiStream(t *testing.T) {
 	rpc := testentity.NewRPC()
 	rpc.FIsServerStreaming = true
 	rpc.FIsClientStreaming = true
-	builder := &callDynamicBuilder{}
-	grpcClient := &callGRPCClient{}
+	builder := newDynamicBuilder(t)
+	grpcClient := newGRPCClient(t)
 
 	t.Run("client end", func(t *testing.T) {
-		inputter := &callInputter{}
+		inputter := &port.InputterMock{
+			InputFunc: func(entity.Message) (proto.Message, error) { return nil, nil },
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
 		defer cancel()
 		_, err := callBidiStreaming(ctx, presenter, inputter, grpcClient, builder, rpc)

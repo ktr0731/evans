@@ -1,4 +1,4 @@
-package entity
+package env
 
 import (
 	"sort"
@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ktr0731/evans/config"
+	"github.com/ktr0731/evans/entity"
 	"github.com/pkg/errors"
 )
 
@@ -20,16 +21,16 @@ var (
 )
 
 type Environment interface {
-	Packages() []*Package
-	Services() ([]Service, error)
-	Messages() ([]Message, error)
-	RPCs() ([]RPC, error)
-	Service(name string) (Service, error)
-	Message(name string) (Message, error)
-	RPC(name string) (RPC, error)
+	Packages() []*entity.Package
+	Services() ([]entity.Service, error)
+	Messages() ([]entity.Message, error)
+	RPCs() ([]entity.RPC, error)
+	Service(name string) (entity.Service, error)
+	Message(name string) (entity.Message, error)
+	RPC(name string) (entity.RPC, error)
 
-	Headers() []*Header
-	AddHeader(header *Header)
+	Headers() []*entity.Header
+	AddHeader(header *entity.Header)
 	RemoveHeader(key string)
 
 	UsePackage(name string) error
@@ -41,8 +42,8 @@ type Environment interface {
 // pkgList is used by showing all packages
 // pkg is used by extract a package by package name
 type cache struct {
-	pkgList []*Package
-	pkg     map[string]*Package
+	pkgList []*entity.Package
+	pkg     map[string]*entity.Package
 }
 
 type state struct {
@@ -55,45 +56,45 @@ type option struct {
 }
 
 type Env struct {
-	pkgs   []*Package
+	pkgs   []*entity.Package
 	state  state
 	option option
 	config *config.Env
 	cache  cache
 }
 
-func NewEnv(pkgs []*Package, config *config.Config) *Env {
+func New(pkgs []*entity.Package, config *config.Config) *Env {
 	env := &Env{
 		pkgs:   pkgs,
 		config: config.Env,
 		cache: cache{
-			pkg: map[string]*Package{},
+			pkg: map[string]*entity.Package{},
 		},
 	}
 
 	for _, h := range config.Request.Header {
-		env.AddHeader(&Header{Key: h.Key, Val: h.Val})
+		env.AddHeader(&entity.Header{Key: h.Key, Val: h.Val})
 	}
 
 	return env
 }
 
-// NewEnvFromServices is called if the target server has enabled gRPC reflection.
+// NewFromServices is called if the target server has enabled gRPC reflection.
 // gRPC reflection has no packages, so Evans creates pseudo package "default".
-func NewEnvFromServices(svcs []Service, config *config.Config) *Env {
-	mmsgs := map[string]Message{}
+func NewFromServices(svcs []entity.Service, config *config.Config) *Env {
+	mmsgs := map[string]entity.Message{}
 	for _, svc := range svcs {
 		for _, rpc := range svc.RPCs() {
 			mmsgs[rpc.RequestMessage().Name()] = rpc.RequestMessage()
 			mmsgs[rpc.ResponseMessage().Name()] = rpc.ResponseMessage()
 		}
 	}
-	var msgs []Message
+	var msgs []entity.Message
 	for _, msg := range mmsgs {
 		msgs = append(msgs, msg)
 	}
 
-	env := NewEnv([]*Package{
+	env := New([]*entity.Package{
 		{
 			Name:     "default",
 			Services: svcs,
@@ -117,11 +118,11 @@ func (e *Env) HasCurrentService() bool {
 	return e.state.currentService != ""
 }
 
-func (e *Env) Packages() []*Package {
+func (e *Env) Packages() []*entity.Package {
 	return e.pkgs
 }
 
-func (e *Env) Services() ([]Service, error) {
+func (e *Env) Services() ([]entity.Service, error) {
 	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
 	}
@@ -131,7 +132,7 @@ func (e *Env) Services() ([]Service, error) {
 	return e.cache.pkg[e.state.currentPackage].Services, nil
 }
 
-func (e *Env) Messages() ([]Message, error) {
+func (e *Env) Messages() ([]entity.Message, error) {
 	if !e.HasCurrentPackage() {
 		return nil, ErrPackageUnselected
 	}
@@ -139,7 +140,7 @@ func (e *Env) Messages() ([]Message, error) {
 	return e.cache.pkg[e.state.currentPackage].Messages, nil
 }
 
-func (e *Env) RPCs() ([]RPC, error) {
+func (e *Env) RPCs() ([]entity.RPC, error) {
 	if !e.HasCurrentService() {
 		return nil, ErrServiceUnselected
 	}
@@ -151,7 +152,7 @@ func (e *Env) RPCs() ([]RPC, error) {
 	return svc.RPCs(), nil
 }
 
-func (e *Env) Service(name string) (Service, error) {
+func (e *Env) Service(name string) (entity.Service, error) {
 	svc, err := e.Services()
 	if err != nil {
 		return nil, err
@@ -164,7 +165,7 @@ func (e *Env) Service(name string) (Service, error) {
 	return nil, errors.Wrapf(ErrInvalidServiceName, "%s not found", name)
 }
 
-func (e *Env) Message(name string) (Message, error) {
+func (e *Env) Message(name string) (entity.Message, error) {
 	msg, err := e.Messages()
 	if err != nil {
 		return nil, err
@@ -177,10 +178,10 @@ func (e *Env) Message(name string) (Message, error) {
 	return nil, errors.Wrapf(ErrInvalidMessageName, "%s not found", name)
 }
 
-func (e *Env) Headers() (headers []*Header) {
+func (e *Env) Headers() (headers []*entity.Header) {
 	e.option.headers.Range(func(k, v interface{}) bool {
-		h := v.(*Header)
-		headers = append(headers, &Header{Key: h.Key, Val: h.Val})
+		h := v.(*entity.Header)
+		headers = append(headers, &entity.Header{Key: h.Key, Val: h.Val})
 		return true
 	})
 	sort.Slice(headers, func(i, j int) bool {
@@ -189,7 +190,7 @@ func (e *Env) Headers() (headers []*Header) {
 	return
 }
 
-func (e *Env) AddHeader(h *Header) {
+func (e *Env) AddHeader(h *entity.Header) {
 	e.option.headers.Store(h.Key, h)
 }
 
@@ -197,7 +198,7 @@ func (e *Env) RemoveHeader(key string) {
 	e.option.headers.Delete(key)
 }
 
-func (e *Env) RPC(name string) (RPC, error) {
+func (e *Env) RPC(name string) (entity.RPC, error) {
 	rpcs, err := e.RPCs()
 	if err != nil {
 		return nil, err

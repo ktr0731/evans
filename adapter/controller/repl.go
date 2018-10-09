@@ -12,7 +12,7 @@ import (
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/config"
-	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/usecase/port"
 	shellstring "github.com/ktr0731/go-shellstring"
 	homedir "github.com/mitchellh/go-homedir"
@@ -28,7 +28,7 @@ var (
 type REPL struct {
 	ui     UI
 	config *config.REPL
-	env    entity.Environment
+	env    env.Environment
 	prompt gateway.Prompter
 	cmds   map[string]Commander
 
@@ -37,7 +37,7 @@ type REPL struct {
 	exitCh chan struct{}
 }
 
-func NewREPL(config *config.REPL, env entity.Environment, ui UI, inputPort port.InputPort) *REPL {
+func NewREPL(config *config.REPL, env env.Environment, ui UI, inputPort port.InputPort) *REPL {
 	cmds := map[string]Commander{
 		"call":    &callCommand{inputPort},
 		"desc":    &descCommand{inputPort},

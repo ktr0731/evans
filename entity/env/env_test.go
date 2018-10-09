@@ -1,55 +1,70 @@
-package entity
+package env_test
 
 import (
 	"testing"
 
 	"github.com/ktr0731/evans/config"
+	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewEnv(t *testing.T) {
+func TestNew(t *testing.T) {
 	cfg := &config.Config{
 		Request: &config.Request{
 			Header: []config.Header{{Key: "foo", Val: "bar"}},
 		},
 	}
-	env := NewEnv(nil, cfg)
-	h := env.Headers()
-	require.Len(t, h, 1)
-	require.Equal(t, h[0].Key, "foo")
-	require.Equal(t, h[0].Val, "bar")
 
-	t.Run("NewEnvFromServices", func(t *testing.T) {
-		env := NewEnvFromServices(nil, cfg)
-		assert.Equal(t, "default", env.state.currentPackage)
+	t.Run("New", func(t *testing.T) {
+		env := env.New(nil, cfg)
+		h := env.Headers()
+		require.Len(t, h, 1)
+		require.Equal(t, h[0].Key, "foo")
+		require.Equal(t, h[0].Val, "bar")
+	})
+
+	t.Run("NewFromServices", func(t *testing.T) {
+		env := env.NewFromServices(nil, cfg)
+		assert.Equal(t, "default", env.DSN())
 	})
 }
 
 func TestEnv(t *testing.T) {
-	pkgs := []*Package{
+	pkgs := []*entity.Package{
 		{
 			Name: "helloworld",
-			Services: []Service{
-				&svc{
-					name: "Greeter",
-					rpcs: []*rpc{
-						&rpc{name: "SayHello"},
+			Services: []entity.Service{
+				&entity.ServiceMock{
+					NameFunc: func() string { return "Greeter" },
+					RPCsFunc: func() []entity.RPC {
+						return []entity.RPC{
+							&entity.RPCMock{
+								NameFunc: func() string { return "SayHello" },
+							},
+						}
 					},
 				},
 			},
-			Messages: []Message{
-				&msg{
-					name: "HelloRequest",
-					fields: []Field{
-						&fld{name: "name"},
+			Messages: []entity.Message{
+				&entity.MessageMock{
+					FieldsFunc: func() []entity.Field {
+						return []entity.Field{
+							&entity.FieldMock{
+								FieldNameFunc: func() string { return "name" },
+							},
+						}
 					},
+					NameFunc: func() string { return "HelloRequest" },
 				},
-				&msg{name: "HelloResponse"},
+				&entity.MessageMock{
+					NameFunc: func() string { return "HelloResponse" },
+				},
 			},
 		},
 	}
-	setup := func(t *testing.T, cfg *config.Config) *Env {
+	setup := func(t *testing.T, cfg *config.Config) *env.Env {
 		if cfg == nil {
 			cfg = &config.Config{
 				Env: &config.Env{},
@@ -58,7 +73,7 @@ func TestEnv(t *testing.T) {
 				},
 			}
 		}
-		return NewEnv(pkgs, cfg)
+		return env.New(pkgs, cfg)
 	}
 
 	env := setup(t, nil)
@@ -156,10 +171,10 @@ func TestEnv(t *testing.T) {
 		env := setup(t, cfg)
 		require.Len(t, env.Headers(), 0)
 
-		env.AddHeader(&Header{"megumi", "kato", false})
+		env.AddHeader(&entity.Header{"megumi", "kato", false})
 		assert.Len(t, env.Headers(), 1)
 
-		env.AddHeader(&Header{"megumi", "kato", false})
+		env.AddHeader(&entity.Header{"megumi", "kato", false})
 		assert.Len(t, env.Headers(), 1)
 	})
 
@@ -181,7 +196,7 @@ func TestEnv(t *testing.T) {
 			{"sapphire", "kawashima"},
 		}
 		for _, h := range headers {
-			env.AddHeader(&Header{h.k, h.v, false})
+			env.AddHeader(&entity.Header{h.k, h.v, false})
 		}
 		assert.Len(t, env.Headers(), 4)
 
@@ -202,60 +217,4 @@ func TestEnv(t *testing.T) {
 		assert.Len(t, env.Headers(), 2)
 		assert.Equal(t, env.Headers()[1].Key, "reina")
 	})
-}
-
-// stubs
-
-type fld struct {
-	Field
-
-	name string
-}
-
-func (f *fld) Name() string {
-	return f.name
-}
-
-type rpc struct {
-	RPC
-
-	name string
-}
-
-func (r *rpc) Name() string {
-	return r.name
-}
-
-type svc struct {
-	Service
-
-	name string
-	rpcs []*rpc
-}
-
-func (s *svc) Name() string {
-	return s.name
-}
-
-func (s *svc) RPCs() []RPC {
-	rpcs := make([]RPC, 0, len(s.rpcs))
-	for _, rpc := range s.rpcs {
-		rpcs = append(rpcs, rpc)
-	}
-	return rpcs
-}
-
-type msg struct {
-	Message
-
-	name   string
-	fields []Field
-}
-
-func (m *msg) Name() string {
-	return m.name
-}
-
-func (m *msg) Fields() []Field {
-	return m.fields
 }

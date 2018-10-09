@@ -6,11 +6,12 @@ import (
 	"io"
 
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/olekukonko/tablewriter"
 )
 
-func Show(params *port.ShowParams, outputPort port.OutputPort, env entity.Environment) (io.Reader, error) {
+func Show(params *port.ShowParams, outputPort port.OutputPort, env env.Environment) (io.Reader, error) {
 	var showable port.Showable
 	switch params.Type {
 	case port.ShowTypePackage:

@@ -12,6 +12,7 @@ import (
 	"github.com/ktr0731/evans/color"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/entity/env"
 	shellstring "github.com/ktr0731/go-shellstring"
 	"github.com/pkg/errors"
 )
@@ -121,7 +122,7 @@ func (p *RealPrompter) livePrefix() (string, bool) {
 }
 
 // NewPrompt instantiates new *Prompt with NewRealPrompter.
-func NewPrompt(config *config.Config, env entity.Environment) *Prompt {
+func NewPrompt(config *config.Config, env env.Environment) *Prompt {
 	return newPrompt(NewRealPrompter(nil, nil), config, env)
 }
 
@@ -131,10 +132,10 @@ func NewPrompt(config *config.Config, env entity.Environment) *Prompt {
 type Prompt struct {
 	prompt Prompter
 	config *config.Config
-	env    entity.Environment
+	env    env.Environment
 }
 
-func newPrompt(prompt Prompter, config *config.Config, env entity.Environment) *Prompt {
+func newPrompt(prompt Prompter, config *config.Config, env env.Environment) *Prompt {
 	return &Prompt{
 		prompt: prompt,
 		config: config,

@@ -10,6 +10,7 @@ import (
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
+	environment "github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/usecase/port"
 	multierror "github.com/ktr0731/go-multierror"
 	shellwords "github.com/mattn/go-shellwords"
@@ -17,7 +18,7 @@ import (
 )
 
 var (
-	env     *entity.Env
+	env     environment.Environment
 	envOnce sync.Once
 )
 
@@ -49,9 +50,9 @@ func initEnv(cfg *config.Config) (rerr error) {
 				rerr = errors.Wrap(err, "failed to list services by gRPC reflection")
 				return
 			}
-			env = entity.NewEnvFromServices(svcs, cfg)
+			env = environment.NewFromServices(svcs, cfg)
 		} else {
-			env = entity.NewEnv(desc, cfg)
+			env = environment.New(desc, cfg)
 
 			if pkg := cfg.Default.Package; pkg != "" {
 				if err := env.UsePackage(pkg); err != nil {
@@ -71,7 +72,7 @@ func initEnv(cfg *config.Config) (rerr error) {
 	return
 }
 
-func Env(cfg *config.Config) (entity.Environment, error) {
+func Env(cfg *config.Config) (environment.Environment, error) {
 	if err := initEnv(cfg); err != nil {
 		return nil, err
 	}
@@ -156,7 +157,7 @@ var (
 
 func initPromptInputter(cfg *config.Config) (err error) {
 	promptInputterOnce.Do(func() {
-		var e entity.Environment
+		var e environment.Environment
 		e, err = Env(cfg)
 		promptInputter = gateway.NewPrompt(cfg, e)
 	})
