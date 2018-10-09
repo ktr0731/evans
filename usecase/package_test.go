@@ -6,27 +6,20 @@ import (
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/usecase/port"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type packageEnv struct {
-	env.Environment
-
-	usedPackage string
-}
-
-func (e *packageEnv) UsePackage(pkgName string) error {
-	e.usedPackage = pkgName
-	return nil
-}
 
 func TestPackage(t *testing.T) {
 	expected := "example_package"
 	params := &port.PackageParams{PkgName: expected}
 	presenter := &presenter.StubPresenter{}
-	env := &packageEnv{}
+	env := &env.EnvironmentMock{
+		UsePackageFunc: func(string) error { return nil },
+	}
 
 	_, err := Package(params, presenter, env)
 	require.NoError(t, err)
-	require.Equal(t, expected, env.usedPackage)
+	require.Len(t, env.UsePackageCalls(), 1)
+	assert.Equal(t, expected, env.UsePackageCalls()[0].Name)
 }
