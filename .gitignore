@@ -26,7 +26,7 @@ _testmain.go
 *.prof
 
 evans
-coverage.out
+coverage.txt
 vendor/
 .wercker/
 *.pb.go
