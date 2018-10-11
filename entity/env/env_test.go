@@ -6,6 +6,7 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/env"
+	mockentity "github.com/ktr0731/evans/tests/mock/entity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,11 +37,11 @@ func TestEnv(t *testing.T) {
 		{
 			Name: "helloworld",
 			Services: []entity.Service{
-				&entity.ServiceMock{
+				&mockentity.ServiceMock{
 					NameFunc: func() string { return "Greeter" },
 					RPCsFunc: func() []entity.RPC {
 						return []entity.RPC{
-							&entity.RPCMock{
+							&mockentity.RPCMock{
 								NameFunc: func() string { return "SayHello" },
 							},
 						}
@@ -48,17 +49,17 @@ func TestEnv(t *testing.T) {
 				},
 			},
 			Messages: []entity.Message{
-				&entity.MessageMock{
+				&mockentity.MessageMock{
 					FieldsFunc: func() []entity.Field {
 						return []entity.Field{
-							&entity.FieldMock{
+							&mockentity.FieldMock{
 								FieldNameFunc: func() string { return "name" },
 							},
 						}
 					},
 					NameFunc: func() string { return "HelloRequest" },
 				},
-				&entity.MessageMock{
+				&mockentity.MessageMock{
 					NameFunc: func() string { return "HelloResponse" },
 				},
 			},

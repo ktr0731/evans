@@ -9,8 +9,10 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
-	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/entity/testentity"
+	mockentity "github.com/ktr0731/evans/tests/mock/entity"
+	"github.com/ktr0731/evans/tests/mock/entity/mockenv"
+	"github.com/ktr0731/evans/tests/mock/usecase/mockport"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -18,8 +20,8 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func newGRPCClient(t *testing.T) *entity.GRPCClientMock {
-	return &entity.GRPCClientMock{
+func newGRPCClient(t *testing.T) *mockentity.GRPCClientMock {
+	return &mockentity.GRPCClientMock{
 		InvokeFunc: func(ctx context.Context, fqrn string, req, res interface{}) error {
 			resText := "this is a response"
 			res = &resText
@@ -27,19 +29,19 @@ func newGRPCClient(t *testing.T) *entity.GRPCClientMock {
 		},
 		CloseFunc: func(context.Context) error { return nil },
 		NewClientStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
-			return &entity.ClientStreamMock{
+			return &mockentity.ClientStreamMock{
 				SendFunc:            func(req proto.Message) error { return nil },
 				CloseAndReceiveFunc: func(res *proto.Message) error { return nil },
 			}, nil
 		},
 		NewServerStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
-			return &entity.ServerStreamMock{
+			return &mockentity.ServerStreamMock{
 				SendFunc:    func(req proto.Message) error { return nil },
 				ReceiveFunc: func(res *proto.Message) error { return nil },
 			}, nil
 		},
 		NewBidiStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
-			return &entity.BidiStreamMock{
+			return &mockentity.BidiStreamMock{
 				SendFunc:    func(req proto.Message) error { return nil },
 				ReceiveFunc: func(res *proto.Message) error { return nil },
 				CloseFunc:   func() error { return nil },
@@ -48,8 +50,8 @@ func newGRPCClient(t *testing.T) *entity.GRPCClientMock {
 	}
 }
 
-func newDynamicBuilder(t *testing.T) *port.DynamicBuilderMock {
-	return &port.DynamicBuilderMock{
+func newDynamicBuilder(t *testing.T) *mockport.DynamicBuilderMock {
+	return &mockport.DynamicBuilderMock{
 		NewMessageFunc: func(entity.Message) proto.Message {
 			return nil
 		},
@@ -60,13 +62,13 @@ func TestCall(t *testing.T) {
 	params := &port.CallParams{RPCName: "SayHello"}
 	presenter := &presenter.StubPresenter{}
 
-	newEnv := func(t *testing.T) *env.EnvironmentMock {
-		return &env.EnvironmentMock{
+	newEnv := func(t *testing.T) *mockenv.EnvironmentMock {
+		return &mockenv.EnvironmentMock{
 			RPCFunc:     func(name string) (entity.RPC, error) { return testentity.NewRPC(), nil },
 			HeadersFunc: func() []*entity.Header { return []*entity.Header{} },
 		}
 	}
-	inputter := &port.InputterMock{
+	inputter := &mockport.InputterMock{
 		InputFunc: func(entity.Message) (proto.Message, error) { return nil, nil },
 	}
 	builder := newDynamicBuilder(t)
@@ -117,15 +119,15 @@ func TestCall_ClientStream(t *testing.T) {
 	rpc := testentity.NewRPC()
 	rpc.FIsClientStreaming = true
 
-	newEnv := func(t *testing.T) *env.EnvironmentMock {
-		return &env.EnvironmentMock{
+	newEnv := func(t *testing.T) *mockenv.EnvironmentMock {
+		return &mockenv.EnvironmentMock{
 			RPCFunc:     func(name string) (entity.RPC, error) { return rpc, nil },
 			HeadersFunc: func() []*entity.Header { return []*entity.Header{} },
 		}
 	}
 	env := newEnv(t)
 
-	inputter := &port.InputterMock{
+	inputter := &mockport.InputterMock{
 		InputFunc: func(entity.Message) (proto.Message, error) { return nil, io.EOF },
 	}
 	grpcClient := newGRPCClient(t)
@@ -146,7 +148,7 @@ func TestCall_ServerStream(t *testing.T) {
 	grpcClient := newGRPCClient(t)
 
 	t.Run("normal", func(t *testing.T) {
-		inputter := &port.InputterMock{
+		inputter := &mockport.InputterMock{
 			InputFunc: func(entity.Message) (proto.Message, error) { return nil, nil },
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
@@ -156,7 +158,7 @@ func TestCall_ServerStream(t *testing.T) {
 	})
 
 	t.Run("inputting canceled", func(t *testing.T) {
-		inputter := &port.InputterMock{
+		inputter := &mockport.InputterMock{
 			InputFunc: func(entity.Message) (proto.Message, error) { return nil, io.EOF },
 		}
 		_, err := callServerStreaming(context.Background(), presenter, inputter, grpcClient, builder, rpc)
@@ -173,7 +175,7 @@ func TestCall_BidiStream(t *testing.T) {
 	grpcClient := newGRPCClient(t)
 
 	t.Run("client end", func(t *testing.T) {
-		inputter := &port.InputterMock{
+		inputter := &mockport.InputterMock{
 			InputFunc: func(entity.Message) (proto.Message, error) { return nil, nil },
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
