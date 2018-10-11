@@ -6,8 +6,13 @@ import (
 
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/env"
+	"github.com/ktr0731/evans/usecase/pbusecase"
 	"github.com/ktr0731/evans/usecase/port"
 )
+
+// TODO: remove dependency related to pbusecase
+// usecase package should not be used from another packages.
+// instead of it, we should use pbusecase.
 
 type Interactor struct {
 	env env.Environment
@@ -45,7 +50,7 @@ func NewInteractor(params *InteractorParams) *Interactor {
 }
 
 func (i *Interactor) Package(params *port.PackageParams) (io.Reader, error) {
-	return Package(params, i.outputPort, i.env)
+	return pbusecase.Package(params, i.outputPort, i.env)
 }
 
 func (i *Interactor) Service(params *port.ServiceParams) (io.Reader, error) {
@@ -53,11 +58,11 @@ func (i *Interactor) Service(params *port.ServiceParams) (io.Reader, error) {
 }
 
 func (i *Interactor) Describe(params *port.DescribeParams) (io.Reader, error) {
-	return Describe(params, i.outputPort, i.env)
+	return pbusecase.Describe(params, i.outputPort, i.env)
 }
 
 func (i *Interactor) Show(params *port.ShowParams) (io.Reader, error) {
-	return Show(params, i.outputPort, i.env)
+	return pbusecase.Show(params, i.outputPort, i.env)
 }
 
 func (i *Interactor) Header(params *port.HeaderParams) (io.Reader, error) {
