@@ -13,8 +13,16 @@ jobs:
           command: make build
 
       - run:
+          name: coverage
+          command: make coverage
+
+      - run:
           name: test
           command: make test
+
+      - run:
+          name: codecov
+          command: bash <(curl -s https://codecov.io/bash)
 
   update-release:
     working_directory: /go/src/github.com/ktr0731/evans

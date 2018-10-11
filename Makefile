@@ -62,7 +62,10 @@ lint:
 
 .PHONY: coverage
 coverage:
-	go test -coverprofile=coverage.out -race $(shell go list ./... | grep -v tests)
+	go test -tags e2e -coverprofile=coverage.out -race $(shell go list ./...)
+
+.PHONY: coverage-web
+coverage-web: coverage
 	go tool cover -html=coverage.out
 
 .PHONY: brew-update
