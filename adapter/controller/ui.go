@@ -71,7 +71,7 @@ type REPLUI struct {
 	prompt string
 }
 
-func newREPLUI(prompt string) *REPLUI {
+func NewREPLUI(prompt string) *REPLUI {
 	return &REPLUI{
 		UI:     NewBasicUI(),
 		prompt: prompt,
@@ -121,7 +121,7 @@ type ColoredREPLUI struct {
 	*REPLUI
 }
 
-func newColoredREPLUI(ui *REPLUI) *ColoredREPLUI {
+func NewColoredREPLUI(ui *REPLUI) *ColoredREPLUI {
 	ui.UI = &ColoredUI{ui.UI}
 	return &ColoredREPLUI{ui}
 }

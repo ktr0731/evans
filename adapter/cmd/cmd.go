@@ -1,4 +1,4 @@
-package controller
+package cmd
 
 import (
 	"context"
@@ -13,6 +13,8 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/ktr0731/evans/adapter/controller"
+	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/di"
@@ -32,145 +34,6 @@ import (
 var (
 	ErrProtoFileRequired = errors.New("least one proto file required")
 )
-
-type optStrSlice []string
-
-func (o *optStrSlice) String() string {
-	return fmt.Sprintf("%v", *o)
-}
-
-func (o *optStrSlice) Set(v string) error {
-	*o = append(*o, v)
-	return nil
-}
-
-var usageFormat = `
-Usage: %s [options ...] [PROTO [PROTO ...]]
-
-Positional arguments:
-	PROTO			.proto files
-
-Options:
-	--edit, -e		%s
-	--repl			%s
-	--cli			%s
-	--silent, -s		%s
-	--host HOST		%s
-	--port PORT, -p PORT	%s
-	--package PACKAGE	%s
-	--service SERVICE	%s
-	--call CALL		%s
-	--file FILE, -f FILE	%s
-	--path PATH		%s
-	--header HEADER		%s
-	--web			%s
-	--reflection, -r	%s
-
-	--help, -h		%s
-	--version, -v		%s
-`
-
-func (c *CLI) parseFlags(args []string) *options {
-	const (
-		edit       = "edit config file using by $EDITOR"
-		repl       = "start as REPL mode"
-		cli        = "start as CLI mode"
-		silent     = "hide splash"
-		host       = "gRPC server host"
-		port       = "gRPC server port"
-		pkg        = "default package"
-		service    = "default service"
-		call       = "call specified RPC by CLI mode"
-		file       = "the script file which will be executed by (used only CLI mode)"
-		path       = "proto file paths"
-		header     = "default headers which set to each requests (example: foo=bar)"
-		web        = "use gRPC Web protocol"
-		reflection = "use gRPC reflection"
-
-		version = "display version and exit"
-		help    = "display this help and exit"
-	)
-
-	f := flag.NewFlagSet("main", flag.ExitOnError)
-	f.Usage = func() {
-		c.Version()
-		fmt.Fprintf(
-			c.ui.Writer(),
-			usageFormat,
-			c.name,
-			edit,
-			repl,
-			cli,
-			silent,
-			host,
-			port,
-			pkg,
-			service,
-			call,
-			file,
-			path,
-			header,
-			web,
-			reflection,
-			help,
-			version,
-		)
-	}
-
-	var opts options
-
-	f.BoolVar(&opts.editConfig, "edit", false, edit)
-	f.BoolVar(&opts.editConfig, "e", false, edit)
-	f.BoolVar(&opts.repl, "repl", false, repl)
-	f.BoolVar(&opts.cli, "cli", false, cli)
-	f.BoolVar(&opts.silent, "silent", false, silent)
-	f.BoolVar(&opts.silent, "s", false, silent)
-	f.StringVar(&opts.host, "host", "", host)
-	f.StringVar(&opts.port, "port", "50051", port)
-	f.StringVar(&opts.port, "p", "50051", port)
-	f.StringVar(&opts.pkg, "package", "", pkg)
-	f.StringVar(&opts.service, "service", "", service)
-	f.StringVar(&opts.call, "call", "", call)
-	f.StringVar(&opts.file, "file", "", file)
-	f.StringVar(&opts.file, "f", "", file)
-	f.Var(&opts.path, "path", path)
-	f.Var(&opts.header, "header", header)
-	f.BoolVar(&opts.web, "web", false, web)
-	f.BoolVar(&opts.reflection, "reflection", false, reflection)
-	f.BoolVar(&opts.reflection, "r", false, reflection)
-	f.BoolVar(&opts.version, "version", false, version)
-	f.BoolVar(&opts.version, "v", false, version)
-
-	// ignore error because flag set mode is ExitOnError
-	_ = f.Parse(args)
-
-	c.flagSet = f
-
-	return &opts
-}
-
-type options struct {
-	// mode options
-	editConfig bool
-
-	// config options
-	repl       bool
-	cli        bool
-	silent     bool
-	host       string
-	port       string
-	pkg        string
-	service    string
-	call       string
-	file       string
-	path       optStrSlice
-	header     optStrSlice
-	web        bool
-	reflection bool
-
-	// meta options
-	version bool
-}
 
 // wrappedConfig is created at intialization and
 // it has *config.Config and other fields.
@@ -194,11 +57,11 @@ type wrappedConfig struct {
 	cli bool
 }
 
-type CLI struct {
+type Command struct {
 	name    string
 	version string
 
-	ui   UI
+	ui   cui.CUI
 	wcfg *wrappedConfig
 
 	flagSet *flag.FlagSet
@@ -208,11 +71,10 @@ type CLI struct {
 	initOnce sync.Once
 }
 
-// NewCLI instantiate CLI interface.
-// if Evans is used as REPL mode, its UI is created by newREPLUI() in runAsREPL.
-// if CLI mode, its ui is same as passed ui.
-func NewCLI(name, version string, ui UI) *CLI {
-	return &CLI{
+// New instantiate a Command.
+// Evans accepts some options and args and selects either REPL mode or CLI mode.
+func New(name, version string, ui cui.CUI) *Command {
+	return &Command{
 		name:    name,
 		version: version,
 		ui:      ui,
@@ -220,7 +82,7 @@ func NewCLI(name, version string, ui UI) *CLI {
 	}
 }
 
-func (c *CLI) init(opts *options, proto []string) error {
+func (c *Command) init(opts *options, proto []string) error {
 	var err error
 	c.initOnce.Do(func() {
 		var cfg *config.Config
@@ -245,19 +107,19 @@ func (c *CLI) init(opts *options, proto []string) error {
 	return err
 }
 
-func (c *CLI) Error(err error) {
+func (c *Command) Error(err error) {
 	c.ui.ErrPrintln(err.Error())
 }
 
-func (c *CLI) Usage() {
+func (c *Command) Usage() {
 	c.flagSet.Usage()
 }
 
-func (c *CLI) Version() {
+func (c *Command) Version() {
 	c.ui.Println(fmt.Sprintf("%s %s", c.name, c.version))
 }
 
-func (c *CLI) Run(args []string) int {
+func (c *Command) Run(args []string) int {
 	opts := c.parseFlags(args)
 	proto := c.flagSet.Args()
 
@@ -293,7 +155,7 @@ func (c *CLI) Run(args []string) int {
 
 var DefaultCLIReader io.Reader = os.Stdin
 
-func (c *CLI) runAsCLI() int {
+func (c *Command) runAsCLI() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 
@@ -365,9 +227,9 @@ func (c *CLI) runAsCLI() int {
 }
 
 // DefaultREPLUI is used for e2e testing
-var DefaultREPLUI = newREPLUI("")
+var DefaultREPLUI = controller.NewREPLUI("")
 
-func (c *CLI) runAsREPL() int {
+func (c *Command) runAsREPL() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -405,9 +267,9 @@ func (c *CLI) runAsREPL() int {
 
 		interactor := usecase.NewInteractor(p)
 
-		var ui UI
+		var ui controller.UI
 		if c.wcfg.cfg.REPL.ColoredOutput {
-			ui = newColoredREPLUI(DefaultREPLUI)
+			ui = controller.NewColoredREPLUI(DefaultREPLUI)
 		} else {
 			ui = DefaultREPLUI
 		}
@@ -418,7 +280,7 @@ func (c *CLI) runAsREPL() int {
 			return
 		}
 
-		r := NewREPL(c.wcfg.cfg.REPL, env, ui, interactor)
+		r := controller.NewREPL(c.wcfg.cfg.REPL, env, ui, interactor)
 		if err := r.Start(); err != nil {
 			errCh <- err
 			return
@@ -453,7 +315,7 @@ func (c *CLI) runAsREPL() int {
 // processUpdate checks new changes and updates Evans in accordance with user's selection.
 // if config.Meta.AutoUpdate enabled, processUpdate is called asynchronously.
 // other than, processUpdate is called synchronously.
-func (c *CLI) processUpdate(ctx context.Context) error {
+func (c *Command) processUpdate(ctx context.Context) error {
 	if !c.cache.UpdateAvailable {
 		return nil
 	}
