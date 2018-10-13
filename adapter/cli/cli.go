@@ -2,12 +2,9 @@ package cli
 
 import (
 	"context"
-	"flag"
-	"sync"
 	"time"
 
 	"github.com/ktr0731/evans/adapter/cui"
-	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/usecase"
@@ -40,39 +37,31 @@ type wrappedConfig struct {
 }
 
 type CLI struct {
-	name    string
-	version string
-
-	ui   cui.CUI
-	wcfg *wrappedConfig
-
-	flagSet *flag.FlagSet
-
-	cache *cache.Cache
-
-	initOnce sync.Once
+	ui  cui.CUI
+	cfg *config.Config
 }
 
 // New instantiate CLI interface.
 // if Evans is used as REPL mode, its UI is created by newREPLUI() in runAsREPL.
 // if CLI mode, its ui is same as passed ui.
-func New(name, version string) *CLI {
+func New(ui cui.CUI, cfg *config.Config) *CLI {
 	return &CLI{
-		name:    name,
-		version: version,
-		cache:   cache.Get(),
+		ui:  ui,
+		cfg: cfg,
 	}
 }
 
 var DefaultCLIReader io.Reader = os.Stdin
 
-func (c *CLI) Run(ctx context.Context) error {
+// TODO: define CLI mode specific config type instead of args.
+
+func (c *CLI) Run(ctx context.Context, file, call string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel() // for non-zero return value
 
 	in := DefaultCLIReader
-	if c.wcfg.file != "" {
-		f, err := os.Open(c.wcfg.file)
+	if file != "" {
+		f, err := os.Open(file)
 		if err != nil {
 			return err
 		}
@@ -80,7 +69,7 @@ func (c *CLI) Run(ctx context.Context) error {
 		in = f
 	}
 
-	p, err := di.NewCLIInteractorParams(c.wcfg.cfg, in)
+	p, err := di.NewCLIInteractorParams(c.cfg, in)
 	if err != nil {
 		return err
 	}
@@ -90,7 +79,7 @@ func (c *CLI) Run(ctx context.Context) error {
 
 	interactor := usecase.NewInteractor(p)
 
-	res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
+	res, err := interactor.Call(&port.CallParams{RPCName: call})
 	if err != nil {
 		return err
 	}

@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/ktr0731/evans/adapter/cmd"
 	"github.com/ktr0731/evans/adapter/controller"
 	"github.com/ktr0731/evans/tests/e2e/repl"
 	"github.com/ktr0731/evans/tests/helper"
@@ -55,9 +56,9 @@ func (h *replHelper) run(args []string) int {
 	if !h.reseted {
 		panic("must be call reset() before each run()")
 	}
-	old := controller.DefaultREPLUI
+	old := cmd.DefaultREPLUI
 	defer func() {
-		controller.DefaultREPLUI = old
+		cmd.DefaultREPLUI = old
 	}()
 
 	if h.r == nil {
@@ -71,7 +72,7 @@ func (h *replHelper) run(args []string) int {
 		h.ew = os.Stderr
 	}
 
-	controller.DefaultREPLUI = &controller.REPLUI{
+	cmd.DefaultREPLUI = &controller.REPLUI{
 		UI: controller.NewUI(h.r, h.w, h.ew),
 	}
 
@@ -82,6 +83,6 @@ func (h *replHelper) run(args []string) int {
 
 	h.reseted = false
 
-	return newCLI(controller.NewUI(os.Stdin, ioutil.Discard, ioutil.Discard)).
+	return newCommand(controller.NewUI(os.Stdin, ioutil.Discard, ioutil.Discard)).
 		Run(append(h.commonArgs, args...))
 }

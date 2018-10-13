@@ -8,7 +8,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ktr0731/evans/adapter/cli"
+	"github.com/ktr0731/evans/adapter/cmd"
 	"github.com/ktr0731/evans/adapter/controller"
+	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/tests/helper"
@@ -16,8 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newCLI(ui controller.UI) *controller.CLI {
-	return controller.NewCLI(meta.AppName, meta.Version.String(), ui)
+func newCommand(ui controller.UI) *cmd.Command {
+	return cmd.New(meta.AppName, meta.Version.String(), ui)
 }
 
 func flatten(s string) string {
@@ -31,7 +34,7 @@ func TestCLI(t *testing.T) {
 	cleanup := di.Reset
 
 	defer func() {
-		controller.DefaultCLIReader = os.Stdin
+		cli.DefaultCLIReader = os.Stdin
 	}()
 
 	t.Run("from stdin", func(t *testing.T) {
@@ -68,15 +71,15 @@ func TestCLI(t *testing.T) {
 				defer cleanup()
 
 				in := strings.NewReader(`{ "name": "maho" }`)
-				controller.DefaultCLIReader = in
+				cli.DefaultCLIReader = in
 
 				out := new(bytes.Buffer)
 				errOut := new(bytes.Buffer)
-				ui := controller.NewUI(in, out, errOut)
+				ui := cui.New(in, out, errOut)
 
 				args := strings.Split(c.args, " ")
 				args = append([]string{"--cli"}, args...)
-				code := newCLI(ui).Run(args)
+				code := newCommand(ui).Run(args)
 				require.Equal(t, c.code, code, errOut.String())
 
 				if c.code == 0 {
@@ -115,12 +118,12 @@ func TestCLI(t *testing.T) {
 				defer cleanup()
 
 				in := strings.NewReader(`{ "name": "maho" }`)
-				controller.DefaultCLIReader = in
+				cli.DefaultCLIReader = in
 
 				out := new(bytes.Buffer)
 				ui := controller.NewUI(in, out, ioutil.Discard)
 
-				code := newCLI(ui).Run(strings.Split(c.args, " "))
+				code := newCommand(ui).Run(strings.Split(c.args, " "))
 				require.Equal(t, c.code, code)
 
 				if c.code == 0 {
