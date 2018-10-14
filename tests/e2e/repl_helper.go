@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ktr0731/evans/adapter/controller"
+	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/tests/e2e/repl"
 	"github.com/ktr0731/evans/tests/helper"
 )
@@ -72,7 +73,7 @@ func (h *replHelper) run(args []string) int {
 	}
 
 	controller.DefaultREPLUI = &controller.REPLUI{
-		UI: controller.NewUI(h.r, h.w, h.ew),
+		UI: cui.NewUI(h.r, h.w, h.ew),
 	}
 
 	h.iq = append(h.iq, repl.Exit()...)
@@ -82,6 +83,6 @@ func (h *replHelper) run(args []string) int {
 
 	h.reseted = false
 
-	return newCLI(controller.NewUI(os.Stdin, ioutil.Discard, ioutil.Discard)).
+	return newCLI(cui.NewUI(os.Stdin, ioutil.Discard, ioutil.Discard)).
 		Run(append(h.commonArgs, args...))
 }
