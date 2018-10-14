@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/controller"
+	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/tests/helper"
@@ -16,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newCLI(ui controller.UI) *controller.CLI {
+func newCLI(ui cui.UI) *controller.CLI {
 	return controller.NewCLI(meta.AppName, meta.Version.String(), ui)
 }
 
@@ -72,7 +73,7 @@ func TestCLI(t *testing.T) {
 
 				out := new(bytes.Buffer)
 				errOut := new(bytes.Buffer)
-				ui := controller.NewUI(in, out, errOut)
+				ui := cui.NewUI(in, out, errOut)
 
 				args := strings.Split(c.args, " ")
 				args = append([]string{"--cli"}, args...)
@@ -118,7 +119,7 @@ func TestCLI(t *testing.T) {
 				controller.DefaultCLIReader = in
 
 				out := new(bytes.Buffer)
-				ui := controller.NewUI(in, out, ioutil.Discard)
+				ui := cui.NewUI(in, out, ioutil.Discard)
 
 				code := newCLI(ui).Run(strings.Split(c.args, " "))
 				require.Equal(t, c.code, code)
