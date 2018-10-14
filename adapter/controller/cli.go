@@ -13,6 +13,7 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/di"
@@ -198,7 +199,7 @@ type CLI struct {
 	name    string
 	version string
 
-	ui   UI
+	ui   cui.UI
 	wcfg *wrappedConfig
 
 	flagSet *flag.FlagSet
@@ -211,7 +212,7 @@ type CLI struct {
 // NewCLI instantiate CLI interface.
 // if Evans is used as REPL mode, its UI is created by newREPLUI() in runAsREPL.
 // if CLI mode, its ui is same as passed ui.
-func NewCLI(name, version string, ui UI) *CLI {
+func NewCLI(name, version string, ui cui.UI) *CLI {
 	return &CLI{
 		name:    name,
 		version: version,
@@ -405,7 +406,7 @@ func (c *CLI) runAsREPL() int {
 
 		interactor := usecase.NewInteractor(p)
 
-		var ui UI
+		var ui cui.UI
 		if c.wcfg.cfg.REPL.ColoredOutput {
 			ui = newColoredREPLUI(DefaultREPLUI)
 		} else {

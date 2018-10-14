@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	prompt "github.com/c-bata/go-prompt"
+	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity/env"
@@ -26,7 +27,7 @@ var (
 )
 
 type REPL struct {
-	ui     UI
+	ui     cui.UI
 	config *config.REPL
 	env    env.Environment
 	prompt gateway.Prompter
@@ -37,7 +38,7 @@ type REPL struct {
 	exitCh chan struct{}
 }
 
-func NewREPL(config *config.REPL, env env.Environment, ui UI, inputPort port.InputPort) *REPL {
+func NewREPL(config *config.REPL, env env.Environment, ui cui.UI, inputPort port.InputPort) *REPL {
 	cmds := map[string]Commander{
 		"call":    &callCommand{inputPort},
 		"desc":    &descCommand{inputPort},
