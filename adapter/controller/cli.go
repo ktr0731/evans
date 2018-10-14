@@ -13,13 +13,13 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/usecase"
-	"github.com/ktr0731/evans/usecase/port"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
 	isatty "github.com/mattn/go-isatty"
@@ -292,6 +292,8 @@ func (c *CLI) Run(args []string) int {
 	return status
 }
 
+// TODO: move to cli package
+
 var DefaultCLIReader io.Reader = os.Stdin
 
 func (c *CLI) runAsCLI() int {
@@ -306,39 +308,7 @@ func (c *CLI) runAsCLI() int {
 	errCh := make(chan error)
 	go func() {
 		defer cancel()
-
-		in := DefaultCLIReader
-		if c.wcfg.file != "" {
-			f, err := os.Open(c.wcfg.file)
-			if err != nil {
-				errCh <- err
-				return
-			}
-			defer f.Close()
-			in = f
-		}
-
-		p, err := di.NewCLIInteractorParams(c.wcfg.cfg, in)
-		if err != nil {
-			errCh <- err
-			return
-		}
-		closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer closeCancel()
-		defer p.Cleanup(closeCtx)
-
-		interactor := usecase.NewInteractor(p)
-
-		res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
-		if err != nil {
-			errCh <- err
-			return
-		}
-
-		if _, err := io.Copy(c.ui.Writer(), res); err != nil {
-			errCh <- err
-			return
-		}
+		errCh <- cli.Run(c.wcfg.cfg, c.ui, DefaultCLIReader, c.wcfg.file, c.wcfg.call)
 	}()
 
 	select {
