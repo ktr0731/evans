@@ -305,33 +305,15 @@ func (c *CLI) runAsCLI() int {
 		checkUpdateErrCh <- checkUpdate(ctx, c.wcfg.cfg, c.cache)
 	}()
 
-	errCh := make(chan error)
-	go func() {
-		defer cancel()
-		errCh <- cli.Run(c.wcfg.cfg, c.ui, DefaultCLIReader, c.wcfg.file, c.wcfg.call)
-	}()
-
-	select {
-	case <-ctx.Done():
-		return 0
-	case err := <-errCh:
-		// first, cancel
-		cancel()
-
-		// receive the REPL result
-		if err != nil {
-			c.Error(err)
-		}
-
-		cuErr := <-checkUpdateErrCh
-		if cuErr != nil {
-			c.Error(cuErr)
-		}
-
-		if err != nil || cuErr != nil {
-			return 1
-		}
+	err := cli.Run(c.wcfg.cfg, c.ui, DefaultCLIReader, c.wcfg.file, c.wcfg.call)
+	if err != nil {
+		c.Error(err)
+		return 1
 	}
+
+	cancel()
+	<-ctx.Done()
+
 	return 0
 }
 
