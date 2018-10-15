@@ -4,11 +4,13 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"sync"
 	"testing"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	srv "github.com/ktr0731/evans/tests/helper/server"
 	"github.com/ktr0731/evans/tests/helper/server/helloworld"
+	multierror "github.com/ktr0731/go-multierror"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -18,6 +20,9 @@ type Server struct {
 	t  *testing.T
 	s  *grpc.Server
 	ws *http.Server
+
+	errMu sync.Mutex
+	err   error
 }
 
 func NewServer(t *testing.T, enableReflection bool) *Server {
@@ -52,7 +57,9 @@ func (s *Server) Start(web bool) *Server {
 				return
 			}
 			if err != nil {
-				require.NoError(s.t, err)
+				s.reportError(err)
+				s.t.Fail()
+				return
 			}
 		}()
 
@@ -63,7 +70,11 @@ func (s *Server) Start(web bool) *Server {
 	require.NoError(s.t, err)
 	go func() {
 		err = s.s.Serve(l)
-		require.NoError(s.t, err)
+		if err != nil {
+			s.reportError(err)
+			s.t.Fail()
+			return
+		}
 	}()
 	return s
 }
@@ -74,8 +85,20 @@ func (s *Server) Stop() {
 		return
 	}
 	s.s.GracefulStop()
+
+	s.errMu.Lock()
+	defer s.errMu.Unlock()
+	if s.t.Failed() {
+		s.t.Error(s.err)
+	}
 }
 
 func (s *Server) gRPCWebEnabled() bool {
 	return s.ws != nil
+}
+
+func (s *Server) reportError(err error) {
+	s.errMu.Lock()
+	defer s.errMu.Unlock()
+	s.err = multierror.Append(s.err, err)
 }
