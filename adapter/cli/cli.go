@@ -52,6 +52,7 @@ func Run(cfg *config.Config, ui cui.UI, file, call string) error {
 	return nil
 }
 
-func IsCommandLineMode(repl bool, file string) bool {
-	return !repl && (!isatty.IsTerminal(os.Stdin.Fd()) || file != "")
+// IsCommandLineMode returns whether Evans was launched as CLI mode or not.
+func IsCommandLineMode(file string) bool {
+	return !isatty.IsTerminal(os.Stdin.Fd()) || file != ""
 }

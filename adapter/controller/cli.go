@@ -282,7 +282,8 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	var status int
-	if cli.IsCommandLineMode(c.wcfg.repl, c.wcfg.file) {
+	// TODO: use c.wcfg.cli instead of c.wcfg.repl
+	if !c.wcfg.repl && cli.IsCommandLineMode(c.wcfg.file) {
 		status = c.runAsCLI()
 	} else {
 		status = c.runAsREPL()
