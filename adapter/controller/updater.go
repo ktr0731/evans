@@ -146,7 +146,7 @@ func newUpdater(cfg *config.Config, v *semver.Version, m updater.Means) *updater
 func newMeans(c *cache.Cache) (updater.Means, error) {
 	switch c.InstalledBy {
 	case cache.MeansType(github.MeansTypeGitHubRelease):
-		return updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans", github.TarDecompresser))
+		return updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans", github.TarGZIPDecompresser))
 	case cache.MeansType(brew.MeansTypeHomebrew):
 		return updater.NewMeans(brew.HomebrewMeans("ktr0731/evans", "evans"))
 	}
