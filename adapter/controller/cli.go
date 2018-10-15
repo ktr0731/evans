@@ -22,7 +22,6 @@ import (
 	"github.com/ktr0731/evans/usecase"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
-	isatty "github.com/mattn/go-isatty"
 	"github.com/mitchellh/copystructure"
 	"github.com/pkg/errors"
 
@@ -283,7 +282,7 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	var status int
-	if isCommandLineMode(c.wcfg) {
+	if cli.IsCommandLineMode(c.wcfg.repl, c.wcfg.file) {
 		status = c.runAsCLI()
 	} else {
 		status = c.runAsREPL()
@@ -573,10 +572,6 @@ func isCallable(w *wrappedConfig) error {
 		return result
 	}
 	return nil
-}
-
-func isCommandLineMode(w *wrappedConfig) bool {
-	return !w.repl && (!isatty.IsTerminal(os.Stdin.Fd()) || w.file != "")
 }
 
 func toHeader(sh optStrSlice) ([]config.Header, error) {

@@ -11,6 +11,7 @@ import (
 	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
+	isatty "github.com/mattn/go-isatty"
 )
 
 // TODO: define cli mode scoped config
@@ -49,4 +50,8 @@ func Run(cfg *config.Config, ui cui.UI, file, call string) error {
 	}
 
 	return nil
+}
+
+func IsCommandLineMode(repl bool, file string) bool {
+	return !repl && (!isatty.IsTerminal(os.Stdin.Fd()) || file != "")
 }
