@@ -292,10 +292,6 @@ func (c *CLI) Run(args []string) int {
 	return status
 }
 
-// TODO: move to cli package
-
-var DefaultCLIReader io.Reader = os.Stdin
-
 func (c *CLI) runAsCLI() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
@@ -305,7 +301,7 @@ func (c *CLI) runAsCLI() int {
 		checkUpdateErrCh <- checkUpdate(ctx, c.wcfg.cfg, c.cache)
 	}()
 
-	err := cli.Run(c.wcfg.cfg, c.ui, DefaultCLIReader, c.wcfg.file, c.wcfg.call)
+	err := cli.Run(c.wcfg.cfg, c.ui, c.wcfg.file, c.wcfg.call)
 	if err != nil {
 		c.Error(err)
 		return 1
@@ -319,6 +315,8 @@ func (c *CLI) runAsCLI() int {
 
 // DefaultREPLUI is used for e2e testing
 var DefaultREPLUI = newREPLUI("")
+
+var DefaultREPLReader io.Reader = os.Stdin
 
 func (c *CLI) runAsREPL() int {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -347,7 +345,7 @@ func (c *CLI) runAsREPL() int {
 			}
 		}
 
-		p, err := di.NewREPLInteractorParams(c.wcfg.cfg, DefaultCLIReader)
+		p, err := di.NewREPLInteractorParams(c.wcfg.cfg, DefaultREPLReader)
 		if err != nil {
 			errCh <- err
 			return

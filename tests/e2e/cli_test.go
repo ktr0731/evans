@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/controller"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/di"
@@ -32,7 +33,7 @@ func TestCLI(t *testing.T) {
 	cleanup := di.Reset
 
 	defer func() {
-		controller.DefaultCLIReader = os.Stdin
+		cli.DefaultReader = os.Stdin
 	}()
 
 	t.Run("from stdin", func(t *testing.T) {
@@ -69,7 +70,7 @@ func TestCLI(t *testing.T) {
 				defer cleanup()
 
 				in := strings.NewReader(`{ "name": "maho" }`)
-				controller.DefaultCLIReader = in
+				cli.DefaultReader = in
 
 				out := new(bytes.Buffer)
 				errOut := new(bytes.Buffer)
@@ -116,7 +117,7 @@ func TestCLI(t *testing.T) {
 				defer cleanup()
 
 				in := strings.NewReader(`{ "name": "maho" }`)
-				controller.DefaultCLIReader = in
+				cli.DefaultReader = in
 
 				out := new(bytes.Buffer)
 				ui := cui.NewUI(in, out, ioutil.Discard)

@@ -13,7 +13,13 @@ import (
 	"github.com/ktr0731/evans/usecase/port"
 )
 
-func Run(cfg *config.Config, ui cui.UI, in io.Reader, file, call string) error {
+// TODO: define cli mode scoped config
+
+var DefaultReader io.Reader = os.Stdin
+
+func Run(cfg *config.Config, ui cui.UI, file, call string) error {
+	in := DefaultReader
+
 	if file != "" {
 		f, err := os.Open(file)
 		if err != nil {
