@@ -30,7 +30,7 @@ func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache) error 
 			m, err = updater.SelectAvailableMeansFrom(
 				ctx,
 				brew.HomebrewMeans("ktr0731/evans", "evans"),
-				github.GitHubReleaseMeans("ktr0731", "evans", github.TarDecompresser),
+				github.GitHubReleaseMeans("ktr0731", "evans", github.TarGZIPDecompresser),
 			)
 			// if ErrUnavailable, user installed Evans by manually, ignore
 			if err == updater.ErrUnavailable {

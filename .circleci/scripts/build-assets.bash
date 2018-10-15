@@ -11,6 +11,6 @@ gox -osarch "$OSARCH" \
 
 for f in *; do
   mv "$f" evans
-  tar cvf "$f.tar.gz" evans
+  tar czvf "$f.tar.gz" evans
   rm -f evans
 done
