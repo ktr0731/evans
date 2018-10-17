@@ -20,7 +20,7 @@ Evans will complete your other usecases just like:
 - manually gRPC API inspection
 - to automate some tasks by scripting
 
-above usecases is corresponding to Evans's two modes, REPL mode, and command-line mode.  
+above usecases is corresponding to Evans's two modes, REPL mode, and CLI mode.  
 
 ## REPL mode
 ![Evans](./evans1.gif)  
@@ -29,18 +29,18 @@ You can use it without thinking like package name, service name, RPC name, comma
 
 proto file which read in demonstration and its implementation are available at [ktr0731/evans-demo](https://github.com/ktr0731/evans-demo).  
 
-## command-line mode
+## CLI mode
 ![Evans](./evans2.gif)  
 
-command-line mode is stateless mode just like [grpc-ecosystem/polyglot](https://github.com/grpc-ecosystem/polyglot).  
-command-line mode issue one request per one command as its name suggests.  
+CLI mode is stateless mode just like [grpc-ecosystem/polyglot](https://github.com/grpc-ecosystem/polyglot).  
+CLI mode issue one request per one command as its name suggests.  
 So it is based on UNIX philosophy.  
 
 For example, read inputs from `stdin`, the command will be a filter command.  
 On the other hand, the command result will be outputted to `stdout` by JSON formatted.  
 So, you can format it by any commands like `jq`. Also, if you want to use the same command (e.g. use same JSON inputs), you can use `--file` (`-f`) option.  
 
-By the way, command-line mode is not able to omit `--package`, `--service` and `--call` option, unlike REPL mode.  
+By the way, CLI mode is not able to omit `--package`, `--service` and `--call` option, unlike REPL mode.  
 However, if `.evans.toml` is exist in Git project root, you can denote default values.  
 
 ``` toml
