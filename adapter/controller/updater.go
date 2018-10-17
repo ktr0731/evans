@@ -30,7 +30,7 @@ func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache) error 
 			m, err = updater.SelectAvailableMeansFrom(
 				ctx,
 				brew.HomebrewMeans("ktr0731/evans", "evans"),
-				github.GitHubReleaseMeans("ktr0731", "evans", github.TarDecompresser),
+				github.GitHubReleaseMeans("ktr0731", "evans", github.TarGZIPDecompresser),
 			)
 			// if ErrUnavailable, user installed Evans by manually, ignore
 			if err == updater.ErrUnavailable {
@@ -146,7 +146,7 @@ func newUpdater(cfg *config.Config, v *semver.Version, m updater.Means) *updater
 func newMeans(c *cache.Cache) (updater.Means, error) {
 	switch c.InstalledBy {
 	case cache.MeansType(github.MeansTypeGitHubRelease):
-		return updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans", github.TarDecompresser))
+		return updater.NewMeans(github.GitHubReleaseMeans("ktr0731", "evans", github.TarGZIPDecompresser))
 	case cache.MeansType(brew.MeansTypeHomebrew):
 		return updater.NewMeans(brew.HomebrewMeans("ktr0731/evans", "evans"))
 	}
