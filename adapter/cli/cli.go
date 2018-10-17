@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -18,6 +19,25 @@ import (
 
 var DefaultReader io.Reader = os.Stdin
 
+type LaunchError struct {
+	err error
+}
+
+func (e *LaunchError) Error() string {
+	return fmt.Sprintf("failed to launch command-line mode: %s", e.err)
+}
+
+// Run is a main entrypoint for command-line mode.
+// cli package will executes Run if Evans is launched as command-line mode.
+//
+// Run returns below errors (Clients should unwrap returned error with errors.Cause):
+// - os.PathError
+//   - Provided `file` is missing.
+//   - It is returned only when `file` is not empty.
+// - ErrLaunchFailed
+//   - Precondition error to launch command-line mode.
+// - TODO: Describe more error specification.
+//
 func Run(cfg *config.Config, ui cui.UI, file, call string) error {
 	in := DefaultReader
 
@@ -32,7 +52,7 @@ func Run(cfg *config.Config, ui cui.UI, file, call string) error {
 
 	p, err := di.NewCLIInteractorParams(cfg, in)
 	if err != nil {
-		return err
+		return &LaunchError{err}
 	}
 	closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer closeCancel()
