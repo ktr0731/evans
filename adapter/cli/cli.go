@@ -24,18 +24,18 @@ type LaunchError struct {
 }
 
 func (e *LaunchError) Error() string {
-	return fmt.Sprintf("failed to launch command-line mode: %s", e.err)
+	return fmt.Sprintf("failed to launch CLI mode: %s", e.err)
 }
 
-// Run is a main entrypoint for command-line mode.
-// cli package will executes Run if Evans is launched as command-line mode.
+// Run is a main entrypoint for CLI mode.
+// cli package will executes Run if Evans is launched as CLI mode.
 //
 // Run returns below errors (Clients should unwrap returned error with errors.Cause):
 // - os.PathError
 //   - Provided `file` is missing.
 //   - It is returned only when `file` is not empty.
 // - ErrLaunchFailed
-//   - Precondition error to launch command-line mode.
+//   - Precondition error to launch CLI mode.
 // - TODO: Describe more error specification.
 //
 func Run(cfg *config.Config, ui cui.UI, file, call string) error {
@@ -72,7 +72,7 @@ func Run(cfg *config.Config, ui cui.UI, file, call string) error {
 	return nil
 }
 
-// IsCommandLineMode returns whether Evans was launched as CLI mode or not.
-func IsCommandLineMode(file string) bool {
+// IsCLIMode returns whether Evans was launched as CLI mode or not.
+func IsCLIMode(file string) bool {
 	return !isatty.IsTerminal(os.Stdin.Fd()) || file != ""
 }

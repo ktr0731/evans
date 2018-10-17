@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	os.Exit(controller.NewCLI(
+	os.Exit(controller.NewCommand(
 		meta.AppName,
 		meta.Version.String(),
 		cui.NewBasicUI(),

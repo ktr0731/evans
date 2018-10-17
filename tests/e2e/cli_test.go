@@ -18,8 +18,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newCLI(ui cui.UI) *controller.CLI {
-	return controller.NewCLI(meta.AppName, meta.Version.String(), ui)
+func newCLI(ui cui.UI) *controller.Command {
+	return controller.NewCommand(meta.AppName, meta.Version.String(), ui)
 }
 
 func flatten(s string) string {

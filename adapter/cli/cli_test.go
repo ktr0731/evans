@@ -32,7 +32,7 @@ func TestIsCommandLineMode(t *testing.T) {
 				}()
 				defer cleanup()
 
-				result := IsCommandLineMode(c.file)
+				result := IsCLIMode(c.file)
 				assert.Equal(t, c.isCommandLineMode, result)
 			}
 		})

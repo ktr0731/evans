@@ -70,7 +70,7 @@ Options:
 	--version, -v		%s
 `
 
-func (c *CLI) parseFlags(args []string) *options {
+func (c *Command) parseFlags(args []string) *options {
 	const (
 		edit       = "edit config file using by $EDITOR"
 		repl       = "start as REPL mode"
@@ -194,7 +194,7 @@ type wrappedConfig struct {
 	cli bool
 }
 
-type CLI struct {
+type Command struct {
 	name    string
 	version string
 
@@ -208,11 +208,11 @@ type CLI struct {
 	initOnce sync.Once
 }
 
-// NewCLI instantiate CLI interface.
+// NewCommand instantiate CLI interface.
 // if Evans is used as REPL mode, its UI is created by newREPLUI() in runAsREPL.
 // if CLI mode, its ui is same as passed ui.
-func NewCLI(name, version string, ui cui.UI) *CLI {
-	return &CLI{
+func NewCommand(name, version string, ui cui.UI) *Command {
+	return &Command{
 		name:    name,
 		version: version,
 		ui:      ui,
@@ -220,7 +220,7 @@ func NewCLI(name, version string, ui cui.UI) *CLI {
 	}
 }
 
-func (c *CLI) init(opts *options, proto []string) error {
+func (c *Command) init(opts *options, proto []string) error {
 	var err error
 	c.initOnce.Do(func() {
 		var cfg *config.Config
@@ -245,19 +245,19 @@ func (c *CLI) init(opts *options, proto []string) error {
 	return err
 }
 
-func (c *CLI) Error(err error) {
+func (c *Command) Error(err error) {
 	c.ui.ErrPrintln(err.Error())
 }
 
-func (c *CLI) Usage() {
+func (c *Command) Usage() {
 	c.flagSet.Usage()
 }
 
-func (c *CLI) Version() {
+func (c *Command) Version() {
 	c.ui.Println(fmt.Sprintf("%s %s", c.name, c.version))
 }
 
-func (c *CLI) Run(args []string) int {
+func (c *Command) Run(args []string) int {
 	opts := c.parseFlags(args)
 	proto := c.flagSet.Args()
 
@@ -283,7 +283,7 @@ func (c *CLI) Run(args []string) int {
 
 	var status int
 	// TODO: use c.wcfg.cli instead of c.wcfg.repl
-	if !c.wcfg.repl && cli.IsCommandLineMode(c.wcfg.file) {
+	if !c.wcfg.repl && cli.IsCLIMode(c.wcfg.file) {
 		status = c.runAsCLI()
 	} else {
 		status = c.runAsREPL()
@@ -292,7 +292,7 @@ func (c *CLI) Run(args []string) int {
 	return status
 }
 
-func (c *CLI) runAsCLI() int {
+func (c *Command) runAsCLI() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 
@@ -318,7 +318,7 @@ var DefaultREPLUI = newREPLUI("")
 
 var DefaultREPLReader io.Reader = os.Stdin
 
-func (c *CLI) runAsREPL() int {
+func (c *Command) runAsREPL() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -404,7 +404,7 @@ func (c *CLI) runAsREPL() int {
 // processUpdate checks new changes and updates Evans in accordance with user's selection.
 // if config.Meta.AutoUpdate enabled, processUpdate is called asynchronously.
 // other than, processUpdate is called synchronously.
-func (c *CLI) processUpdate(ctx context.Context) error {
+func (c *Command) processUpdate(ctx context.Context) error {
 	if !c.cache.UpdateAvailable {
 		return nil
 	}
