@@ -13,16 +13,15 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/usecase"
-	"github.com/ktr0731/evans/usecase/port"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
-	isatty "github.com/mattn/go-isatty"
 	"github.com/mitchellh/copystructure"
 	"github.com/pkg/errors"
 
@@ -71,7 +70,7 @@ Options:
 	--version, -v		%s
 `
 
-func (c *CLI) parseFlags(args []string) *options {
+func (c *Command) parseFlags(args []string) *options {
 	const (
 		edit       = "edit config file using by $EDITOR"
 		repl       = "start as REPL mode"
@@ -195,7 +194,7 @@ type wrappedConfig struct {
 	cli bool
 }
 
-type CLI struct {
+type Command struct {
 	name    string
 	version string
 
@@ -209,11 +208,11 @@ type CLI struct {
 	initOnce sync.Once
 }
 
-// NewCLI instantiate CLI interface.
+// NewCommand instantiate CLI interface.
 // if Evans is used as REPL mode, its UI is created by newREPLUI() in runAsREPL.
 // if CLI mode, its ui is same as passed ui.
-func NewCLI(name, version string, ui cui.UI) *CLI {
-	return &CLI{
+func NewCommand(name, version string, ui cui.UI) *Command {
+	return &Command{
 		name:    name,
 		version: version,
 		ui:      ui,
@@ -221,7 +220,7 @@ func NewCLI(name, version string, ui cui.UI) *CLI {
 	}
 }
 
-func (c *CLI) init(opts *options, proto []string) error {
+func (c *Command) init(opts *options, proto []string) error {
 	var err error
 	c.initOnce.Do(func() {
 		var cfg *config.Config
@@ -246,19 +245,19 @@ func (c *CLI) init(opts *options, proto []string) error {
 	return err
 }
 
-func (c *CLI) Error(err error) {
+func (c *Command) Error(err error) {
 	c.ui.ErrPrintln(err.Error())
 }
 
-func (c *CLI) Usage() {
+func (c *Command) Usage() {
 	c.flagSet.Usage()
 }
 
-func (c *CLI) Version() {
+func (c *Command) Version() {
 	c.ui.Println(fmt.Sprintf("%s %s", c.name, c.version))
 }
 
-func (c *CLI) Run(args []string) int {
+func (c *Command) Run(args []string) int {
 	opts := c.parseFlags(args)
 	proto := c.flagSet.Args()
 
@@ -283,7 +282,8 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	var status int
-	if isCommandLineMode(c.wcfg) {
+	// TODO: use c.wcfg.cli instead of c.wcfg.repl
+	if !c.wcfg.repl && cli.IsCLIMode(c.wcfg.file) {
 		status = c.runAsCLI()
 	} else {
 		status = c.runAsREPL()
@@ -292,9 +292,7 @@ func (c *CLI) Run(args []string) int {
 	return status
 }
 
-var DefaultCLIReader io.Reader = os.Stdin
-
-func (c *CLI) runAsCLI() int {
+func (c *Command) runAsCLI() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 
@@ -303,72 +301,24 @@ func (c *CLI) runAsCLI() int {
 		checkUpdateErrCh <- checkUpdate(ctx, c.wcfg.cfg, c.cache)
 	}()
 
-	errCh := make(chan error)
-	go func() {
-		defer cancel()
-
-		in := DefaultCLIReader
-		if c.wcfg.file != "" {
-			f, err := os.Open(c.wcfg.file)
-			if err != nil {
-				errCh <- err
-				return
-			}
-			defer f.Close()
-			in = f
-		}
-
-		p, err := di.NewCLIInteractorParams(c.wcfg.cfg, in)
-		if err != nil {
-			errCh <- err
-			return
-		}
-		closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer closeCancel()
-		defer p.Cleanup(closeCtx)
-
-		interactor := usecase.NewInteractor(p)
-
-		res, err := interactor.Call(&port.CallParams{RPCName: c.wcfg.call})
-		if err != nil {
-			errCh <- err
-			return
-		}
-
-		if _, err := io.Copy(c.ui.Writer(), res); err != nil {
-			errCh <- err
-			return
-		}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return 0
-	case err := <-errCh:
-		// first, cancel
-		cancel()
-
-		// receive the REPL result
-		if err != nil {
-			c.Error(err)
-		}
-
-		cuErr := <-checkUpdateErrCh
-		if cuErr != nil {
-			c.Error(cuErr)
-		}
-
-		if err != nil || cuErr != nil {
-			return 1
-		}
+	err := cli.Run(c.wcfg.cfg, c.ui, c.wcfg.file, c.wcfg.call)
+	if err != nil {
+		c.Error(err)
+		return 1
 	}
+
+	cancel()
+	<-ctx.Done()
+
 	return 0
 }
 
 // DefaultREPLUI is used for e2e testing
 var DefaultREPLUI = newREPLUI("")
 
-func (c *CLI) runAsREPL() int {
+var DefaultREPLReader io.Reader = os.Stdin
+
+func (c *Command) runAsREPL() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -395,7 +345,7 @@ func (c *CLI) runAsREPL() int {
 			}
 		}
 
-		p, err := di.NewREPLInteractorParams(c.wcfg.cfg, DefaultCLIReader)
+		p, err := di.NewREPLInteractorParams(c.wcfg.cfg, DefaultREPLReader)
 		if err != nil {
 			errCh <- err
 			return
@@ -454,7 +404,7 @@ func (c *CLI) runAsREPL() int {
 // processUpdate checks new changes and updates Evans in accordance with user's selection.
 // if config.Meta.AutoUpdate enabled, processUpdate is called asynchronously.
 // other than, processUpdate is called synchronously.
-func (c *CLI) processUpdate(ctx context.Context) error {
+func (c *Command) processUpdate(ctx context.Context) error {
 	if !c.cache.UpdateAvailable {
 		return nil
 	}
@@ -623,10 +573,6 @@ func isCallable(w *wrappedConfig) error {
 		return result
 	}
 	return nil
-}
-
-func isCommandLineMode(w *wrappedConfig) bool {
-	return !w.repl && (!isatty.IsTerminal(os.Stdin.Fd()) || w.file != "")
 }
 
 func toHeader(sh optStrSlice) ([]config.Header, error) {

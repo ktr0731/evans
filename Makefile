@@ -75,3 +75,7 @@ coverage-web: coverage
 .PHONY: brew-update
 brew-update:
 	bash .circleci/scripts/entrypoint.bash $(VERSION)
+
+.PHONY: depgraph
+depgraph:
+	godepgraph -s -novendor . | dot -Tpng -o dep.png
