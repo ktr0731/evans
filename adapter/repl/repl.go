@@ -1,6 +1,7 @@
 package repl
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -8,12 +9,15 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/config"
+	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/entity/env"
+	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
 	shellstring "github.com/ktr0731/go-shellstring"
 	homedir "github.com/mitchellh/go-homedir"
@@ -25,6 +29,29 @@ var (
 	ErrArgumentRequired = errors.New("argument required")
 	ErrUnknownTarget    = errors.New("unknown target")
 )
+
+func Run(cfg *config.Config, in io.Reader, ui cui.UI) error {
+	p, err := di.NewREPLInteractorParams(cfg, in)
+	if err != nil {
+		return err
+	}
+	closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer closeCancel()
+	defer p.Cleanup(closeCtx)
+
+	interactor := usecase.NewInteractor(p)
+
+	env, err := di.Env(cfg)
+	if err != nil {
+		return err
+	}
+
+	r := New(cfg.REPL, env, ui, interactor)
+	if err := r.Start(); err != nil {
+		return err
+	}
+	return nil
+}
 
 type REPL struct {
 	ui     cui.UI

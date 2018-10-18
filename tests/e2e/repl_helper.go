@@ -72,9 +72,7 @@ func (h *replHelper) run(args []string) int {
 		h.ew = os.Stderr
 	}
 
-	controller.DefaultREPLUI = &controller.REPLUI{
-		UI: cui.NewUI(h.r, h.w, h.ew),
-	}
+	controller.DefaultREPLUI = cui.NewUI(h.r, h.w, h.ew)
 
 	h.iq = append(h.iq, repl.Exit()...)
 	p := helper.NewMockPrompt(h.iq, []string{})

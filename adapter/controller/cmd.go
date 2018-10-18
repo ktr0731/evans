@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
@@ -18,9 +17,7 @@ import (
 	"github.com/ktr0731/evans/adapter/repl"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
-	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/meta"
-	"github.com/ktr0731/evans/usecase"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
 	"github.com/mitchellh/copystructure"
@@ -315,7 +312,7 @@ func (c *Command) runAsCLI() int {
 }
 
 // DefaultREPLUI is used for e2e testing
-var DefaultREPLUI = newREPLUI("")
+var DefaultREPLUI cui.UI = cui.NewBasicUI()
 
 var DefaultREPLReader io.Reader = os.Stdin
 
@@ -329,70 +326,42 @@ func (c *Command) runAsREPL() int {
 	}()
 
 	processUpdateErrCh := make(chan error, 1)
-	errCh := make(chan error)
-	go func() {
-		defer cancel()
 
-		// if AutoUpdate enabled, do update asynchronously
-		if c.wcfg.cfg.Meta.AutoUpdate {
-			go func() {
-				processUpdateErrCh <- c.processUpdate(ctx)
-			}()
-		} else {
-			err := c.processUpdate(ctx)
-			if err != nil {
-				errCh <- err
-				return
-			}
-		}
-
-		p, err := di.NewREPLInteractorParams(c.wcfg.cfg, DefaultREPLReader)
-		if err != nil {
-			errCh <- err
-			return
-		}
-		closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer closeCancel()
-		defer p.Cleanup(closeCtx)
-
-		interactor := usecase.NewInteractor(p)
-
-		var ui cui.UI
-		if c.wcfg.cfg.REPL.ColoredOutput {
-			ui = newColoredREPLUI(DefaultREPLUI)
-		} else {
-			ui = DefaultREPLUI
-		}
-
-		env, err := di.Env(c.wcfg.cfg)
-		if err != nil {
-			errCh <- err
-			return
-		}
-
-		r := repl.New(c.wcfg.cfg.REPL, env, ui, interactor)
-		if err := r.Start(); err != nil {
-			errCh <- err
-			return
-		}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return 0
-	case err := <-errCh:
+	// if AutoUpdate enabled, do update asynchronously
+	if c.wcfg.cfg.Meta.AutoUpdate {
+		go func() {
+			processUpdateErrCh <- c.processUpdate(ctx)
+		}()
+	} else {
+		err := c.processUpdate(ctx)
 		if err != nil {
 			c.Error(err)
 			return 1
 		}
+	}
 
-		cancel()
+	var ui = DefaultREPLUI
+	if c.wcfg.cfg.REPL.ColoredOutput {
+		ui = &cui.ColoredUI{ui}
+	}
 
-		select {
-		case err = <-processUpdateErrCh:
-		case err = <-checkUpdateErrCh:
+	err := repl.Run(c.wcfg.cfg, DefaultREPLReader, ui)
+	if err != nil {
+		c.Error(err)
+		return 1
+	}
+
+	cancel()
+
+	select {
+	case <-ctx.Done():
+		return 0
+	case err := <-checkUpdateErrCh:
+		if err != nil {
+			c.Error(err)
+			return 1
 		}
-
+	case err := <-processUpdateErrCh:
 		if err != nil {
 			c.Error(err)
 			return 1
