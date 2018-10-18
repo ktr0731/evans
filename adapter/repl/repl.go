@@ -1,4 +1,4 @@
-package controller
+package repl
 
 import (
 	"fmt"
@@ -38,7 +38,7 @@ type REPL struct {
 	exitCh chan struct{}
 }
 
-func NewREPL(config *config.REPL, env env.Environment, ui cui.UI, inputPort port.InputPort) *REPL {
+func New(config *config.REPL, env env.Environment, ui cui.UI, inputPort port.InputPort) *REPL {
 	cmds := map[string]Commander{
 		"call":    &callCommand{inputPort},
 		"desc":    &descCommand{inputPort},

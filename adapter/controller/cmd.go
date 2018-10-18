@@ -15,6 +15,7 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
+	"github.com/ktr0731/evans/adapter/repl"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/di"
@@ -369,7 +370,7 @@ func (c *Command) runAsREPL() int {
 			return
 		}
 
-		r := NewREPL(c.wcfg.cfg.REPL, env, ui, interactor)
+		r := repl.New(c.wcfg.cfg.REPL, env, ui, interactor)
 		if err := r.Start(); err != nil {
 			errCh <- err
 			return
