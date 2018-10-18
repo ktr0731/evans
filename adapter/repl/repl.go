@@ -38,6 +38,10 @@ var (
 )
 
 func Run(cfg *config.Config, ui cui.UI) error {
+	if cfg.REPL.ColoredOutput {
+		ui = cui.NewColored(ui)
+	}
+
 	in := DefaultReader
 
 	p, err := di.NewREPLInteractorParams(cfg, in)

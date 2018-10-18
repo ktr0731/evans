@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newCLI(ui cui.UI) *controller.Command {
+func newCommand(ui cui.UI) *controller.Command {
 	return controller.NewCommand(meta.AppName, meta.Version.String(), ui)
 }
 
@@ -78,7 +78,7 @@ func TestCLI(t *testing.T) {
 
 				args := strings.Split(c.args, " ")
 				args = append([]string{"--cli"}, args...)
-				code := newCLI(ui).Run(args)
+				code := newCommand(ui).Run(args)
 				require.Equal(t, c.code, code, errOut.String())
 
 				if c.code == 0 {
@@ -122,7 +122,7 @@ func TestCLI(t *testing.T) {
 				out := new(bytes.Buffer)
 				ui := cui.NewUI(in, out, ioutil.Discard)
 
-				code := newCLI(ui).Run(strings.Split(c.args, " "))
+				code := newCommand(ui).Run(strings.Split(c.args, " "))
 				require.Equal(t, c.code, code)
 
 				if c.code == 0 {

@@ -311,10 +311,6 @@ func (c *Command) runAsCLI() int {
 	return 0
 }
 
-// DefaultREPLUI is used for e2e testing.
-// TODO: use c.ui with colored.
-var DefaultREPLUI cui.UI = cui.NewBasicUI()
-
 func (c *Command) runAsREPL() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -338,12 +334,7 @@ func (c *Command) runAsREPL() int {
 		}
 	}
 
-	var ui = DefaultREPLUI
-	if c.wcfg.cfg.REPL.ColoredOutput {
-		ui = &cui.ColoredUI{ui}
-	}
-
-	err := repl.Run(c.wcfg.cfg, ui)
+	err := repl.Run(c.wcfg.cfg, c.ui)
 	if err != nil {
 		c.Error(err)
 		return 1

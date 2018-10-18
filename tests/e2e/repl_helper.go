@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/ktr0731/evans/adapter/controller"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/tests/e2e/repl"
 	"github.com/ktr0731/evans/tests/helper"
@@ -56,10 +55,6 @@ func (h *replHelper) run(args []string) int {
 	if !h.reseted {
 		panic("must be call reset() before each run()")
 	}
-	old := controller.DefaultREPLUI
-	defer func() {
-		controller.DefaultREPLUI = old
-	}()
 
 	if h.r == nil {
 		h.r = os.Stdin
@@ -72,7 +67,8 @@ func (h *replHelper) run(args []string) int {
 		h.ew = os.Stderr
 	}
 
-	controller.DefaultREPLUI = cui.NewUI(h.r, h.w, h.ew)
+	ui := cui.NewUI(h.r, h.w, h.ew)
+	cli := newCommand(ui)
 
 	h.iq = append(h.iq, repl.Exit()...)
 	p := helper.NewMockPrompt(h.iq, []string{})
@@ -81,6 +77,5 @@ func (h *replHelper) run(args []string) int {
 
 	h.reseted = false
 
-	return newCLI(cui.NewUI(os.Stdin, ioutil.Discard, ioutil.Discard)).
-		Run(append(h.commonArgs, args...))
+	return cli.Run(append(h.commonArgs, args...))
 }

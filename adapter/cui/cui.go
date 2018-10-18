@@ -70,6 +70,15 @@ type ColoredUI struct {
 	UI
 }
 
+// NewColored wraps provided `ui` with ColoredUI.
+// If `ui` is *ColoredUI, NewColored returns it as it is.
+func NewColored(ui UI) UI {
+	if ui, ok := ui.(*ColoredUI); ok {
+		return ui
+	}
+	return &ColoredUI{ui}
+}
+
 func (u *ColoredUI) printWithColor(
 	w func(a interface{}),
 	color func(format string, a ...interface{}) string,
