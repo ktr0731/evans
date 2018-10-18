@@ -311,10 +311,9 @@ func (c *Command) runAsCLI() int {
 	return 0
 }
 
-// DefaultREPLUI is used for e2e testing
+// DefaultREPLUI is used for e2e testing.
+// TODO: use c.ui with colored.
 var DefaultREPLUI cui.UI = cui.NewBasicUI()
-
-var DefaultREPLReader io.Reader = os.Stdin
 
 func (c *Command) runAsREPL() int {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -326,7 +325,6 @@ func (c *Command) runAsREPL() int {
 	}()
 
 	processUpdateErrCh := make(chan error, 1)
-
 	// if AutoUpdate enabled, do update asynchronously
 	if c.wcfg.cfg.Meta.AutoUpdate {
 		go func() {
@@ -345,7 +343,7 @@ func (c *Command) runAsREPL() int {
 		ui = &cui.ColoredUI{ui}
 	}
 
-	err := repl.Run(c.wcfg.cfg, DefaultREPLReader, ui)
+	err := repl.Run(c.wcfg.cfg, ui)
 	if err != nil {
 		c.Error(err)
 		return 1

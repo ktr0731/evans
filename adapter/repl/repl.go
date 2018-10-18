@@ -30,7 +30,16 @@ var (
 	ErrUnknownTarget    = errors.New("unknown target")
 )
 
-func Run(cfg *config.Config, in io.Reader, ui cui.UI) error {
+// TODO: define cli mode scoped config
+
+var (
+	// DefaultReader is used for e2e testing.
+	DefaultReader io.Reader = os.Stdin
+)
+
+func Run(cfg *config.Config, ui cui.UI) error {
+	in := DefaultReader
+
 	p, err := di.NewREPLInteractorParams(cfg, in)
 	if err != nil {
 		return err
