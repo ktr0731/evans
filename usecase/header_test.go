@@ -3,9 +3,9 @@ package usecase
 import (
 	"testing"
 
-	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/tests/mock/entity/mockenv"
+	"github.com/ktr0731/evans/usecase/internal/usecasetest"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func TestHeader(t *testing.T) {
 			{Key: "miya", Val: "tachibana", NeedToRemove: true},
 		},
 	}
-	presenter := presenter.NewStubPresenter()
+	presenter := usecasetest.NewPresenter()
 	env := &mockenv.EnvironmentMock{
 		AddHeaderFunc:    func(*entity.Header) {},
 		RemoveHeaderFunc: func(string) {},

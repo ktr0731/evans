@@ -3,8 +3,8 @@ package usecase
 import (
 	"testing"
 
-	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/tests/mock/entity/mockenv"
+	"github.com/ktr0731/evans/usecase/internal/usecasetest"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/stretchr/testify/require"
 )
@@ -12,7 +12,7 @@ import (
 func TestService(t *testing.T) {
 	expected := "example_service"
 	params := &port.ServiceParams{SvcName: expected}
-	presenter := &presenter.StubPresenter{}
+	presenter := usecasetest.NewPresenter()
 	env := &mockenv.EnvironmentMock{
 		UseServiceFunc: func(string) error { return nil },
 	}
