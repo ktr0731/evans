@@ -16,11 +16,11 @@ func TestREPL(t *testing.T) {
 		cases := []struct {
 			args          string
 			code          int  // exit code, 1 when precondition failed
-			hasErr        bool // error was occurred in REPL, false if precondition failed
+			hasErr        bool // error was occurred in repl, false if precondition failed
 			useReflection bool
 			useWeb        bool
 		}{
-			{args: "", code: 1}, // cannot launch REPL case
+			{args: "", code: 1}, // cannot launch repl case
 			{args: "--package helloworld", code: 1},
 			{args: "--service Greeter", code: 1},
 			{args: "testdata/helloworld.proto", hasErr: true},

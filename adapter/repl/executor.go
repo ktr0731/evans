@@ -1,4 +1,4 @@
-package controller
+package repl
 
 import (
 	"strings"
@@ -6,7 +6,7 @@ import (
 )
 
 type executor struct {
-	repl *REPL
+	repl *repl
 }
 
 func (e *executor) execute(l string) {

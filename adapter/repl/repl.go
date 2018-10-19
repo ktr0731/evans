@@ -1,6 +1,7 @@
-package controller
+package repl
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -8,12 +9,15 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	prompt "github.com/c-bata/go-prompt"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/config"
+	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/entity/env"
+	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
 	shellstring "github.com/ktr0731/go-shellstring"
 	homedir "github.com/mitchellh/go-homedir"
@@ -26,20 +30,56 @@ var (
 	ErrUnknownTarget    = errors.New("unknown target")
 )
 
-type REPL struct {
+// TODO: define cli mode scoped config
+
+var (
+	// DefaultReader is used for e2e testing.
+	DefaultReader io.Reader = os.Stdin
+)
+
+func Run(cfg *config.Config, ui cui.UI) error {
+	if cfg.REPL.ColoredOutput {
+		ui = cui.NewColored(ui)
+	}
+
+	in := DefaultReader
+
+	p, err := di.NewREPLInteractorParams(cfg, in)
+	if err != nil {
+		return err
+	}
+	closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer closeCancel()
+	defer p.Cleanup(closeCtx)
+
+	interactor := usecase.NewInteractor(p)
+
+	env, err := di.Env(cfg)
+	if err != nil {
+		return err
+	}
+
+	r := newEnv(cfg.REPL, env, ui, interactor)
+	if err := r.start(); err != nil {
+		return err
+	}
+	return nil
+}
+
+type repl struct {
 	ui     cui.UI
 	config *config.REPL
 	env    env.Environment
 	prompt gateway.Prompter
-	cmds   map[string]Commander
+	cmds   map[string]commander
 
 	// exitCh receives exit signal from executor or
 	// goroutine which wrapping Run method.
 	exitCh chan struct{}
 }
 
-func NewREPL(config *config.REPL, env env.Environment, ui cui.UI, inputPort port.InputPort) *REPL {
-	cmds := map[string]Commander{
+func newEnv(config *config.REPL, env env.Environment, ui cui.UI, inputPort port.InputPort) *repl {
+	cmds := map[string]commander{
 		"call":    &callCommand{inputPort},
 		"desc":    &descCommand{inputPort},
 		"package": &packageCommand{inputPort},
@@ -48,7 +88,7 @@ func NewREPL(config *config.REPL, env env.Environment, ui cui.UI, inputPort port
 		"header":  &headerCommand{inputPort},
 	}
 
-	repl := &REPL{
+	repl := &repl{
 		ui:     ui,
 		config: config,
 		env:    env,
@@ -79,7 +119,7 @@ func NewREPL(config *config.REPL, env env.Environment, ui cui.UI, inputPort port
 	return repl
 }
 
-func (r *REPL) eval(l string) (io.Reader, error) {
+func (r *repl) eval(l string) (io.Reader, error) {
 	// trim quote
 	// e.g. key='foo' is interpreted to `foo`
 	//      key='foo bar' is `foo bar`
@@ -113,7 +153,7 @@ func (r *REPL) eval(l string) (io.Reader, error) {
 	return cmd.Run(args)
 }
 
-func (r *REPL) Start() error {
+func (r *repl) start() error {
 	if r.config.ShowSplashText {
 		r.printSplash(r.config.SplashTextPath)
 		defer r.ui.InfoPrintln("Good Bye :)")
@@ -131,7 +171,7 @@ func (r *REPL) Start() error {
 	return nil
 }
 
-func (r *REPL) help(cmds map[string]Commander) string {
+func (r *repl) help(cmds map[string]commander) string {
 	var maxLen int
 	// slice of [name, synopsis]
 	text := make([][]string, len(cmds))
@@ -155,7 +195,7 @@ Show more details:
 	return strings.TrimRight(msg, "\n")
 }
 
-func (r *REPL) getPrompt() string {
+func (r *repl) getPrompt() string {
 	p := fmt.Sprintf("%s:%s> ", r.config.Server.Host, r.config.Server.Port)
 	if dsn := r.env.DSN(); dsn != "" {
 		p = fmt.Sprintf("%s@%s", dsn, p)
@@ -175,7 +215,7 @@ const defaultSplashText = `
 
 `
 
-func (r *REPL) printSplash(p string) {
+func (r *repl) printSplash(p string) {
 	if p == "" {
 		r.ui.Println(defaultSplashText)
 		return

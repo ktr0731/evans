@@ -1,4 +1,4 @@
-package controller
+package repl
 
 import (
 	"strings"
@@ -8,7 +8,7 @@ import (
 )
 
 type completer struct {
-	cmds map[string]Commander
+	cmds map[string]commander
 	env  env.Environment
 }
 

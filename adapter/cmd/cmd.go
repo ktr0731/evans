@@ -1,4 +1,4 @@
-package controller
+package cmd
 
 import (
 	"context"
@@ -9,17 +9,15 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
+	"github.com/ktr0731/evans/adapter/repl"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
-	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/meta"
-	"github.com/ktr0731/evans/usecase"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
 	"github.com/mitchellh/copystructure"
@@ -208,10 +206,9 @@ type Command struct {
 	initOnce sync.Once
 }
 
-// NewCommand instantiate CLI interface.
-// if Evans is used as REPL mode, its UI is created by newREPLUI() in runAsREPL.
-// if CLI mode, its ui is same as passed ui.
-func NewCommand(name, version string, ui cui.UI) *Command {
+// New instantiate CLI interface.
+// `ui` is used for both of CLI mode and REPL mode.
+func New(name, version string, ui cui.UI) *Command {
 	return &Command{
 		name:    name,
 		version: version,
@@ -313,11 +310,6 @@ func (c *Command) runAsCLI() int {
 	return 0
 }
 
-// DefaultREPLUI is used for e2e testing
-var DefaultREPLUI = newREPLUI("")
-
-var DefaultREPLReader io.Reader = os.Stdin
-
 func (c *Command) runAsREPL() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -328,70 +320,36 @@ func (c *Command) runAsREPL() int {
 	}()
 
 	processUpdateErrCh := make(chan error, 1)
-	errCh := make(chan error)
-	go func() {
-		defer cancel()
-
-		// if AutoUpdate enabled, do update asynchronously
-		if c.wcfg.cfg.Meta.AutoUpdate {
-			go func() {
-				processUpdateErrCh <- c.processUpdate(ctx)
-			}()
-		} else {
-			err := c.processUpdate(ctx)
-			if err != nil {
-				errCh <- err
-				return
-			}
-		}
-
-		p, err := di.NewREPLInteractorParams(c.wcfg.cfg, DefaultREPLReader)
-		if err != nil {
-			errCh <- err
-			return
-		}
-		closeCtx, closeCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer closeCancel()
-		defer p.Cleanup(closeCtx)
-
-		interactor := usecase.NewInteractor(p)
-
-		var ui cui.UI
-		if c.wcfg.cfg.REPL.ColoredOutput {
-			ui = newColoredREPLUI(DefaultREPLUI)
-		} else {
-			ui = DefaultREPLUI
-		}
-
-		env, err := di.Env(c.wcfg.cfg)
-		if err != nil {
-			errCh <- err
-			return
-		}
-
-		r := NewREPL(c.wcfg.cfg.REPL, env, ui, interactor)
-		if err := r.Start(); err != nil {
-			errCh <- err
-			return
-		}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return 0
-	case err := <-errCh:
+	// if AutoUpdate enabled, do update asynchronously
+	if c.wcfg.cfg.Meta.AutoUpdate {
+		go func() {
+			processUpdateErrCh <- c.processUpdate(ctx)
+		}()
+	} else {
+		err := c.processUpdate(ctx)
 		if err != nil {
 			c.Error(err)
 			return 1
 		}
+	}
 
-		cancel()
+	err := repl.Run(c.wcfg.cfg, c.ui)
+	if err != nil {
+		c.Error(err)
+		return 1
+	}
 
-		select {
-		case err = <-processUpdateErrCh:
-		case err = <-checkUpdateErrCh:
+	cancel()
+
+	select {
+	case <-ctx.Done():
+		return 0
+	case err := <-checkUpdateErrCh:
+		if err != nil {
+			c.Error(err)
+			return 1
 		}
-
+	case err := <-processUpdateErrCh:
 		if err != nil {
 			c.Error(err)
 			return 1
