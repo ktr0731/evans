@@ -11,6 +11,16 @@ import (
 	"github.com/ktr0731/evans/usecase/port"
 )
 
+// JSONPresenter provides JSON formatted output.
+// For example, a message definition is here.
+//   message {
+//     string foo = 1;
+//   }
+//
+// If `foo` is "some_string", the response is
+//   {"foo":"some_string"}
+//
+// Also indenting is supported. (see NewJSONWithIndent)
 type JSONPresenter struct {
 	indent string
 }
@@ -52,6 +62,12 @@ func NewJSON() *JSONPresenter {
 	return &JSONPresenter{}
 }
 
+// NewJSONWithIndent provides indented output.
+//
+// If `foo` is "some_string", the response is
+//   {
+//     "foo": "some_string"
+//   }
 func NewJSONWithIndent() *JSONPresenter {
 	return &JSONPresenter{indent: "  "}
 }
