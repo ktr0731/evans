@@ -67,8 +67,8 @@ func marshalIndent(out io.Writer, pb proto.Message, indent string) error {
 		}
 		_, err = out.Write(b)
 		return err
-	} else {
-		m := &jsonpb.Marshaler{}
-		return m.Marshal(out, pb)
 	}
+
+	m := &jsonpb.Marshaler{}
+	return m.Marshal(out, pb)
 }
