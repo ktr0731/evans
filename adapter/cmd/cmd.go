@@ -71,7 +71,7 @@ Options:
 func (c *Command) parseFlags(args []string) *options {
 	const (
 		edit       = "edit config file using by $EDITOR"
-		repl       = "start as repl mode"
+		repl       = "start as REPL mode"
 		cli        = "start as CLI mode"
 		silent     = "hide splash"
 		host       = "gRPC server host"
@@ -185,7 +185,7 @@ type wrappedConfig struct {
 	// if input is stdin, file is empty
 	file string
 
-	// explicit using repl mode
+	// explicit using REPL mode
 	repl bool
 
 	// explicit using CLI mode
