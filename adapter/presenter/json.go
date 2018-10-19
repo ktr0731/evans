@@ -48,11 +48,11 @@ func (p *JSONPresenter) Call(res proto.Message) (io.Reader, error) {
 	return buf, nil
 }
 
-func NewJSONCLIPresenter() *JSONPresenter {
+func NewJSON() *JSONPresenter {
 	return &JSONPresenter{}
 }
 
-func NewJSONCLIPresenterWithIndent() *JSONPresenter {
+func NewJSONWithIndent() *JSONPresenter {
 	return &JSONPresenter{indent: "  "}
 }
 

@@ -14,7 +14,7 @@ import (
 func TestShow(t *testing.T) {
 	expected := []*entity.Package{{Name: "example_package"}}
 	params := &port.ShowParams{Type: port.ShowTypePackage}
-	presenter := presenter.NewJSONCLIPresenter()
+	presenter := presenter.NewJSON()
 
 	env := &mockenv.EnvironmentMock{
 		PackagesFunc: func() []*entity.Package { return expected },

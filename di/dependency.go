@@ -133,7 +133,7 @@ var (
 
 func initJSONCLIPresenter() error {
 	jsonCLIPresenterOnce.Do(func() {
-		jsonCLIPresenter = presenter.NewJSONCLIPresenterWithIndent()
+		jsonCLIPresenter = presenter.NewJSONWithIndent()
 	})
 	return nil
 }
