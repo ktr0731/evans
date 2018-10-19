@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/cli"
-	"github.com/ktr0731/evans/adapter/controller"
+	"github.com/ktr0731/evans/adapter/cmd"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/meta"
@@ -18,8 +18,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newCommand(ui cui.UI) *controller.Command {
-	return controller.NewCommand(meta.AppName, meta.Version.String(), ui)
+func newCommand(ui cui.UI) *cmd.Command {
+	return cmd.New(meta.AppName, meta.Version.String(), ui)
 }
 
 func flatten(s string) string {

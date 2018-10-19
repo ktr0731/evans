@@ -1,4 +1,4 @@
-package controller
+package cmd
 
 import (
 	"context"
@@ -206,10 +206,9 @@ type Command struct {
 	initOnce sync.Once
 }
 
-// NewCommand instantiate CLI interface.
-// if Evans is used as repl mode, its UI is created by newREPLUI() in runAsREPL.
-// if CLI mode, its ui is same as passed ui.
-func NewCommand(name, version string, ui cui.UI) *Command {
+// New instantiate CLI interface.
+// `ui` is used for both of CLI mode and REPL mode.
+func New(name, version string, ui cui.UI) *Command {
 	return &Command{
 		name:    name,
 		version: version,
