@@ -10,7 +10,7 @@ import (
 	"github.com/ktr0731/evans/tests/helper"
 )
 
-// replHelper has gateway.REPL and special fields for REPL-mode e2e testing.
+// replHelper has gateway.repl and special fields for repl-mode e2e testing.
 // replHelper is used from TestREPL.
 //
 // r, w and ew are re-created at run()

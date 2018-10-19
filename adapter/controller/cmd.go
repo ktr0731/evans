@@ -71,7 +71,7 @@ Options:
 func (c *Command) parseFlags(args []string) *options {
 	const (
 		edit       = "edit config file using by $EDITOR"
-		repl       = "start as REPL mode"
+		repl       = "start as repl mode"
 		cli        = "start as CLI mode"
 		silent     = "hide splash"
 		host       = "gRPC server host"
@@ -185,7 +185,7 @@ type wrappedConfig struct {
 	// if input is stdin, file is empty
 	file string
 
-	// explicit using REPL mode
+	// explicit using repl mode
 	repl bool
 
 	// explicit using CLI mode
@@ -207,7 +207,7 @@ type Command struct {
 }
 
 // NewCommand instantiate CLI interface.
-// if Evans is used as REPL mode, its UI is created by newREPLUI() in runAsREPL.
+// if Evans is used as repl mode, its UI is created by newREPLUI() in runAsREPL.
 // if CLI mode, its ui is same as passed ui.
 func NewCommand(name, version string, ui cui.UI) *Command {
 	return &Command{

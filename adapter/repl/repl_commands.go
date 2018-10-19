@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Commander interface {
+type commander interface {
 	Help() string
 	Synopsis() string
 	Validate(args []string) error

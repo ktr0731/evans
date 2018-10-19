@@ -59,27 +59,27 @@ func Run(cfg *config.Config, ui cui.UI) error {
 		return err
 	}
 
-	r := New(cfg.REPL, env, ui, interactor)
-	if err := r.Start(); err != nil {
+	r := newEnv(cfg.REPL, env, ui, interactor)
+	if err := r.start(); err != nil {
 		return err
 	}
 	return nil
 }
 
-type REPL struct {
+type repl struct {
 	ui     cui.UI
 	config *config.REPL
 	env    env.Environment
 	prompt gateway.Prompter
-	cmds   map[string]Commander
+	cmds   map[string]commander
 
 	// exitCh receives exit signal from executor or
 	// goroutine which wrapping Run method.
 	exitCh chan struct{}
 }
 
-func New(config *config.REPL, env env.Environment, ui cui.UI, inputPort port.InputPort) *REPL {
-	cmds := map[string]Commander{
+func newEnv(config *config.REPL, env env.Environment, ui cui.UI, inputPort port.InputPort) *repl {
+	cmds := map[string]commander{
 		"call":    &callCommand{inputPort},
 		"desc":    &descCommand{inputPort},
 		"package": &packageCommand{inputPort},
@@ -88,7 +88,7 @@ func New(config *config.REPL, env env.Environment, ui cui.UI, inputPort port.Inp
 		"header":  &headerCommand{inputPort},
 	}
 
-	repl := &REPL{
+	repl := &repl{
 		ui:     ui,
 		config: config,
 		env:    env,
@@ -119,7 +119,7 @@ func New(config *config.REPL, env env.Environment, ui cui.UI, inputPort port.Inp
 	return repl
 }
 
-func (r *REPL) eval(l string) (io.Reader, error) {
+func (r *repl) eval(l string) (io.Reader, error) {
 	// trim quote
 	// e.g. key='foo' is interpreted to `foo`
 	//      key='foo bar' is `foo bar`
@@ -153,7 +153,7 @@ func (r *REPL) eval(l string) (io.Reader, error) {
 	return cmd.Run(args)
 }
 
-func (r *REPL) Start() error {
+func (r *repl) start() error {
 	if r.config.ShowSplashText {
 		r.printSplash(r.config.SplashTextPath)
 		defer r.ui.InfoPrintln("Good Bye :)")
@@ -171,7 +171,7 @@ func (r *REPL) Start() error {
 	return nil
 }
 
-func (r *REPL) help(cmds map[string]Commander) string {
+func (r *repl) help(cmds map[string]commander) string {
 	var maxLen int
 	// slice of [name, synopsis]
 	text := make([][]string, len(cmds))
@@ -195,7 +195,7 @@ Show more details:
 	return strings.TrimRight(msg, "\n")
 }
 
-func (r *REPL) getPrompt() string {
+func (r *repl) getPrompt() string {
 	p := fmt.Sprintf("%s:%s> ", r.config.Server.Host, r.config.Server.Port)
 	if dsn := r.env.DSN(); dsn != "" {
 		p = fmt.Sprintf("%s@%s", dsn, p)
@@ -215,7 +215,7 @@ const defaultSplashText = `
 
 `
 
-func (r *REPL) printSplash(p string) {
+func (r *repl) printSplash(p string) {
 	if p == "" {
 		r.ui.Println(defaultSplashText)
 		return
