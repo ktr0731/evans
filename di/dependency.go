@@ -127,7 +127,7 @@ func resolveProtoFiles(conf *config.Config) []string {
 }
 
 var (
-	jsonCLIPresenter     *presenter.CLIPresenter
+	jsonCLIPresenter     *presenter.JSONPresenter
 	jsonCLIPresenterOnce sync.Once
 )
 

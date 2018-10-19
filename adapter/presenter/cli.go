@@ -11,39 +11,35 @@ import (
 	"github.com/ktr0731/evans/usecase/port"
 )
 
-type marshaler interface {
-	Marshal(io.Writer, proto.Message) error
-}
-
-type CLIPresenter struct {
-	marshaler marshaler
+type JSONPresenter struct {
+	indent string
 }
 
 var emptyResult = strings.NewReader("")
 
-func (p *CLIPresenter) Package() (io.Reader, error) {
+func (p *JSONPresenter) Package() (io.Reader, error) {
 	return emptyResult, nil
 }
 
-func (p *CLIPresenter) Service() (io.Reader, error) {
+func (p *JSONPresenter) Service() (io.Reader, error) {
 	return emptyResult, nil
 }
 
-func (p *CLIPresenter) Describe(showable port.Showable) (io.Reader, error) {
+func (p *JSONPresenter) Describe(showable port.Showable) (io.Reader, error) {
 	return strings.NewReader(showable.Show()), nil
 }
 
-func (p *CLIPresenter) Show(showable port.Showable) (io.Reader, error) {
+func (p *JSONPresenter) Show(showable port.Showable) (io.Reader, error) {
 	return strings.NewReader(showable.Show()), nil
 }
 
-func (p *CLIPresenter) Header() (io.Reader, error) {
+func (p *JSONPresenter) Header() (io.Reader, error) {
 	return emptyResult, nil
 }
 
-func (p *CLIPresenter) Call(res proto.Message) (io.Reader, error) {
+func (p *JSONPresenter) Call(res proto.Message) (io.Reader, error) {
 	buf := new(bytes.Buffer)
-	if err := p.marshaler.Marshal(buf, res); err != nil {
+	if err := marshalIndent(buf, res, p.indent); err != nil {
 		return nil, err
 	}
 	if _, err := buf.WriteRune('\n'); err != nil {
@@ -52,43 +48,27 @@ func (p *CLIPresenter) Call(res proto.Message) (io.Reader, error) {
 	return buf, nil
 }
 
-func NewJSONCLIPresenter() *CLIPresenter {
-	return &CLIPresenter{
-		marshaler: &jsonMarshaler{jsonpb.Marshaler{}},
-	}
+func NewJSONCLIPresenter() *JSONPresenter {
+	return &JSONPresenter{}
 }
 
-func NewJSONCLIPresenterWithIndent() *CLIPresenter {
-	presenter := NewJSONCLIPresenter()
-	presenter.marshaler.(*jsonMarshaler).Indent = "  "
-	return presenter
+func NewJSONCLIPresenterWithIndent() *JSONPresenter {
+	return &JSONPresenter{indent: "  "}
 }
 
-type jsonMarshaler struct {
-	jsonpb.Marshaler
-}
-
-func (m *jsonMarshaler) Marshal(out io.Writer, pb proto.Message) error {
+func marshalIndent(out io.Writer, pb proto.Message, indent string) error {
 	if dmsg, ok := pb.(*dynamic.Message); ok {
-		var b []byte
-		var err error
-		if m.hasIndent() {
-			b, err = dmsg.MarshalJSONPB(&jsonpb.Marshaler{
-				Indent:       "  ",
-				EmitDefaults: true,
-			})
-		} else {
-			b, err = dmsg.MarshalJSON()
-		}
+		b, err := dmsg.MarshalJSONPB(&jsonpb.Marshaler{
+			Indent:       indent,
+			EmitDefaults: true,
+		})
 		if err != nil {
 			return err
 		}
 		_, err = out.Write(b)
 		return err
+	} else {
+		m := &jsonpb.Marshaler{}
+		return m.Marshal(out, pb)
 	}
-	return m.Marshaler.Marshal(out, pb)
-}
-
-func (m *jsonMarshaler) hasIndent() bool {
-	return m.Marshaler.Indent != ""
 }
