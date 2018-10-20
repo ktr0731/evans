@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/testentity"
 	mockentity "github.com/ktr0731/evans/tests/mock/entity"
 	"github.com/ktr0731/evans/tests/mock/entity/mockenv"
 	"github.com/ktr0731/evans/tests/mock/usecase/mockport"
+	"github.com/ktr0731/evans/usecase/internal/usecasetest"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -60,7 +60,7 @@ func newDynamicBuilder(t *testing.T) *mockport.DynamicBuilderMock {
 
 func TestCall(t *testing.T) {
 	params := &port.CallParams{RPCName: "SayHello"}
-	presenter := &presenter.StubPresenter{}
+	presenter := usecasetest.NewPresenter()
 
 	newEnv := func(t *testing.T) *mockenv.EnvironmentMock {
 		return &mockenv.EnvironmentMock{
@@ -114,7 +114,7 @@ func TestCall(t *testing.T) {
 
 func TestCall_ClientStream(t *testing.T) {
 	params := &port.CallParams{RPCName: "SayHello"}
-	presenter := &presenter.StubPresenter{}
+	presenter := usecasetest.NewPresenter()
 
 	rpc := testentity.NewRPC()
 	rpc.FIsClientStreaming = true
@@ -141,7 +141,7 @@ func TestCall_ClientStream(t *testing.T) {
 }
 
 func TestCall_ServerStream(t *testing.T) {
-	presenter := &presenter.StubPresenter{}
+	presenter := usecasetest.NewPresenter()
 	rpc := testentity.NewRPC()
 	rpc.FIsServerStreaming = true
 	builder := newDynamicBuilder(t)
@@ -167,7 +167,7 @@ func TestCall_ServerStream(t *testing.T) {
 }
 
 func TestCall_BidiStream(t *testing.T) {
-	presenter := &presenter.StubPresenter{}
+	presenter := usecasetest.NewPresenter()
 	rpc := testentity.NewRPC()
 	rpc.FIsServerStreaming = true
 	rpc.FIsClientStreaming = true

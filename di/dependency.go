@@ -127,13 +127,13 @@ func resolveProtoFiles(conf *config.Config) []string {
 }
 
 var (
-	jsonCLIPresenter     *presenter.CLIPresenter
+	jsonCLIPresenter     *presenter.JSONPresenter
 	jsonCLIPresenterOnce sync.Once
 )
 
 func initJSONCLIPresenter() error {
 	jsonCLIPresenterOnce.Do(func() {
-		jsonCLIPresenter = presenter.NewJSONCLIPresenterWithIndent()
+		jsonCLIPresenter = presenter.NewJSONWithIndent()
 	})
 	return nil
 }

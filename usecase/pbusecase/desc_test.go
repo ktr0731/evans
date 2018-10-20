@@ -16,7 +16,7 @@ func TestDescribe(t *testing.T) {
 	var expected entity.Message = testentity.NewMsg()
 
 	params := &port.DescribeParams{}
-	presenter := presenter.NewJSONCLIPresenter()
+	presenter := presenter.NewJSON()
 	env := &mockenv.EnvironmentMock{
 		MessageFunc: func(name string) (entity.Message, error) { return expected, nil },
 	}
