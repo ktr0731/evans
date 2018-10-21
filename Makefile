@@ -66,7 +66,7 @@ lint:
 
 .PHONY: coverage
 coverage:
-	go test -covermode=atomic -tags e2e -coverprofile=coverage.txt -race $(shell go list ./... | egrep -v '(mock|testentity|helper|di)')
+	go test -coverpkg ./... -covermode=atomic -tags e2e -coverprofile=coverage.txt -race $(shell go list ./... | egrep -v '(mock|testentity|helper|di)')
 
 .PHONY: coverage-web
 coverage-web: coverage
