@@ -9,18 +9,12 @@ import (
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/cli"
-	"github.com/ktr0731/evans/adapter/cmd"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/di"
-	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func newCommand(ui cui.UI) *cmd.Command {
-	return cmd.New(meta.AppName, meta.Version.String(), ui)
-}
 
 func flatten(s string) string {
 	s = strings.Replace(s, "\n", " ", -1)
