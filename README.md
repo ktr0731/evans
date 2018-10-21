@@ -10,7 +10,8 @@
 ```
 --- 
 
-[![CircleCI](https://circleci.com/gh/ktr0731/evans/tree/master.svg?style=svg)](https://circleci.com/gh/ktr0731/evans/tree/master)  
+[![CircleCI](https://circleci.com/gh/ktr0731/evans/tree/master.svg?style=svg)](https://circleci.com/gh/ktr0731/evans/tree/master)
+[![codecov](https://codecov.io/gh/ktr0731/evans/branch/master/graph/badge.svg)](https://codecov.io/gh/ktr0731/evans)  
 
 ## Motivation
 Evans was created to use easier than other existing gRPC clients.  
