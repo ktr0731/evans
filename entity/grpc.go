@@ -33,6 +33,6 @@ type BidiStream interface {
 }
 
 type GRPCReflectionClient interface {
-	ReflectionEnabled() bool
+	Enabled() bool
 	ListServices() ([]Service, error)
 }

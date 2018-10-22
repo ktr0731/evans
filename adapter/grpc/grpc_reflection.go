@@ -16,30 +16,30 @@ import (
 
 const reflectionServiceName = "grpc.reflection.v1alpha.ServerReflection"
 
-type gRPCReflectoinClient struct {
+type reflectionClient struct {
 	client *grpcreflect.Client
 }
 
-func newGRPCReflectionClient(conn *grpc.ClientConn) *gRPCReflectoinClient {
-	return &gRPCReflectoinClient{
+func newReflectionClient(conn *grpc.ClientConn) *reflectionClient {
+	return &reflectionClient{
 		client: grpcreflect.NewClient(context.Background(), grpc_reflection_v1alpha.NewServerReflectionClient(conn)),
 	}
 }
 
-func newGRPCWebReflectionClient(conn *grpcweb.Client) *gRPCReflectoinClient {
-	return &gRPCReflectoinClient{
+func newWebReflectionClient(conn *grpcweb.Client) *reflectionClient {
+	return &reflectionClient{
 		client: grpcreflect.NewClient(context.Background(), grpcweb_reflection_v1alpha.NewServerReflectionClient(conn)),
 	}
 }
 
-func (c *gRPCReflectoinClient) ReflectionEnabled() bool {
+func (c *reflectionClient) Enabled() bool {
 	return c != nil
 }
 
-func (c *gRPCReflectoinClient) ListServices() ([]entity.Service, error) {
+func (c *reflectionClient) ListServices() ([]entity.Service, error) {
 	ssvcs, err := c.client.ListServices()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list services from reflecton enabled gRPC server")
+		return nil, errors.Wrap(err, "failed to list services from reflecton Enabled gRPC server")
 	}
 
 	svcs := make([]*desc.ServiceDescriptor, 0, len(ssvcs)-1)
@@ -57,7 +57,7 @@ func (c *gRPCReflectoinClient) ListServices() ([]entity.Service, error) {
 	return protobuf.ToEntitiesFromServiceDescriptors(svcs), nil
 }
 
-func (c *gRPCReflectoinClient) Close() {
+func (c *reflectionClient) Close() {
 	if c == nil {
 		return
 	}

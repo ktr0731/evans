@@ -12,31 +12,31 @@ import (
 	"github.com/pkg/errors"
 )
 
-type GRPCWebClient struct {
+type webClient struct {
 	config *config.Config
 	conn   *grpcweb.Client
 
 	builder port.DynamicBuilder
 
-	*gRPCReflectoinClient
+	*reflectionClient
 }
 
-func NewGRPCWebClient(config *config.Config, builder port.DynamicBuilder) *GRPCWebClient {
+func NewWebClient(config *config.Config, builder port.DynamicBuilder) entity.GRPCClient {
 	conn := grpcweb.NewClient(fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port))
-	client := &GRPCWebClient{
+	client := &webClient{
 		config:  config,
 		conn:    conn,
 		builder: builder,
 	}
 
 	if config.Server.Reflection {
-		client.gRPCReflectoinClient = newGRPCWebReflectionClient(conn)
+		client.reflectionClient = newWebReflectionClient(conn)
 	}
 
 	return client
 }
 
-func (c *GRPCWebClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {
+func (c *webClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {
 	endpoint, err := fqrnToEndpoint(fqrn)
 	if err != nil {
 		return errors.Wrap(err, "failed to convert FQRN to endpoint")
@@ -66,7 +66,7 @@ func (s *webClientStream) CloseAndReceive(res *proto.Message) error {
 	return nil
 }
 
-func (c *GRPCWebClient) NewClientStream(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
+func (c *webClient) NewClientStream(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
 	endpoint, err := fqrnToEndpoint(rpc.FQRN())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert FQRN to endpoint")
@@ -113,7 +113,7 @@ func (s *webServerStream) Receive(res *proto.Message) error {
 	return nil
 }
 
-func (c *GRPCWebClient) NewServerStream(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
+func (c *webClient) NewServerStream(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
 	endpoint, err := fqrnToEndpoint(rpc.FQRN())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert FQRN to endpoint")
@@ -164,7 +164,7 @@ func (s *webBidiStream) Close() error {
 	return s.conn.Close()
 }
 
-func (c *GRPCWebClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
+func (c *webClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
 	endpoint, err := fqrnToEndpoint(rpc.FQRN())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert FQRN to endpoint")
@@ -190,7 +190,7 @@ func (c *GRPCWebClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (enti
 	}, nil
 }
 
-func (c *GRPCWebClient) Close(ctx context.Context) error {
-	c.gRPCReflectoinClient.Close()
+func (c *webClient) Close(ctx context.Context) error {
+	c.reflectionClient.Close()
 	return nil
 }
