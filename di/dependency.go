@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ktr0731/evans/adapter/gateway"
+	"github.com/ktr0731/evans/adapter/grpc"
 	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/config"
@@ -178,9 +179,9 @@ func initGRPCClient(cfg *config.Config) error {
 			if err != nil {
 				return
 			}
-			gRPCClient = gateway.NewGRPCWebClient(cfg, b)
+			gRPCClient = grpc.NewWebClient(cfg, b)
 		} else {
-			gRPCClient, err = gateway.NewGRPCClient(cfg)
+			gRPCClient, err = grpc.NewClient(cfg)
 		}
 	})
 	return err

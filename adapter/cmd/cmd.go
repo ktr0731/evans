@@ -378,7 +378,7 @@ func (c *Command) processUpdate(ctx context.Context) error {
 		// show update info at the end
 		return nil
 	} else if err != nil {
-		return errors.Wrapf(err, "failed to get means from cache (%s)", c.cache)
+		return errors.Wrapf(err, "failed to get means from cache (%v)", c.cache)
 	}
 
 	var w io.Writer

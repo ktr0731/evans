@@ -1,4 +1,4 @@
-package gateway
+package grpc
 
 import (
 	"context"
@@ -6,24 +6,23 @@ import (
 	"io"
 	"strings"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	multierror "github.com/ktr0731/go-multierror"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 )
 
-type GRPCClient struct {
+type client struct {
 	config *config.Config
 	conn   *grpc.ClientConn
 
-	*gRPCReflectoinClient
+	*reflectionClient
 }
 
-func NewGRPCClient(config *config.Config) (*GRPCClient, error) {
+func NewClient(config *config.Config) (entity.GRPCClient, error) {
 	// TODO: secure option
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port), grpc.WithInsecure())
 	if err != nil {
@@ -36,19 +35,19 @@ func NewGRPCClient(config *config.Config) (*GRPCClient, error) {
 		return nil, errors.Errorf("the gRPC server was closed: %s", s)
 	}
 
-	client := &GRPCClient{
+	client := &client{
 		config: config,
 		conn:   conn,
 	}
 
 	if config.Server.Reflection {
-		client.gRPCReflectoinClient = newGRPCReflectionClient(conn)
+		client.reflectionClient = newReflectionClient(conn)
 	}
 
 	return client, nil
 }
 
-func (c *GRPCClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {
+func (c *client) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {
 	endpoint, err := fqrnToEndpoint(fqrn)
 	if err != nil {
 		return err
@@ -56,11 +55,11 @@ func (c *GRPCClient) Invoke(ctx context.Context, fqrn string, req, res interface
 	return grpc.Invoke(ctx, endpoint, req, res, c.conn)
 }
 
-func (c *GRPCClient) Close(ctx context.Context) error {
+func (c *client) Close(ctx context.Context) error {
 	doneCh := make(chan error)
 	go func() {
 		var result error
-		c.gRPCReflectoinClient.Close()
+		c.reflectionClient.Close()
 		if err := c.conn.Close(); err != nil {
 			result = multierror.Append(result, errors.Wrap(err, "failed to close gRPC client"))
 		}
@@ -95,7 +94,7 @@ func (s *clientStream) CloseAndReceive(res *proto.Message) error {
 	return nil
 }
 
-func (c *GRPCClient) NewClientStream(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
+func (c *client) NewClientStream(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
 	endpoint, err := fqrnToEndpoint(rpc.FQRN())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert fqrn to endpoint")
@@ -115,7 +114,7 @@ func (s *serverStream) Receive(res *proto.Message) error {
 	return s.cs.RecvMsg(*res)
 }
 
-func (c *GRPCClient) NewServerStream(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
+func (c *client) NewServerStream(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
 	s, err := c.NewClientStream(ctx, rpc)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create server stream")
@@ -139,7 +138,7 @@ func (s *bidiStream) Close() error {
 	return s.s.cs.CloseSend()
 }
 
-func (c *GRPCClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
+func (c *client) NewBidiStream(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
 	s, err := c.NewServerStream(ctx, rpc)
 	if err != nil {
 		return nil, err
