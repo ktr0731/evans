@@ -3,16 +3,13 @@ package grpc
 import (
 	"testing"
 
-	"github.com/ktr0731/evans/adapter/internal/testhelper"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_fqrnToEndpoint(t *testing.T) {
-	env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
-	rpc, err := env.RPC("SayHello")
-	require.NoError(t, err)
+	fqrn := "helloworld.Greeter.SayHello"
 
-	fqrn, err := fqrnToEndpoint(rpc.FQRN())
+	endpoint, err := fqrnToEndpoint(fqrn)
 	require.NoError(t, err)
-	require.Equal(t, fqrn, "/helloworld.Greeter/SayHello")
+	require.Equal(t, endpoint, "/helloworld.Greeter/SayHello")
 }

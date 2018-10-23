@@ -1101,13 +1101,13 @@ func (mock *BidiStreamMock) SendCalls() []struct {
 }
 
 var (
-	lockGRPCClientMockClose           sync.RWMutex
-	lockGRPCClientMockEnabled         sync.RWMutex
-	lockGRPCClientMockInvoke          sync.RWMutex
-	lockGRPCClientMockListServices    sync.RWMutex
-	lockGRPCClientMockNewBidiStream   sync.RWMutex
-	lockGRPCClientMockNewClientStream sync.RWMutex
-	lockGRPCClientMockNewServerStream sync.RWMutex
+	lockGRPCClientMockClose             sync.RWMutex
+	lockGRPCClientMockInvoke            sync.RWMutex
+	lockGRPCClientMockListServices      sync.RWMutex
+	lockGRPCClientMockNewBidiStream     sync.RWMutex
+	lockGRPCClientMockNewClientStream   sync.RWMutex
+	lockGRPCClientMockNewServerStream   sync.RWMutex
+	lockGRPCClientMockReflectionEnabled sync.RWMutex
 )
 
 // GRPCClientMock is a mock implementation of GRPCClient.
@@ -1118,9 +1118,6 @@ var (
 //         mockedGRPCClient := &GRPCClientMock{
 //             CloseFunc: func(ctx context.Context) error {
 // 	               panic("TODO: mock out the Close method")
-//             },
-//             EnabledFunc: func() bool {
-// 	               panic("TODO: mock out the Enabled method")
 //             },
 //             InvokeFunc: func(ctx context.Context, fqrn string, req interface{}, res interface{}) error {
 // 	               panic("TODO: mock out the Invoke method")
@@ -1137,6 +1134,9 @@ var (
 //             NewServerStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
 // 	               panic("TODO: mock out the NewServerStream method")
 //             },
+//             ReflectionEnabledFunc: func() bool {
+// 	               panic("TODO: mock out the ReflectionEnabled method")
+//             },
 //         }
 //
 //         // TODO: use mockedGRPCClient in code that requires GRPCClient
@@ -1146,9 +1146,6 @@ var (
 type GRPCClientMock struct {
 	// CloseFunc mocks the Close method.
 	CloseFunc func(ctx context.Context) error
-
-	// EnabledFunc mocks the Enabled method.
-	EnabledFunc func() bool
 
 	// InvokeFunc mocks the Invoke method.
 	InvokeFunc func(ctx context.Context, fqrn string, req interface{}, res interface{}) error
@@ -1165,15 +1162,15 @@ type GRPCClientMock struct {
 	// NewServerStreamFunc mocks the NewServerStream method.
 	NewServerStreamFunc func(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error)
 
+	// ReflectionEnabledFunc mocks the ReflectionEnabled method.
+	ReflectionEnabledFunc func() bool
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// Close holds details about calls to the Close method.
 		Close []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-		}
-		// Enabled holds details about calls to the Enabled method.
-		Enabled []struct {
 		}
 		// Invoke holds details about calls to the Invoke method.
 		Invoke []struct {
@@ -1210,6 +1207,9 @@ type GRPCClientMock struct {
 			// RPC is the rpc argument value.
 			RPC entity.RPC
 		}
+		// ReflectionEnabled holds details about calls to the ReflectionEnabled method.
+		ReflectionEnabled []struct {
+		}
 	}
 }
 
@@ -1241,32 +1241,6 @@ func (mock *GRPCClientMock) CloseCalls() []struct {
 	lockGRPCClientMockClose.RLock()
 	calls = mock.calls.Close
 	lockGRPCClientMockClose.RUnlock()
-	return calls
-}
-
-// Enabled calls EnabledFunc.
-func (mock *GRPCClientMock) Enabled() bool {
-	if mock.EnabledFunc == nil {
-		panic("GRPCClientMock.EnabledFunc: method is nil but GRPCClient.Enabled was just called")
-	}
-	callInfo := struct {
-	}{}
-	lockGRPCClientMockEnabled.Lock()
-	mock.calls.Enabled = append(mock.calls.Enabled, callInfo)
-	lockGRPCClientMockEnabled.Unlock()
-	return mock.EnabledFunc()
-}
-
-// EnabledCalls gets all the calls that were made to Enabled.
-// Check the length with:
-//     len(mockedGRPCClient.EnabledCalls())
-func (mock *GRPCClientMock) EnabledCalls() []struct {
-} {
-	var calls []struct {
-	}
-	lockGRPCClientMockEnabled.RLock()
-	calls = mock.calls.Enabled
-	lockGRPCClientMockEnabled.RUnlock()
 	return calls
 }
 
@@ -1441,5 +1415,31 @@ func (mock *GRPCClientMock) NewServerStreamCalls() []struct {
 	lockGRPCClientMockNewServerStream.RLock()
 	calls = mock.calls.NewServerStream
 	lockGRPCClientMockNewServerStream.RUnlock()
+	return calls
+}
+
+// ReflectionEnabled calls ReflectionEnabledFunc.
+func (mock *GRPCClientMock) ReflectionEnabled() bool {
+	if mock.ReflectionEnabledFunc == nil {
+		panic("GRPCClientMock.ReflectionEnabledFunc: method is nil but GRPCClient.ReflectionEnabled was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockGRPCClientMockReflectionEnabled.Lock()
+	mock.calls.ReflectionEnabled = append(mock.calls.ReflectionEnabled, callInfo)
+	lockGRPCClientMockReflectionEnabled.Unlock()
+	return mock.ReflectionEnabledFunc()
+}
+
+// ReflectionEnabledCalls gets all the calls that were made to ReflectionEnabled.
+// Check the length with:
+//     len(mockedGRPCClient.ReflectionEnabledCalls())
+func (mock *GRPCClientMock) ReflectionEnabledCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockGRPCClientMockReflectionEnabled.RLock()
+	calls = mock.calls.ReflectionEnabled
+	lockGRPCClientMockReflectionEnabled.RUnlock()
 	return calls
 }

@@ -32,14 +32,14 @@ func newWebReflectionClient(conn *grpcweb.Client) *reflectionClient {
 	}
 }
 
-func (c *reflectionClient) Enabled() bool {
+func (c *reflectionClient) ReflectionEnabled() bool {
 	return c != nil
 }
 
 func (c *reflectionClient) ListServices() ([]entity.Service, error) {
 	ssvcs, err := c.client.ListServices()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list services from reflecton Enabled gRPC server")
+		return nil, errors.Wrap(err, "failed to list services from reflecton enabled gRPC server")
 	}
 
 	svcs := make([]*desc.ServiceDescriptor, 0, len(ssvcs)-1)

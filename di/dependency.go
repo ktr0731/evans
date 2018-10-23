@@ -45,7 +45,7 @@ func initEnv(cfg *config.Config) (rerr error) {
 			return
 		}
 
-		if gRPCClient.Enabled() {
+		if gRPCClient.ReflectionEnabled() {
 			svcs, err = gRPCClient.ListServices()
 			if err != nil {
 				rerr = errors.Wrap(err, "failed to list services by gRPC reflection")
