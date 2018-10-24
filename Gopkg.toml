@@ -132,3 +132,7 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "go.uber.org/config"
+  version = "1.3.1"

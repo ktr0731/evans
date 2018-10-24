@@ -4,7 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -22,9 +24,6 @@ import (
 	updater "github.com/ktr0731/go-updater"
 	"github.com/mitchellh/copystructure"
 	"github.com/pkg/errors"
-
-	"io"
-	"os"
 )
 
 var (
@@ -181,6 +180,7 @@ type wrappedConfig struct {
 
 	// used only CLI mode
 	call string
+
 	// used as a input for CLI mode
 	// if input is stdin, file is empty
 	file string
