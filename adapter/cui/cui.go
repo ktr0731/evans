@@ -36,7 +36,7 @@ func New(r io.Reader, w, ew io.Writer) UI {
 }
 
 // NewBasic creates a new UI with stdin, stdout, stderr.
-func NewBasic() *basicUI {
+func NewBasic() UI {
 	return &basicUI{
 		reader:    os.Stdin,
 		writer:    colorable.NewColorableStdout(),
