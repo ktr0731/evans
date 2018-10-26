@@ -1,6 +1,6 @@
-clone_folder: c:\go\src\github.com\ktr0731\evans
+clone_folder: c:\gopath\src\github.com\ktr0731\evans
 environment:
-  GOPATH: c:\go
+  GOPATH: c:\gopath
 install:
   - go get github.com/tj/mmake/cmd/mmake
   - mmake deps
