@@ -1,0 +1,10 @@
+clone_folder: c:\go\src\github.com\ktr0731\evans
+environment:
+  GOPATH: c:\go
+install:
+  - go get github.com/tj/mmake/cmd/mmake
+  - mmake deps
+build: off
+test_script:
+  - mmake build
+  - mmake test
