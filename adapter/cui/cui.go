@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+	colorable "github.com/mattn/go-colorable"
 )
 
 type UI interface {
@@ -33,8 +34,8 @@ func NewUI(r io.Reader, w, ew io.Writer) UI {
 func NewBasicUI() *BaseUI {
 	return &BaseUI{
 		reader:    os.Stdin,
-		writer:    os.Stdout,
-		errWriter: os.Stderr,
+		writer:    colorable.NewColorableStdout(),
+		errWriter: colorable.NewColorableStderr(),
 	}
 }
 

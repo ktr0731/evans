@@ -132,3 +132,7 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "github.com/mattn/go-colorable"
+  version = "0.0.9"
