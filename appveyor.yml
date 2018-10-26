@@ -3,9 +3,9 @@ environment:
   GOPATH: c:\gopath
   PATH: '%GOPATH%\bin;%PATH%'
 install:
-  - go get github.com/tj/mmake/cmd/mmake
-  - mmake deps
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+  - dep ensure
 build: off
 test_script:
-  - mmake build
-  - mmake test
+  - go build
+  - go test -tags e2e -race $(go list ./...)
