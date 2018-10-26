@@ -10,4 +10,4 @@ install:
 build: off
 test_script:
   - go build
-  - go test -tags e2e -race -v $(go list './...')
+  - cmd: go test -tags e2e -race -v $(go list './...')
