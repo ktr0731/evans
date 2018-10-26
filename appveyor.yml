@@ -9,5 +9,5 @@ install:
   - dep ensure
 build: off
 test_script:
-  - go build
+  - CGO_ENABLED=0 go build
   - go test -tags e2e -race -v ./...
