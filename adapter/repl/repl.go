@@ -203,18 +203,6 @@ func (r *repl) getPrompt() string {
 	return p
 }
 
-const defaultSplashText = `
-  ______
- |  ____|
- | |__    __   __   __ _   _ __    ___
- |  __|   \ \ / /  / _. | | '_ \  / __|
- | |____   \ V /  | (_| | | | | | \__ \
- |______|   \_/    \__,_| |_| |_| |___/
-
- more expressive universal gRPC client
-
-`
-
 func (r *repl) printSplash(p string) {
 	if p == "" {
 		r.ui.Println(defaultSplashText)

@@ -525,6 +525,7 @@
     "github.com/ktr0731/grpc-web-go-client/grpcweb",
     "github.com/ktr0731/grpc-web-go-client/grpcweb/grpcweb_reflection_v1alpha",
     "github.com/ktr0731/mapstruct",
+    "github.com/mattn/go-colorable",
     "github.com/mattn/go-isatty",
     "github.com/mattn/go-shellwords",
     "github.com/mitchellh/copystructure",

@@ -68,7 +68,7 @@ func TestCLI(t *testing.T) {
 
 				out := new(bytes.Buffer)
 				errOut := new(bytes.Buffer)
-				ui := cui.NewUI(in, out, errOut)
+				ui := cui.New(in, out, errOut)
 
 				args := strings.Split(c.args, " ")
 				args = append([]string{"--cli"}, args...)
@@ -114,7 +114,7 @@ func TestCLI(t *testing.T) {
 				cli.DefaultReader = in
 
 				out := new(bytes.Buffer)
-				ui := cui.NewUI(in, out, ioutil.Discard)
+				ui := cui.New(in, out, ioutil.Discard)
 
 				code := newCommand(ui).Run(strings.Split(c.args, " "))
 				require.Equal(t, c.code, code)

@@ -12,6 +12,6 @@ func main() {
 	os.Exit(cmd.New(
 		meta.AppName,
 		meta.Version.String(),
-		cui.NewBasicUI(),
+		cui.NewBasic(),
 	).Run(os.Args[1:]))
 }
