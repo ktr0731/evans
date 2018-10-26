@@ -1,0 +1,12 @@
+clone_folder: c:\gopath\src\github.com\ktr0731\evans
+environment:
+  GOPATH: c:\gopath
+  GOBIN: c:\gopath\bin
+install:
+  - mkdir c:\gopath\bin
+  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+  - dep ensure
+build: off
+test_script:
+  - go build
+  - go test -tags e2e -race $(go list ./...)
