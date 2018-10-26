@@ -3,7 +3,7 @@ environment:
   GOPATH: c:\gopath
   GOBIN: '%GOPATH%\bin'
 install:
-  - mkdir '%GOBIN%'
+  - mkdir '%GOPATH%\bin'
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
   - dep ensure
 build: off
