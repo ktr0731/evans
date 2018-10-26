@@ -73,7 +73,7 @@ func (h *replHelper) run(args []string) int {
 		h.ew = os.Stderr
 	}
 
-	ui := cui.NewUI(h.r, h.w, h.ew)
+	ui := cui.New(h.r, h.w, h.ew)
 	cli := newCommand(ui)
 
 	h.iq = append(h.iq, repl.Exit()...)

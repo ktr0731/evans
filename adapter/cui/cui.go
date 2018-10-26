@@ -9,6 +9,8 @@ import (
 	colorable "github.com/mattn/go-colorable"
 )
 
+// UI provides formatted I/O interfaces.
+// It is used from Evans's standard I/O and CLI mode I/O.
 type UI interface {
 	Println(a interface{})
 	InfoPrintln(a interface{})
@@ -18,28 +20,31 @@ type UI interface {
 	ErrWriter() io.Writer
 }
 
-type BaseUI struct {
+type basicUI struct {
 	reader            io.Reader
 	writer, errWriter io.Writer
 }
 
-func NewUI(r io.Reader, w, ew io.Writer) UI {
-	return &BaseUI{
+// New creates a new UI with passed io.Reader, io.Writers.
+// In normal case, you can use NewBasic instead of New.
+func New(r io.Reader, w, ew io.Writer) UI {
+	return &basicUI{
 		reader:    r,
 		writer:    w,
 		errWriter: ew,
 	}
 }
 
-func NewBasicUI() *BaseUI {
-	return &BaseUI{
+// NewBasic creates a new UI with stdin, stdout, stderr.
+func NewBasic() *basicUI {
+	return &basicUI{
 		reader:    os.Stdin,
 		writer:    colorable.NewColorableStdout(),
 		errWriter: colorable.NewColorableStderr(),
 	}
 }
 
-func (u *BaseUI) fprintln(w io.Writer, a interface{}) {
+func (u *basicUI) fprintln(w io.Writer, a interface{}) {
 	if i, ok := a.(io.Reader); ok {
 		io.Copy(u.writer, i)
 	} else {
@@ -47,40 +52,41 @@ func (u *BaseUI) fprintln(w io.Writer, a interface{}) {
 	}
 }
 
-func (u *BaseUI) Println(a interface{}) {
+func (u *basicUI) Println(a interface{}) {
 	u.fprintln(u.writer, a)
 }
 
-func (u *BaseUI) InfoPrintln(a interface{}) {
+func (u *basicUI) InfoPrintln(a interface{}) {
 	u.fprintln(u.writer, a)
 }
 
-func (u *BaseUI) ErrPrintln(a interface{}) {
+func (u *basicUI) ErrPrintln(a interface{}) {
 	u.fprintln(u.errWriter, a)
 }
 
-func (u *BaseUI) Writer() io.Writer {
+func (u *basicUI) Writer() io.Writer {
 	return u.writer
 }
 
-func (u *BaseUI) ErrWriter() io.Writer {
+func (u *basicUI) ErrWriter() io.Writer {
 	return u.errWriter
 }
 
-type ColoredUI struct {
+type coloredUI struct {
 	UI
 }
 
-// NewColored wraps provided `ui` with ColoredUI.
-// If `ui` is *ColoredUI, NewColored returns it as it is.
+// NewColored wraps provided `ui` with coloredUI.
+// If `ui` is *coloredUI, NewColored returns it as it is.
+// Colored output works fine in Windows environment.
 func NewColored(ui UI) UI {
-	if ui, ok := ui.(*ColoredUI); ok {
+	if ui, ok := ui.(*coloredUI); ok {
 		return ui
 	}
-	return &ColoredUI{ui}
+	return &coloredUI{ui}
 }
 
-func (u *ColoredUI) printWithColor(
+func (u *coloredUI) printWithColor(
 	w func(a interface{}),
 	color func(format string, a ...interface{}) string,
 	a interface{},
@@ -95,10 +101,10 @@ func (u *ColoredUI) printWithColor(
 	}
 }
 
-func (u *ColoredUI) InfoPrintln(a interface{}) {
+func (u *coloredUI) InfoPrintln(a interface{}) {
 	u.printWithColor(u.UI.InfoPrintln, color.BlueString, a)
 }
 
-func (u *ColoredUI) ErrPrintln(a interface{}) {
+func (u *coloredUI) ErrPrintln(a interface{}) {
 	u.printWithColor(u.UI.ErrPrintln, color.RedString, a)
 }
