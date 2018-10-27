@@ -3,11 +3,14 @@ environment:
   GOPATH: c:\gopath
   GOBIN: c:\gopath\bin
   PATH: c:\gopath\bin;%PATH%
+cache:
+  - vendor -> Gopkg.lock
 install:
   - mkdir c:\gopath\bin
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
   - dep ensure
 build: off
 test_script:
-  - CGO_ENABLED=0 go build
+  - set CGO_ENABLED=0
+  - go build
   - go test -tags e2e -race -v ./...
