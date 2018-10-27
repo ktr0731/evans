@@ -10,7 +10,11 @@ gox -osarch "$OSARCH" \
   ..
 
 for f in *; do
-  mv "$f" evans
+  if echo "$f" | grep exe > /dev/null 2>&1; then
+    mv "$f" evans.exe
+  else
+    mv "$f" evans
+  fi
   tar czvf "$f.tar.gz" evans
   rm -f evans
 done
