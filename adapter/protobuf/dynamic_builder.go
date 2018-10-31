@@ -1,4 +1,4 @@
-package gateway
+package protobuf
 
 import (
 	"github.com/golang/protobuf/proto"
