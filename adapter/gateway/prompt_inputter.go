@@ -13,7 +13,6 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/env"
-	shellstring "github.com/ktr0731/go-shellstring"
 	"github.com/pkg/errors"
 )
 
@@ -180,11 +179,11 @@ func newFieldInputter(
 	color color.Color,
 ) *fieldInputter {
 	return &fieldInputter{
-		prompt:       prompter,
-		setter:       setter,
-		prefixFormat: prefixFormat,
-		ancestor:     ancestor,
-		color:        color,
+		prompt:                         prompter,
+		setter:                         setter,
+		prefixFormat:                   prefixFormat,
+		ancestor:                       ancestor,
+		color:                          color,
 		hasAncestorAndHasRepeatedField: hasAncestorAndHasRepeatedField,
 	}
 }
@@ -359,23 +358,9 @@ func (i *fieldInputter) inputRepeatedField(f entity.Field) error {
 }
 
 func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{}, error) {
-	l, err := i.prompt.Input()
+	in, err := i.prompt.Input()
 	if err != nil {
 		return "", err
-	}
-
-	part, err := shellstring.Parse(l)
-	if err != nil {
-		return "", err
-	}
-
-	if len(part) > 1 {
-		return nil, errors.New("invalid input string")
-	}
-
-	var in string
-	if len(part) != 0 {
-		in = part[0]
 	}
 
 	if in == "" {
