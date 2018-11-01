@@ -1,8 +1,8 @@
-package gateway
+package protobuf
 
 import (
 	"github.com/golang/protobuf/proto"
-	"github.com/ktr0731/evans/adapter/protobuf"
+	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/entity"
 )
 
@@ -13,5 +13,6 @@ func NewDynamicBuilder() *DynamicBuilder {
 }
 
 func (b *DynamicBuilder) NewMessage(m entity.Message) proto.Message {
-	return protobuf.NewDynamicMessage(m)
+	msg := m.(*message)
+	return dynamic.NewMessage(msg.d)
 }

@@ -5,10 +5,11 @@ import (
 	"io"
 	"sync"
 
-	"github.com/ktr0731/evans/adapter/gateway"
 	"github.com/ktr0731/evans/adapter/grpc"
+	"github.com/ktr0731/evans/adapter/inputter"
 	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/adapter/presenter"
+	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	environment "github.com/ktr0731/evans/entity/env"
@@ -140,19 +141,19 @@ func initJSONCLIPresenter() error {
 }
 
 var (
-	jsonFileInputter     *gateway.JSONFileInputter
+	jsonFileInputter     *inputter.JSONFile
 	jsonFileInputterOnce sync.Once
 )
 
 func initJSONFileInputter(in io.Reader) error {
 	jsonFileInputterOnce.Do(func() {
-		jsonFileInputter = gateway.NewJSONFileInputter(in)
+		jsonFileInputter = inputter.NewJSONFile(in)
 	})
 	return nil
 }
 
 var (
-	promptInputter     *gateway.Prompt
+	promptInputter     *inputter.PromptInputter
 	promptInputterOnce sync.Once
 )
 
@@ -160,7 +161,7 @@ func initPromptInputter(cfg *config.Config) (err error) {
 	promptInputterOnce.Do(func() {
 		var e environment.Environment
 		e, err = Env(cfg)
-		promptInputter = gateway.NewPrompt(cfg, e)
+		promptInputter = inputter.NewPrompt(cfg, e)
 	})
 	return
 }
@@ -195,13 +196,13 @@ func GRPCClient(cfg *config.Config) (entity.GRPCClient, error) {
 }
 
 var (
-	dynamicBuilder     *gateway.DynamicBuilder
+	dynamicBuilder     *protobuf.DynamicBuilder
 	dynamicBuilderOnce sync.Once
 )
 
 func initDynamicBuilder() error {
 	dynamicBuilderOnce.Do(func() {
-		dynamicBuilder = gateway.NewDynamicBuilder()
+		dynamicBuilder = protobuf.NewDynamicBuilder()
 	})
 	return nil
 }

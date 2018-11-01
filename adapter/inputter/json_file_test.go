@@ -1,4 +1,4 @@
-package gateway
+package inputter_test
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/stretchr/testify/require"
+	"github.com/ktr0731/evans/adapter/inputter"
 )
 
 func TestJSONFileInputter(t *testing.T) {
@@ -29,7 +30,7 @@ func TestJSONFileInputter(t *testing.T) {
 	require.NoError(t, err)
 
 	in := bytes.NewReader([]byte(jsonInput))
-	inputter := NewJSONFileInputter(in)
+	inputter := inputter.NewJSONFile(in)
 	res, err := inputter.Input(m)
 	require.NoError(t, err)
 
