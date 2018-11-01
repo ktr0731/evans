@@ -1,4 +1,4 @@
-package gateway
+package inputter
 
 import (
 	"encoding/json"
@@ -10,18 +10,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-type JSONFileInputter struct {
+type JSONFile struct {
 	decoder *json.Decoder
 }
 
-func NewJSONFileInputter(in io.Reader) *JSONFileInputter {
-	return &JSONFileInputter{
+func NewJSONFile(in io.Reader) *JSONFile {
+	return &JSONFile{
 		decoder: json.NewDecoder(in),
 	}
 }
 
-func (i *JSONFileInputter) Input(reqType entity.Message) (proto.Message, error) {
-	req := protobuf.NewDynamicMessage(reqType)
+func (i *JSONFile) Input(reqType entity.Message) (proto.Message, error) {
+	req := protobuf.NewDynamicBuilder().NewMessage(reqType)
 	err := i.decoder.Decode(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read input from JSON")

@@ -1,12 +1,13 @@
-package gateway
+package inputter
 
 import (
 	"fmt"
 	"testing"
 
-	prompt "github.com/c-bata/go-prompt"
+	goprompt "github.com/c-bata/go-prompt"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
+	"github.com/ktr0731/evans/adapter/prompt"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/tests/helper"
@@ -19,7 +20,7 @@ func TestPrompt_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
 
 		p := helper.NewMockPrompt([]string{"rin", "shima"}, nil)
-		inputter := newPrompt(p, helper.TestConfig(), env)
+		inputter := newPromptInputter(p, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("SayHello")
 		require.NoError(t, err)
@@ -37,7 +38,7 @@ func TestPrompt_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
 
 		p := helper.NewMockPrompt([]string{"eriri", "spencer", "sawamura"}, nil)
-		inputter := newPrompt(p, helper.TestConfig(), env)
+		inputter := newPromptInputter(p, helper.TestConfig(), env)
 
 		rpc, err := env.RPC("BorrowBook")
 		require.NoError(t, err)
@@ -55,7 +56,7 @@ func TestPrompt_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 
 		p := helper.NewMockPrompt(nil, []string{"PHILOSOPHY"})
-		inputter := newPrompt(p, helper.TestConfig(), env)
+		inputter := newPromptInputter(p, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "enum.proto")
 		packages, err := protobuf.ToEntitiesFrom(descs)
@@ -75,7 +76,7 @@ func TestPrompt_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 
 		p := helper.NewMockPrompt(nil, []string{"kumiko"})
-		inputter := newPrompt(p, helper.TestConfig(), env)
+		inputter := newPromptInputter(p, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "enum.proto")
 		packages, err := protobuf.ToEntitiesFrom(descs)
@@ -91,7 +92,7 @@ func TestPrompt_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 
 		p := helper.NewMockPrompt([]string{"utaha", "kasumigaoka"}, []string{"book"})
-		inputter := newPrompt(p, helper.TestConfig(), env)
+		inputter := newPromptInputter(p, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
 		packages, err := protobuf.ToEntitiesFrom(descs)
@@ -114,7 +115,7 @@ func TestPrompt_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 
 		p := helper.NewMockPrompt([]string{"bar"}, []string{"Book"})
-		inputter := newPrompt(p, helper.TestConfig(), env)
+		inputter := newPromptInputter(p, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "oneof.proto")
 		packages, err := protobuf.ToEntitiesFrom(descs)
@@ -134,10 +135,10 @@ func TestPrompt_Input(t *testing.T) {
 			{"foo", "", "bar", "", ""},
 		}, nil)
 
-		cleanup := injectNewRealPrompter(p)
+		cleanup := injectNewPrompt(p)
 		defer cleanup()
 
-		inputter := newPrompt(p, helper.TestConfig(), env)
+		inputter := newPromptInputter(p, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "repeated.proto")
 		packages, err := protobuf.ToEntitiesFrom(descs)
@@ -158,10 +159,10 @@ func TestPrompt_Input(t *testing.T) {
 			{"foo", "", "bar", "", ""},
 		}, nil)
 
-		cleanup := injectNewRealPrompter(prompt)
+		cleanup := injectNewPrompt(prompt)
 		defer cleanup()
 
-		inputter := newPrompt(prompt, helper.TestConfig(), env)
+		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "map.proto")
 		p, err := protobuf.ToEntitiesFrom(descs)
@@ -182,10 +183,10 @@ func TestPrompt_Input(t *testing.T) {
 			{"key", "", "val1", "3", "", ""},
 		}, nil)
 
-		cleanup := injectNewRealPrompter(prompt)
+		cleanup := injectNewPrompt(prompt)
 		defer cleanup()
 
-		inputter := newPrompt(prompt, helper.TestConfig(), env)
+		inputter := newPromptInputter(prompt, helper.TestConfig(), env)
 
 		descs := testhelper.ReadProtoAsFileDescriptors(t, "map.proto")
 		p, err := protobuf.ToEntitiesFrom(descs)
@@ -248,12 +249,12 @@ func Test_makePrefix(t *testing.T) {
 	})
 }
 
-func injectNewRealPrompter(p Prompter) func() {
-	old := NewRealPrompter
-	NewRealPrompter = func(_ func(string), _ func(prompt.Document) []prompt.Suggest, _ ...prompt.Option) Prompter {
+func injectNewPrompt(p prompt.Prompt) func() {
+	old := prompt.New
+	prompt.New = func(func(string), func(goprompt.Document) []goprompt.Suggest, ...goprompt.Option) prompt.Prompt {
 		return p
 	}
 	return func() {
-		NewRealPrompter = old
+		prompt.New = old
 	}
 }

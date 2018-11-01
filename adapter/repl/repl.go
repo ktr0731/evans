@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	prompt "github.com/c-bata/go-prompt"
+	goprompt "github.com/c-bata/go-prompt"
 	"github.com/ktr0731/evans/adapter/cui"
-	"github.com/ktr0731/evans/adapter/gateway"
+	"github.com/ktr0731/evans/adapter/prompt"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/entity/env"
@@ -70,7 +70,7 @@ type repl struct {
 	ui     cui.UI
 	config *config.REPL
 	env    env.Environment
-	prompt gateway.Prompter
+	prompt prompt.Prompt
 	cmds   map[string]commander
 
 	// exitCh receives exit signal from executor or
@@ -99,19 +99,19 @@ func newEnv(config *config.REPL, env env.Environment, ui cui.UI, inputPort port.
 	executor := &executor{repl: repl}
 	completer := &completer{cmds: cmds, env: env}
 
-	repl.prompt = gateway.NewRealPrompter(
+	repl.prompt = prompt.New(
 		executor.execute,
 		completer.complete,
 
-		prompt.OptionSuggestionBGColor(prompt.LightGray),
-		prompt.OptionSuggestionTextColor(prompt.Black),
-		prompt.OptionDescriptionBGColor(prompt.White),
-		prompt.OptionDescriptionTextColor(prompt.Black),
+		goprompt.OptionSuggestionBGColor(goprompt.LightGray),
+		goprompt.OptionSuggestionTextColor(goprompt.Black),
+		goprompt.OptionDescriptionBGColor(goprompt.White),
+		goprompt.OptionDescriptionTextColor(goprompt.Black),
 
-		prompt.OptionSelectedSuggestionBGColor(prompt.DarkBlue),
-		prompt.OptionSelectedSuggestionTextColor(prompt.Black),
-		prompt.OptionSelectedDescriptionBGColor(prompt.Blue),
-		prompt.OptionSelectedDescriptionTextColor(prompt.Black),
+		goprompt.OptionSelectedSuggestionBGColor(goprompt.DarkBlue),
+		goprompt.OptionSelectedSuggestionTextColor(goprompt.Black),
+		goprompt.OptionSelectedDescriptionBGColor(goprompt.Blue),
+		goprompt.OptionSelectedDescriptionTextColor(goprompt.Black),
 	)
 
 	repl.prompt.SetPrefix(repl.getPrompt())

@@ -1,13 +1,12 @@
-package gateway
+package inputter
 
 import (
 	"fmt"
 	"io"
 	"strings"
 
-	"github.com/AlecAivazis/survey"
-	prompt "github.com/c-bata/go-prompt"
 	"github.com/golang/protobuf/proto"
+	"github.com/ktr0731/evans/adapter/prompt"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/color"
 	"github.com/ktr0731/evans/config"
@@ -22,120 +21,21 @@ var (
 	EORF                     = errors.New("end of repeated field")
 )
 
-// Prompter represents prompter which display inputters or selectors.
-type Prompter interface {
-	// Run is called from REPL input prompter
-	Run()
-
-	Input() (string, error)
-	Select(msg string, opts []string) (string, error)
-	SetPrefix(prefix string)
-	SetPrefixColor(color color.Color) error
-}
-
-type RealPrompter struct {
-	fieldPrompter *prompt.Prompt
-	currentPrefix string
-
-	// entered is changed from prompt.Enter key bind of c-bata/go-prompt.
-	// c-bata/go-prompt doesn't return EOF (ctrl+d), only returns empty string.
-	// so Evans cannot determine whether empty input is EOF or just entered.
-	// therefore, Evans uses a tricky method to know EOF.
-	//
-	// 1. register key bind for enter at NewRealPrompter.
-	// 2. the key bind changes entered variable from  KeyBindFunc.
-	// 3. RealPrompter.Input checks entered field.
-	//    if the input is empty string and entered field is false, it is EOF.
-	// 4. Input returns io.EOF as a error.
-	entered bool
-}
-
-// NewRealPrompter instantiates a prompt which satisfied Prompter with go-prompt.
-// NewRealPrompter will be replace by a mock when e2e testing.
-//
-// NewRealPrompter is called to create REPL-CLI and REPL field inputter.
-// NewPrompt is the short-hand method to create *Prompt with no params NewRealPrompter.
-var NewRealPrompter = func(executor func(string), completer func(prompt.Document) []prompt.Suggest, opt ...prompt.Option) Prompter {
-	if executor == nil {
-		executor = func(in string) {
-			return
-		}
-	}
-	if completer == nil {
-		completer = func(d prompt.Document) []prompt.Suggest {
-			return nil
-		}
-	}
-	p := &RealPrompter{}
-	p.fieldPrompter = prompt.New(
-		executor,
-		completer,
-		append(opt,
-			prompt.OptionLivePrefix(p.livePrefix),
-			prompt.OptionAddKeyBind(prompt.KeyBind{
-				Key: prompt.Enter,
-				Fn: func(_ *prompt.Buffer) {
-					p.entered = true
-				},
-			}),
-		)...)
-	return p
-}
-
-func (p *RealPrompter) Run() {
-	p.fieldPrompter.Run()
-}
-
-func (p *RealPrompter) Input() (string, error) {
-	p.entered = false
-	in := p.fieldPrompter.Input()
-	// ctrl+d
-	if !p.entered && in == "" {
-		return "", io.EOF
-	}
-	return in, nil
-}
-
-func (p *RealPrompter) Select(msg string, opts []string) (string, error) {
-	var choice string
-	err := survey.AskOne(&survey.Select{
-		Message: msg,
-		Options: opts,
-	}, &choice, nil)
-	if err != nil {
-		return "", io.EOF
-	}
-	return choice, nil
-}
-
-func (p *RealPrompter) SetPrefix(prefix string) {
-	p.currentPrefix = prefix
-}
-
-func (p *RealPrompter) SetPrefixColor(color color.Color) error {
-	return prompt.OptionPrefixTextColor(prompt.Color(color))(p.fieldPrompter)
-}
-
-func (p *RealPrompter) livePrefix() (string, bool) {
-	return p.currentPrefix, true
-}
-
-// NewPrompt instantiates new *Prompt with NewRealPrompter.
-func NewPrompt(config *config.Config, env env.Environment) *Prompt {
-	return newPrompt(NewRealPrompter(nil, nil), config, env)
-}
-
-// Prompt is an implementation of inputting method.
+// PromptInputter is an implementation of inputting method.
 // it has common logic to input fields interactively.
 // in normal, go-prompt is used as prompt.
-type Prompt struct {
-	prompt Prompter
+type PromptInputter struct {
+	prompt prompt.Prompt
 	config *config.Config
 	env    env.Environment
 }
 
-func newPrompt(prompt Prompter, config *config.Config, env env.Environment) *Prompt {
-	return &Prompt{
+func NewPrompt(config *config.Config, env env.Environment) *PromptInputter {
+	return newPromptInputter(prompt.New(nil, nil), config, env)
+}
+
+func newPromptInputter(prompt prompt.Prompt, config *config.Config, env env.Environment) *PromptInputter {
+	return &PromptInputter{
 		prompt: prompt,
 		config: config,
 		env:    env,
@@ -143,7 +43,7 @@ func newPrompt(prompt Prompter, config *config.Config, env env.Environment) *Pro
 }
 
 // Input is an implementation of port.Inputter
-func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
+func (i *PromptInputter) Input(reqType entity.Message) (proto.Message, error) {
 	setter := protobuf.NewMessageSetter(reqType)
 	fields := reqType.Fields()
 
@@ -154,7 +54,7 @@ func (i *Prompt) Input(reqType entity.Message) (proto.Message, error) {
 // fieldInputter inputs each fields of req in interactively
 // first fieldInputter is instantiated per one request
 type fieldInputter struct {
-	prompt Prompter
+	prompt prompt.Prompt
 	setter *protobuf.MessageSetter
 
 	prefixFormat string
@@ -171,7 +71,7 @@ type fieldInputter struct {
 }
 
 func newFieldInputter(
-	prompter Prompter,
+	prompter prompt.Prompt,
 	prefixFormat string,
 	setter *protobuf.MessageSetter,
 	ancestor []string,
@@ -342,7 +242,7 @@ func (i *fieldInputter) inputRepeatedField(f entity.Field) error {
 	// if repeated fields, create new prompt.
 	// and the prompt will be terminate with ctrl+d.
 	for {
-		i.prompt = NewRealPrompter(nil, nil)
+		i.prompt = prompt.New(nil, nil)
 		if err := i.prompt.SetPrefixColor(i.color); err != nil {
 			return err
 		}
