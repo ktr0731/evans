@@ -45,7 +45,7 @@
 - [See Also](#see-also)
 
 ## Motivation
-Evans have been created to use easier than other existing gRPC clients.  
+Evans has been created to use easier than other existing gRPC clients.  
 If you want to keep your product quality, you must use CI with gRPC testing, should not do use manually testing.  
 Evans will complete your other use cases just like:  
 
@@ -110,7 +110,7 @@ $ go get github.com/ktr0731/evans
 Evans consists of some commands in REPL mode.  
 
 The proto file which read in the demonstration and its implementation are available at [ktr0731/grpc-test](https://github.com/ktr0731/grpc-test).  
-`grpc-test`'s details can be see `grpc-test --help`.
+`grpc-test`'s details can see `grpc-test --help`.
 
 Enter to REPL.
 ``` sh
@@ -124,7 +124,7 @@ $ evans -r
 ```
 
 To show package names of proto files REPL read:  
-``` sh
+```
 > show package
 +---------+
 | PACKAGE |
@@ -134,7 +134,7 @@ To show package names of proto files REPL read:
 ```
 
 To show the summary of services or messages:
-``` sh
+```
 > package api
 > show service
 +---------+----------------------+-----------------------------+----------------+
@@ -178,7 +178,7 @@ To show the summary of services or messages:
 ```
 
 To show more description of a message:  
-``` sh
+``
 > desc SimpleRequest
 +-------+-------------+
 | FIELD |    TYPE     |
@@ -188,7 +188,7 @@ To show more description of a message:
 ```
 
 Set headers for each request:
-``` sh
+```
 > header -h
 usage: header <key>=<value>[, <key>=<value>...]
 
@@ -196,7 +196,7 @@ usage: header <key>=<value>[, <key>=<value>...]
 ```
 
 To show headers:
-``` sh
+```
 > show header
 +-------------+-------+
 |     KEY     |  VAL  |
@@ -206,8 +206,8 @@ To show headers:
 +-------------+-------+
 ```
 
-To remove added header:
-``` sh
+To remove the added header:
+```
 > header foo
 > show header
 +-------------+-------+
@@ -218,7 +218,7 @@ To remove added header:
 ```
 
 Call a RPC:  
-``` sh
+```
 > service Example
 > call Unary
 name (TYPE_STRING) => ktr
@@ -232,9 +232,9 @@ Evans constructs a gRPC request interactively and sends the request to a gRPC se
 Finally, Evans prints the JSON formatted result.  
 
 ### Repeated fields
-Repeated field is an array like data structure.  
+`repeated` is an array-like data structure.  
 You can input some values and finish with <kbd>CTRL-D</kbd>  
-``` sh
+```
 > call UnaryRepeated
 <repeated> name (TYPE_STRING) => foo
 <repeated> name (TYPE_STRING) => bar
@@ -246,9 +246,9 @@ You can input some values and finish with <kbd>CTRL-D</kbd>
 ```
 
 ### Enum fields
-You can select one from proposed selections.  
+You can select one from the proposed selections.  
 To abort it, input <kbd>CTRL-C</kbd>.
-``` sh
+```
 > call UnaryEnum
 ? UnaryEnumRequest  [Use arrows to move, type to filter]
 > Male
@@ -261,7 +261,7 @@ To abort it, input <kbd>CTRL-C</kbd>.
 ### Bytes type fields
 You can use byte literal and Unicode literal.
 
-``` sh
+```
 > call UnaryBytes
 data (TYPE_BYTES) => \x46\x6f\x6f
 {
@@ -279,7 +279,7 @@ data (TYPE_BYTES) => \u65e5\u672c\u8a9e
 Client streaming RPC accepts some requests and then returns only one response.  
 Finish request inputting with <kbd>CTRL-D</kbd>
 
-``` sh
+```
 > call ClientStreaming
 name (TYPE_STRING) => ktr
 name (TYPE_STRING) => ktr
@@ -292,8 +292,8 @@ name (TYPE_STRING) =>
 
 ### Server streaming RPC
 Server streaming RPC accepts only one request and then returns some responses.
-Each response is represents as another JSON formatted output.
-``` sh
+Each response is represented as another JSON formatted output.
+```
 name (TYPE_STRING) => ktr
 {
   "message": "hello ktr, I greet 0 times."
@@ -308,7 +308,7 @@ name (TYPE_STRING) => ktr
 Bidirectional streaming RPC accepts some requests and returns some responses corresponding to each request.
 Finish request inputting with <kbd>CTRL-D</kbd>
 
-``` sh
+```
 > call BidiStreaming
 name (TYPE_STRING) => foo
 {
@@ -333,7 +333,7 @@ name (TYPE_STRING) =>
 
 ## Usage (CLI)
 ### Basic usage
-You can input requests from stdin or files.  
+You can input requests from `stdin` or files.  
 Unlike REPL mode, you need to specify `--package`, `--service` and `--call` options.  
 If gRPC server enables gRPC reflection, `--package` is unnecessary. (instead, `-r` requires)  
 
@@ -350,7 +350,7 @@ $ evans --service Example --call Unary --file request.json
 }
 ```
 
-Use stdin.
+Use `stdin`.
 ``` sh
 $ echo '{ "name": "ktr" }' | evans --service Example --call Unary
 {
@@ -432,7 +432,7 @@ $ echo '{ "name": "foo" } { "name": "bar" }' | evans -r --service Example --call
 }
 ```
 
-## Another features
+## Other features
 ### gRPC Web
 Evans also support gRPC Web protocol.  
 Tested gRPC Web implementations are:
