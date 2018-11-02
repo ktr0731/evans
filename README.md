@@ -89,8 +89,8 @@ Highly recommended methods are GitHub Releases or Homebrew because these can be 
 Please see [GitHub Releases](https://github.com/ktr0731/evans/releases).  
 Available binaries are:
 - macOS
-- Windows
 - Linux
+- Windows
 
 ### macOS
 ``` sh
@@ -178,7 +178,7 @@ To show the summary of services or messages:
 ```
 
 To show more description of a message:  
-``
+```
 > desc SimpleRequest
 +-------+-------------+
 | FIELD |    TYPE     |
