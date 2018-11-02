@@ -14,51 +14,69 @@
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/32r7s2skrgm9ubva?svg=true)](https://ci.appveyor.com/api/projects/status/32r7s2skrgm9ubva?svg=true)
 [![codecov](https://codecov.io/gh/ktr0731/evans/branch/master/graph/badge.svg)](https://codecov.io/gh/ktr0731/evans)  
 
+
 ## Motivation
-Evans was created to use easier than other existing gRPC clients.  
+Evans has been created to use easier than other existing gRPC clients.  
 If you want to keep your product quality, you must use CI with gRPC testing, should not do use manually testing.  
-Evans will complete your other usecases just like:  
+Evans will complete your other use cases just like:  
 
-- manually gRPC API inspection
-- to automate some tasks by scripting
+- Manually gRPC API inspection
+- To automate some tasks by scripting
 
-above usecases is corresponding to Evans's two modes, REPL mode, and CLI mode.  
+Above use cases is corresponding to Evans's two modes, REPL mode, and CLI mode.  
 
 ## REPL mode
 ![Evans](./evans1.gif)  
-REPL mode is the solution for first usecase.  
+REPL mode is the solution for first use case.  
 You can use it without thinking like package name, service name, RPC name, command usage, and so on because REPL mode has powerful completion!  
-
-proto file which read in demonstration and its implementation are available at [ktr0731/evans-demo](https://github.com/ktr0731/evans-demo).  
 
 ## CLI mode
 ![Evans](./evans2.gif)  
 
 CLI mode is stateless mode just like [grpc-ecosystem/polyglot](https://github.com/grpc-ecosystem/polyglot).  
-CLI mode issue one request per one command as its name suggests.  
+It sends one request per one command as its name suggests.  
 So it is based on UNIX philosophy.  
 
 For example, read inputs from `stdin`, the command will be a filter command.  
 On the other hand, the command result will be outputted to `stdout` by JSON formatted.  
 So, you can format it by any commands like `jq`. Also, if you want to use the same command (e.g. use same JSON inputs), you can use `--file` (`-f`) option.  
 
-By the way, CLI mode is not able to omit `--package`, `--service` and `--call` option, unlike REPL mode.  
-However, if `.evans.toml` is exist in Git project root, you can denote default values.  
+## Table of Contents
+- [Installation](#installation)
+   - [From GitHub Releases](#from-github-releases)
+   - [macOS](#macos)
+   - [[Deprecated] go get](#deprecated-go-get)
+- [Usage (REPL)](#usage-repl)
+   - [Basic usage](#basic-usage)
+   - [Repeated fields](#repeated-fields)
+   - [Enum fields](#enum-fields)
+   - [Bytes type fields](#bytes-type-fields)
+   - [Client streaming RPC](#client-streaming-rpc)
+   - [Server streaming RPC](#server-streaming-rpc)
+   - [Bidirectional streaming RPC](#bidirectional-streaming-rpc)
+- [Usage (CLI)](#usage-cli)
+   - [Basic usage](#basic-usage-1)
+   - [Repeated fields](#repeated-fields-1)
+   - [Enum fields](#enum-fields-1)
+   - [Bytes type fields](#bytes-type-fields-1)
+   - [Client streaming RPC](#client-streaming-rpc-1)
+   - [Server streaming RPC](#server-streaming-rpc-1)
+   - [Bidirectional streaming RPC](#bidirectional-streaming-rpc-1)
+- [Another features](#another-features)
+   - [gRPC Web](#grpc-web)
+- [Supported IDL (interface definition language)](#supported-idl-interface-definition-language)
+- [See Also](#see-also)
 
-``` toml
-[default]
-protoFile = ["api/api.proto"]
-package = "api"
-service = "UserService"
-```
-
-Then, the command will be more clear.  
 
 ## Installation
-highly recommended methods are GitHub Releases or Homebrew because these can be software update automatically by the built-in feature in Evans.  
+Highly recommended methods are GitHub Releases or Homebrew because these can be software update automatically by the built-in feature in Evans.  
 
-### from GitHub Releases
-please see [GitHub Releases](https://github.com/ktr0731/evans/releases).  
+### From GitHub Releases
+Please see [GitHub Releases](https://github.com/ktr0731/evans/releases).  
+Available binaries are:
+- macOS
+- Linux
+- Windows
 
 ### macOS
 ``` sh
@@ -66,86 +84,361 @@ $ brew tap ktr0731/evans
 $ brew install evans
 ```
 
-### go get
-v1.10 or later required.  
+### **[Deprecated]** go get
+Go v1.10 or later required.  
+`go get` installation is not supported officially.
 ``` sh
 $ go get github.com/ktr0731/evans
 ```
 
-## Usage
-Evans consists of some commands in REPL.  
+## Usage (REPL)
+### Basic usage
+Evans consists of some commands in REPL mode.  
 
-Enter to REPL (this file is [here](adapter/gateway/testdata/helloworld.proto))  
-``` 
-$ evans adapter/gateway/testdata/helloworld.proto
+The proto file which read in the demonstration and its implementation are available at [ktr0731/grpc-test](https://github.com/ktr0731/grpc-test).  
+`grpc-test`'s details can see `grpc-test --help`.
+
+Enter to REPL.
+``` sh
+$ cd grpc-test
+$ evans api/api.proto
 ```
 
-To show the summary of packages, services or messages of proto files REPL read:  
-``` 
-> show package
-+------------+
-|  PACKAGE   |
-+------------+
-| helloworld |
-+------------+
+If your server is enabling [gRPC reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md), you can launch Evans with only `-r` (`--reflection`) option.
+``` sh
+$ evans -r
+```
 
+To show package names of proto files REPL read:  
+```
+> show package
++---------+
+| PACKAGE |
++---------+
+| api     |
++---------+
+```
+
+To show the summary of services or messages:
+```
+> package api
 > show service
-+---------+----------+--------------+---------------+
-| SERVICE |   RPC    | REQUESTTYPE  | RESPONSETYPE  |
-+---------+----------+--------------+---------------+
-| Greeter | SayHello | HelloRequest | HelloResponse |
-+---------+----------+--------------+---------------+
++---------+----------------------+-----------------------------+----------------+
+| SERVICE |         RPC          |         REQUESTTYPE         |  RESPONSETYPE  |
++---------+----------------------+-----------------------------+----------------+
+| Example | Unary                | SimpleRequest               | SimpleResponse |
+|         | UnaryMessage         | UnaryMessageRequest         | SimpleResponse |
+|         | UnaryRepeated        | UnaryRepeatedRequest        | SimpleResponse |
+|         | UnaryRepeatedMessage | UnaryRepeatedMessageRequest | SimpleResponse |
+|         | UnaryRepeatedEnum    | UnaryRepeatedEnumRequest    | SimpleResponse |
+|         | UnarySelf            | UnarySelfRequest            | SimpleResponse |
+|         | UnaryMap             | UnaryMapRequest             | SimpleResponse |
+|         | UnaryMapMessage      | UnaryMapMessageRequest      | SimpleResponse |
+|         | UnaryOneof           | UnaryOneofRequest           | SimpleResponse |
+|         | UnaryEnum            | UnaryEnumRequest            | SimpleResponse |
+|         | UnaryBytes           | UnaryBytesRequest           | SimpleResponse |
+|         | ClientStreaming      | SimpleRequest               | SimpleResponse |
+|         | ServerStreaming      | SimpleRequest               | SimpleResponse |
+|         | BidiStreaming        | SimpleRequest               | SimpleResponse |
++---------+----------------------+-----------------------------+----------------+
 
 > show message
-+---------------+
-|    MESSAGE    |
-+---------------+
-| HelloRequest  |
-| HelloResponse |
-+---------------+
++-----------------------------+
+|           MESSAGE           |
++-----------------------------+
+| SimpleRequest               |
+| SimpleResponse              |
+| Name                        |
+| UnaryMessageRequest         |
+| UnaryRepeatedRequest        |
+| UnaryRepeatedMessageRequest |
+| UnaryRepeatedEnumRequest    |
+| UnarySelfRequest            |
+| Person                      |
+| UnaryMapRequest             |
+| UnaryMapMessageRequest      |
+| UnaryOneofRequest           |
+| UnaryEnumRequest            |
+| UnaryBytesRequest           |
++-----------------------------+
 ```
 
 To show more description of a message:  
-``` 
-> desc HelloRequest
-+---------+-------------+
-|  FIELD  |    TYPE     |
-+---------+-------------+
-| name    | TYPE_STRING |
-| message | TYPE_STRING |
-+---------+-------------+
+```
+> desc SimpleRequest
++-------+-------------+
+| FIELD |    TYPE     |
++-------+-------------+
+| name  | TYPE_STRING |
++-------+-------------+
 ```
 
 Set headers for each request:
 ```
+> header -h
+usage: header <key>=<value>[, <key>=<value>...]
+
 > header foo=bar
 ```
 
 To show headers:
 ```
 > show header
-+------------+-------+
-|    KEY     |  VAL  |
-+------------+-------+
-| user-agent | evans |
-| foo        | bar   |
-+------------+-------+
++-------------+-------+
+|     KEY     |  VAL  |
++-------------+-------+
+| foo         | bar   |
+| grpc-client | evans |
++-------------+-------+
+```
+
+To remove the added header:
+```
+> header foo
+> show header
++-------------+-------+
+|     KEY     |  VAL  |
++-------------+-------+
+| grpc-client | evans |
++-------------+-------+
 ```
 
 Call a RPC:  
-``` 
-> call SayHello
-name (TYPE_STRING) = ktr
-message (TYPE_STRING) => hello!
+```
+> service Example
+> call Unary
+name (TYPE_STRING) => ktr
+{
+  "message": "hello, ktr"
+}
+
 ```
 
 Evans constructs a gRPC request interactively and sends the request to a gRPC server.  
 Finally, Evans prints the JSON formatted result.  
+
+### Repeated fields
+`repeated` is an array-like data structure.  
+You can input some values and finish with <kbd>CTRL-D</kbd>  
+```
+> call UnaryRepeated
+<repeated> name (TYPE_STRING) => foo
+<repeated> name (TYPE_STRING) => bar
+<repeated> name (TYPE_STRING) => baz
+<repeated> name (TYPE_STRING) =>
+{
+  "message": "hello, foo, bar, baz"
+}
+```
+
+### Enum fields
+You can select one from the proposed selections.  
+To abort it, input <kbd>CTRL-C</kbd>.
+```
+> call UnaryEnum
+? UnaryEnumRequest  [Use arrows to move, type to filter]
+> Male
+  Female
+{
+  "message": "M"
+}
+```
+
+### Bytes type fields
+You can use byte literal and Unicode literal.
+
+```
+> call UnaryBytes
+data (TYPE_BYTES) => \x46\x6f\x6f
+{
+  "message": "received: (bytes) 46 6f 6f, (string) Foo"
+}
+
+> call UnaryBytes
+data (TYPE_BYTES) => \u65e5\u672c\u8a9e
+{
+  "message": "received: (bytes) e6 97 a5 e6 9c ac e8 aa 9e, (string) 日本語"
+}
+```
+
+### Client streaming RPC
+Client streaming RPC accepts some requests and then returns only one response.  
+Finish request inputting with <kbd>CTRL-D</kbd>
+
+```
+> call ClientStreaming
+name (TYPE_STRING) => ktr
+name (TYPE_STRING) => ktr
+name (TYPE_STRING) => ktr
+name (TYPE_STRING) =>
+{
+  "message": "ktr, you greet 3 times."
+}
+```
+
+### Server streaming RPC
+Server streaming RPC accepts only one request and then returns some responses.
+Each response is represented as another JSON formatted output.
+```
+name (TYPE_STRING) => ktr
+{
+  "message": "hello ktr, I greet 0 times."
+}
+
+{
+  "message": "hello ktr, I greet 1 times."
+}
+```
+
+### Bidirectional streaming RPC
+Bidirectional streaming RPC accepts some requests and returns some responses corresponding to each request.
+Finish request inputting with <kbd>CTRL-D</kbd>
+
+```
+> call BidiStreaming
+name (TYPE_STRING) => foo
+{
+  "message": "hello foo, I greet 0 times."
+}
+
+{
+  "message": "hello foo, I greet 1 times."
+}
+
+{
+  "message": "hello foo, I greet 2 times."
+}
+
+name (TYPE_STRING) => bar
+{
+  "message": "hello bar, I greet 0 times."
+}
+
+name (TYPE_STRING) =>
+```
+
+## Usage (CLI)
+### Basic usage
+You can input requests from `stdin` or files.  
+Unlike REPL mode, you need to specify `--package`, `--service` and `--call` options.  
+If gRPC server enables gRPC reflection, `--package` is unnecessary. (instead, `-r` requires)  
+
+Use `--file` (`-f`) to specify a file.
+``` sh
+$ cat request.json
+{
+  "name": "ktr"
+}
+
+$ evans --service Example --call Unary --file request.json
+{
+  "message": "hello, ktr"
+}
+```
+
+Use `stdin`.
+``` sh
+$ echo '{ "name": "ktr" }' | evans --service Example --call Unary
+{
+  "message": "hello, ktr"
+}
+```
+
+If `.evans.toml` is exist in Git project root, you can denote default values.  
+
+``` toml
+[default]
+protoFile = ["api/api.proto"]
+package = "api"
+service = "Example"
+```
+
+Then, the command will be more clear.  
+
+### Repeated fields
+``` sh
+$ echo '{ "name": ["foo", "bar"] }' | evans -r --service Example --call UnaryRepeated
+{
+  "message": "hello, foo, bar"
+}
+```
+
+### Enum fields
+``` sh
+$ echo '{ "gender": 0 }' | evans -r --service Example --call UnaryEnum
+{
+  "message": "M"
+}
+```
+
+### Bytes type fields
+You need to encode bytes by Base64.  
+This constraint is come from Go's standard package [encoding/json](https://golang.org/pkg/encoding/json/#Marshal)  
+``` sh
+$ echo 'Foo' | base64
+Rm9vCg==
+
+$ echo '{"data": "Rm9vCg=="}' | evans -r --service Example --call UnaryBytes
+```
+
+### Client streaming RPC
+``` sh
+$ echo '{ "name": "ktr" } { "name": "ktr" }' | evans -r --service Example --call ClientStreaming
+{
+  "message": "ktr, you greet 2 times."
+}
+```
+
+### Server streaming RPC
+``` sh
+$ echo '{ "name": "ktr" }' | evans -r --service Example --call ServerStreaming
+{
+  "message": "hello ktr, I greet 0 times."
+}
+
+{
+  "message": "hello ktr, I greet 1 times."
+}
+
+{
+  "message": "hello ktr, I greet 2 times."
+}
+```
+
+### Bidirectional streaming RPC
+``` sh
+$ echo '{ "name": "foo" } { "name": "bar" }' | evans -r --service Example --call BidiStreaming
+{
+  "message": "hello foo, I greet 0 times."
+}
+
+{
+  "message": "hello foo, I greet 1 times."
+}
+
+{
+  "message": "hello foo, I greet 2 times."
+}
+
+{
+  "message": "hello foo, I greet 3 times."
+}
+
+{
+  "message": "hello bar, I greet 0 times."
+}
+```
+
+## Other features
+### gRPC Web
+Evans also support gRPC Web protocol.  
+Tested gRPC Web implementations are:
+- [improbable-eng/grpc-web](https://github.com/improbable-eng/grpc-web)
 
 ## Supported IDL (interface definition language)
 - [Protocol Buffers 3](https://developers.google.com/protocol-buffers/)  
 
 ## See Also
 Evans (DJ YOSHITAKA)  
-![Evans](./evans.png)  
+![Evans](https://user-images.githubusercontent.com/12953836/47862601-da7d9c00-de38-11e8-80be-9fc981903f6c.png)  
 [iTunes](https://itunes.apple.com/jp/album/jubeat-original-soundtrack/id325295989)  
