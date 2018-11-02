@@ -15,35 +15,6 @@
 [![codecov](https://codecov.io/gh/ktr0731/evans/branch/master/graph/badge.svg)](https://codecov.io/gh/ktr0731/evans)  
 
 
-## Table of Contents
-- [Motivation](#motivation)
-- [REPL mode](#repl-mode)
-- [CLI mode](#cli-mode)
-- [Installation](#installation)
-   - [From GitHub Releases](#from-github-releases)
-   - [macOS](#macos)
-   - [[Deprecated] go get](#deprecated-go-get)
-- [Usage (REPL)](#usage-repl)
-   - [Basic usage](#basic-usage)
-   - [Repeated fields](#repeated-fields)
-   - [Enum fields](#enum-fields)
-   - [Bytes type fields](#bytes-type-fields)
-   - [Client streaming RPC](#client-streaming-rpc)
-   - [Server streaming RPC](#server-streaming-rpc)
-   - [Bidirectional streaming RPC](#bidirectional-streaming-rpc)
-- [Usage (CLI)](#usage-cli)
-   - [Basic usage](#basic-usage-1)
-   - [Repeated fields](#repeated-fields-1)
-   - [Enum fields](#enum-fields-1)
-   - [Bytes type fields](#bytes-type-fields-1)
-   - [Client streaming RPC](#client-streaming-rpc-1)
-   - [Server streaming RPC](#server-streaming-rpc-1)
-   - [Bidirectional streaming RPC](#bidirectional-streaming-rpc-1)
-- [Another features](#another-features)
-   - [gRPC Web](#grpc-web)
-- [Supported IDL (interface definition language)](#supported-idl-interface-definition-language)
-- [See Also](#see-also)
-
 ## Motivation
 Evans has been created to use easier than other existing gRPC clients.  
 If you want to keep your product quality, you must use CI with gRPC testing, should not do use manually testing.  
@@ -70,17 +41,32 @@ For example, read inputs from `stdin`, the command will be a filter command.
 On the other hand, the command result will be outputted to `stdout` by JSON formatted.  
 So, you can format it by any commands like `jq`. Also, if you want to use the same command (e.g. use same JSON inputs), you can use `--file` (`-f`) option.  
 
-By the way, CLI mode is not able to omit `--package`, `--service` and `--call` option, unlike REPL mode.  
-However, if `.evans.toml` is exist in Git project root, you can denote default values.  
+## Table of Contents
+- [Installation](#installation)
+   - [From GitHub Releases](#from-github-releases)
+   - [macOS](#macos)
+   - [[Deprecated] go get](#deprecated-go-get)
+- [Usage (REPL)](#usage-repl)
+   - [Basic usage](#basic-usage)
+   - [Repeated fields](#repeated-fields)
+   - [Enum fields](#enum-fields)
+   - [Bytes type fields](#bytes-type-fields)
+   - [Client streaming RPC](#client-streaming-rpc)
+   - [Server streaming RPC](#server-streaming-rpc)
+   - [Bidirectional streaming RPC](#bidirectional-streaming-rpc)
+- [Usage (CLI)](#usage-cli)
+   - [Basic usage](#basic-usage-1)
+   - [Repeated fields](#repeated-fields-1)
+   - [Enum fields](#enum-fields-1)
+   - [Bytes type fields](#bytes-type-fields-1)
+   - [Client streaming RPC](#client-streaming-rpc-1)
+   - [Server streaming RPC](#server-streaming-rpc-1)
+   - [Bidirectional streaming RPC](#bidirectional-streaming-rpc-1)
+- [Another features](#another-features)
+   - [gRPC Web](#grpc-web)
+- [Supported IDL (interface definition language)](#supported-idl-interface-definition-language)
+- [See Also](#see-also)
 
-``` toml
-[default]
-protoFile = ["api/api.proto"]
-package = "api"
-service = "UserService"
-```
-
-Then, the command will be more clear.  
 
 ## Installation
 Highly recommended methods are GitHub Releases or Homebrew because these can be software update automatically by the built-in feature in Evans.  
@@ -357,6 +343,17 @@ $ echo '{ "name": "ktr" }' | evans --service Example --call Unary
   "message": "hello, ktr"
 }
 ```
+
+If `.evans.toml` is exist in Git project root, you can denote default values.  
+
+``` toml
+[default]
+protoFile = ["api/api.proto"]
+package = "api"
+service = "Example"
+```
+
+Then, the command will be more clear.  
 
 ### Repeated fields
 ``` sh
