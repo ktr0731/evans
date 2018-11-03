@@ -90,7 +90,7 @@ func (c *Command) parseFlags(args []string) *options {
 
 	f := flag.NewFlagSet("main", flag.ExitOnError)
 	f.Usage = func() {
-		c.Version()
+		c.printVersion()
 		fmt.Fprintf(
 			c.ui.Writer(),
 			usageFormat,
@@ -245,54 +245,60 @@ func (c *Command) init(opts *options, proto []string) error {
 	return err
 }
 
-func (c *Command) Error(err error) {
-	c.ui.ErrPrintln(err.Error())
-}
-
-func (c *Command) Usage() {
+func (c *Command) printUsage() {
 	c.flagSet.Usage()
 }
 
-func (c *Command) Version() {
+func (c *Command) printVersion() {
 	c.ui.Println(fmt.Sprintf("%s %s", c.name, c.version))
 }
 
+// Run starts Evans.
+// If returned int value is 0, Evans has finished normally.
+// Conversely value is 1, Evans has finished with some errors.
 func (c *Command) Run(args []string) int {
+	err := c.run(args)
+	if err != nil {
+		c.ui.ErrPrintln(err.Error())
+		return 1
+	}
+	return 0
+}
+
+func (c *Command) run(args []string) error {
 	opts := c.parseFlags(args)
 	proto := c.flagSet.Args()
 
 	switch {
 	case opts.version:
-		c.Version()
-		return 0
+		c.printVersion()
+		return nil
 	case opts.editConfig:
 		if err := config.Edit(); err != nil {
-			c.Error(err)
-			return 1
+			return err
 		}
-		return 0
+		return nil
 	}
 
 	c.init(opts, proto)
 
 	if len(c.wcfg.cfg.Default.ProtoFile) == 0 && !c.wcfg.cfg.Server.Reflection {
-		c.Usage()
-		c.Error(ErrProtoFileRequired)
-		return 1
+		c.printUsage()
+		return ErrProtoFileRequired
 	}
 
-	var status int
+	var err error
 	// TODO: use c.wcfg.cli instead of c.wcfg.repl
 	if !c.wcfg.repl && cli.IsCLIMode(c.wcfg.file) {
-		status = c.runAsCLI()
+		err = c.runAsCLI()
 	} else {
-		status = c.runAsREPL()
+		err = c.runAsREPL()
 	}
 
-	return status
+	return err
 }
 
-func (c *Command) runAsCLI() int {
+func (c *Command) runAsCLI() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // for non-zero return value
 
@@ -303,17 +309,16 @@ func (c *Command) runAsCLI() int {
 
 	err := cli.Run(c.wcfg.cfg, c.ui, c.wcfg.file, c.wcfg.call)
 	if err != nil {
-		c.Error(err)
-		return 1
+		return err
 	}
 
 	cancel()
 	<-ctx.Done()
 
-	return 0
+	return nil
 }
 
-func (c *Command) runAsREPL() int {
+func (c *Command) runAsREPL() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -331,35 +336,31 @@ func (c *Command) runAsREPL() int {
 	} else {
 		err := c.processUpdate(ctx)
 		if err != nil {
-			c.Error(err)
-			return 1
+			return err
 		}
 	}
 
 	err := repl.Run(c.wcfg.cfg, c.ui)
 	if err != nil {
-		c.Error(err)
-		return 1
+		return err
 	}
 
 	cancel()
 
 	select {
 	case <-ctx.Done():
-		return 0
+		return nil
 	case err := <-checkUpdateErrCh:
 		if err != nil {
-			c.Error(err)
-			return 1
+			return err
 		}
 	case err := <-processUpdateErrCh:
 		if err != nil {
-			c.Error(err)
-			return 1
+			return err
 		}
 	}
 
-	return 0
+	return nil
 }
 
 // processUpdate checks new changes and updates Evans in accordance with user's selection.
