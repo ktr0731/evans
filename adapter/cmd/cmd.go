@@ -4,7 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -22,9 +24,6 @@ import (
 	updater "github.com/ktr0731/go-updater"
 	"github.com/mitchellh/copystructure"
 	"github.com/pkg/errors"
-
-	"io"
-	"os"
 )
 
 var (
@@ -207,11 +206,15 @@ type Command struct {
 }
 
 // New instantiate CLI interface.
-// `ui` is used for both of CLI mode and REPL mode.
-func New(name, version string, ui cui.UI) *Command {
+// ui is used for both of CLI mode and REPL mode.
+// If ui is nil, cui.NewBasicUI will be used.
+func New(ui cui.UI) *Command {
+	if ui == nil {
+		ui = cui.NewBasic()
+	}
 	return &Command{
-		name:    name,
-		version: version,
+		name:    meta.AppName,
+		version: meta.Version.String(),
 		ui:      ui,
 		cache:   cache.Get(),
 	}
