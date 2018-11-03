@@ -20,6 +20,7 @@ type MeansType updater.MeansType
 
 const MeansTypeUndefined MeansType = ""
 
+// Cache represents cached items.
 type Cache struct {
 	UpdateAvailable bool      `default:"false" toml:"updateAvailable"`
 	LatestVersion   string    `default:"" toml:"latestVersion"`
@@ -63,22 +64,28 @@ func setup() {
 	}
 }
 
+// Get returns loaded cache contents.
+// Returned *Cache is NOT goroutine safe.
 func Get() *Cache {
 	return &c
 }
 
+// Clear clears contents of the cache file.
 func Clear() error {
 	c.UpdateAvailable = false
 	c.LatestVersion = ""
 	return save()
 }
 
+// SetUpdateInfo sets an updatable flag to true and
+// the latest version info to passed version.
 func SetUpdateInfo(latest *semver.Version) error {
 	c.UpdateAvailable = true
 	c.LatestVersion = latest.String()
 	return save()
 }
 
+// SetInstalledBy sets means how Evans was installed.
 func SetInstalledBy(mt MeansType) error {
 	c.InstalledBy = mt
 	return save()
