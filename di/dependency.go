@@ -7,7 +7,6 @@ import (
 
 	"github.com/ktr0731/evans/adapter/grpc"
 	"github.com/ktr0731/evans/adapter/inputter"
-	"github.com/ktr0731/evans/adapter/parser"
 	"github.com/ktr0731/evans/adapter/presenter"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/config"
@@ -33,7 +32,7 @@ func initEnv(cfg *config.Config) (rerr error) {
 		}
 
 		files := resolveProtoFiles(cfg)
-		desc, err := parser.ParseFile(files, paths)
+		desc, err := protobuf.ParseFile(files, paths)
 		if err != nil {
 			rerr = err
 			return

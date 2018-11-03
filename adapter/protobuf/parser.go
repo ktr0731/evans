@@ -1,8 +1,7 @@
-package parser
+package protobuf
 
 import (
 	"github.com/ktr0731/evans/adapter/internal/protoparser"
-	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/entity"
 )
 
@@ -16,5 +15,5 @@ func ParseFile(filename []string, paths []string) ([]*entity.Package, error) {
 	for _, d := range set {
 		set = append(set, d.GetDependencies()...)
 	}
-	return protobuf.ToEntitiesFrom(set)
+	return ToEntitiesFrom(set)
 }
