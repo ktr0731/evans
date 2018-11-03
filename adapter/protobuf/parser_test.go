@@ -1,7 +1,6 @@
-package parser
+package protobuf
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,8 +15,4 @@ func TestParseFile(t *testing.T) {
 		assert.Len(t, pkgs, 1)
 		assert.Len(t, pkgs[0].Messages, 4)
 	})
-}
-
-func testdata(s ...string) string {
-	return filepath.Join(append([]string{"testdata"}, s...)...)
 }
