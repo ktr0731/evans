@@ -2,6 +2,7 @@ package di
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"sync"
 
@@ -164,7 +165,7 @@ func initPromptInputter(cfg *config.Config) (err error) {
 	promptInputterOnce.Do(func() {
 		var e environment.Environment
 		e, err = Env(cfg)
-		promptInputter = inputter.NewPrompt(cfg, e)
+		promptInputter = inputter.NewPrompt(cfg.Input.PromptFormat, e)
 	})
 	return
 }
@@ -177,15 +178,16 @@ var (
 func initGRPCClient(cfg *config.Config) error {
 	var err error
 	gRPCClientOnce.Do(func() {
+		addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
 		if cfg.Request.Web {
 			var b port.DynamicBuilder
 			b, err = DynamicBuilder()
 			if err != nil {
 				return
 			}
-			gRPCClient = grpc.NewWebClient(cfg, b)
+			gRPCClient = grpc.NewWebClient(addr, cfg.Server.Reflection, b)
 		} else {
-			gRPCClient, err = grpc.NewClient(cfg)
+			gRPCClient, err = grpc.NewClient(addr, cfg.Server.Reflection)
 		}
 	})
 	return err

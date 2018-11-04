@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	multierror "github.com/ktr0731/go-multierror"
 	"github.com/pkg/errors"
@@ -16,15 +15,18 @@ import (
 )
 
 type client struct {
-	config *config.Config
-	conn   *grpc.ClientConn
+	conn *grpc.ClientConn
 
 	*reflectionClient
 }
 
-func NewClient(config *config.Config) (entity.GRPCClient, error) {
+// NewClient creates a new gRPC client.
+// It dials to the server specified by addr.
+// addr format is same as the first argument of grpc.Dial.
+// If useReflection is true, the gRPC client enables gRPC reflection.
+func NewClient(addr string, useReflection bool) (entity.GRPCClient, error) {
 	// TODO: secure option
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port), grpc.WithInsecure())
+	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial to gRPC server")
 	}
@@ -36,11 +38,10 @@ func NewClient(config *config.Config) (entity.GRPCClient, error) {
 	}
 
 	client := &client{
-		config: config,
-		conn:   conn,
+		conn: conn,
 	}
 
-	if config.Server.Reflection {
+	if useReflection {
 		client.reflectionClient = newReflectionClient(conn)
 	}
 

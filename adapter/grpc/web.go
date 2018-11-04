@@ -2,10 +2,8 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 	"github.com/ktr0731/grpc-web-go-client/grpcweb"
@@ -13,23 +11,21 @@ import (
 )
 
 type webClient struct {
-	config *config.Config
-	conn   *grpcweb.Client
+	conn *grpcweb.Client
 
 	builder port.DynamicBuilder
 
 	*reflectionClient
 }
 
-func NewWebClient(config *config.Config, builder port.DynamicBuilder) entity.GRPCClient {
-	conn := grpcweb.NewClient(fmt.Sprintf("%s:%s", config.Server.Host, config.Server.Port))
+func NewWebClient(addr string, useReflection bool, builder port.DynamicBuilder) entity.GRPCClient {
+	conn := grpcweb.NewClient(addr)
 	client := &webClient{
-		config:  config,
 		conn:    conn,
 		builder: builder,
 	}
 
-	if config.Server.Reflection {
+	if useReflection {
 		client.reflectionClient = newWebReflectionClient(conn)
 	}
 
