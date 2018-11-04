@@ -9,7 +9,6 @@ import (
 	"github.com/ktr0731/evans/adapter/prompt"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/color"
-	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/env"
 	"github.com/pkg/errors"
@@ -25,20 +24,20 @@ var (
 // it has common logic to input fields interactively.
 // in normal, go-prompt is used as prompt.
 type PromptInputter struct {
-	prompt prompt.Prompt
-	config *config.Config
-	env    env.Environment
+	prompt       prompt.Prompt
+	prefixFormat string
+	env          env.Environment
 }
 
-func NewPrompt(config *config.Config, env env.Environment) *PromptInputter {
-	return newPromptInputter(prompt.New(nil, nil), config, env)
+func NewPrompt(prefixFormat string, env env.Environment) *PromptInputter {
+	return newPromptInputter(prompt.New(nil, nil), prefixFormat, env)
 }
 
-func newPromptInputter(prompt prompt.Prompt, config *config.Config, env env.Environment) *PromptInputter {
+func newPromptInputter(prompt prompt.Prompt, prefixFormat string, env env.Environment) *PromptInputter {
 	return &PromptInputter{
-		prompt: prompt,
-		config: config,
-		env:    env,
+		prompt:       prompt,
+		prefixFormat: prefixFormat,
+		env:          env,
 	}
 }
 
@@ -48,7 +47,7 @@ func (i *PromptInputter) Input(reqType entity.Message) (proto.Message, error) {
 	fields := reqType.Fields()
 
 	// DarkGreen is the initial color
-	return newFieldInputter(i.prompt, i.config.Input.PromptFormat, setter, []string{}, false, color.DefaultColor()).Input(fields)
+	return newFieldInputter(i.prompt, i.prefixFormat, setter, []string{}, false, color.DefaultColor()).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively

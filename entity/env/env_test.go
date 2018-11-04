@@ -12,14 +12,10 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	cfg := &config.Config{
-		Request: &config.Request{
-			Header: []config.Header{{Key: "foo", Val: "bar"}},
-		},
-	}
+	headers := []entity.Header{{Key: "foo", Val: "bar"}}
 
 	t.Run("New", func(t *testing.T) {
-		env := env.New(nil, cfg)
+		env := env.New(nil, headers)
 		h := env.Headers()
 		require.Len(t, h, 1)
 		require.Equal(t, h[0].Key, "foo")
@@ -27,7 +23,7 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("NewFromServices", func(t *testing.T) {
-		env := env.NewFromServices(nil, cfg)
+		env := env.NewFromServices(nil, headers)
 		assert.Equal(t, "default", env.DSN())
 	})
 }
@@ -74,7 +70,7 @@ func TestEnv(t *testing.T) {
 				},
 			}
 		}
-		return env.New(pkgs, cfg)
+		return env.New(pkgs, nil)
 	}
 
 	env := setup(t, nil)
