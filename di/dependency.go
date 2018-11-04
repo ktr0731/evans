@@ -45,15 +45,19 @@ func initEnv(cfg *config.Config) (rerr error) {
 			return
 		}
 
+		headers := make([]entity.Header, 0, len(cfg.Request.Header))
+		for _, h := range cfg.Request.Header {
+			headers = append(headers, entity.Header{Key: h.Key, Val: h.Val})
+		}
 		if gRPCClient.ReflectionEnabled() {
 			svcs, err = gRPCClient.ListServices()
 			if err != nil {
 				rerr = errors.Wrap(err, "failed to list services by gRPC reflection")
 				return
 			}
-			env = environment.NewFromServices(svcs, cfg)
+			env = environment.NewFromServices(svcs, headers)
 		} else {
-			env = environment.New(desc, cfg)
+			env = environment.New(desc, headers)
 
 			if pkg := cfg.Default.Package; pkg != "" {
 				if err := env.UsePackage(pkg); err != nil {

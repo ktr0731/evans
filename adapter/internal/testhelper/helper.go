@@ -6,6 +6,7 @@ import (
 
 	"github.com/jhump/protoreflect/desc"
 	"github.com/ktr0731/evans/adapter/internal/protoparser"
+	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/require"
@@ -37,8 +38,12 @@ func SetupEnv(t *testing.T, fpath, pkgName, svcName string) *env.Env {
 	t.Helper()
 
 	set := helper.ReadProto(t, fpath)
-
-	env := env.New(set, helper.TestConfig())
+	cfg := helper.TestConfig()
+	headers := make([]entity.Header, 0, len(cfg.Request.Header))
+	for _, h := range cfg.Request.Header {
+		headers = append(headers, entity.Header{Key: h.Key, Val: h.Val})
+	}
+	env := env.New(set, headers)
 
 	err := env.UsePackage(pkgName)
 	require.NoError(t, err)

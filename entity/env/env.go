@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/pkg/errors"
 )
@@ -59,20 +58,18 @@ type Env struct {
 	pkgs   []*entity.Package
 	state  state
 	option option
-	config *config.Env
 	cache  cache
 }
 
-func New(pkgs []*entity.Package, config *config.Config) *Env {
+func New(pkgs []*entity.Package, defaultHeaders []entity.Header) *Env {
 	env := &Env{
-		pkgs:   pkgs,
-		config: config.Env,
+		pkgs: pkgs,
 		cache: cache{
 			pkg: map[string]*entity.Package{},
 		},
 	}
 
-	for _, h := range config.Request.Header {
+	for _, h := range defaultHeaders {
 		env.AddHeader(&entity.Header{Key: h.Key, Val: h.Val})
 	}
 
@@ -81,7 +78,7 @@ func New(pkgs []*entity.Package, config *config.Config) *Env {
 
 // NewFromServices is called if the target server has enabled gRPC reflection.
 // gRPC reflection has no packages, so Evans creates pseudo package "default".
-func NewFromServices(svcs []entity.Service, config *config.Config) *Env {
+func NewFromServices(svcs []entity.Service, defaultHeaders []entity.Header) *Env {
 	mmsgs := map[string]entity.Message{}
 	for _, svc := range svcs {
 		for _, rpc := range svc.RPCs() {
@@ -100,7 +97,7 @@ func NewFromServices(svcs []entity.Service, config *config.Config) *Env {
 			Services: svcs,
 			Messages: msgs,
 		},
-	}, config)
+	}, defaultHeaders)
 
 	err := env.UsePackage(env.pkgs[0].Name)
 	if err != nil {
