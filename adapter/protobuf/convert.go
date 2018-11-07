@@ -3,6 +3,7 @@ package protobuf
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -124,10 +125,40 @@ func ToEntitiesFrom(files []*desc.FileDescriptor) ([]*entity.Package, error) {
 // this API is called if the target server has enabled gRPC reflection.
 // reflection service returns available services, so Evans needs to convert to entities
 // from service descriptors, not file descriptors.
-func ToEntitiesFromServiceDescriptors(services []*desc.ServiceDescriptor) []entity.Service {
+// Also ToEntitiesFromServiceDescriptors returns messages which is containing to request/response message fields or itself.
+func ToEntitiesFromServiceDescriptors(services []*desc.ServiceDescriptor) ([]entity.Service, []entity.Message) {
+	msgs := make([]entity.Message, 0, 2) // request, response messages
 	svcs := make([]entity.Service, 0, len(services))
+
+	encounteredMessage := map[string]bool{}
 	for _, s := range services {
-		svcs = append(svcs, newService(s))
+		svc := newService(s)
+		svcs = append(svcs, svc)
+
+		for _, rpc := range svc.RPCs() {
+			for _, msg := range []entity.Message{rpc.RequestMessage(), rpc.ResponseMessage()} {
+				for _, f := range msg.Fields() {
+					if f.Type() != entity.FieldTypeMessage {
+						continue
+					}
+					mf := f.(*messageField)
+					if !encounteredMessage[mf.Message.Name()] {
+						msgs = append(msgs, mf.Message)
+						encounteredMessage[mf.Message.Name()] = true
+					}
+				}
+				if !encounteredMessage[msg.Name()] {
+					msgs = append(msgs, msg)
+					encounteredMessage[msg.Name()] = true
+				}
+			}
+		}
 	}
-	return svcs
+	sort.Slice(svcs, func(i, j int) bool {
+		return svcs[i].Name() < svcs[j].Name()
+	})
+	sort.Slice(msgs, func(i, j int) bool {
+		return msgs[i].Name() < msgs[j].Name()
+	})
+	return svcs, msgs
 }
