@@ -11,15 +11,49 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type replTestCase struct {
+	args          string
+	code          int  // exit code, 1 when precondition failed
+	hasErr        bool // error was occurred in repl, false if precondition failed
+	useReflection bool
+	useWeb        bool
+}
+
 func TestREPL(t *testing.T) {
-	t.Run("from stdin", func(t *testing.T) {
-		cases := []struct {
-			args          string
-			code          int  // exit code, 1 when precondition failed
-			hasErr        bool // error was occurred in repl, false if precondition failed
-			useReflection bool
-			useWeb        bool
-		}{
+	runTests := func(t *testing.T, cases []replTestCase, replInputs ...repl.CmdAndArgs, assert func(t *testing.T, out, eout *bytes.Buffer)) {
+		rh := newREPLHelper([]string{"--silent", "--repl"})
+
+		cleanup := func() {
+			rh.reset()
+			di.Reset()
+		}
+
+		for _, c := range cases {
+			t.Run(c.args, func(t *testing.T) {
+				defer helper.NewServer(t, c.useReflection).Start(c.useWeb).Stop()
+				defer cleanup()
+
+				out, eout := new(bytes.Buffer), new(bytes.Buffer)
+				rh.w = out
+				rh.ew = eout
+
+				rh.registerInput(replInputs...)
+
+				args := strings.Split(c.args, " ")
+				code := rh.run(args)
+				assert.Equal(t, c.code, code, eout.String())
+
+				if c.hasErr {
+					assert.NotEmpty(t, eout.String())
+				}
+
+				assert(t, out, eout)
+			})
+		}
+	}
+
+	t.Run("call", func(t *testing.T) {
+		cases := []replTestCase{
 			{args: "", code: 1}, // cannot launch repl case
 			{args: "--package helloworld", code: 1},
 			{args: "--service Greeter", code: 1},
@@ -49,38 +83,19 @@ func TestREPL(t *testing.T) {
 			{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
 		}
 
-		rh := newREPLHelper([]string{"--silent", "--repl"})
-
-		cleanup := func() {
-			rh.reset()
-			di.Reset()
-		}
-
-		for _, c := range cases {
-			t.Run(c.args, func(t *testing.T) {
-				defer helper.NewServer(t, c.useReflection).Start(c.useWeb).Stop()
-				defer cleanup()
-
-				out, eout := new(bytes.Buffer), new(bytes.Buffer)
-				rh.w = out
-				rh.ew = eout
-
-				rh.registerInput(
-					cmd.Call("SayHello", "maho"),
-				)
-
-				args := strings.Split(c.args, " ")
-				code := rh.run(args)
-				assert.Equal(t, c.code, code, eout.String())
-
-				if c.hasErr {
-					assert.NotEmpty(t, eout.String())
-				}
+		runTests(t, cases,
+			cmd.Call("SayHello", "maho"),
+			func(t *testing.T, out, eout *bytes.Buffer) {
 				// normal case
 				if c.code == 0 && !c.hasErr {
 					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()), eout.String())
 				}
 			})
-		}
+	})
+
+	t.Run("show message", func(t *testing.T) {
+		// cases := []replTestCase{
+		// 	{args: "--reflection --service Greeter", useReflection: true},
+		// }
 	})
 }
