@@ -11,8 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO: add tests for other commands.
 func TestREPL(t *testing.T) {
-	t.Run("from stdin", func(t *testing.T) {
+	t.Run("call", func(t *testing.T) {
 		cases := []struct {
 			args          string
 			code          int  // exit code, 1 when precondition failed

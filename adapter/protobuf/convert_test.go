@@ -31,8 +31,9 @@ func TestToEntitiesFromServiceDescriptors(t *testing.T) {
 	d := parseFile(t, []string{"helloworld.proto"}, nil)
 	require.Len(t, d, 1)
 
-	svcs := ToEntitiesFromServiceDescriptors(d[0].GetServices())
+	svcs, msgs := ToEntitiesFromServiceDescriptors(d[0].GetServices())
 	assert.Len(t, svcs, len(d))
+	assert.Lenf(t, msgs, 2, "expected number of messages is same as number of request/response message, but got %d", len(msgs))
 
 	assert.Len(t, svcs[0].RPCs(), 1)
 }

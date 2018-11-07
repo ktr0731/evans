@@ -1122,7 +1122,7 @@ var (
 //             InvokeFunc: func(ctx context.Context, fqrn string, req interface{}, res interface{}) error {
 // 	               panic("TODO: mock out the Invoke method")
 //             },
-//             ListServicesFunc: func() ([]entity.Service, error) {
+//             ListServicesFunc: func() ([]entity.Service, []entity.Message, error) {
 // 	               panic("TODO: mock out the ListServices method")
 //             },
 //             NewBidiStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
@@ -1151,7 +1151,7 @@ type GRPCClientMock struct {
 	InvokeFunc func(ctx context.Context, fqrn string, req interface{}, res interface{}) error
 
 	// ListServicesFunc mocks the ListServices method.
-	ListServicesFunc func() ([]entity.Service, error)
+	ListServicesFunc func() ([]entity.Service, []entity.Message, error)
 
 	// NewBidiStreamFunc mocks the NewBidiStream method.
 	NewBidiStreamFunc func(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error)
@@ -1288,7 +1288,7 @@ func (mock *GRPCClientMock) InvokeCalls() []struct {
 }
 
 // ListServices calls ListServicesFunc.
-func (mock *GRPCClientMock) ListServices() ([]entity.Service, error) {
+func (mock *GRPCClientMock) ListServices() ([]entity.Service, []entity.Message, error) {
 	if mock.ListServicesFunc == nil {
 		panic("GRPCClientMock.ListServicesFunc: method is nil but GRPCClient.ListServices was just called")
 	}

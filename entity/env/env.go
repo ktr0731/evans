@@ -78,19 +78,7 @@ func New(pkgs []*entity.Package, defaultHeaders []entity.Header) *Env {
 
 // NewFromServices is called if the target server has enabled gRPC reflection.
 // gRPC reflection has no packages, so Evans creates pseudo package "default".
-func NewFromServices(svcs []entity.Service, defaultHeaders []entity.Header) *Env {
-	mmsgs := map[string]entity.Message{}
-	for _, svc := range svcs {
-		for _, rpc := range svc.RPCs() {
-			mmsgs[rpc.RequestMessage().Name()] = rpc.RequestMessage()
-			mmsgs[rpc.ResponseMessage().Name()] = rpc.ResponseMessage()
-		}
-	}
-	var msgs []entity.Message
-	for _, msg := range mmsgs {
-		msgs = append(msgs, msg)
-	}
-
+func NewFromServices(svcs []entity.Service, msgs []entity.Message, defaultHeaders []entity.Header) *Env {
 	env := New([]*entity.Package{
 		{
 			Name:     "default",
