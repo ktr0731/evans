@@ -23,7 +23,7 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("NewFromServices", func(t *testing.T) {
-		env := env.NewFromServices(nil, headers)
+		env := env.NewFromServices(nil, nil, headers)
 		assert.Equal(t, "default", env.DSN())
 	})
 }
