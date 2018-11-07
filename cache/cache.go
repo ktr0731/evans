@@ -4,11 +4,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/BurntSushi/toml"
 	"github.com/ktr0731/evans/meta"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
 	homedir "github.com/mitchellh/go-homedir"
-	toml "github.com/pelletier/go-toml"
 )
 
 var (
@@ -59,7 +59,7 @@ func setup() {
 	}
 	defer f.Close()
 
-	if err := toml.NewDecoder(f).Decode(&c); err != nil {
+	if _, err := toml.DecodeReader(f, &c); err != nil {
 		panic(err)
 	}
 }
