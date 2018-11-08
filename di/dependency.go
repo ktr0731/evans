@@ -6,6 +6,7 @@ import (
 	"io"
 	"sync"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/adapter/grpc"
 	"github.com/ktr0731/evans/adapter/inputter"
 	"github.com/ktr0731/evans/adapter/presenter"
@@ -14,7 +15,6 @@ import (
 	"github.com/ktr0731/evans/entity"
 	environment "github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/usecase/port"
-	multierror "github.com/ktr0731/go-multierror"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 )
