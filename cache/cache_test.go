@@ -4,6 +4,8 @@ import (
 	"os"
 	"testing"
 
+	semver "github.com/ktr0731/go-semver"
+	"github.com/ktr0731/go-updater/github"
 	toml "github.com/pelletier/go-toml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,7 +35,7 @@ func TestCache(t *testing.T) {
 		defer func() {
 			os.RemoveAll(testDir)
 		}()
-		assert.NotNil(t, Get())
+		assert.NotNil(t, Get(), "after setup called, cache file is written in $XDG_CACHE_HOME/testDir but returned cache was nil")
 	})
 
 	t.Run("config exist", func(t *testing.T) {
@@ -43,8 +45,11 @@ func TestCache(t *testing.T) {
 		}()
 
 		cache := Get()
-		cache.LatestVersion = "1.0.0"
-		cache.UpdateAvailable = true
+		err := SetUpdateInfo(semver.MustParse("1.0.0"))
+		require.NoError(t, err)
+		mt := MeansType(github.MeansTypeGitHubRelease)
+		err = SetInstalledBy(mt)
+		require.NoError(t, err)
 
 		p, err := resolvePath()
 		require.NoError(t, err)
@@ -61,5 +66,6 @@ func TestCache(t *testing.T) {
 		newCache := Get()
 		assert.Equal(t, "1.0.0", newCache.LatestVersion)
 		assert.True(t, newCache.UpdateAvailable)
+		assert.Equal(t, newCache.InstalledBy, MeansType(mt))
 	})
 }

@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/entity"
-	multierror "github.com/ktr0731/go-multierror"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"

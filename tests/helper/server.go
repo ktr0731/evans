@@ -7,10 +7,10 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	srv "github.com/ktr0731/evans/tests/helper/server"
 	"github.com/ktr0731/evans/tests/helper/server/helloworld"
-	multierror "github.com/ktr0731/go-multierror"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
