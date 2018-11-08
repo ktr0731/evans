@@ -5,16 +5,18 @@ VERSION := $(shell bump show meta/meta.go)
 version:
 	@echo "evans: $(VERSION)"
 
-
 .PHONY: dep
 dep:
-ifeq ($(shell which dep 2>/dev/null),)
-	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+ifeq ($(shell go help mod 2>/dev/null),)
+	@echo "Go v1.11 or later required"
+	@exit 1
 endif
 
 .PHONY: deps
 deps: dep
-	dep ensure
+	GO111MODULE=on go mod download
+	GO111MODULE=on go mod verify
+	GO111MODULE=on go mod vendor
 
 .PHONY: generate
 generate:
