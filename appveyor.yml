@@ -1,16 +1,14 @@
+image: Go 1.11
 clone_folder: c:\gopath\src\github.com\ktr0731\evans
-environment:
-  GOPATH: c:\gopath
-  GOBIN: c:\gopath\bin
-  PATH: c:\gopath\bin;%PATH%
 cache:
-  - vendor -> Gopkg.lock
+  - vendor -> go.mod
 install:
-  - mkdir c:\gopath\bin
-  - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-  - dep ensure
+  - set GO111MODULE=on
+  - go mod download
+  - go mod verify
 build: off
 test_script:
   - set CGO_ENABLED=0
+  - set GO111MODULE=on
   - go build
   - go test -tags e2e -v ./...
