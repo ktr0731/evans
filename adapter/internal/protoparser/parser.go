@@ -6,7 +6,7 @@ import (
 )
 
 func ParseFile(fnames []string, paths []string) ([]*desc.FileDescriptor, error) {
-	paths = append(paths, ".")
+	paths = append(paths, "")
 
 	p := &protoparse.Parser{
 		ImportPaths: paths,
