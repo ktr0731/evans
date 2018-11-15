@@ -9,7 +9,7 @@ import (
 
 func TestParseFile(t *testing.T) {
 	t.Run("importing", func(t *testing.T) {
-		fnames := []string{testdata("importing", "library.proto")}
+		fnames := []string{"library.proto"}
 		pkgs, err := ParseFile(fnames, []string{"testdata/importing"})
 		require.NoError(t, err)
 		assert.Len(t, pkgs, 1)

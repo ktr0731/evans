@@ -43,7 +43,3 @@ func toEntitiesFrom(files []*desc.FileDescriptor) ([]*entity.Package, error) {
 
 	return pkgs, nil
 }
-
-func testdata(s ...string) string {
-	return filepath.Join(append([]string{"testdata"}, s...)...)
-}
