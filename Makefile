@@ -2,6 +2,7 @@ SHELL := /bin/bash
 VERSION := $(shell bump show meta/meta.go)
 
 export PATH := _tools:$(PATH)
+export GO111MODULE := on
 
 .PHONY: version
 version:
@@ -16,7 +17,6 @@ endif
 
 .PHONY: deps
 deps: dep
-	@export GO111MODULE=on
 	@go mod download
 	@go mod verify
 	@go mod vendor
@@ -43,7 +43,11 @@ build: deps
 	go build
 
 .PHONY: test
-test: unit-test e2e-test
+test: format unit-test e2e-test
+
+.PHONY: format
+format:
+	go mod tidy
 
 .PHONY: unit-test
 unit-test: lint
@@ -55,10 +59,10 @@ e2e-test: lint
 
 .PHONY: lint
 lint:
-	@golangci-lint run --disable-all \
-	--build-tags e2e \
-	-e 'should have name of the form ErrFoo' -E 'deadcode,govet,golint' \
-	./...
+	golangci-lint run --disable-all \
+		--build-tags e2e \
+		-e 'should have name of the form ErrFoo' -E 'deadcode,govet,golint' \
+		./...
 
 .PHONY: coverage
 coverage:
