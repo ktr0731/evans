@@ -1,6 +1,8 @@
 SHELL := /bin/bash
 VERSION := $(shell bump show meta/meta.go)
 
+export PATH := _tools:$(PATH)
+
 .PHONY: version
 version:
 	@echo "evans: $(VERSION)"
@@ -14,9 +16,13 @@ endif
 
 .PHONY: deps
 deps: dep
-	GO111MODULE=on go mod download
-	GO111MODULE=on go mod verify
-	GO111MODULE=on go mod vendor
+	@export GO111MODULE=on
+	@go mod download
+	@go mod verify
+	@go mod vendor
+	@go get github.com/ktr0731/dept@v0.1.0
+	@go build -o _tools/dept github.com/ktr0731/dept
+	@dept build
 
 .PHONY: generate
 generate:
@@ -37,34 +43,22 @@ build: deps
 	go build
 
 .PHONY: test
-test: vet lint unit-test e2e-test
+test: unit-test e2e-test
 
 .PHONY: unit-test
-unit-test: deadcode-test
-	go test -race $(shell go list ./... | grep -v tests)
+unit-test: lint
+	go test -v -race ./...
 
 .PHONY: e2e-test
-e2e-test: deadcode-test
-	go test -tags e2e -race ./tests/...
-
-# to find uninitialized dependencies
-.PHONY: deadcode-test
-deadcode-test:
-	gometalinter --vendor --disable-all --enable=deadcode di
-
-.PHONY: vet
-vet:
-	@gometalinter --vendor --disable-all $(shell go list ./... | grep -v tests)
-
-.PHONY: deadcode
-deadcode:
-	@gometalinter --vendor --disable-all --enable=deadcode ./...
+e2e-test: lint
+	go test -v -tags e2e -race ./tests/...
 
 .PHONY: lint
 lint:
-	# ignore comments for exported objects
-	# ignore Err prefix
-	gometalinter --vendor --disable-all --enable=golint --exclude="(should have comment|ErrFoo)" ./...
+	@golangci-lint run --disable-all \
+	--build-tags e2e \
+	-e 'should have name of the form ErrFoo' -E 'deadcode,govet,golint' \
+	./...
 
 .PHONY: coverage
 coverage:
