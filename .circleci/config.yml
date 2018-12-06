@@ -11,9 +11,9 @@ jobs:
       - restore_cache:
           keys:
             - mod-{{ checksum "go.sum" }}
-            - mod-{{ checksum "gotool.sum" }}
+            - tool-{{ checksum "gotool.sum" }}
 
-      - run: deps
+      - run:
           name: install dependencies
           command: make deps
 
@@ -23,7 +23,7 @@ jobs:
             - /go/pkg/mod
 
       - save_cache:
-          key: mod-{{ checksum "gotool.sum" }}
+          key: tool-{{ checksum "gotool.sum" }}
           paths:
             - /go/src/github.com/ktr0731/evans/_tools
 
