@@ -49,7 +49,7 @@ require (
 	golang.org/x/crypto v0.0.0-20181106171534-e4dc69e5b2fd // indirect
 	golang.org/x/net v0.0.0-20181107234226-1c5f79cfb164
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
-	golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8 // indirect
+	golang.org/x/sys v0.0.0-20181116161606-93218def8b18 // indirect
 	google.golang.org/genproto v0.0.0-20181107211654-5fc9ac540362 // indirect
 	google.golang.org/grpc v1.16.0
 	gopkg.in/AlecAivazis/survey.v1 v1.6.3 // indirect

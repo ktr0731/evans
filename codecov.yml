@@ -26,3 +26,11 @@ comment:
   layout: "header, diff"
   behavior: default
   require_changes: no
+
+ignore:
+  - main
+  - tests/mock
+  - tests/helper/server
+  - testentity
+  - helper
+  - di
