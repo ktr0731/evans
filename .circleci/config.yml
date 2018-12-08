@@ -4,6 +4,8 @@ jobs:
     working_directory: /go/src/github.com/ktr0731/evans
     docker:
       - image: ktr0731/circleci-evans
+    environment:
+      - GOCACHE: "/tmp/go/cache"
 
     steps:
       - checkout
@@ -21,11 +23,18 @@ jobs:
           key: mod-{{ checksum "go.sum" }}
           paths:
             - /go/pkg/mod
+          when: always
 
       - save_cache:
           key: tool-{{ checksum "gotool.sum" }}
           paths:
             - /go/src/github.com/ktr0731/evans/_tools
+          when: always
+
+      - restore_cache:
+          keys:
+            - build-cache-{{ .Branch }}--
+            - build-cache-master--
 
       - run:
           name: build
@@ -38,6 +47,12 @@ jobs:
       - run:
           name: test
           command: make test
+
+      - save_cache:
+          key: build-cache-{{ .Branch }}--{{ .Revision }}
+          paths:
+              - /tmp/go/cache
+          when: always
 
       - run:
           name: codecov

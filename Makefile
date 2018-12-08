@@ -66,7 +66,7 @@ lint:
 
 .PHONY: coverage
 coverage:
-	go test -coverpkg ./... -covermode=atomic -tags e2e -coverprofile=coverage.txt -race ./...
+	go test -coverpkg ./... -covermode=atomic -tags e2e -coverprofile=coverage.txt -race $(shell go list -tags e2e ./...)
 
 .PHONY: coverage-web
 coverage-web: coverage

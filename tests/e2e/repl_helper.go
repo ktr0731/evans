@@ -7,14 +7,14 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/ktr0731/evans/adapter/cmd"
+	"github.com/ktr0731/evans/adapter/app"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/tests/e2e/repl"
 	"github.com/ktr0731/evans/tests/helper"
 )
 
-func newCommand(ui cui.UI) *cmd.Command {
-	return cmd.New(ui)
+func newCommand(ui cui.UI) *app.Command {
+	return app.New(ui)
 }
 
 // replHelper has gateway.repl and special fields for repl-mode e2e testing.
