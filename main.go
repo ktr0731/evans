@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/ktr0731/evans/adapter/cmd"
+	"github.com/ktr0731/evans/adapter/app"
 )
 
 func main() {
-	os.Exit(cmd.New(nil).Run(os.Args[1:]))
+	os.Exit(app.New(nil).Run(os.Args[1:]))
 }
