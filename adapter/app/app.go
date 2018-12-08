@@ -40,8 +40,8 @@ Positional arguments:
 
 Options:
 %s
-        --help, -h               display help text and exit
-	--version, -v            display version and exit
+	--help, -h		display help text and exit
+	--version, -v		display version and exit
 
 `
 
@@ -51,7 +51,7 @@ func (c *Command) parseFlags(args []string) *options {
 	var opts options
 
 	f.BoolVarP(&opts.editConfig, "edit", "e", false, "edit config file using by $EDITOR")
-	f.BoolVar(&opts.repl, "repl", false, "start as REPL mode")
+	f.BoolVar(&opts.repl, "repl", false, "launch Evans as REPL mode")
 	f.BoolVar(&opts.cli, "cli", false, "start as CLI mode")
 	f.BoolVarP(&opts.silent, "silent", "s", false, "hide splash")
 	f.StringVar(&opts.host, "host", "", "gRPC server host")
@@ -59,9 +59,9 @@ func (c *Command) parseFlags(args []string) *options {
 	f.StringVar(&opts.pkg, "package", "", "default package")
 	f.StringVar(&opts.service, "service", "", "default service")
 	f.StringVar(&opts.call, "call", "", "call specified RPC by CLI mode")
-	f.StringVarP(&opts.file, "file", "f", "", "the script file which will be executed by (used only CLI mode)")
+	f.StringVarP(&opts.file, "file", "f", "", "a script file that will be executed by (used only CLI mode)")
 	f.StringSliceVar(&opts.path, "path", nil, "proto file paths")
-	f.StringSliceVar(&opts.header, "header", nil, "default headers which set to each requests (example: foo=bar)")
+	f.StringSliceVar(&opts.header, "header", nil, "default headers that set to each requests (example: foo=bar)")
 	f.BoolVar(&opts.web, "web", false, "use gRPC Web protocol")
 	f.BoolVarP(&opts.reflection, "reflection", "r", false, "use gRPC reflection")
 	f.BoolVarP(&opts.version, "version", "v", false, "display version and exit")
