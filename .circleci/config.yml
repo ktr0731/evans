@@ -23,11 +23,13 @@ jobs:
           key: mod-{{ checksum "go.sum" }}
           paths:
             - /go/pkg/mod
+          when: always
 
       - save_cache:
           key: tool-{{ checksum "gotool.sum" }}
           paths:
             - /go/src/github.com/ktr0731/evans/_tools
+          when: always
 
       - restore_cache:
           keys:
@@ -50,6 +52,7 @@ jobs:
           key: build-cache-{{ .Branch }}--{{ .Revision }}
           paths:
               - /tmp/go/cache
+          when: always
 
       - run:
           name: codecov
