@@ -28,7 +28,7 @@ jobs:
       - save_cache:
           key: tool-{{ checksum "gotool.sum" }}
           paths:
-            - /go/src/github.com/ktr0731/evans/_tools
+            - /go/pkg/dept
           when: always
 
       - restore_cache:
@@ -42,7 +42,7 @@ jobs:
 
       - run:
           name: coverage
-          command: make coverage
+          command: make coverage-circleci
 
       - run:
           name: test
