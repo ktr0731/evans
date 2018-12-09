@@ -65,7 +65,9 @@ func (c *Command) parseFlags(args []string) *options {
 	f.BoolVar(&opts.web, "web", false, "use gRPC Web protocol")
 	f.BoolVarP(&opts.reflection, "reflection", "r", false, "use gRPC reflection")
 	f.BoolVarP(&opts.version, "version", "v", false, "display version and exit")
+	f.MarkHidden("version")
 	f.BoolP("help", "h", false, "display help text and exit")
+	f.MarkHidden("help")
 
 	f.Usage = func() {
 		c.printVersion()
@@ -74,7 +76,7 @@ func (c *Command) parseFlags(args []string) *options {
 		f.VisitAll(func(f *pflag.Flag) {
 			// Ignore help and version flags.
 			// These are shown at the end of the help text.
-			if f.Name == "help" || f.Name == "version" {
+			if f.Hidden {
 				return
 			}
 			cmd := "--" + f.Name
