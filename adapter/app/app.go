@@ -40,13 +40,12 @@ Positional arguments:
 
 Options:
 %s
-	--help, -h		display help text and exit
-	--version, -v		display version and exit
-
 `
 
 func (c *Command) parseFlags(args []string) *options {
 	f := pflag.NewFlagSet("main", pflag.ExitOnError)
+	f.SortFlags = false
+	f.SetOutput(c.ui.Writer())
 
 	var opts options
 
@@ -65,20 +64,13 @@ func (c *Command) parseFlags(args []string) *options {
 	f.BoolVar(&opts.web, "web", false, "use gRPC Web protocol")
 	f.BoolVarP(&opts.reflection, "reflection", "r", false, "use gRPC reflection")
 	f.BoolVarP(&opts.version, "version", "v", false, "display version and exit")
-	f.MarkHidden("version")
-	f.BoolP("help", "h", false, "display help text and exit")
-	f.MarkHidden("help")
+	f.BoolVarP(&opts.help, "help", "h", false, "display help text and exit")
 
 	f.Usage = func() {
 		c.printVersion()
 		var buf bytes.Buffer
 		w := tabwriter.NewWriter(&buf, 0, 8, 8, ' ', tabwriter.TabIndent)
 		f.VisitAll(func(f *pflag.Flag) {
-			// Ignore help and version flags.
-			// These are shown at the end of the help text.
-			if f.Hidden {
-				return
-			}
 			cmd := "--" + f.Name
 			if f.Shorthand != "" {
 				cmd += ", -" + f.Shorthand
@@ -126,6 +118,7 @@ type options struct {
 
 	// meta options
 	version bool
+	help    bool
 }
 
 // wrappedConfig is created at intialization and
@@ -231,6 +224,9 @@ func (c *Command) run(args []string) error {
 	switch {
 	case opts.version:
 		c.printVersion()
+		return nil
+	case opts.help:
+		c.flagSet.Usage()
 		return nil
 	case opts.editConfig:
 		if err := config.Edit(); err != nil {

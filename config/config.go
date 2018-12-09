@@ -2,21 +2,25 @@ package config
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/kelseyhightower/envconfig"
 	configure "github.com/ktr0731/go-configure"
 	"github.com/ktr0731/mapstruct"
 	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
+	"github.com/spf13/viper"
+	xdgbasedir "github.com/zchee/go-xdgbasedir"
 )
 
 var (
-	localConfigName = ".evans.toml"
+	localConfigName  = ".evans.toml"
+	globalConfigName = "config.toml"
 )
 
 var mConfig *configure.Configure
@@ -32,14 +36,16 @@ type Header struct {
 	Val string `toml:"val"`
 }
 
+type Header2 map[string]string
+
 type Request struct {
-	Header []Header `toml:"header"`
-	Web    bool     `toml:"web"`
+	Header Header2 `toml:"header"`
+	Web    bool    `toml:"web"`
 }
 
 type REPL struct {
 	Server       *Server `toml:"-"`
-	PromptFormat string  `default:"{package}.{sevice}@{addr}:{port}" toml:"promptFormat"`
+	PromptFormat string  `toml:"promptFormat"`
 
 	ColoredOutput bool `default:"true" toml:"coloredOutput"`
 
@@ -56,7 +62,6 @@ type Input struct {
 }
 
 type Meta struct {
-	Path        string `default:"~/.config/evans/config.toml" toml:"path"`
 	AutoUpdate  bool   `default:"false" toml:"autoUpdate"`
 	UpdateLevel string `default:"patch" toml:"updateLevel"`
 }
@@ -83,11 +88,99 @@ type Log struct {
 	Prefix string `default:"[evans] " toml:"prefix"`
 }
 
-func init() {
+func Get2() (*Config, error) {
+	return initConfig()
+}
+
+func initDefaultValues() {
+	viper.SetDefault("default.protoPath", []string{""})
+	viper.SetDefault("default.protoFile", []string{""})
+	viper.SetDefault("default.package", "")
+	viper.SetDefault("default.service", "")
+
+	viper.SetDefault("meta.autoUpdate", false)
+	viper.SetDefault("meta.updateLevel", "patch")
+
+	viper.SetDefault("repl.promptFormat", "{package}.{sevice}@{addr}:{port}")
+	viper.SetDefault("repl.coloredOutput", true)
+	viper.SetDefault("repl.showSplashText", true)
+	viper.SetDefault("repl.splashTextPath", "")
+
+	viper.SetDefault("server.host", "127.0.0.1")
+	viper.SetDefault("server.port", "50051")
+	viper.SetDefault("server.reflection", false)
+
+	viper.SetDefault("log.prefix", "evans: ")
+
+	viper.SetDefault("request.header", Header2{"grpc-client": "evans"})
+	viper.SetDefault("request.web", false)
+}
+
+func defaultConfig() (*Config, error) {
+	initDefaultValues()
+	var cfg Config
+	err := viper.Unmarshal(&cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal default config")
+	}
+	return &cfg, nil
+}
+
+// TODO: sync.Once
+func initConfig() (*Config, error) {
+	initDefaultValues()
+
+	cfgDir := filepath.Join(xdgbasedir.ConfigHome(), "evans")
+
+	// Global config paths
+	viper.SetConfigType("toml")
+	viper.SetConfigName("config")
+	viper.AddConfigPath(cfgDir)
+	err := viper.ReadInConfig()
+	if err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			if err := os.MkdirAll(cfgDir, 0755); err != nil {
+				return nil, errors.Wrap(err, "failed to create config dirs")
+			}
+			if err := viper.WriteConfigAs(filepath.Join(cfgDir, globalConfigName)); err != nil {
+				return nil, errors.Wrap(err, "failed to write a default config")
+			}
+			return defaultConfig()
+		} else {
+			return nil, err
+		}
+	}
+	var globalCfg Config
+	if err := viper.Unmarshal(&globalCfg); err != nil {
+		return nil, err
+	}
+
+	p, found := getLocalConfigPath()
+	if !found {
+		return &globalCfg, nil
+	}
+
+	f, err := os.Open(p)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to open a local config file")
+	}
+	defer f.Close()
+	if err := viper.MergeConfig(f); err != nil {
+		return nil, errors.Wrap(err, "failed to merge a local config to the global config")
+	}
+
+	var finalCfg Config
+	if err := viper.Unmarshal(&finalCfg); err != nil {
+		return nil, err
+	}
+	return &finalCfg, nil
+
+	////
+
 	conf := Config{
 		Request: &Request{
-			Header: []Header{
-				{"grpc-client", "evans"},
+			Header: Header2{
+				"grpc-client": "evans",
 			},
 		},
 		// to show items in initial config file, set an empty value
@@ -96,15 +189,15 @@ func init() {
 			ProtoFile: []string{""},
 		},
 	}
-	var err error
 	if err := envconfig.Process("evans", &conf); err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	mConfig, err = configure.NewConfigure(conf.Meta.Path, conf, nil)
-	if err != nil {
-		panic(err)
-	}
+	// mConfig, err = configure.NewConfigure(conf.Meta.Path, conf, nil)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	return nil, nil
 }
 
 func SetupConfig(c *Config) {
@@ -151,6 +244,25 @@ func Edit() error {
 	return mConfig.Edit()
 }
 
+func getLocalConfigPath() (string, bool) {
+	if _, err := os.Stat(localConfigName); err != nil {
+		if os.IsNotExist(err) {
+			root, found := lookupProjectRootPath()
+			if !found {
+				return "", false
+			}
+			p := filepath.Join(root, localConfigName)
+			if _, err := os.Stat(p); os.IsNotExist(err) {
+				return "", false
+			}
+			return p, true
+		}
+		return "", false
+	}
+	p, err := filepath.Abs(localConfigName)
+	return p, err == nil
+}
+
 func getLocalConfig() (*Config, error) {
 	var f io.ReadCloser
 	if _, err := os.Stat(localConfigName); err != nil {
@@ -174,6 +286,15 @@ func getLocalConfig() (*Config, error) {
 	var conf Config
 	_, err = toml.DecodeReader(f, &conf)
 	return &conf, err
+}
+
+func lookupProjectRootPath() (string, bool) {
+	b, err := exec.Command("git", "rev-parse", "--show-cdup").Output()
+	if err != nil {
+		return "", false
+	}
+	p := strings.TrimSpace(string(b))
+	return p, p != ""
 }
 
 func lookupProjectRoot() (io.ReadCloser, error) {
