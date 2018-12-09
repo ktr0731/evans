@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -82,7 +83,7 @@ func TestLoad(t *testing.T) {
 		resetEnv := changeEnv("XDG_CONFIG_HOME", filepath.Join(cwd, "config"))
 		defer resetEnv()
 
-		cfg, err := Get2()
+		cfg, err := Get2(nil)
 		require.NoError(t, err, "Get2 must not return any errors")
 
 		defCfg := DefaultConfig(t)
@@ -103,12 +104,13 @@ func TestLoad(t *testing.T) {
 		// global.toml was changed host and port to 'localhost' and '3000'.
 		copyFile(t, filepath.Join(cwd, "config", "evans", "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
 
-		cfg, err := Get2()
+		cfg, err := Get2(nil)
 		require.NoError(t, err, "Get2 must not return any errors")
 
 		expected := DefaultConfig(t)
 		expected.Server.Host = "localhost"
 		expected.Server.Port = "3000"
+		expected.Default.ProtoPath = []string{"foo"}
 
 		assert.EqualValues(t, expected, cfg)
 	})
@@ -134,7 +136,7 @@ func TestLoad(t *testing.T) {
 		err = exec.Command("git", "init").Run()
 		require.NoError(t, err, "failed to init a pseudo project")
 
-		cfg, err := Get2()
+		cfg, err := Get2(nil)
 		require.NoError(t, err, "Get2 must not return any errors")
 
 		expected := DefaultConfig(t)
@@ -143,6 +145,47 @@ func TestLoad(t *testing.T) {
 		// Local config (global config is overwritten)
 		expected.Server.Port = "3333"
 		expected.Request.Header["foo"] = "bar"
+		expected.Default.ProtoPath = []string{"bar"}
+
+		assert.EqualValues(t, expected, cfg)
+	})
+
+	t.Run("Will be apply local config and flags", func(t *testing.T) {
+		oldCWD := getWorkDir(t)
+
+		cwd, cleanup := setup(t)
+		defer cleanup()
+		resetEnv := changeEnv("XDG_CONFIG_HOME", filepath.Join(cwd, "config"))
+		defer resetEnv()
+
+		projDir := filepath.Join(cwd, "local")
+
+		err := os.MkdirAll(filepath.Join(cwd, "config", "evans"), 0755)
+		require.NoError(t, err, "failed to setup config dir")
+		err = os.MkdirAll(projDir, 0755)
+		require.NoError(t, err, "failed to setup a project local dir")
+		copyFile(t, filepath.Join(cwd, "config", "evans", "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
+		copyFile(t, filepath.Join(projDir, ".evans.toml"), filepath.Join(oldCWD, "testdata", "local.toml"))
+
+		os.Chdir(projDir)
+		err = exec.Command("git", "init").Run()
+		require.NoError(t, err, "failed to init a pseudo project")
+
+		fs := pflag.NewFlagSet("test", pflag.ExitOnError)
+		fs.String("port", "", "")
+		fs.Parse([]string{"--port", "8080"})
+
+		cfg, err := Get2(fs)
+		require.NoError(t, err, "Get2 must not return any errors")
+
+		expected := DefaultConfig(t)
+		// Global config
+		expected.Server.Host = "localhost"
+		// Local config (global config is overwritten)
+		expected.Request.Header["foo"] = "bar"
+		expected.Default.ProtoPath = []string{"bar"}
+		// Flags (global and local configs are overwritten)
+		expected.Server.Port = "8080"
 
 		assert.EqualValues(t, expected, cfg)
 	})

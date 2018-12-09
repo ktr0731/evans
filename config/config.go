@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/kelseyhightower/envconfig"
 	configure "github.com/ktr0731/go-configure"
 	"github.com/ktr0731/mapstruct"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	xdgbasedir "github.com/zchee/go-xdgbasedir"
 )
@@ -88,8 +88,8 @@ type Log struct {
 	Prefix string `default:"[evans] " toml:"prefix"`
 }
 
-func Get2() (*Config, error) {
-	return initConfig()
+func Get2(fs *pflag.FlagSet) (*Config, error) {
+	return initConfig(fs)
 }
 
 func initDefaultValues() {
@@ -116,7 +116,29 @@ func initDefaultValues() {
 	viper.SetDefault("request.web", false)
 }
 
+func bindFlags(fs *pflag.FlagSet) {
+	kv := map[string]string{
+		"default.protoPath": "path",
+		"default.protoFile": "file",
+		"default.package":   "package",
+		"default.service":   "service",
+		"server.host":       "host",
+		"server.port":       "port",
+		"server.reflection": "reflection",
+		"request.header":    "header",
+		"request.web":       "web",
+	}
+	for k, v := range kv {
+		f := fs.Lookup(v)
+		if f == nil {
+			continue
+		}
+		viper.BindPFlag(k, f)
+	}
+}
+
 func defaultConfig() (*Config, error) {
+	viper.Reset()
 	initDefaultValues()
 	var cfg Config
 	err := viper.Unmarshal(&cfg)
@@ -127,7 +149,7 @@ func defaultConfig() (*Config, error) {
 }
 
 // TODO: sync.Once
-func initConfig() (*Config, error) {
+func initConfig(fs *pflag.FlagSet) (*Config, error) {
 	initDefaultValues()
 
 	cfgDir := filepath.Join(xdgbasedir.ConfigHome(), "evans")
@@ -169,35 +191,21 @@ func initConfig() (*Config, error) {
 		return nil, errors.Wrap(err, "failed to merge a local config to the global config")
 	}
 
+	var mergedCfg Config
+	if err := viper.Unmarshal(&mergedCfg); err != nil {
+		return nil, err
+	}
+
+	if fs == nil {
+		return &mergedCfg, nil
+	}
+
+	bindFlags(fs)
 	var finalCfg Config
 	if err := viper.Unmarshal(&finalCfg); err != nil {
 		return nil, err
 	}
 	return &finalCfg, nil
-
-	////
-
-	conf := Config{
-		Request: &Request{
-			Header: Header2{
-				"grpc-client": "evans",
-			},
-		},
-		// to show items in initial config file, set an empty value
-		Default: &Default{
-			ProtoPath: []string{""},
-			ProtoFile: []string{""},
-		},
-	}
-	if err := envconfig.Process("evans", &conf); err != nil {
-		return nil, err
-	}
-
-	// mConfig, err = configure.NewConfigure(conf.Meta.Path, conf, nil)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	return nil, nil
 }
 
 func SetupConfig(c *Config) {

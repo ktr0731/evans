@@ -2,7 +2,7 @@
 [default]
   package = ""
   protofile = [""]
-  protopath = [""]
+  protopath = ["foo"]
   service = ""
 
 [log]
