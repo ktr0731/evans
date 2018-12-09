@@ -19,40 +19,6 @@ func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(m)
 }
 
-func TestConfig_Get(t *testing.T) {
-	checkValues := func() {
-		c := Get()
-		_ = c.REPL.Server.Host
-		_ = c.Env.Server.Host
-	}
-
-	t.Run("no local config", func(t *testing.T) {
-		checkValues()
-	})
-
-	t.Run("has local config", func(t *testing.T) {
-		f, err := ioutil.TempFile("", "")
-		require.NoError(t, err)
-		defer f.Close()
-
-		backup := localConfigName
-		defer func() {
-			localConfigName = backup
-		}()
-
-		localConfigName = f.Name()
-
-		checkValues()
-	})
-
-	t.Run("REPL.Server and Env.Server are same as top-level Server", func(t *testing.T) {
-		checkValues()
-		c := Get()
-		assert.Equal(t, c.Server, c.Env.Server)
-		assert.Equal(t, c.Server, c.REPL.Server)
-	})
-}
-
 func TestLoad(t *testing.T) {
 	setup := func(t *testing.T) (string, func()) {
 		cwd := getWorkDir(t)
@@ -77,14 +43,26 @@ func TestLoad(t *testing.T) {
 		}
 	}
 
+	checkValues := func(t *testing.T, c *Config) {
+		require.NotNil(t, c.REPL.Server)
+		if len(c.Default.ProtoFile) == 1 {
+			require.NotEmpty(t, c.Default.ProtoFile[0])
+		}
+		if len(c.Default.ProtoPath) == 1 {
+			require.NotEmpty(t, c.Default.ProtoPath[0])
+		}
+	}
+
 	t.Run("Create a default global config if both of global and local config are not found", func(t *testing.T) {
 		cwd, cleanup := setup(t)
 		defer cleanup()
 		resetEnv := changeEnv("XDG_CONFIG_HOME", filepath.Join(cwd, "config"))
 		defer resetEnv()
 
-		cfg, err := Get2(nil)
-		require.NoError(t, err, "Get2 must not return any errors")
+		cfg, err := Get(nil)
+		require.NoError(t, err, "Get must not return any errors")
+
+		checkValues(t, cfg)
 
 		defCfg := DefaultConfig(t)
 		assert.EqualValues(t, cfg, defCfg)
@@ -104,8 +82,10 @@ func TestLoad(t *testing.T) {
 		// global.toml was changed host and port to 'localhost' and '3000'.
 		copyFile(t, filepath.Join(cwd, "config", "evans", "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
 
-		cfg, err := Get2(nil)
-		require.NoError(t, err, "Get2 must not return any errors")
+		cfg, err := Get(nil)
+		require.NoError(t, err, "Get must not return any errors")
+
+		checkValues(t, cfg)
 
 		expected := DefaultConfig(t)
 		expected.Server.Host = "localhost"
@@ -136,8 +116,10 @@ func TestLoad(t *testing.T) {
 		err = exec.Command("git", "init").Run()
 		require.NoError(t, err, "failed to init a pseudo project")
 
-		cfg, err := Get2(nil)
-		require.NoError(t, err, "Get2 must not return any errors")
+		cfg, err := Get(nil)
+		require.NoError(t, err, "Get must not return any errors")
+
+		checkValues(t, cfg)
 
 		expected := DefaultConfig(t)
 		// Global config
@@ -175,8 +157,10 @@ func TestLoad(t *testing.T) {
 		fs.String("port", "", "")
 		fs.Parse([]string{"--port", "8080"})
 
-		cfg, err := Get2(fs)
-		require.NoError(t, err, "Get2 must not return any errors")
+		cfg, err := Get(fs)
+		require.NoError(t, err, "Get must not return any errors")
+
+		checkValues(t, cfg)
 
 		expected := DefaultConfig(t)
 		// Global config

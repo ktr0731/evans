@@ -1,17 +1,12 @@
 package config
 
 import (
-	"bytes"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/BurntSushi/toml"
 	configure "github.com/ktr0731/go-configure"
-	"github.com/ktr0731/mapstruct"
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -53,14 +48,6 @@ type REPL struct {
 	SplashTextPath string `default:"" toml:"splashTextPath"`
 }
 
-type Env struct {
-	Server *Server `toml:"-"`
-}
-
-type Input struct {
-	PromptFormat string `default:"{ancestor}{name} ({type}) => " toml:"promptFormat"`
-}
-
 type Meta struct {
 	AutoUpdate  bool   `default:"false" toml:"autoUpdate"`
 	UpdateLevel string `default:"patch" toml:"updateLevel"`
@@ -70,11 +57,9 @@ type Config struct {
 	Default *Default `toml:"default"`
 	Meta    *Meta    `toml:"meta"`
 	REPL    *REPL    `toml:"repl"`
-	Env     *Env     `toml:"env"`
 	Server  *Server  `toml:"server"`
 	Log     *Log     `toml:"log"`
 	Request *Request `toml:"request"`
-	Input   *Input   `toml:"input"`
 }
 
 type Default struct {
@@ -88,7 +73,7 @@ type Log struct {
 	Prefix string `default:"[evans] " toml:"prefix"`
 }
 
-func Get2(fs *pflag.FlagSet) (*Config, error) {
+func Get(fs *pflag.FlagSet) (*Config, error) {
 	return initConfig(fs)
 }
 
@@ -145,11 +130,16 @@ func defaultConfig() (*Config, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal default config")
 	}
+	setupConfig(&cfg)
 	return &cfg, nil
 }
 
 // TODO: sync.Once
-func initConfig(fs *pflag.FlagSet) (*Config, error) {
+func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
+	defer func() {
+		setupConfig(cfg)
+	}()
+
 	initDefaultValues()
 
 	cfgDir := filepath.Join(xdgbasedir.ConfigHome(), "evans")
@@ -158,7 +148,7 @@ func initConfig(fs *pflag.FlagSet) (*Config, error) {
 	viper.SetConfigType("toml")
 	viper.SetConfigName("config")
 	viper.AddConfigPath(cfgDir)
-	err := viper.ReadInConfig()
+	err = viper.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			if err := os.MkdirAll(cfgDir, 0755); err != nil {
@@ -167,7 +157,8 @@ func initConfig(fs *pflag.FlagSet) (*Config, error) {
 			if err := viper.WriteConfigAs(filepath.Join(cfgDir, globalConfigName)); err != nil {
 				return nil, errors.Wrap(err, "failed to write a default config")
 			}
-			return defaultConfig()
+			cfg, err = defaultConfig()
+			return
 		} else {
 			return nil, err
 		}
@@ -179,7 +170,8 @@ func initConfig(fs *pflag.FlagSet) (*Config, error) {
 
 	p, found := getLocalConfigPath()
 	if !found {
-		return &globalCfg, nil
+		cfg = &globalCfg
+		return
 	}
 
 	f, err := os.Open(p)
@@ -197,7 +189,8 @@ func initConfig(fs *pflag.FlagSet) (*Config, error) {
 	}
 
 	if fs == nil {
-		return &mergedCfg, nil
+		cfg = &mergedCfg
+		return
 	}
 
 	bindFlags(fs)
@@ -205,10 +198,11 @@ func initConfig(fs *pflag.FlagSet) (*Config, error) {
 	if err := viper.Unmarshal(&finalCfg); err != nil {
 		return nil, err
 	}
-	return &finalCfg, nil
+	cfg = &finalCfg
+	return
 }
 
-func SetupConfig(c *Config) {
+func setupConfig(c *Config) {
 	if len(c.Default.ProtoFile) == 1 && c.Default.ProtoFile[0] == "" {
 		c.Default.ProtoFile = []string{}
 	}
@@ -216,36 +210,6 @@ func SetupConfig(c *Config) {
 		c.Default.ProtoPath = []string{}
 	}
 	c.REPL.Server = c.Server
-	c.Env.Server = c.Server
-}
-
-func Get() *Config {
-	var global Config
-	err := mapstructure.Decode(mConfig.Get(), &global)
-	if err != nil {
-		panic(err)
-	}
-
-	local, err := getLocalConfig()
-	if err != nil {
-		panic(err)
-	}
-
-	// if local config missing, return global config
-	if local == nil {
-		SetupConfig(&global)
-		return &global
-	}
-
-	ic, err := mapstruct.Map(&global, local)
-	if err != nil {
-		panic(err)
-	}
-
-	c := ic.(*Config)
-	SetupConfig(c)
-
-	return c
 }
 
 func Edit() error {
@@ -271,31 +235,6 @@ func getLocalConfigPath() (string, bool) {
 	return p, err == nil
 }
 
-func getLocalConfig() (*Config, error) {
-	var f io.ReadCloser
-	if _, err := os.Stat(localConfigName); err != nil {
-		if os.IsNotExist(err) {
-			f, err = lookupProjectRoot()
-			// local file not found
-			if f == nil || err != nil {
-				return nil, nil
-			}
-			defer f.Close()
-		}
-		return nil, err
-	}
-
-	f, err := os.Open(localConfigName)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	var conf Config
-	_, err = toml.DecodeReader(f, &conf)
-	return &conf, err
-}
-
 func lookupProjectRootPath() (string, bool) {
 	b, err := exec.Command("git", "rev-parse", "--show-cdup").Output()
 	if err != nil {
@@ -303,22 +242,4 @@ func lookupProjectRootPath() (string, bool) {
 	}
 	p := strings.TrimSpace(string(b))
 	return p, p != ""
-}
-
-func lookupProjectRoot() (io.ReadCloser, error) {
-	outBuf, errBuf := new(bytes.Buffer), new(bytes.Buffer)
-	cmd := exec.Command("git", "rev-parse", "--show-cdup")
-	cmd.Stdout = outBuf
-	cmd.Stderr = errBuf
-	if err := cmd.Run(); err != nil {
-		return nil, err
-	}
-	if errBuf.Len() != 0 {
-		return nil, errors.New(errBuf.String())
-	}
-	p := filepath.Join(outBuf.String(), localConfigName)
-	if _, err := os.Stat(p); os.IsNotExist(err) {
-		return nil, nil
-	}
-	return os.Open(p)
 }
