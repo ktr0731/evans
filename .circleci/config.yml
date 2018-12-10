@@ -29,8 +29,8 @@ jobs:
           when: always
 
       - run:
-        name: install tools
-        command: make tools
+          name: install tools
+          command: make tools
 
       - save_cache:
           key: tool-{{ checksum "gotool.sum" }}
