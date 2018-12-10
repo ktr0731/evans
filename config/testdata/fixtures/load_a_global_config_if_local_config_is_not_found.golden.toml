@@ -1,0 +1,35 @@
+
+[default]
+  package = ""
+  protofile = []
+  protopath = ["foo"]
+  service = ""
+
+[log]
+  prefix = "evans: "
+
+[meta]
+  autoupdate = false
+  updatelevel = "patch"
+
+[repl]
+  coloredoutput = true
+  promptformat = "{package}.{sevice}@{addr}:{port}"
+  showsplashtext = true
+  splashtextpath = ""
+
+  [repl.server]
+    host = "localhost"
+    port = "3000"
+    reflection = false
+
+[request]
+  web = false
+
+  [request.header]
+    grpc-client = "evans"
+
+[server]
+  host = "localhost"
+  port = "3000"
+  reflection = false

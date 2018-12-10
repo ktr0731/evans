@@ -27,9 +27,12 @@ func TestLoad(t *testing.T) {
 		require.NoError(t, err, "failed to create a temp dir to setup testing enviroment")
 
 		os.Chdir(dir)
+		oldEnv := os.Getenv("XDG_CONFIG_HOME")
+		os.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, "config"))
 
 		return dir, func() {
 			os.Chdir(cwd)
+			os.Setenv("XDG_CONFIG_HOME", oldEnv)
 			os.RemoveAll(dir)
 			viper.Reset()
 		}

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ktr0731/evans/logger"
 	configure "github.com/ktr0731/go-configure"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -116,6 +117,7 @@ func bindFlags(fs *pflag.FlagSet) {
 	for k, v := range kv {
 		f := fs.Lookup(v)
 		if f == nil {
+			logger.Printf("flag is not found: %s-%s", k, v)
 			continue
 		}
 		viper.BindPFlag(k, f)
@@ -148,13 +150,17 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 	viper.SetConfigType("toml")
 	viper.SetConfigName("config")
 	viper.AddConfigPath(cfgDir)
+
+	logger.Printf("load global config from %s", cfgDir)
 	err = viper.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			path := filepath.Join(cfgDir, globalConfigName)
+			logger.Printf("global config is not found, create a new one: %s", path)
 			if err := os.MkdirAll(cfgDir, 0755); err != nil {
 				return nil, errors.Wrap(err, "failed to create config dirs")
 			}
-			if err := viper.WriteConfigAs(filepath.Join(cfgDir, globalConfigName)); err != nil {
+			if err := viper.WriteConfigAs(path); err != nil {
 				return nil, errors.Wrap(err, "failed to write a default config")
 			}
 			cfg, err = defaultConfig()
@@ -170,10 +176,12 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 
 	p, found := getLocalConfigPath()
 	if !found {
+		logger.Println("local config is not found")
 		cfg = &globalCfg
 		return
 	}
 
+	logger.Printf("load local config from %s", p)
 	f, err := os.Open(p)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open a local config file")
@@ -189,10 +197,12 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 	}
 
 	if fs == nil {
+		logger.Println("flagset is not found")
 		cfg = &mergedCfg
 		return
 	}
 
+	logger.Println("bind flagset to the loaded config")
 	bindFlags(fs)
 	var finalCfg Config
 	if err := viper.Unmarshal(&finalCfg); err != nil {
