@@ -19,10 +19,37 @@ func ConvertValue(pv string, field entity.PrimitiveField) (interface{}, error) {
 		return nil, errors.New("type assertion failed")
 	}
 
+	protoDefaults := map[descriptor.FieldDescriptorProto_Type]interface{}{
+		descriptor.FieldDescriptorProto_TYPE_DOUBLE: float64(0),
+		descriptor.FieldDescriptorProto_TYPE_FLOAT: float32(0),
+		descriptor.FieldDescriptorProto_TYPE_INT64: int64(0),
+		descriptor.FieldDescriptorProto_TYPE_UINT64: uint64(0),
+		descriptor.FieldDescriptorProto_TYPE_INT32: int32(0),
+		descriptor.FieldDescriptorProto_TYPE_UINT32: uint32(0),
+		descriptor.FieldDescriptorProto_TYPE_FIXED64: uint64(0),
+		descriptor.FieldDescriptorProto_TYPE_FIXED32: uint32(0),
+		descriptor.FieldDescriptorProto_TYPE_BOOL: false,
+		descriptor.FieldDescriptorProto_TYPE_STRING: "",
+		descriptor.FieldDescriptorProto_TYPE_BYTES: []byte{},
+		descriptor.FieldDescriptorProto_TYPE_SFIXED64: uint64(0),
+		descriptor.FieldDescriptorProto_TYPE_SFIXED32: uint32(0),
+		descriptor.FieldDescriptorProto_TYPE_SINT64: int64(0),
+		descriptor.FieldDescriptorProto_TYPE_SINT32: int32(0),
+		}
+
+	t := descriptor.FieldDescriptorProto_Type(descriptor.FieldDescriptorProto_Type_value[f.PBType()])
+
+	if pv == "" {
+		d, found := protoDefaults[t]
+		if found {
+			return d, nil
+		}
+		// if not found, we'll let the normal code execute
+	}
+	
 	var v interface{}
 	var err error
 
-	t := descriptor.FieldDescriptorProto_Type(descriptor.FieldDescriptorProto_Type_value[f.PBType()])
 	switch t {
 	case descriptor.FieldDescriptorProto_TYPE_DOUBLE:
 		v, err = strconv.ParseFloat(pv, 64)
