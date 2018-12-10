@@ -82,6 +82,10 @@ jobs:
           command: make deps
 
       - run:
+          name: install tools
+          command: make tools
+
+      - run:
           name: update GitHub releases and update brew formula
           command: make brew-update
 
