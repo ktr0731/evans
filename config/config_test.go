@@ -231,6 +231,29 @@ func TestLoad(t *testing.T) {
 
 		return cfg
 	})
+
+	assertWithGolden(t, "will be apply flags, but local config doesn't exist", func(t *testing.T) *Config {
+		oldCWD := getWorkDir(t)
+
+		_, cfgDir, cleanup := setup(t)
+		defer cleanup()
+
+		// Copy global.toml from testdata to the config dir.
+		// default config was changed host and port to 'localhost' and '3000'.
+		copyFile(t, filepath.Join(cfgDir, "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
+
+		fs := pflag.NewFlagSet("test", pflag.ExitOnError)
+		fs.String("port", "", "")
+		// --port flag changes port number to '8080'.
+		fs.Parse([]string{"--port", "8080"})
+
+		cfg, err := Get(fs)
+		require.NoError(t, err, "Get must not return any errors")
+
+		checkValues(t, cfg)
+
+		return cfg
+	})
 }
 
 func getWorkDir(t *testing.T) string {

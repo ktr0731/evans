@@ -46,8 +46,8 @@ func initEnv(cfg *config.Config) (rerr error) {
 		}
 
 		headers := make([]entity.Header, 0, len(cfg.Request.Header))
-		for _, h := range cfg.Request.Header {
-			headers = append(headers, entity.Header{Key: h.Key, Val: h.Val})
+		for k, v := range cfg.Request.Header {
+			headers = append(headers, entity.Header{Key: k, Val: v})
 		}
 		if gRPCClient.ReflectionEnabled() {
 			var svcs []entity.Service
@@ -166,7 +166,7 @@ func initPromptInputter(cfg *config.Config) (err error) {
 	promptInputterOnce.Do(func() {
 		var e environment.Environment
 		e, err = Env(cfg)
-		promptInputter = inputter.NewPrompt(cfg.Input.PromptFormat, e)
+		promptInputter = inputter.NewPrompt(cfg.REPL.PromptFormat, e)
 	})
 	return
 }

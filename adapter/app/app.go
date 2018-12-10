@@ -8,13 +8,13 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 	"text/tabwriter"
 
 	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/adapter/repl"
@@ -23,7 +23,6 @@ import (
 	"github.com/ktr0731/evans/meta"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
-	"github.com/mitchellh/copystructure"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 )
@@ -60,7 +59,7 @@ func (c *Command) parseFlags(args []string) *options {
 	f.StringVar(&opts.call, "call", "", "call specified RPC by CLI mode")
 	f.StringVarP(&opts.file, "file", "f", "", "a script file that will be executed by (used only CLI mode)")
 	f.StringSliceVar(&opts.path, "path", nil, "proto file paths")
-	f.StringSliceVar(&opts.header, "header", nil, "default headers that set to each requests (example: foo=bar)")
+	f.StringToStringVar(&opts.header, "header", nil, "default headers that set to each requests (example: foo=bar)")
 	f.BoolVar(&opts.web, "web", false, "use gRPC Web protocol")
 	f.BoolVarP(&opts.reflection, "reflection", "r", false, "use gRPC reflection")
 	f.BoolVarP(&opts.version, "version", "v", false, "display version and exit")
@@ -112,7 +111,7 @@ type options struct {
 	call       string
 	file       string
 	path       []string
-	header     []string
+	header     map[string]string
 	web        bool
 	reflection bool
 
@@ -176,10 +175,12 @@ func (c *Command) init(opts *options, proto []string) error {
 	var err error
 	c.initOnce.Do(func() {
 		var cfg *config.Config
-		cfg, err = mergeConfig(config.Get(), opts, proto)
+		cfg, err = config.Get(c.flagSet)
 		if err != nil {
 			return
 		}
+
+		pp.Println(cfg.Server)
 
 		c.wcfg = &wrappedConfig{
 			cfg:  cfg,
@@ -382,71 +383,6 @@ func (c *Command) processUpdate(ctx context.Context) error {
 	return nil
 }
 
-func mergeConfig(cfg *config.Config, opt *options, proto []string) (*config.Config, error) {
-	headers, err := toHeader(opt.header)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to merge config and option")
-	}
-
-	mergeString := func(s1, s2 string) string {
-		if s2 != "" {
-			return s2
-		}
-		return s1
-	}
-
-	mergeSlice := func(s1, s2 []string) []string {
-		slice := make([]string, 0, len(s1)+len(s2))
-		encountered := map[string]bool{}
-		for _, s := range append(s1, s2...) {
-			if !encountered[s] {
-				slice = append(slice, s)
-				encountered[s] = true
-			}
-		}
-		return slice
-	}
-
-	mergeHeader := func(s1, s2 []config.Header) []config.Header {
-		slice := make([]config.Header, 0, len(s1)+len(s2))
-		encountered := map[string]bool{}
-		for _, s := range append(s1, s2...) {
-			if !encountered[s.Key] {
-				slice = append(slice, s)
-				encountered[s.Key] = true
-			}
-		}
-		return slice
-	}
-
-	mc := copystructure.Must(copystructure.Copy(cfg)).(*config.Config)
-
-	mc.Default.Package = mergeString(cfg.Default.Package, opt.pkg)
-	mc.Default.Service = mergeString(cfg.Default.Service, opt.service)
-	mc.Default.ProtoPath = mergeSlice(cfg.Default.ProtoPath, opt.path)
-	mc.Default.ProtoFile = mergeSlice(cfg.Default.ProtoFile, proto)
-
-	mc.Server.Host = mergeString(cfg.Server.Host, opt.host)
-	mc.Server.Port = mergeString(cfg.Server.Port, opt.port)
-
-	mc.Request.Header = mergeHeader(cfg.Request.Header, headers)
-
-	if opt.silent {
-		mc.REPL.ShowSplashText = false
-	}
-
-	if opt.web {
-		mc.Request.Web = true
-	}
-
-	if opt.reflection {
-		mc.Server.Reflection = true
-	}
-
-	config.SetupConfig(mc)
-	return mc, nil
-}
-
 func checkPrecondition(w *wrappedConfig) error {
 	if _, err := strconv.Atoi(w.cfg.Server.Port); err != nil {
 		return errors.New(`port must be integer`)
@@ -490,22 +426,4 @@ func isCallable(w *wrappedConfig) error {
 		return result
 	}
 	return nil
-}
-
-func toHeader(sh []string) ([]config.Header, error) {
-	if len(sh) == 0 {
-		return nil, nil
-	}
-	headers := make([]config.Header, 0, len(sh))
-	for _, h := range sh {
-		s := strings.SplitN(h, "=", 2)
-		if len(s) != 2 {
-			return nil, errors.New(`header must be specified "key=val" format`)
-		}
-		headers = append(headers, config.Header{
-			Key: s[0],
-			Val: s[1],
-		})
-	}
-	return headers, nil
 }

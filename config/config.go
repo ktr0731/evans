@@ -101,15 +101,16 @@ func initDefaultValues() {
 
 func bindFlags(fs *pflag.FlagSet) {
 	kv := map[string]string{
-		"default.protoPath": "path",
-		"default.protoFile": "file",
-		"default.package":   "package",
-		"default.service":   "service",
-		"server.host":       "host",
-		"server.port":       "port",
-		"server.reflection": "reflection",
-		"request.header":    "header",
-		"request.web":       "web",
+		"default.protoPath":   "path",
+		"default.protoFile":   "file",
+		"default.package":     "package",
+		"default.service":     "service",
+		"server.host":         "host",
+		"server.port":         "port",
+		"server.reflection":   "reflection",
+		"request.header":      "header",
+		"request.web":         "web",
+		"repl.showSplashText": "silent",
 	}
 	for k, v := range kv {
 		f := fs.Lookup(v)
@@ -193,6 +194,16 @@ func defaultConfig() (*Config, error) {
 
 func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 	defer func() {
+		if fs == nil {
+			logger.Println("flagset is not found")
+		} else {
+			logger.Println("bind flagset to the loaded config")
+			bindFlags(fs)
+			if err = viper.Unmarshal(cfg); err != nil {
+				return
+			}
+		}
+
 		if err == nil {
 			setupConfig(cfg)
 		}
@@ -225,6 +236,7 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 			return nil, err
 		}
 	}
+
 	var globalCfg Config
 	if err := viper.Unmarshal(&globalCfg); err != nil {
 		return nil, err
@@ -251,21 +263,7 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 	if err := viper.Unmarshal(&mergedCfg); err != nil {
 		return nil, err
 	}
-
-	if fs == nil {
-		logger.Println("flagset is not found")
-		cfg = &mergedCfg
-		return
-	}
-
-	logger.Println("bind flagset to the loaded config")
-	bindFlags(fs)
-	var finalCfg Config
-	if err := viper.Unmarshal(&finalCfg); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal the config which is applied flag values")
-	}
-	cfg = &finalCfg
-	return
+	return &mergedCfg, nil
 }
 
 func setupConfig(c *Config) {

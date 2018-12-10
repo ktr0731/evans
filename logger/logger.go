@@ -2,12 +2,12 @@ package logger
 
 import (
 	"io"
-	"io/ioutil"
 	"log"
+	"os"
 )
 
 var (
-	defaultLogger = log.New(ioutil.Discard, "evans: ", 0)
+	defaultLogger = log.New(os.Stderr, "evans: ", 0)
 )
 
 func SetOutput(w io.Writer) {
