@@ -38,6 +38,7 @@ func assertWithGolden(t *testing.T, name string, f func(t *testing.T) *Config) {
 	}
 
 	t.Run(name, func(t *testing.T) {
+		t.Helper()
 		cfg := f(t)
 
 		fname := normalizeFilename(name)
@@ -153,7 +154,7 @@ func TestLoad(t *testing.T) {
 		defer cleanup()
 
 		// Copy global.toml from testdata to the config dir.
-		// global.toml was changed host and port to 'localhost' and '3000'.
+		// default config was changed host and port to 'localhost' and '3000'.
 		copyFile(t, filepath.Join(cfgDir, "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
 
 		cfg, err := Get(nil)
@@ -173,7 +174,11 @@ func TestLoad(t *testing.T) {
 		projDir := filepath.Join(cwd, "local")
 		mkdir(t, projDir)
 
+		// Copy global.toml from testdata to the config dir.
+		// default config was changed host and port to 'localhost' and '3000'.
 		copyFile(t, filepath.Join(cfgDir, "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
+		// Copy local.toml from testdata to the project dir.
+		// global.toml was changed protopath, request.header and port to '["bar"]', 'grpc-client = "evans"' and '3333'.
 		copyFile(t, filepath.Join(projDir, ".evans.toml"), filepath.Join(oldCWD, "testdata", "local.toml"))
 
 		os.Chdir(projDir)
@@ -197,7 +202,11 @@ func TestLoad(t *testing.T) {
 		projDir := filepath.Join(cwd, "local")
 
 		mkdir(t, projDir)
+		// Copy global.toml from testdata to the config dir.
+		// default config was changed host and port to 'localhost' and '3000'.
 		copyFile(t, filepath.Join(cfgDir, "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
+		// Copy local.toml from testdata to the project dir.
+		// global.toml was changed protopath, request.header and port to '["bar"]', 'grpc-client = "evans"' and '3333'.
 		copyFile(t, filepath.Join(projDir, ".evans.toml"), filepath.Join(oldCWD, "testdata", "local.toml"))
 
 		os.Chdir(projDir)
@@ -206,7 +215,14 @@ func TestLoad(t *testing.T) {
 
 		fs := pflag.NewFlagSet("test", pflag.ExitOnError)
 		fs.String("port", "", "")
-		fs.Parse([]string{"--port", "8080"})
+		fs.StringToString("header", nil, "")
+		fs.StringSlice("path", nil, "")
+		// --port flag changes port number to '8080'. Also --header appends 'foo=bar' and 'hoge=fuga' to 'request.header'.
+		fs.Parse([]string{
+			"--port", "8080",
+			"--path", "yoko.touma",
+			"--header", "foo=bar", "--header", "hoge=fuga",
+		})
 
 		cfg, err := Get(fs)
 		require.NoError(t, err, "Get must not return any errors")

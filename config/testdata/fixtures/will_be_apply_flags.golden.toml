@@ -2,7 +2,7 @@
 [default]
   package = ""
   protofile = []
-  protopath = ["bar"]
+  protopath = ["bar","yoko.touma"]
   service = ""
 
 [log]
@@ -29,6 +29,7 @@
   [request.header]
     foo = "bar"
     grpc-client = "evans"
+    hoge = "fuga"
 
 [server]
   host = "localhost"

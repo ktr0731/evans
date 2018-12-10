@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/csv"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,11 +28,11 @@ type Server struct {
 	Reflection bool   `toml:"reflection"`
 }
 
-type Header map[string]string
+// type Header map[string]string
 
 type Request struct {
-	Header Header `toml:"header"`
-	Web    bool   `toml:"web"`
+	Header map[string]string `toml:"header"`
+	Web    bool              `toml:"web"`
 }
 
 type REPL struct {
@@ -94,7 +95,7 @@ func initDefaultValues() {
 
 	viper.SetDefault("log.prefix", "evans: ")
 
-	viper.SetDefault("request.header", Header{"grpc-client": "evans"})
+	viper.SetDefault("request.header", map[string]string{"grpc-client": "evans"})
 	viper.SetDefault("request.web", false)
 }
 
@@ -116,8 +117,66 @@ func bindFlags(fs *pflag.FlagSet) {
 			logger.Printf("flag is not found: %s-%s", k, v)
 			continue
 		}
+		switch f.Value.Type() {
+		case "stringToString":
+			// There is pflag.StringToString which converts 'key=val' to a map structure.
+			// However, currently, we don't use BindPFlag because it has some bugs.
+			currentMap := viper.GetStringMapString(k)
+			newMap := stringToStringToMap(f.Value.String())
+			for k, v := range newMap {
+				currentMap[k] = v
+			}
+			viper.Set(k, currentMap)
+			continue
+		case "stringSlice":
+			// We want to append flag values to the config.
+			// So, we don't use BindPFlag.
+			currentSlice := viper.GetStringSlice(k)
+			newSlice := stringSliceToSlice(f.Value.String())
+			for _, v := range newSlice {
+				currentSlice = append(currentSlice, v)
+			}
+			viper.Set(k, currentSlice)
+			continue
+		}
 		viper.BindPFlag(k, f)
 	}
+}
+
+// stringToStringToMap convets (pflag.stringToStringValue).String() to a map.
+// If some errors occur, stringToStringToMap returns an empty map.
+func stringToStringToMap(val string) map[string]string {
+	val = strings.Trim(val, "[]")
+	if len(val) == 0 {
+		return nil
+	}
+	r := csv.NewReader(strings.NewReader(val))
+	ss, err := r.Read()
+	if err != nil {
+		return nil
+	}
+	out := make(map[string]string, len(ss))
+	for _, pair := range ss {
+		kv := strings.SplitN(pair, "=", 2)
+		if len(kv) != 2 {
+			return nil
+		}
+		out[kv[0]] = kv[1]
+	}
+	return out
+}
+
+func stringSliceToSlice(val string) []string {
+	val = val[1 : len(val)-1]
+	if len(val) == 0 {
+		return nil
+	}
+	cr := csv.NewReader(strings.NewReader(val))
+	records, err := cr.Read()
+	if err != nil {
+		return nil
+	}
+	return records
 }
 
 func defaultConfig() (*Config, error) {
@@ -132,10 +191,11 @@ func defaultConfig() (*Config, error) {
 	return &cfg, nil
 }
 
-// TODO: sync.Once
 func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 	defer func() {
-		setupConfig(cfg)
+		if err == nil {
+			setupConfig(cfg)
+		}
 	}()
 
 	initDefaultValues()
@@ -202,7 +262,7 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 	bindFlags(fs)
 	var finalCfg Config
 	if err := viper.Unmarshal(&finalCfg); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to unmarshal the config which is applied flag values")
 	}
 	cfg = &finalCfg
 	return
