@@ -1,19 +1,101 @@
 package config
 
 import (
+	"flag"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/ktr0731/evans/logger"
+	toml "github.com/pelletier/go-toml"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 )
+
+var (
+	update = flag.Bool("update", false, "update golden files")
+)
+
+func init() {
+	if *update {
+		os.RemoveAll(filepath.Join("testdata", "fixtures"))
+	}
+}
+
+func assertWithGolden(t *testing.T, name string, f func(t *testing.T) *Config) {
+	normalizeFilename := func(name string) string {
+		fname := strings.Replace(strings.ToLower(name), " ", "_", -1) + ".golden.toml"
+		return filepath.Join("testdata", "fixtures", fname)
+	}
+
+	t.Run(name, func(t *testing.T) {
+		cfg := f(t)
+
+		fname := normalizeFilename(name)
+
+		// Load a TOML formatted golden file.
+		v := viper.New()
+		v.SetConfigType("toml")
+		f, err := os.Open(fname)
+		if *update {
+			createGolden(t, fname, cfg)
+			logger.Printf("golden updated: %s", fname)
+			return
+		}
+		require.NoError(t, err, "failed to load a golden file")
+		defer f.Close()
+
+		err = v.ReadConfig(f)
+		require.NoError(t, err, "failed to read golden file")
+
+		var expected Config
+		err = v.Unmarshal(&expected)
+		require.NoError(t, err, "failed to unmarshal a golden file")
+		setupConfig(&expected)
+
+		assert.EqualValues(t, expected, *cfg)
+	})
+}
+
+func createGolden(t *testing.T, fname string, cfg *Config) {
+	t.Helper()
+
+	m := structToMap(cfg).(map[string]interface{})
+	tree, err := toml.TreeFromMap(m)
+	if err != nil {
+		log.Fatal(err)
+	}
+	f, err := os.Create(fname)
+	require.NoError(t, err, "failed to create a file")
+	defer f.Close()
+	_, err = tree.WriteTo(f)
+	require.NoError(t, err, "failed to encode cfg as a TOML format")
+}
+
+func structToMap(i interface{}) interface{} {
+	rv := reflect.ValueOf(i)
+	if rv.Kind() != reflect.Struct && rv.Kind() != reflect.Ptr {
+		return rv.Interface()
+	}
+
+	m := make(map[string]interface{})
+	el := rv.Elem()
+	for i := 0; i < el.Type().NumField(); i++ {
+		tag := strings.ToLower(el.Type().Field(i).Tag.Get("toml"))
+		iface := el.Field(i).Interface()
+		m[tag] = structToMap(iface)
+	}
+	return m
+}
 
 func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(m)
@@ -38,14 +120,6 @@ func TestLoad(t *testing.T) {
 		}
 	}
 
-	changeEnv := func(k, v string) func() {
-		old := os.Getenv(k)
-		os.Setenv(k, v)
-		return func() {
-			os.Setenv(k, old)
-		}
-	}
-
 	checkValues := func(t *testing.T, c *Config) {
 		require.NotNil(t, c.REPL.Server)
 		if len(c.Default.ProtoFile) == 1 {
@@ -56,28 +130,23 @@ func TestLoad(t *testing.T) {
 		}
 	}
 
-	t.Run("Create a default global config if both of global and local config are not found", func(t *testing.T) {
-		cwd, cleanup := setup(t)
+	assertWithGolden(t, "create a default global config if both of global and local config are not found", func(t *testing.T) *Config {
+		_, cleanup := setup(t)
 		defer cleanup()
-		resetEnv := changeEnv("XDG_CONFIG_HOME", filepath.Join(cwd, "config"))
-		defer resetEnv()
 
 		cfg, err := Get(nil)
 		require.NoError(t, err, "Get must not return any errors")
 
 		checkValues(t, cfg)
 
-		defCfg := DefaultConfig(t)
-		assert.EqualValues(t, cfg, defCfg)
+		return cfg
 	})
 
-	t.Run("Load a global config if local config are not found", func(t *testing.T) {
+	assertWithGolden(t, "load a global config if local config is not found", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)
 
 		cwd, cleanup := setup(t)
 		defer cleanup()
-		resetEnv := changeEnv("XDG_CONFIG_HOME", filepath.Join(cwd, "config"))
-		defer resetEnv()
 
 		err := os.MkdirAll(filepath.Join(cwd, "config", "evans"), 0755)
 		require.NoError(t, err, "failed to setup config dir")
@@ -90,21 +159,14 @@ func TestLoad(t *testing.T) {
 
 		checkValues(t, cfg)
 
-		expected := DefaultConfig(t)
-		expected.Server.Host = "localhost"
-		expected.Server.Port = "3000"
-		expected.Default.ProtoPath = []string{"foo"}
-
-		assert.EqualValues(t, expected, cfg)
+		return cfg
 	})
 
-	t.Run("Will be apply local config if global/local config files are found", func(t *testing.T) {
+	assertWithGolden(t, "load a local config", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)
 
 		cwd, cleanup := setup(t)
 		defer cleanup()
-		resetEnv := changeEnv("XDG_CONFIG_HOME", filepath.Join(cwd, "config"))
-		defer resetEnv()
 
 		projDir := filepath.Join(cwd, "local")
 
@@ -124,24 +186,14 @@ func TestLoad(t *testing.T) {
 
 		checkValues(t, cfg)
 
-		expected := DefaultConfig(t)
-		// Global config
-		expected.Server.Host = "localhost"
-		// Local config (global config is overwritten)
-		expected.Server.Port = "3333"
-		expected.Request.Header["foo"] = "bar"
-		expected.Default.ProtoPath = []string{"bar"}
-
-		assert.EqualValues(t, expected, cfg)
+		return cfg
 	})
 
-	t.Run("Will be apply local config and flags", func(t *testing.T) {
+	assertWithGolden(t, "will be apply flags", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)
 
 		cwd, cleanup := setup(t)
 		defer cleanup()
-		resetEnv := changeEnv("XDG_CONFIG_HOME", filepath.Join(cwd, "config"))
-		defer resetEnv()
 
 		projDir := filepath.Join(cwd, "local")
 
@@ -165,16 +217,7 @@ func TestLoad(t *testing.T) {
 
 		checkValues(t, cfg)
 
-		expected := DefaultConfig(t)
-		// Global config
-		expected.Server.Host = "localhost"
-		// Local config (global config is overwritten)
-		expected.Request.Header["foo"] = "bar"
-		expected.Default.ProtoPath = []string{"bar"}
-		// Flags (global and local configs are overwritten)
-		expected.Server.Port = "8080"
-
-		assert.EqualValues(t, expected, cfg)
+		return cfg
 	})
 }
 

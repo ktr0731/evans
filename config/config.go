@@ -40,7 +40,8 @@ type Request struct {
 }
 
 type REPL struct {
-	Server       *Server `toml:"-"`
+	// TODO: remove this
+	Server       *Server `toml:"server"`
 	PromptFormat string  `toml:"promptFormat"`
 
 	ColoredOutput bool `default:"true" toml:"coloredOutput"`
@@ -213,10 +214,13 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 }
 
 func setupConfig(c *Config) {
-	if len(c.Default.ProtoFile) == 1 && c.Default.ProtoFile[0] == "" {
+	// To show protofile and protopath field, set slice which has empty string
+	// if these are nil. (please see default values.)
+	// Conversely, trim the empty string element when config loading.
+	if (c.Default.ProtoFile == nil) || (len(c.Default.ProtoFile) == 1 && c.Default.ProtoFile[0] == "") {
 		c.Default.ProtoFile = []string{}
 	}
-	if len(c.Default.ProtoPath) == 1 && c.Default.ProtoPath[0] == "" {
+	if (c.Default.ProtoPath == nil) || (len(c.Default.ProtoPath) == 1 && c.Default.ProtoPath[0] == "") {
 		c.Default.ProtoPath = []string{}
 	}
 	c.REPL.Server = c.Server
