@@ -11,6 +11,24 @@ import (
 	"github.com/ktr0731/evans/entity"
 )
 
+var protoDefaults = map[descriptor.FieldDescriptorProto_Type]interface{}{
+	descriptor.FieldDescriptorProto_TYPE_DOUBLE:   float64(0),
+	descriptor.FieldDescriptorProto_TYPE_FLOAT:    float32(0),
+	descriptor.FieldDescriptorProto_TYPE_INT64:    int64(0),
+	descriptor.FieldDescriptorProto_TYPE_UINT64:   uint64(0),
+	descriptor.FieldDescriptorProto_TYPE_INT32:    int32(0),
+	descriptor.FieldDescriptorProto_TYPE_UINT32:   uint32(0),
+	descriptor.FieldDescriptorProto_TYPE_FIXED64:  uint64(0),
+	descriptor.FieldDescriptorProto_TYPE_FIXED32:  uint32(0),
+	descriptor.FieldDescriptorProto_TYPE_BOOL:     false,
+	descriptor.FieldDescriptorProto_TYPE_STRING:   "",
+	descriptor.FieldDescriptorProto_TYPE_BYTES:    []byte{},
+	descriptor.FieldDescriptorProto_TYPE_SFIXED64: uint64(0),
+	descriptor.FieldDescriptorProto_TYPE_SFIXED32: uint32(0),
+	descriptor.FieldDescriptorProto_TYPE_SINT64:   int64(0),
+	descriptor.FieldDescriptorProto_TYPE_SINT32:   int32(0),
+}
+
 // ConvertValue holds value and error of conversion
 // each cast (Parse*) returns falsy value when failed to parse argument
 func ConvertValue(pv string, field entity.PrimitiveField) (interface{}, error) {
@@ -18,24 +36,6 @@ func ConvertValue(pv string, field entity.PrimitiveField) (interface{}, error) {
 	if !ok {
 		return nil, errors.New("type assertion failed")
 	}
-
-	protoDefaults := map[descriptor.FieldDescriptorProto_Type]interface{}{
-		descriptor.FieldDescriptorProto_TYPE_DOUBLE: float64(0),
-		descriptor.FieldDescriptorProto_TYPE_FLOAT: float32(0),
-		descriptor.FieldDescriptorProto_TYPE_INT64: int64(0),
-		descriptor.FieldDescriptorProto_TYPE_UINT64: uint64(0),
-		descriptor.FieldDescriptorProto_TYPE_INT32: int32(0),
-		descriptor.FieldDescriptorProto_TYPE_UINT32: uint32(0),
-		descriptor.FieldDescriptorProto_TYPE_FIXED64: uint64(0),
-		descriptor.FieldDescriptorProto_TYPE_FIXED32: uint32(0),
-		descriptor.FieldDescriptorProto_TYPE_BOOL: false,
-		descriptor.FieldDescriptorProto_TYPE_STRING: "",
-		descriptor.FieldDescriptorProto_TYPE_BYTES: []byte{},
-		descriptor.FieldDescriptorProto_TYPE_SFIXED64: uint64(0),
-		descriptor.FieldDescriptorProto_TYPE_SFIXED32: uint32(0),
-		descriptor.FieldDescriptorProto_TYPE_SINT64: int64(0),
-		descriptor.FieldDescriptorProto_TYPE_SINT32: int32(0),
-		}
 
 	t := descriptor.FieldDescriptorProto_Type(descriptor.FieldDescriptorProto_Type_value[f.PBType()])
 
@@ -46,7 +46,7 @@ func ConvertValue(pv string, field entity.PrimitiveField) (interface{}, error) {
 		}
 		// if not found, we'll let the normal code execute
 	}
-	
+
 	var v interface{}
 	var err error
 
