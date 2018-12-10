@@ -22,21 +22,16 @@ var (
 var mConfig *configure.Configure
 
 type Server struct {
-	Host       string `default:"127.0.0.1" toml:"host"`
-	Port       string `default:"50051" toml:"port"`
-	Reflection bool   `default:"false" toml:"reflection"`
+	Host       string `toml:"host"`
+	Port       string `toml:"port"`
+	Reflection bool   `toml:"reflection"`
 }
 
-type Header struct {
-	Key string `toml:"key"`
-	Val string `toml:"val"`
-}
-
-type Header2 map[string]string
+type Header map[string]string
 
 type Request struct {
-	Header Header2 `toml:"header"`
-	Web    bool    `toml:"web"`
+	Header Header `toml:"header"`
+	Web    bool   `toml:"web"`
 }
 
 type REPL struct {
@@ -44,15 +39,15 @@ type REPL struct {
 	Server       *Server `toml:"server"`
 	PromptFormat string  `toml:"promptFormat"`
 
-	ColoredOutput bool `default:"true" toml:"coloredOutput"`
+	ColoredOutput bool `toml:"coloredOutput"`
 
-	ShowSplashText bool   `default:"true" toml:"showSplashText"`
-	SplashTextPath string `default:"" toml:"splashTextPath"`
+	ShowSplashText bool   `toml:"showSplashText"`
+	SplashTextPath string `toml:"splashTextPath"`
 }
 
 type Meta struct {
-	AutoUpdate  bool   `default:"false" toml:"autoUpdate"`
-	UpdateLevel string `default:"patch" toml:"updateLevel"`
+	AutoUpdate  bool   `toml:"autoUpdate"`
+	UpdateLevel string `toml:"updateLevel"`
 }
 
 type Config struct {
@@ -65,14 +60,14 @@ type Config struct {
 }
 
 type Default struct {
-	ProtoPath []string `toml:"protoPath" default:""`
-	ProtoFile []string `toml:"protoFile" default:""`
-	Package   string   `toml:"package" default:""`
-	Service   string   `toml:"service" default:""`
+	ProtoPath []string `toml:"protoPath"`
+	ProtoFile []string `toml:"protoFile"`
+	Package   string   `toml:"package"`
+	Service   string   `toml:"service"`
 }
 
 type Log struct {
-	Prefix string `default:"[evans] " toml:"prefix"`
+	Prefix string `toml:"prefix"`
 }
 
 func Get(fs *pflag.FlagSet) (*Config, error) {
@@ -99,7 +94,7 @@ func initDefaultValues() {
 
 	viper.SetDefault("log.prefix", "evans: ")
 
-	viper.SetDefault("request.header", Header2{"grpc-client": "evans"})
+	viper.SetDefault("request.header", Header{"grpc-client": "evans"})
 	viper.SetDefault("request.web", false)
 }
 

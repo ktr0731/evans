@@ -90,6 +90,7 @@ func structToMap(i interface{}) interface{} {
 	m := make(map[string]interface{})
 	el := rv.Elem()
 	for i := 0; i < el.Type().NumField(); i++ {
+		// spf13/viper formats all keys to lower-case.
 		tag := strings.ToLower(el.Type().Field(i).Tag.Get("toml"))
 		iface := el.Field(i).Interface()
 		m[tag] = structToMap(iface)
@@ -102,7 +103,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestLoad(t *testing.T) {
-	setup := func(t *testing.T) (string, func()) {
+	setup := func(t *testing.T) (string, string, func()) {
 		cwd := getWorkDir(t)
 
 		dir, err := ioutil.TempDir("", "")
@@ -110,9 +111,12 @@ func TestLoad(t *testing.T) {
 
 		os.Chdir(dir)
 		oldEnv := os.Getenv("XDG_CONFIG_HOME")
-		os.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, "config"))
+		cfgDir := filepath.Join(dir, "config")
+		os.Setenv("XDG_CONFIG_HOME", cfgDir)
+		evansCfgDir := filepath.Join(cfgDir, "evans")
+		mkdir(t, evansCfgDir)
 
-		return dir, func() {
+		return dir, evansCfgDir, func() {
 			os.Chdir(cwd)
 			os.Setenv("XDG_CONFIG_HOME", oldEnv)
 			os.RemoveAll(dir)
@@ -131,7 +135,7 @@ func TestLoad(t *testing.T) {
 	}
 
 	assertWithGolden(t, "create a default global config if both of global and local config are not found", func(t *testing.T) *Config {
-		_, cleanup := setup(t)
+		_, _, cleanup := setup(t)
 		defer cleanup()
 
 		cfg, err := Get(nil)
@@ -145,14 +149,12 @@ func TestLoad(t *testing.T) {
 	assertWithGolden(t, "load a global config if local config is not found", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)
 
-		cwd, cleanup := setup(t)
+		_, cfgDir, cleanup := setup(t)
 		defer cleanup()
 
-		err := os.MkdirAll(filepath.Join(cwd, "config", "evans"), 0755)
-		require.NoError(t, err, "failed to setup config dir")
 		// Copy global.toml from testdata to the config dir.
 		// global.toml was changed host and port to 'localhost' and '3000'.
-		copyFile(t, filepath.Join(cwd, "config", "evans", "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
+		copyFile(t, filepath.Join(cfgDir, "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
 
 		cfg, err := Get(nil)
 		require.NoError(t, err, "Get must not return any errors")
@@ -165,20 +167,17 @@ func TestLoad(t *testing.T) {
 	assertWithGolden(t, "load a local config", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)
 
-		cwd, cleanup := setup(t)
+		cwd, cfgDir, cleanup := setup(t)
 		defer cleanup()
 
 		projDir := filepath.Join(cwd, "local")
+		mkdir(t, projDir)
 
-		err := os.MkdirAll(filepath.Join(cwd, "config", "evans"), 0755)
-		require.NoError(t, err, "failed to setup config dir")
-		err = os.MkdirAll(projDir, 0755)
-		require.NoError(t, err, "failed to setup a project local dir")
-		copyFile(t, filepath.Join(cwd, "config", "evans", "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
+		copyFile(t, filepath.Join(cfgDir, "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
 		copyFile(t, filepath.Join(projDir, ".evans.toml"), filepath.Join(oldCWD, "testdata", "local.toml"))
 
 		os.Chdir(projDir)
-		err = exec.Command("git", "init").Run()
+		err := exec.Command("git", "init").Run()
 		require.NoError(t, err, "failed to init a pseudo project")
 
 		cfg, err := Get(nil)
@@ -192,20 +191,17 @@ func TestLoad(t *testing.T) {
 	assertWithGolden(t, "will be apply flags", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)
 
-		cwd, cleanup := setup(t)
+		cwd, cfgDir, cleanup := setup(t)
 		defer cleanup()
 
 		projDir := filepath.Join(cwd, "local")
 
-		err := os.MkdirAll(filepath.Join(cwd, "config", "evans"), 0755)
-		require.NoError(t, err, "failed to setup config dir")
-		err = os.MkdirAll(projDir, 0755)
-		require.NoError(t, err, "failed to setup a project local dir")
-		copyFile(t, filepath.Join(cwd, "config", "evans", "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
+		mkdir(t, projDir)
+		copyFile(t, filepath.Join(cfgDir, "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
 		copyFile(t, filepath.Join(projDir, ".evans.toml"), filepath.Join(oldCWD, "testdata", "local.toml"))
 
 		os.Chdir(projDir)
-		err = exec.Command("git", "init").Run()
+		err := exec.Command("git", "init").Run()
 		require.NoError(t, err, "failed to init a pseudo project")
 
 		fs := pflag.NewFlagSet("test", pflag.ExitOnError)
@@ -235,4 +231,9 @@ func copyFile(t *testing.T, to, from string) {
 	require.NoError(t, err, "failed to open a prepared config file")
 	defer ff.Close()
 	io.Copy(tf, ff)
+}
+
+func mkdir(t *testing.T, dir string) {
+	err := os.MkdirAll(dir, 0755)
+	require.NoError(t, err, "failed to create dirs")
 }
