@@ -222,7 +222,29 @@ func setupConfig(c *Config) {
 }
 
 func Edit() error {
-	return mConfig.Edit()
+	p, found := getLocalConfigPath()
+	if !found {
+		root, found := lookupProjectRootPath()
+		if !found {
+			return errors.New("--edit must be call inside a Git project")
+		}
+		p = filepath.Join(root, localConfigName)
+		if err := viper.WriteConfigAs(p); err != nil {
+			return errors.Wrapf(err, "failed to write the current config to %s", p)
+		}
+	}
+	editor := getEditor()
+	if editor == "" {
+		return errors.New("--edit requires one of $EDITOR value or Vim")
+	}
+	cmd := exec.Command(editor, p)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return errors.Wrapf(err, "failed to execute %s", editor)
+	}
+	return nil
 }
 
 func getLocalConfigPath() (string, bool) {
@@ -251,4 +273,15 @@ func lookupProjectRootPath() (string, bool) {
 	}
 	p := strings.TrimSpace(string(b))
 	return p, p != ""
+}
+
+func getEditor() string {
+	if env := os.Getenv("EDITOR"); env != "" {
+		return env
+	}
+	p, err := exec.LookPath("vim")
+	if err != nil {
+		return ""
+	}
+	return p
 }

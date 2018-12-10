@@ -16,7 +16,6 @@ require (
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf // indirect
 	github.com/jhump/protoreflect v1.1.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/kelseyhightower/envconfig v1.3.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/ktr0731/go-configure v0.1.0
 	github.com/ktr0731/go-semver v0.1.0
@@ -24,7 +23,6 @@ require (
 	github.com/ktr0731/go-updater v0.1.3
 	github.com/ktr0731/grpc-test v0.0.0-20181102092628-34f3c19774b5 // indirect
 	github.com/ktr0731/grpc-web-go-client v0.2.2
-	github.com/ktr0731/mapstruct v0.1.0
 	github.com/mattn/go-colorable v0.0.9
 	github.com/mattn/go-isatty v0.0.4
 	github.com/mattn/go-pipeline v0.0.0-20170920030317-cfb87a531e2b // indirect
@@ -34,7 +32,6 @@ require (
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mitchellh/go-homedir v1.0.0
-	github.com/mitchellh/mapstructure v1.1.2
 	github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223 // indirect
 	github.com/olekukonko/tablewriter v0.0.1
 	github.com/pelletier/go-toml v1.2.0
@@ -45,6 +42,7 @@ require (
 	github.com/spf13/viper v1.3.1
 	github.com/stretchr/testify v1.2.2
 	github.com/tj/go-spin v1.1.0
+	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
 	golang.org/x/net v0.0.0-20181107234226-1c5f79cfb164
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect

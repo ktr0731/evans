@@ -47,8 +47,6 @@ github.com/jhump/protoreflect v1.1.0 h1:h+zsMrsiq0vIl7yWmeowmd8e8VtnWk75U04GgXA2
 github.com/jhump/protoreflect v1.1.0/go.mod h1:kG/zRVeS2M91gYaCvvUbPkMjjtFQS4qqjcPFzFkh2zE=
 github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 h1:Z9n2FFNUXsshfwJMBgNA0RU6/i7WVaAegv3PtuIHPMs=
 github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51/go.mod h1:CzGEWj7cYgsdH8dAjBGEr58BoE7ScuLd+fwFZ44+/x8=
-github.com/kelseyhightower/envconfig v1.3.0 h1:IvRS4f2VcIQy6j4ORGIf9145T/AsUB+oY8LyvN8BXNM=
-github.com/kelseyhightower/envconfig v1.3.0/go.mod h1:cccZRl6mQpaq41TPp5QxidR+Sa3axMbJDNb//FQX6Gg=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
@@ -68,8 +66,6 @@ github.com/ktr0731/grpc-test v0.0.0-20181102092628-34f3c19774b5 h1:wheheYNKCIYXS
 github.com/ktr0731/grpc-test v0.0.0-20181102092628-34f3c19774b5/go.mod h1:NuD281ufrVMbvgEgnr6VuppyuiHgRkw3kJ4SmdnhJqk=
 github.com/ktr0731/grpc-web-go-client v0.2.2 h1:SIj0oH8bIcUTRapqWAalj5bfORutBJv9/2ufzR+YX1Q=
 github.com/ktr0731/grpc-web-go-client v0.2.2/go.mod h1:x+vyk0V4Hj3LGwqzpOAwCCVyA7tqoyNQujXokoiOnCc=
-github.com/ktr0731/mapstruct v0.1.0 h1:ELfJD3Y+jWA6OjEB9+kLGY1/RMzKzWp2pyg3GwbT/TU=
-github.com/ktr0731/mapstruct v0.1.0/go.mod h1:zD49g0Vg0aeddWsA5e+114q3iREClGnW67e5m+khIeE=
 github.com/magiconair/properties v1.8.0 h1:LLgXmsheXeRoUOBOjtwPQCWIYqM/LU1ayDtDePerRcY=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/mattn/go-colorable v0.0.9 h1:UVL0vNpWh04HeJXV0KLcaT7r06gOH2l4OW6ddYRUIY4=
@@ -124,6 +120,8 @@ github.com/tj/go-spin v1.1.0 h1:lhdWZsvImxvZ3q1C5OIB7d72DuOwP4O2NdBg9PyzNds=
 github.com/tj/go-spin v1.1.0/go.mod h1:Mg1mzmePZm4dva8Qz60H2lHwmJ2loum4VIrLgVnKwh4=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
+github.com/zchee/go-xdgbasedir v1.0.3 h1:loLl3qosOHcMSCtV9ciISdjEQuXcj56BYccRNBvQKDY=
+github.com/zchee/go-xdgbasedir v1.0.3/go.mod h1:Ta5nXXeucstQZw/DpFneOcG3OF8i3pxPTqda2w+nyc8=
 go.uber.org/goleak v0.10.0 h1:G3eWbSNIskeRqtsN/1uI5B+eP73y3JUuBsv9AZjehb4=
 go.uber.org/goleak v0.10.0/go.mod h1:VCZuO8V8mFPlL0F5J5GK1rtHV3DrFcQ1R8ryq7FK0aI=
 golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9 h1:mKdxBk7AujPs8kU4m80U72y/zjbZ3UcXC7dClwKbUI0=
