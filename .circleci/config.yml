@@ -28,6 +28,10 @@ jobs:
             - /go/pkg/mod
           when: always
 
+      - run:
+          name: install tools
+          command: make tools
+
       - save_cache:
           key: tool-{{ checksum "gotool.sum" }}
           paths:
@@ -76,6 +80,10 @@ jobs:
       - run:
           name: install deps
           command: make deps
+
+      - run:
+          name: install tools
+          command: make tools
 
       - run:
           name: update GitHub releases and update brew formula

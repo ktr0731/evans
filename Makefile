@@ -19,9 +19,14 @@ endif
 deps: dep
 	@go mod download
 	@go mod verify
-	@go mod vendor
-	@go get github.com/ktr0731/dept@v0.1.0
+
+.PHONY: dept
+dept:
+	@go get github.com/ktr0731/dept@v0.1.1
 	@go build -o _tools/dept github.com/ktr0731/dept
+
+.PHONY: tools
+tools: dept
 	@dept build
 
 .PHONY: generate
