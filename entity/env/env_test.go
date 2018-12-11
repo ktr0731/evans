@@ -64,9 +64,8 @@ func TestEnv(t *testing.T) {
 	setup := func(t *testing.T, cfg *config.Config) *env.Env {
 		if cfg == nil {
 			cfg = &config.Config{
-				Env: &config.Env{},
 				Request: &config.Request{
-					Header: []config.Header{},
+					Header: config.Header{},
 				},
 			}
 		}
@@ -149,16 +148,13 @@ func TestEnv(t *testing.T) {
 		env := setup(t, cfg)
 		require.Len(t, env.Headers(), 0)
 
-		expected := []config.Header{
-			{Key: "foo", Val: "bar"},
-			{Key: "hoge", Val: "fuga"},
+		expected := config.Header{
+			"foo":  "bar",
+			"hoge": "fuga",
 		}
 		cfg.Request.Header = expected
 		env = setup(t, cfg)
-		for i, h := range env.Headers() {
-			assert.Equal(t, expected[i].Key, h.Key)
-			assert.Equal(t, expected[i].Val, h.Val)
-		}
+		assertHeaders(t, expected, env.Headers())
 	})
 
 	t.Run("AddHeader", func(t *testing.T) {
@@ -184,16 +180,14 @@ func TestEnv(t *testing.T) {
 
 		env.RemoveHeader("foo")
 
-		headers := []struct {
-			k, v string
-		}{
-			{"hazuki", "katou"},
-			{"kumiko", "oumae"},
-			{"reina", "kousaka"},
-			{"sapphire", "kawashima"},
+		headers := map[string]string{
+			"hazuki":   "katou",
+			"kumiko":   "oumae",
+			"reina":    "kousaka",
+			"sapphire": "kawashima",
 		}
-		for _, h := range headers {
-			env.AddHeader(&entity.Header{h.k, h.v, false})
+		for k, v := range headers {
+			env.AddHeader(&entity.Header{k, v, false})
 		}
 		assert.Len(t, env.Headers(), 4)
 
@@ -214,4 +208,24 @@ func TestEnv(t *testing.T) {
 		assert.Len(t, env.Headers(), 2)
 		assert.Equal(t, env.Headers()[1].Key, "reina")
 	})
+}
+
+func assertHeaders(t *testing.T, expected config.Header, actual []*entity.Header) {
+	t.Helper()
+
+	m := map[string]string{}
+	for k, v := range expected {
+		m[k] = v
+	}
+
+	for _, h := range actual {
+		v, found := m[h.Key]
+		if !found {
+			t.Errorf("key %s is not found", h.Key)
+			continue
+		}
+		if h.Val != v {
+			t.Errorf("key %s: expected value is %s, but got %s", h.Key, v, h.Val)
+		}
+	}
 }

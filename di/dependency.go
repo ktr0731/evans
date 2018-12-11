@@ -28,14 +28,14 @@ func initEnv(cfg *config.Config) (rerr error) {
 	envOnce.Do(func() {
 		paths, err := resolveProtoPaths(cfg)
 		if err != nil {
-			rerr = err
+			rerr = errors.Wrap(err, "failed to resolve proto paths")
 			return
 		}
 
 		files := resolveProtoFiles(cfg)
 		desc, err := protobuf.ParseFile(files, paths)
 		if err != nil {
-			rerr = err
+			rerr = errors.Wrap(err, "failed to parse proto files")
 			return
 		}
 
@@ -166,7 +166,7 @@ func initPromptInputter(cfg *config.Config) (err error) {
 	promptInputterOnce.Do(func() {
 		var e environment.Environment
 		e, err = Env(cfg)
-		promptInputter = inputter.NewPrompt(cfg.REPL.PromptFormat, e)
+		promptInputter = inputter.NewPrompt(cfg.REPL.InputPromptFormat, e)
 	})
 	return
 }
@@ -239,9 +239,9 @@ func (i *initializer) init() error {
 	i.done = true
 
 	var result error
-	for _, f := range i.f {
+	for i, f := range i.f {
 		if err := f(); err != nil {
-			result = multierror.Append(result, err)
+			result = multierror.Append(result, errors.Wrapf(err, "%d: failed to initialize", i))
 		}
 	}
 	return result

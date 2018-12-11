@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/ktr0731/evans/logger"
-	configure "github.com/ktr0731/go-configure"
+	"github.com/ktr0731/evans/meta"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -20,25 +20,24 @@ var (
 	globalConfigName = "config.toml"
 )
 
-var mConfig *configure.Configure
-
 type Server struct {
 	Host       string `toml:"host"`
 	Port       string `toml:"port"`
 	Reflection bool   `toml:"reflection"`
 }
 
-// type Header map[string]string
+type Header map[string]string
 
 type Request struct {
-	Header map[string]string `toml:"header"`
-	Web    bool              `toml:"web"`
+	Header Header `toml:"header"`
+	Web    bool   `toml:"web"`
 }
 
 type REPL struct {
 	// TODO: remove this
-	Server       *Server `toml:"server"`
-	PromptFormat string  `toml:"promptFormat"`
+	Server            *Server `toml:"server"`
+	PromptFormat      string  `toml:"promptFormat"`
+	InputPromptFormat string  `toml:"inputPromptFormat"`
 
 	ColoredOutput bool `toml:"coloredOutput"`
 
@@ -47,8 +46,9 @@ type REPL struct {
 }
 
 type Meta struct {
-	AutoUpdate  bool   `toml:"autoUpdate"`
-	UpdateLevel string `toml:"updateLevel"`
+	ConfigVersion string `toml:"configVersion"`
+	AutoUpdate    bool   `toml:"autoUpdate"`
+	UpdateLevel   string `toml:"updateLevel"`
 }
 
 type Config struct {
@@ -81,10 +81,14 @@ func initDefaultValues() {
 	viper.SetDefault("default.package", "")
 	viper.SetDefault("default.service", "")
 
+	// We set the default version to v0.6.10
+	// because the structure of Config is changed at v0.6.11.
+	viper.SetDefault("meta.configVersion", "0.6.10")
 	viper.SetDefault("meta.autoUpdate", false)
 	viper.SetDefault("meta.updateLevel", "patch")
 
 	viper.SetDefault("repl.promptFormat", "{package}.{sevice}@{addr}:{port}")
+	viper.SetDefault("repl.inputPromptFormat", "{ancestor}{name} ({type}) => ")
 	viper.SetDefault("repl.coloredOutput", true)
 	viper.SetDefault("repl.showSplashText", true)
 	viper.SetDefault("repl.splashTextPath", "")
@@ -95,14 +99,13 @@ func initDefaultValues() {
 
 	viper.SetDefault("log.prefix", "evans: ")
 
-	viper.SetDefault("request.header", map[string]string{"grpc-client": "evans"})
+	viper.SetDefault("request.header", Header{"grpc-client": "evans"})
 	viper.SetDefault("request.web", false)
 }
 
 func bindFlags(fs *pflag.FlagSet) {
 	kv := map[string]string{
 		"default.protoPath":   "path",
-		"default.protoFile":   "file",
 		"default.package":     "package",
 		"default.service":     "service",
 		"server.host":         "host",
@@ -118,6 +121,13 @@ func bindFlags(fs *pflag.FlagSet) {
 			logger.Printf("flag is not found: %s-%s", k, v)
 			continue
 		}
+		// TODO: cleanup this special case.
+		if k == "repl.showSplashText" {
+			// If --silent is disabled, showSplashText is true.
+			viper.Set(k, f.Value.String() != "true")
+			continue
+		}
+
 		switch f.Value.Type() {
 		case "stringToString":
 			// There is pflag.StringToString which converts 'key=val' to a map structure.
@@ -180,15 +190,26 @@ func stringSliceToSlice(val string) []string {
 	return records
 }
 
-func defaultConfig() (*Config, error) {
+// writeLatestDefaultConfig writes the latest default config to path.
+// Note that writeLatestDefaultConfig initializes viper again.
+// So, all flags you bind by BindPFlag, global and local config will be clear.
+func writeLatestDefaultConfig(path string) (*Config, error) {
+	// TODO: create a new one instead of package global.
 	viper.Reset()
 	initDefaultValues()
+	// TODO: write tests
+	// Set configVersion to the latest version.
+	viper.Set("meta.configVersion", meta.Version.String())
+
 	var cfg Config
 	err := viper.Unmarshal(&cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal default config")
 	}
 	setupConfig(&cfg)
+	if err := viper.WriteConfigAs(path); err != nil {
+		return nil, errors.Wrapf(err, "failed to write the latest default config to %s", path)
+	}
 	return &cfg, nil
 }
 
@@ -227,14 +248,18 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 			if err := os.MkdirAll(cfgDir, 0755); err != nil {
 				return nil, errors.Wrap(err, "failed to create config dirs")
 			}
-			if err := viper.WriteConfigAs(path); err != nil {
-				return nil, errors.Wrap(err, "failed to write a default config")
-			}
-			cfg, err = defaultConfig()
+			cfg, err = writeLatestDefaultConfig(path)
 			return
-		} else {
-			return nil, err
 		}
+		return nil, err
+	}
+
+	// migrate old versions to the latest.
+	if old := viper.GetString("meta.configVersion"); old != meta.Version.String() {
+		migrate(old, viper.GetViper())
+		// Update the global config with the migrated config.
+		logger.Println("migrated the global config to the structure of the latest version")
+		viper.WriteConfig()
 	}
 
 	var globalCfg Config
@@ -282,20 +307,26 @@ func setupConfig(c *Config) {
 func Edit() error {
 	p, found := getLocalConfigPath()
 	if !found {
+		logger.Println("local config is not found. create a new local config to the project root.")
 		root, found := lookupProjectRootPath()
 		if !found {
 			return errors.New("--edit must be call inside a Git project")
 		}
 		p = filepath.Join(root, localConfigName)
-		if err := viper.WriteConfigAs(p); err != nil {
-			return errors.Wrapf(err, "failed to write the current config to %s", p)
+		logger.Printf("create a new local config to %s", p)
+		if _, err := writeLatestDefaultConfig(p); err != nil {
+			return err
 		}
 	}
 	editor := getEditor()
 	if editor == "" {
 		return errors.New("--edit requires one of $EDITOR value or Vim")
 	}
-	cmd := exec.Command(editor, p)
+	return runEditor(editor, p)
+}
+
+var runEditor = func(editor string, cfgPath string) error {
+	cmd := exec.Command(editor, cfgPath)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -330,7 +361,7 @@ func lookupProjectRootPath() (string, bool) {
 		return "", false
 	}
 	p := strings.TrimSpace(string(b))
-	return p, p != ""
+	return p, true
 }
 
 func getEditor() string {

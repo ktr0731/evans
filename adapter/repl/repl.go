@@ -70,6 +70,7 @@ type repl struct {
 	ui     cui.UI
 	config *config.REPL
 	env    env.Environment
+	// TODO: REPL must not depend to c-bata/go-prompt.
 	prompt prompt.Prompt
 	cmds   map[string]commander
 

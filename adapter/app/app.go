@@ -8,18 +8,17 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
-	"sync"
 	"syscall"
 	"text/tabwriter"
 
 	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
-	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/adapter/repl"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
+	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/meta"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
@@ -62,6 +61,7 @@ func (c *Command) parseFlags(args []string) *options {
 	f.StringToStringVar(&opts.header, "header", nil, "default headers that set to each requests (example: foo=bar)")
 	f.BoolVar(&opts.web, "web", false, "use gRPC Web protocol")
 	f.BoolVarP(&opts.reflection, "reflection", "r", false, "use gRPC reflection")
+	f.BoolVar(&opts.verbose, "verbose", false, "verbose output")
 	f.BoolVarP(&opts.version, "version", "v", false, "display version and exit")
 	f.BoolVarP(&opts.help, "help", "h", false, "display help text and exit")
 
@@ -116,6 +116,7 @@ type options struct {
 	reflection bool
 
 	// meta options
+	verbose bool
 	version bool
 	help    bool
 }
@@ -152,8 +153,6 @@ type Command struct {
 	flagSet *pflag.FlagSet
 
 	cache *cache.Cache
-
-	initOnce sync.Once
 }
 
 // New instantiate CLI interface.
@@ -172,30 +171,26 @@ func New(ui cui.UI) *Command {
 }
 
 func (c *Command) init(opts *options, proto []string) error {
-	var err error
-	c.initOnce.Do(func() {
-		var cfg *config.Config
-		cfg, err = config.Get(c.flagSet)
-		if err != nil {
-			return
-		}
+	cfg, err := config.Get(c.flagSet)
+	if err != nil {
+		return err
+	}
 
-		pp.Println(cfg.Server)
+	cfg.Default.ProtoFile = append(cfg.Default.ProtoFile, proto...)
 
-		c.wcfg = &wrappedConfig{
-			cfg:  cfg,
-			call: opts.call,
-			file: opts.file,
-			repl: opts.repl,
-			cli:  opts.cli,
-		}
+	c.wcfg = &wrappedConfig{
+		cfg:  cfg,
+		call: opts.call,
+		file: opts.file,
+		repl: opts.repl,
+		cli:  opts.cli,
+	}
 
-		err = checkPrecondition(c.wcfg)
-		if err != nil {
-			return
-		}
-	})
-	return err
+	err = checkPrecondition(c.wcfg)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Command) printUsage() {
@@ -222,6 +217,10 @@ func (c *Command) run(args []string) error {
 	opts := c.parseFlags(args)
 	proto := c.flagSet.Args()
 
+	if opts.verbose {
+		logger.SetOutput(os.Stderr)
+	}
+
 	switch {
 	case opts.version:
 		c.printVersion()
@@ -229,14 +228,16 @@ func (c *Command) run(args []string) error {
 	case opts.help:
 		c.flagSet.Usage()
 		return nil
-	case opts.editConfig:
+	}
+
+	c.init(opts, proto)
+
+	if opts.editConfig {
 		if err := config.Edit(); err != nil {
 			return err
 		}
 		return nil
 	}
-
-	c.init(opts, proto)
 
 	if len(c.wcfg.cfg.Default.ProtoFile) == 0 && !c.wcfg.cfg.Server.Reflection {
 		c.printUsage()
