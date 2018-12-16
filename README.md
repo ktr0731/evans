@@ -62,7 +62,7 @@ So, you can format it by any commands like `jq`. Also, if you want to use the sa
    - [Client streaming RPC](#client-streaming-rpc-1)
    - [Server streaming RPC](#server-streaming-rpc-1)
    - [Bidirectional streaming RPC](#bidirectional-streaming-rpc-1)
-- [Another features](#another-features)
+- [Other features](#other-features)
    - [gRPC Web](#grpc-web)
 - [Supported IDL (interface definition language)](#supported-idl-interface-definition-language)
 - [See Also](#see-also)
