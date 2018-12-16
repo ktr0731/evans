@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/credentials"
 )
 
 type client struct {
@@ -24,9 +25,16 @@ type client struct {
 // It dials to the server specified by addr.
 // addr format is same as the first argument of grpc.Dial.
 // If useReflection is true, the gRPC client enables gRPC reflection.
-func NewClient(addr string, useReflection bool) (entity.GRPCClient, error) {
+// If useTLS is true, the gRPC client establishes a secure connection with the server.
+func NewClient(addr string, useReflection bool, useTLS bool) (entity.GRPCClient, error) {
 	// TODO: secure option
-	conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	var conn *grpc.ClientConn
+	var err error
+	if useTLS {
+		conn, err = grpc.Dial(addr, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
+	} else {
+		conn, err = grpc.Dial(addr, grpc.WithInsecure())
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial to gRPC server")
 	}
@@ -53,7 +61,7 @@ func (c *client) Invoke(ctx context.Context, fqrn string, req, res interface{}) 
 	if err != nil {
 		return err
 	}
-	return grpc.Invoke(ctx, endpoint, req, res, c.conn)
+	return c.conn.Invoke(ctx, endpoint, req, res)
 }
 
 func (c *client) Close(ctx context.Context) error {

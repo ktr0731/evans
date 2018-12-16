@@ -25,6 +25,7 @@ type Server struct {
 	Host       string `default:"127.0.0.1" toml:"host"`
 	Port       string `default:"50051" toml:"port"`
 	Reflection bool   `default:"false" toml:"reflection"`
+    TLS        bool   `default:"false" toml:"tls"`
 }
 
 type Header struct {
