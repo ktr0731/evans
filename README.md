@@ -109,6 +109,11 @@ If your server is enabling [gRPC reflection](https://github.com/grpc/grpc/blob/m
 $ evans -r
 ```
 
+Also if the server requires secure TLS connections, yuo can lunch Evans with the `t` (`--tls`) options.
+``` sh
+$ evans --tls
+```
+
 To show package names of proto files REPL read:  
 ```
 > show package
@@ -434,6 +439,8 @@ $ echo '{ "name": "foo" } { "name": "bar" }' | evans -r --service Example --call
 Evans also support gRPC Web protocol.  
 Tested gRPC Web implementations are:
 - [improbable-eng/grpc-web](https://github.com/improbable-eng/grpc-web)
+
+At the moment TLS is not supported for gRPC Web.
 
 ## Supported IDL (interface definition language)
 - [Protocol Buffers 3](https://developers.google.com/protocol-buffers/)  
