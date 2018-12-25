@@ -188,7 +188,7 @@ func initGRPCClient(cfg *config.Config) error {
 			}
 			gRPCClient = grpc.NewWebClient(addr, cfg.Server.Reflection, b)
 		} else {
-			gRPCClient, err = grpc.NewClient(addr, cfg.Server.Reflection)
+			gRPCClient, err = grpc.NewClient(addr, cfg.Server.Reflection, cfg.Server.TLS)
 		}
 	})
 	return err
