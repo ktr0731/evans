@@ -117,6 +117,19 @@ func SetupConfig(c *Config) {
 	}
 	c.REPL.Server = c.Server
 	c.Env.Server = c.Server
+	if c.Request == nil {
+		c.Request = &Request{
+			Header: []Header{
+				{"grpc-client", "evans"},
+			},
+		}
+	}
+
+	if c.Input == nil {
+		c.Input = &Input{
+			PromptFormat: "{ancestor}{name} ({type}) => ",
+		}
+	}
 }
 
 func Get() *Config {
