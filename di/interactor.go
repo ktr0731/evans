@@ -5,11 +5,12 @@ import (
 
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/usecase"
+	"github.com/pkg/errors"
 )
 
 func NewCLIInteractorParams(cfg *config.Config, in io.Reader) (*usecase.InteractorParams, error) {
 	if err := initDependencies(cfg, in); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "initialization error")
 	}
 
 	return &usecase.InteractorParams{

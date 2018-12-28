@@ -6,6 +6,7 @@ import (
 
 	"github.com/jhump/protoreflect/desc"
 	"github.com/ktr0731/evans/adapter/internal/protoparser"
+	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/env"
 	"github.com/ktr0731/evans/tests/helper"
@@ -38,14 +39,18 @@ func SetupEnv(t *testing.T, fpath, pkgName, svcName string) *env.Env {
 	t.Helper()
 
 	set := helper.ReadProto(t, fpath)
-	cfg := helper.TestConfig()
+
+	cfg, err := config.Get(nil)
+	require.NoError(t, err, "failed to get a config")
+
 	headers := make([]entity.Header, 0, len(cfg.Request.Header))
-	for _, h := range cfg.Request.Header {
-		headers = append(headers, entity.Header{Key: h.Key, Val: h.Val})
+	for k, v := range cfg.Request.Header {
+		require.Len(t, v, 1, "currently, header length is always 1")
+		headers = append(headers, entity.Header{Key: k, Val: v[0]})
 	}
 	env := env.New(set, headers)
 
-	err := env.UsePackage(pkgName)
+	err = env.UsePackage(pkgName)
 	require.NoError(t, err)
 
 	if svcName != "" {

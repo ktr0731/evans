@@ -1,0 +1,36 @@
+[default]
+  protoPath = [""]
+  protoFile = [""]
+  package = ""
+  service = ""
+
+[meta]
+  path = "~/.config/evans/config.toml"
+  autoUpdate = false
+  updateLevel = "patch"
+
+[repl]
+  promptFormat = "{package}.{sevice}@{addr}:{port}"
+  coloredOutput = true
+  showSplashText = true
+  splashTextPath = ""
+
+[env]
+
+[server]
+  host = "127.0.0.1"
+  port = "50051"
+  reflection = false
+
+[log]
+  prefix = "[evans] "
+
+[request]
+  web = false
+
+  [[request.header]]
+    key = "grpc-client"
+    val = "evans"
+
+[input]
+  promptFormat = "{ancestor}{name} ({type}) => "

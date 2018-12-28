@@ -59,7 +59,7 @@ func Run(cfg *config.Config, ui cui.UI) error {
 		return err
 	}
 
-	r := newEnv(cfg.REPL, env, ui, interactor)
+	r := newEnv(cfg.REPL, cfg.Server, env, ui, interactor)
 	if err := r.start(); err != nil {
 		return err
 	}
@@ -67,9 +67,11 @@ func Run(cfg *config.Config, ui cui.UI) error {
 }
 
 type repl struct {
-	ui     cui.UI
-	config *config.REPL
-	env    env.Environment
+	ui           cui.UI
+	config       *config.REPL
+	serverConfig *config.Server
+	env          env.Environment
+	// TODO: REPL must not depend to c-bata/go-prompt.
 	prompt prompt.Prompt
 	cmds   map[string]commander
 
@@ -78,7 +80,7 @@ type repl struct {
 	exitCh chan struct{}
 }
 
-func newEnv(config *config.REPL, env env.Environment, ui cui.UI, inputPort port.InputPort) *repl {
+func newEnv(config *config.REPL, serverConfig *config.Server, env env.Environment, ui cui.UI, inputPort port.InputPort) *repl {
 	cmds := map[string]commander{
 		"call":    &callCommand{inputPort},
 		"desc":    &descCommand{inputPort},
@@ -89,11 +91,12 @@ func newEnv(config *config.REPL, env env.Environment, ui cui.UI, inputPort port.
 	}
 
 	repl := &repl{
-		ui:     ui,
-		config: config,
-		env:    env,
-		cmds:   cmds,
-		exitCh: make(chan struct{}, 2), // for goroutines which manage quit command and CTRL+D
+		ui:           ui,
+		config:       config,
+		serverConfig: serverConfig,
+		env:          env,
+		cmds:         cmds,
+		exitCh:       make(chan struct{}, 2), // for goroutines which manage quit command and CTRL+D
 	}
 
 	executor := &executor{repl: repl}
@@ -196,7 +199,7 @@ Show more details:
 }
 
 func (r *repl) getPrompt() string {
-	p := fmt.Sprintf("%s:%s> ", r.config.Server.Host, r.config.Server.Port)
+	p := fmt.Sprintf("%s:%s> ", r.serverConfig.Host, r.serverConfig.Port)
 	if dsn := r.env.DSN(); dsn != "" {
 		p = fmt.Sprintf("%s@%s", dsn, p)
 	}

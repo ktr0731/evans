@@ -6,7 +6,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/hashicorp/go-multierror"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/adapter/grpc"
 	"github.com/ktr0731/evans/adapter/inputter"
 	"github.com/ktr0731/evans/adapter/presenter"
@@ -14,6 +14,7 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	environment "github.com/ktr0731/evans/entity/env"
+	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/usecase/port"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
@@ -28,14 +29,14 @@ func initEnv(cfg *config.Config) (rerr error) {
 	envOnce.Do(func() {
 		paths, err := resolveProtoPaths(cfg)
 		if err != nil {
-			rerr = err
+			rerr = errors.Wrap(err, "failed to resolve proto paths")
 			return
 		}
 
 		files := resolveProtoFiles(cfg)
 		desc, err := protobuf.ParseFile(files, paths)
 		if err != nil {
-			rerr = err
+			rerr = errors.Wrap(err, "failed to parse proto files")
 			return
 		}
 
@@ -46,8 +47,15 @@ func initEnv(cfg *config.Config) (rerr error) {
 		}
 
 		headers := make([]entity.Header, 0, len(cfg.Request.Header))
-		for _, h := range cfg.Request.Header {
-			headers = append(headers, entity.Header{Key: h.Key, Val: h.Val})
+		for k, v := range cfg.Request.Header {
+			if len(v) == 0 {
+				continue
+			}
+			// TODO: support multiple values
+			if len(v) > 1 {
+				logger.Println("currently, Evans doesn't support multiple header values corresponding to a key")
+			}
+			headers = append(headers, entity.Header{Key: k, Val: v[0]})
 		}
 		if gRPCClient.ReflectionEnabled() {
 			var svcs []entity.Service
@@ -166,7 +174,7 @@ func initPromptInputter(cfg *config.Config) (err error) {
 	promptInputterOnce.Do(func() {
 		var e environment.Environment
 		e, err = Env(cfg)
-		promptInputter = inputter.NewPrompt(cfg.Input.PromptFormat, e)
+		promptInputter = inputter.NewPrompt(cfg.REPL.InputPromptFormat, e)
 	})
 	return
 }
@@ -239,9 +247,9 @@ func (i *initializer) init() error {
 	i.done = true
 
 	var result error
-	for _, f := range i.f {
+	for i, f := range i.f {
 		if err := f(); err != nil {
-			result = multierror.Append(result, err)
+			result = multierror.Append(result, errors.Wrapf(err, "%d: failed to initialize", i))
 		}
 	}
 	return result

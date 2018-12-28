@@ -8,8 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
-	"strings"
-	"sync"
 	"syscall"
 	"text/tabwriter"
 
@@ -20,10 +18,10 @@ import (
 	"github.com/ktr0731/evans/adapter/repl"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
+	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/meta"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
-	"github.com/mitchellh/copystructure"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 )
@@ -40,13 +38,12 @@ Positional arguments:
 
 Options:
 %s
-	--help, -h		display help text and exit
-	--version, -v		display version and exit
-
 `
 
 func (c *Command) parseFlags(args []string) *options {
 	f := pflag.NewFlagSet("main", pflag.ExitOnError)
+	f.SortFlags = false
+	f.SetOutput(c.ui.Writer())
 
 	var opts options
 
@@ -61,23 +58,19 @@ func (c *Command) parseFlags(args []string) *options {
 	f.StringVar(&opts.call, "call", "", "call specified RPC by CLI mode")
 	f.StringVarP(&opts.file, "file", "f", "", "a script file that will be executed by (used only CLI mode)")
 	f.StringSliceVar(&opts.path, "path", nil, "proto file paths")
-	f.StringSliceVar(&opts.header, "header", nil, "default headers that set to each requests (example: foo=bar)")
+	f.StringToStringVar(&opts.header, "header", nil, "default headers that set to each requests (example: foo=bar)")
 	f.BoolVar(&opts.web, "web", false, "use gRPC Web protocol")
 	f.BoolVarP(&opts.reflection, "reflection", "r", false, "use gRPC reflection")
+	f.BoolVar(&opts.verbose, "verbose", false, "verbose output")
 	f.BoolVarP(&opts.tls, "tls", "t", false, "use a secure TLS connection")
 	f.BoolVarP(&opts.version, "version", "v", false, "display version and exit")
-	f.BoolP("help", "h", false, "display help text and exit")
+	f.BoolVarP(&opts.help, "help", "h", false, "display help text and exit")
 
 	f.Usage = func() {
 		c.printVersion()
 		var buf bytes.Buffer
 		w := tabwriter.NewWriter(&buf, 0, 8, 8, ' ', tabwriter.TabIndent)
 		f.VisitAll(func(f *pflag.Flag) {
-			// Ignore help and version flags.
-			// These are shown at the end of the help text.
-			if f.Name == "help" || f.Name == "version" {
-				return
-			}
 			cmd := "--" + f.Name
 			if f.Shorthand != "" {
 				cmd += ", -" + f.Shorthand
@@ -119,13 +112,15 @@ type options struct {
 	call       string
 	file       string
 	path       []string
-	header     []string
+	header     map[string]string
 	web        bool
 	reflection bool
 	tls        bool
 
 	// meta options
+	verbose bool
 	version bool
+	help    bool
 }
 
 // wrappedConfig is created at intialization and
@@ -160,8 +155,6 @@ type Command struct {
 	flagSet *pflag.FlagSet
 
 	cache *cache.Cache
-
-	initOnce sync.Once
 }
 
 // New instantiate CLI interface.
@@ -180,28 +173,26 @@ func New(ui cui.UI) *Command {
 }
 
 func (c *Command) init(opts *options, proto []string) error {
-	var err error
-	c.initOnce.Do(func() {
-		var cfg *config.Config
-		cfg, err = mergeConfig(config.Get(), opts, proto)
-		if err != nil {
-			return
-		}
+	cfg, err := config.Get(c.flagSet)
+	if err != nil {
+		return err
+	}
 
-		c.wcfg = &wrappedConfig{
-			cfg:  cfg,
-			call: opts.call,
-			file: opts.file,
-			repl: opts.repl,
-			cli:  opts.cli,
-		}
+	cfg.Default.ProtoFile = append(cfg.Default.ProtoFile, proto...)
 
-		err = checkPrecondition(c.wcfg)
-		if err != nil {
-			return
-		}
-	})
-	return err
+	c.wcfg = &wrappedConfig{
+		cfg:  cfg,
+		call: opts.call,
+		file: opts.file,
+		repl: opts.repl,
+		cli:  opts.cli,
+	}
+
+	err = checkPrecondition(c.wcfg)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Command) printUsage() {
@@ -228,18 +219,29 @@ func (c *Command) run(args []string) error {
 	opts := c.parseFlags(args)
 	proto := c.flagSet.Args()
 
+	if opts.verbose {
+		logger.SetOutput(os.Stderr)
+	}
+
 	switch {
 	case opts.version:
 		c.printVersion()
 		return nil
-	case opts.editConfig:
+	case opts.help:
+		c.flagSet.Usage()
+		return nil
+	}
+
+	c.init(opts, proto)
+
+	logger.SetPrefix(c.wcfg.cfg.Log.Prefix)
+
+	if opts.editConfig {
 		if err := config.Edit(); err != nil {
 			return err
 		}
 		return nil
 	}
-
-	c.init(opts, proto)
 
 	if len(c.wcfg.cfg.Default.ProtoFile) == 0 && !c.wcfg.cfg.Server.Reflection {
 		c.printUsage()
@@ -386,75 +388,6 @@ func (c *Command) processUpdate(ctx context.Context) error {
 	return nil
 }
 
-func mergeConfig(cfg *config.Config, opt *options, proto []string) (*config.Config, error) {
-	headers, err := toHeader(opt.header)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to merge config and option")
-	}
-
-	mergeString := func(s1, s2 string) string {
-		if s2 != "" {
-			return s2
-		}
-		return s1
-	}
-
-	mergeSlice := func(s1, s2 []string) []string {
-		slice := make([]string, 0, len(s1)+len(s2))
-		encountered := map[string]bool{}
-		for _, s := range append(s1, s2...) {
-			if !encountered[s] {
-				slice = append(slice, s)
-				encountered[s] = true
-			}
-		}
-		return slice
-	}
-
-	mergeHeader := func(s1, s2 []config.Header) []config.Header {
-		slice := make([]config.Header, 0, len(s1)+len(s2))
-		encountered := map[string]bool{}
-		for _, s := range append(s1, s2...) {
-			if !encountered[s.Key] {
-				slice = append(slice, s)
-				encountered[s.Key] = true
-			}
-		}
-		return slice
-	}
-
-	mc := copystructure.Must(copystructure.Copy(cfg)).(*config.Config)
-
-	mc.Default.Package = mergeString(cfg.Default.Package, opt.pkg)
-	mc.Default.Service = mergeString(cfg.Default.Service, opt.service)
-	mc.Default.ProtoPath = mergeSlice(cfg.Default.ProtoPath, opt.path)
-	mc.Default.ProtoFile = mergeSlice(cfg.Default.ProtoFile, proto)
-
-	mc.Server.Host = mergeString(cfg.Server.Host, opt.host)
-	mc.Server.Port = mergeString(cfg.Server.Port, opt.port)
-
-	mc.Request.Header = mergeHeader(cfg.Request.Header, headers)
-
-	if opt.silent {
-		mc.REPL.ShowSplashText = false
-	}
-
-	if opt.web {
-		mc.Request.Web = true
-	}
-
-	if opt.reflection {
-		mc.Server.Reflection = true
-	}
-
-	if opt.tls {
-		mc.Server.TLS = true
-	}
-
-	config.SetupConfig(mc)
-	return mc, nil
-}
-
 func checkPrecondition(w *wrappedConfig) error {
 	if _, err := strconv.Atoi(w.cfg.Server.Port); err != nil {
 		return errors.New(`port must be integer`)
@@ -502,22 +435,4 @@ func isCallable(w *wrappedConfig) error {
 		return result
 	}
 	return nil
-}
-
-func toHeader(sh []string) ([]config.Header, error) {
-	if len(sh) == 0 {
-		return nil, nil
-	}
-	headers := make([]config.Header, 0, len(sh))
-	for _, h := range sh {
-		s := strings.SplitN(h, "=", 2)
-		if len(s) != 2 {
-			return nil, errors.New(`header must be specified "key=val" format`)
-		}
-		headers = append(headers, config.Header{
-			Key: s[0],
-			Val: s[1],
-		})
-	}
-	return headers, nil
 }

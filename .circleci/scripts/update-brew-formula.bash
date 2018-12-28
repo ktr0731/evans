@@ -1,4 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
+set -e -o pipefail
 
 if [ $# -ne 1 ]; then
   echo 'please use from Makefile'

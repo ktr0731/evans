@@ -84,5 +84,9 @@ func (h *replHelper) run(args []string) int {
 
 	h.reseted = false
 
+	// trim empty string
+	if len(args) == 1 && args[0] == "" {
+		return cli.Run(h.commonArgs)
+	}
 	return cli.Run(append(h.commonArgs, args...))
 }

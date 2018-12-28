@@ -1,0 +1,35 @@
+
+[default]
+  package = ""
+  protofile = []
+  protopath = ["bar","yoko.touma"]
+  service = ""
+
+[log]
+  prefix = "evans: "
+
+[meta]
+  autoupdate = false
+  configversion = "0.6.11"
+  updatelevel = "patch"
+
+[repl]
+  coloredoutput = true
+  inputpromptformat = "{ancestor}{name} ({type}) => "
+  promptformat = "{package}.{sevice}@{addr}:{port}"
+  showsplashtext = true
+  splashtextpath = ""
+
+[request]
+  web = false
+
+  [request.header]
+    foo = ["bar"]
+    grpc-client = ["evans"]
+    hoge = ["fuga"]
+
+[server]
+  host = "localhost"
+  port = "8080"
+  reflection = false
+  tls = false

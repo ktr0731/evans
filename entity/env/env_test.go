@@ -3,7 +3,6 @@ package env_test
 import (
 	"testing"
 
-	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/env"
 	mockentity "github.com/ktr0731/evans/tests/mock/entity"
@@ -61,19 +60,11 @@ func TestEnv(t *testing.T) {
 			},
 		},
 	}
-	setup := func(t *testing.T, cfg *config.Config) *env.Env {
-		if cfg == nil {
-			cfg = &config.Config{
-				Env: &config.Env{},
-				Request: &config.Request{
-					Header: []config.Header{},
-				},
-			}
-		}
+	setup := func(t *testing.T) *env.Env {
 		return env.New(pkgs, nil)
 	}
 
-	env := setup(t, nil)
+	env := setup(t)
 
 	t.Run("DSN with no current package", func(t *testing.T) {
 		assert.Equal(t, "", env.DSN())
@@ -142,30 +133,8 @@ func TestEnv(t *testing.T) {
 		require.Equal(t, "SayHello", rpc.Name())
 	})
 
-	t.Run("Headers", func(t *testing.T) {
-		cfg := &config.Config{
-			Request: &config.Request{},
-		}
-		env := setup(t, cfg)
-		require.Len(t, env.Headers(), 0)
-
-		expected := []config.Header{
-			{Key: "foo", Val: "bar"},
-			{Key: "hoge", Val: "fuga"},
-		}
-		cfg.Request.Header = expected
-		env = setup(t, cfg)
-		for i, h := range env.Headers() {
-			assert.Equal(t, expected[i].Key, h.Key)
-			assert.Equal(t, expected[i].Val, h.Val)
-		}
-	})
-
 	t.Run("AddHeader", func(t *testing.T) {
-		cfg := &config.Config{
-			Request: &config.Request{},
-		}
-		env := setup(t, cfg)
+		env := setup(t)
 		require.Len(t, env.Headers(), 0)
 
 		env.AddHeader(&entity.Header{"megumi", "kato", false})
@@ -173,27 +142,24 @@ func TestEnv(t *testing.T) {
 
 		env.AddHeader(&entity.Header{"megumi", "kato", false})
 		assert.Len(t, env.Headers(), 1)
+
+		assert.EqualValues(t, &entity.Header{Key: "megumi", Val: "kato"}, env.Headers()[0])
 	})
 
 	t.Run("RemoveHeader", func(t *testing.T) {
-		cfg := &config.Config{
-			Request: &config.Request{},
-		}
-		env := setup(t, cfg)
+		env := setup(t)
 		require.Len(t, env.Headers(), 0)
 
 		env.RemoveHeader("foo")
 
-		headers := []struct {
-			k, v string
-		}{
-			{"hazuki", "katou"},
-			{"kumiko", "oumae"},
-			{"reina", "kousaka"},
-			{"sapphire", "kawashima"},
+		headers := map[string]string{
+			"hazuki":   "katou",
+			"kumiko":   "oumae",
+			"reina":    "kousaka",
+			"sapphire": "kawashima",
 		}
-		for _, h := range headers {
-			env.AddHeader(&entity.Header{h.k, h.v, false})
+		for k, v := range headers {
+			env.AddHeader(&entity.Header{k, v, false})
 		}
 		assert.Len(t, env.Headers(), 4)
 

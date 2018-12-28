@@ -14,10 +14,6 @@ jobs:
           keys:
             - mod-{{ checksum "go.sum" }}
 
-      - restore_cache:
-          keys:
-            - tool-{{ checksum "gotool.sum" }}
-
       - run:
           name: install dependencies
           command: make deps
@@ -27,6 +23,10 @@ jobs:
           paths:
             - /go/pkg/mod
           when: always
+
+      - restore_cache:
+          keys:
+            - tool-{{ checksum "gotool.sum" }}
 
       - run:
           name: install tools
