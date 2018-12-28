@@ -198,9 +198,7 @@ func stringSliceToSlice(val string) []string {
 // Note that writeLatestDefaultConfig initializes viper again.
 // So, all flags you bind by BindPFlag, global and local config will be clear.
 func writeLatestDefaultConfig(path string) (*Config, error) {
-	// TODO: create a new one instead of package global.
 	v := newDefaultViper()
-	// TODO: write tests
 	// Set configVersion to the latest version.
 	v.Set("meta.configVersion", meta.Version.String())
 
