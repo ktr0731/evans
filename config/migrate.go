@@ -12,7 +12,7 @@ var migrationScripts = map[string]func(string, *viper.Viper) string{
 func migrate(old string, v *viper.Viper) {
 	f, ok := migrationScripts[old]
 	if !ok {
-		// no any changes
+		// No any changes
 		return
 	}
 	updatedVer := f(old, v)
@@ -46,7 +46,7 @@ func migrate0610To0611(old string, v *viper.Viper) string {
 	//   }
 	//
 	if err := v.UnmarshalKey("request.header", &oldHeader); err != nil {
-		logger.Println("failed to unmarshal 'request.header' in v%s", old)
+		logger.Printf("failed to unmarshal 'request.header' in v%s", old)
 		return ""
 	}
 

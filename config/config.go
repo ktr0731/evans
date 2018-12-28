@@ -254,7 +254,7 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 		return nil, err
 	}
 
-	// migrate old versions to the latest.
+	// Migrate old versions to the latest.
 	if old := viper.GetString("meta.configVersion"); old != meta.Version.String() {
 		migrate(old, viper.GetViper())
 		// Update the global config with the migrated config.
