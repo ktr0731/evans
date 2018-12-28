@@ -62,7 +62,7 @@ So, you can format it by any commands like `jq`. Also, if you want to use the sa
    - [Client streaming RPC](#client-streaming-rpc-1)
    - [Server streaming RPC](#server-streaming-rpc-1)
    - [Bidirectional streaming RPC](#bidirectional-streaming-rpc-1)
-- [Another features](#another-features)
+- [Other features](#other-features)
    - [gRPC Web](#grpc-web)
 - [Supported IDL (interface definition language)](#supported-idl-interface-definition-language)
 - [See Also](#see-also)
@@ -107,6 +107,11 @@ $ evans api/api.proto
 If your server is enabling [gRPC reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md), you can launch Evans with only `-r` (`--reflection`) option.
 ``` sh
 $ evans -r
+```
+
+Also if the server requires secure TLS connections, yuo can lunch Evans with the `t` (`--tls`) options.
+``` sh
+$ evans --tls
 ```
 
 To show package names of proto files REPL read:  
@@ -434,6 +439,8 @@ $ echo '{ "name": "foo" } { "name": "bar" }' | evans -r --service Example --call
 Evans also support gRPC Web protocol.  
 Tested gRPC Web implementations are:
 - [improbable-eng/grpc-web](https://github.com/improbable-eng/grpc-web)
+
+At the moment TLS is not supported for gRPC Web.
 
 ## Supported IDL (interface definition language)
 - [Protocol Buffers 3](https://developers.google.com/protocol-buffers/)  

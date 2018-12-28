@@ -62,6 +62,7 @@ func (c *Command) parseFlags(args []string) *options {
 	f.BoolVar(&opts.web, "web", false, "use gRPC Web protocol")
 	f.BoolVarP(&opts.reflection, "reflection", "r", false, "use gRPC reflection")
 	f.BoolVar(&opts.verbose, "verbose", false, "verbose output")
+	f.BoolVarP(&opts.tls, "tls", "t", false, "use a secure TLS connection")
 	f.BoolVarP(&opts.version, "version", "v", false, "display version and exit")
 	f.BoolVarP(&opts.help, "help", "h", false, "display help text and exit")
 
@@ -114,6 +115,7 @@ type options struct {
 	header     map[string]string
 	web        bool
 	reflection bool
+	tls        bool
 
 	// meta options
 	verbose bool
@@ -399,6 +401,10 @@ func checkPrecondition(w *wrappedConfig) error {
 
 	if w.cfg.Server.Reflection && w.cfg.Request.Web {
 		return errors.New("gRPC Web server reflection is not supported yet")
+	}
+
+	if w.cfg.Server.TLS && w.cfg.Request.Web {
+		return errors.New("TLS connections with a gRPC Web server are not supported yet")
 	}
 
 	return nil
