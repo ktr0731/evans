@@ -31,6 +31,36 @@ func init() {
 	}
 }
 
+// setupEnv creates a temp dir and set $XDG_CONFIG_HOME to it.
+// setupEnv returns dir which is the base dir and cleanup func.
+//
+// The directory structure is as follows:
+//
+//   - (temp dir): dir
+//     - config: $XDG_CONFIG_HOME
+//       - evans: evansCfgDir
+//
+func setupEnv(t *testing.T) (string, string, func()) {
+	cwd := getWorkDir(t)
+
+	dir, err := ioutil.TempDir("", "")
+	require.NoError(t, err, "failed to create a temp dir to setup testing enviroment")
+
+	os.Chdir(dir)
+	oldEnv := os.Getenv("XDG_CONFIG_HOME")
+	cfgDir := filepath.Join(dir, "config")
+	os.Setenv("XDG_CONFIG_HOME", cfgDir)
+	evansCfgDir := filepath.Join(cfgDir, "evans")
+	mkdir(t, evansCfgDir)
+
+	return dir, evansCfgDir, func() {
+		os.Chdir(cwd)
+		os.Setenv("XDG_CONFIG_HOME", oldEnv)
+		os.RemoveAll(dir)
+		viper.Reset()
+	}
+}
+
 func assertWithGolden(t *testing.T, name string, f func(t *testing.T) *Config) {
 	normalizeFilename := func(name string) string {
 		fname := strings.Replace(strings.ToLower(name), " ", "_", -1) + ".golden.toml"
@@ -104,27 +134,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestLoad(t *testing.T) {
-	setup := func(t *testing.T) (string, string, func()) {
-		cwd := getWorkDir(t)
-
-		dir, err := ioutil.TempDir("", "")
-		require.NoError(t, err, "failed to create a temp dir to setup testing enviroment")
-
-		os.Chdir(dir)
-		oldEnv := os.Getenv("XDG_CONFIG_HOME")
-		cfgDir := filepath.Join(dir, "config")
-		os.Setenv("XDG_CONFIG_HOME", cfgDir)
-		evansCfgDir := filepath.Join(cfgDir, "evans")
-		mkdir(t, evansCfgDir)
-
-		return dir, evansCfgDir, func() {
-			os.Chdir(cwd)
-			os.Setenv("XDG_CONFIG_HOME", oldEnv)
-			os.RemoveAll(dir)
-			viper.Reset()
-		}
-	}
-
 	checkValues := func(t *testing.T, c *Config) {
 		require.NotNil(t, c.REPL.Server)
 		if len(c.Default.ProtoFile) == 1 {
@@ -136,7 +145,7 @@ func TestLoad(t *testing.T) {
 	}
 
 	assertWithGolden(t, "create a default global config if both of global and local config are not found", func(t *testing.T) *Config {
-		_, _, cleanup := setup(t)
+		_, _, cleanup := setupEnv(t)
 		defer cleanup()
 
 		cfg, err := Get(nil)
@@ -150,7 +159,7 @@ func TestLoad(t *testing.T) {
 	assertWithGolden(t, "load a global config if local config is not found", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)
 
-		_, cfgDir, cleanup := setup(t)
+		_, cfgDir, cleanup := setupEnv(t)
 		defer cleanup()
 
 		// Copy global.toml from testdata to the config dir.
@@ -168,7 +177,7 @@ func TestLoad(t *testing.T) {
 	assertWithGolden(t, "load a local config", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)
 
-		cwd, cfgDir, cleanup := setup(t)
+		cwd, cfgDir, cleanup := setupEnv(t)
 		defer cleanup()
 
 		projDir := filepath.Join(cwd, "local")
@@ -196,7 +205,7 @@ func TestLoad(t *testing.T) {
 	assertWithGolden(t, "will be apply flags", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)
 
-		cwd, cfgDir, cleanup := setup(t)
+		cwd, cfgDir, cleanup := setupEnv(t)
 		defer cleanup()
 
 		projDir := filepath.Join(cwd, "local")
@@ -235,7 +244,7 @@ func TestLoad(t *testing.T) {
 	assertWithGolden(t, "will be apply flags, but local config doesn't exist", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)
 
-		_, cfgDir, cleanup := setup(t)
+		_, cfgDir, cleanup := setupEnv(t)
 		defer cleanup()
 
 		// Copy global.toml from testdata to the config dir.
