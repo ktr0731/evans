@@ -14,6 +14,10 @@ func SetOutput(w io.Writer) {
 	defaultLogger.SetOutput(w)
 }
 
+func SetPrefix(p string) {
+	defaultLogger.SetPrefix(p)
+}
+
 func Println(v ...interface{}) {
 	defaultLogger.Println(v...)
 }

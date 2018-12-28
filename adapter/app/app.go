@@ -234,6 +234,8 @@ func (c *Command) run(args []string) error {
 
 	c.init(opts, proto)
 
+	logger.SetPrefix(c.wcfg.cfg.Log.Prefix)
+
 	if opts.editConfig {
 		if err := config.Edit(); err != nil {
 			return err
