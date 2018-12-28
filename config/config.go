@@ -74,36 +74,39 @@ func Get(fs *pflag.FlagSet) (*Config, error) {
 	return initConfig(fs)
 }
 
-func initDefaultValues() {
-	viper.SetDefault("default.protoPath", []string{""})
-	viper.SetDefault("default.protoFile", []string{""})
-	viper.SetDefault("default.package", "")
-	viper.SetDefault("default.service", "")
+func newDefaultViper() *viper.Viper {
+	v := viper.New()
+	v.SetDefault("default.protoPath", []string{""})
+	v.SetDefault("default.protoFile", []string{""})
+	v.SetDefault("default.package", "")
+	v.SetDefault("default.service", "")
 
 	// We set the default version to v0.6.10
 	// because the structure of Config is changed at v0.6.11.
-	viper.SetDefault("meta.configVersion", "0.6.10")
-	viper.SetDefault("meta.autoUpdate", false)
-	viper.SetDefault("meta.updateLevel", "patch")
+	v.SetDefault("meta.configVersion", "0.6.10")
+	v.SetDefault("meta.autoUpdate", false)
+	v.SetDefault("meta.updateLevel", "patch")
 
-	viper.SetDefault("repl.promptFormat", "{package}.{sevice}@{addr}:{port}")
-	viper.SetDefault("repl.inputPromptFormat", "{ancestor}{name} ({type}) => ")
-	viper.SetDefault("repl.coloredOutput", true)
-	viper.SetDefault("repl.showSplashText", true)
-	viper.SetDefault("repl.splashTextPath", "")
+	v.SetDefault("repl.promptFormat", "{package}.{sevice}@{addr}:{port}")
+	v.SetDefault("repl.inputPromptFormat", "{ancestor}{name} ({type}) => ")
+	v.SetDefault("repl.coloredOutput", true)
+	v.SetDefault("repl.showSplashText", true)
+	v.SetDefault("repl.splashTextPath", "")
 
-	viper.SetDefault("server.host", "127.0.0.1")
-	viper.SetDefault("server.port", "50051")
-	viper.SetDefault("server.reflection", false)
-	viper.SetDefault("server.tls", false)
+	v.SetDefault("server.host", "127.0.0.1")
+	v.SetDefault("server.port", "50051")
+	v.SetDefault("server.reflection", false)
+	v.SetDefault("server.tls", false)
 
-	viper.SetDefault("log.prefix", "evans: ")
+	v.SetDefault("log.prefix", "evans: ")
 
-	viper.SetDefault("request.header", Header{"grpc-client": []string{"evans"}})
-	viper.SetDefault("request.web", false)
+	v.SetDefault("request.header", Header{"grpc-client": []string{"evans"}})
+	v.SetDefault("request.web", false)
+
+	return v
 }
 
-func bindFlags(fs *pflag.FlagSet) {
+func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
 	kv := map[string]string{
 		"default.protoPath":   "path",
 		"default.package":     "package",
@@ -125,7 +128,7 @@ func bindFlags(fs *pflag.FlagSet) {
 		// TODO: cleanup this special case.
 		if k == "repl.showSplashText" {
 			// If --silent is disabled, showSplashText is true.
-			viper.Set(k, f.Value.String() != "true")
+			vp.Set(k, f.Value.String() != "true")
 			continue
 		}
 
@@ -133,29 +136,29 @@ func bindFlags(fs *pflag.FlagSet) {
 		case "stringToString":
 			// There is pflag.StringToString which converts 'key=val' to a map structure.
 			// However, currently, we don't use BindPFlag because it has some bugs.
-			currentMap := viper.GetStringMapString(k)
+			currentMap := vp.GetStringMapString(k)
 			newMap := stringToStringToMap(f.Value.String())
 			for k, v := range newMap {
 				currentMap[k] = v
 			}
-			viper.Set(k, currentMap)
+			vp.Set(k, currentMap)
 			continue
 		case "stringSlice":
 			// We want to append flag values to the config.
 			// So, we don't use BindPFlag.
-			currentSlice := viper.GetStringSlice(k)
+			currentSlice := vp.GetStringSlice(k)
 			newSlice := stringSliceToSlice(f.Value.String())
 			for _, v := range newSlice {
 				currentSlice = append(currentSlice, v)
 			}
-			viper.Set(k, currentSlice)
+			vp.Set(k, currentSlice)
 			continue
 		}
-		viper.BindPFlag(k, f)
+		vp.BindPFlag(k, f)
 	}
 }
 
-// stringToStringToMap convets (pflag.stringToStringValue).String() to a map.
+// stringToStringToMap converts (pflag.stringToStringValue).String() to a map.
 // If some errors occur, stringToStringToMap returns an empty map.
 func stringToStringToMap(val string) map[string]string {
 	val = strings.Trim(val, "[]")
@@ -196,32 +199,33 @@ func stringSliceToSlice(val string) []string {
 // So, all flags you bind by BindPFlag, global and local config will be clear.
 func writeLatestDefaultConfig(path string) (*Config, error) {
 	// TODO: create a new one instead of package global.
-	viper.Reset()
-	initDefaultValues()
+	v := newDefaultViper()
 	// TODO: write tests
 	// Set configVersion to the latest version.
-	viper.Set("meta.configVersion", meta.Version.String())
+	v.Set("meta.configVersion", meta.Version.String())
 
 	var cfg Config
-	err := viper.Unmarshal(&cfg)
+	err := v.Unmarshal(&cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal default config")
 	}
 	setupConfig(&cfg)
-	if err := viper.WriteConfigAs(path); err != nil {
+	if err := v.WriteConfigAs(path); err != nil {
 		return nil, errors.Wrapf(err, "failed to write the latest default config to %s", path)
 	}
 	return &cfg, nil
 }
 
 func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
+	v := newDefaultViper()
+
 	defer func() {
 		if fs == nil {
 			logger.Println("flagset is not found")
 		} else {
 			logger.Println("bind flagset to the loaded config")
-			bindFlags(fs)
-			if err = viper.Unmarshal(cfg); err != nil {
+			bindFlags(v, fs)
+			if err = v.Unmarshal(cfg); err != nil {
 				return
 			}
 		}
@@ -231,17 +235,15 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 		}
 	}()
 
-	initDefaultValues()
-
 	cfgDir := filepath.Join(xdgbasedir.ConfigHome(), "evans")
 
 	// Global config paths
-	viper.SetConfigType("toml")
-	viper.SetConfigName("config")
-	viper.AddConfigPath(cfgDir)
+	v.SetConfigType("toml")
+	v.SetConfigName("config")
+	v.AddConfigPath(cfgDir)
 
 	logger.Printf("load global config from %s", cfgDir)
-	err = viper.ReadInConfig()
+	err = v.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			path := filepath.Join(cfgDir, globalConfigName)
@@ -256,15 +258,15 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 	}
 
 	// Migrate old versions to the latest.
-	if old := viper.GetString("meta.configVersion"); old != meta.Version.String() {
-		migrate(old, viper.GetViper())
+	if old := v.GetString("meta.configVersion"); old != meta.Version.String() {
+		migrate(old, v)
 		// Update the global config with the migrated config.
 		logger.Println("migrated the global config to the structure of the latest version")
-		viper.WriteConfig()
+		v.WriteConfig()
 	}
 
 	var globalCfg Config
-	if err := viper.Unmarshal(&globalCfg); err != nil {
+	if err := v.Unmarshal(&globalCfg); err != nil {
 		return nil, err
 	}
 
@@ -281,12 +283,12 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 		return nil, errors.Wrap(err, "failed to open a local config file")
 	}
 	defer f.Close()
-	if err := viper.MergeConfig(f); err != nil {
+	if err := v.MergeConfig(f); err != nil {
 		return nil, errors.Wrap(err, "failed to merge a local config to the global config")
 	}
 
 	var mergedCfg Config
-	if err := viper.Unmarshal(&mergedCfg); err != nil {
+	if err := v.Unmarshal(&mergedCfg); err != nil {
 		return nil, err
 	}
 	return &mergedCfg, nil
