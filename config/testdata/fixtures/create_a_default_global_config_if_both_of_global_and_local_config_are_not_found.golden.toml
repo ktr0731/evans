@@ -24,7 +24,7 @@
   web = false
 
   [request.header]
-    grpc-client = "evans"
+    grpc-client = ["evans"]
 
 [server]
   host = "127.0.0.1"

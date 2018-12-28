@@ -45,7 +45,8 @@ func SetupEnv(t *testing.T, fpath, pkgName, svcName string) *env.Env {
 
 	headers := make([]entity.Header, 0, len(cfg.Request.Header))
 	for k, v := range cfg.Request.Header {
-		headers = append(headers, entity.Header{Key: k, Val: v})
+		require.Len(t, v, 1, "currently, header length is always 1")
+		headers = append(headers, entity.Header{Key: k, Val: v[0]})
 	}
 	env := env.New(set, headers)
 

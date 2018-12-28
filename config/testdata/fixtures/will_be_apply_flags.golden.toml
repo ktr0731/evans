@@ -24,9 +24,9 @@
   web = false
 
   [request.header]
-    foo = "bar"
-    grpc-client = "evans"
-    hoge = "fuga"
+    foo = ["bar"]
+    grpc-client = ["evans"]
+    hoge = ["fuga"]
 
 [server]
   host = "localhost"

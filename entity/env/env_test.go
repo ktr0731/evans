@@ -3,7 +3,6 @@ package env_test
 import (
 	"testing"
 
-	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/env"
 	mockentity "github.com/ktr0731/evans/tests/mock/entity"
@@ -61,18 +60,11 @@ func TestEnv(t *testing.T) {
 			},
 		},
 	}
-	setup := func(t *testing.T, cfg *config.Config) *env.Env {
-		if cfg == nil {
-			cfg = &config.Config{
-				Request: &config.Request{
-					Header: config.Header{},
-				},
-			}
-		}
+	setup := func(t *testing.T) *env.Env {
 		return env.New(pkgs, nil)
 	}
 
-	env := setup(t, nil)
+	env := setup(t)
 
 	t.Run("DSN with no current package", func(t *testing.T) {
 		assert.Equal(t, "", env.DSN())
@@ -141,27 +133,8 @@ func TestEnv(t *testing.T) {
 		require.Equal(t, "SayHello", rpc.Name())
 	})
 
-	t.Run("Headers", func(t *testing.T) {
-		cfg := &config.Config{
-			Request: &config.Request{},
-		}
-		env := setup(t, cfg)
-		require.Len(t, env.Headers(), 0)
-
-		expected := config.Header{
-			"foo":  "bar",
-			"hoge": "fuga",
-		}
-		cfg.Request.Header = expected
-		env = setup(t, cfg)
-		assertHeaders(t, expected, env.Headers())
-	})
-
 	t.Run("AddHeader", func(t *testing.T) {
-		cfg := &config.Config{
-			Request: &config.Request{},
-		}
-		env := setup(t, cfg)
+		env := setup(t)
 		require.Len(t, env.Headers(), 0)
 
 		env.AddHeader(&entity.Header{"megumi", "kato", false})
@@ -169,13 +142,12 @@ func TestEnv(t *testing.T) {
 
 		env.AddHeader(&entity.Header{"megumi", "kato", false})
 		assert.Len(t, env.Headers(), 1)
+
+		assert.EqualValues(t, &entity.Header{Key: "megumi", Val: "kato"}, env.Headers()[0])
 	})
 
 	t.Run("RemoveHeader", func(t *testing.T) {
-		cfg := &config.Config{
-			Request: &config.Request{},
-		}
-		env := setup(t, cfg)
+		env := setup(t)
 		require.Len(t, env.Headers(), 0)
 
 		env.RemoveHeader("foo")
@@ -208,24 +180,4 @@ func TestEnv(t *testing.T) {
 		assert.Len(t, env.Headers(), 2)
 		assert.Equal(t, env.Headers()[1].Key, "reina")
 	})
-}
-
-func assertHeaders(t *testing.T, expected config.Header, actual []*entity.Header) {
-	t.Helper()
-
-	m := map[string]string{}
-	for k, v := range expected {
-		m[k] = v
-	}
-
-	for _, h := range actual {
-		v, found := m[h.Key]
-		if !found {
-			t.Errorf("key %s is not found", h.Key)
-			continue
-		}
-		if h.Val != v {
-			t.Errorf("key %s: expected value is %s, but got %s", h.Key, v, h.Val)
-		}
-	}
 }

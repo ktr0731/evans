@@ -27,7 +27,7 @@ type Server struct {
 	TLS        bool   `toml:"tls"`
 }
 
-type Header map[string]string
+type Header map[string][]string
 
 type Request struct {
 	Header Header `toml:"header"`
@@ -99,7 +99,7 @@ func initDefaultValues() {
 
 	viper.SetDefault("log.prefix", "evans: ")
 
-	viper.SetDefault("request.header", Header{"grpc-client": "evans"})
+	viper.SetDefault("request.header", Header{"grpc-client": []string{"evans"}})
 	viper.SetDefault("request.web", false)
 }
 

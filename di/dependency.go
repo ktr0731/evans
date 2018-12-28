@@ -6,7 +6,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/hashicorp/go-multierror"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/adapter/grpc"
 	"github.com/ktr0731/evans/adapter/inputter"
 	"github.com/ktr0731/evans/adapter/presenter"
@@ -14,6 +14,7 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/entity"
 	environment "github.com/ktr0731/evans/entity/env"
+	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/usecase/port"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
@@ -47,7 +48,14 @@ func initEnv(cfg *config.Config) (rerr error) {
 
 		headers := make([]entity.Header, 0, len(cfg.Request.Header))
 		for k, v := range cfg.Request.Header {
-			headers = append(headers, entity.Header{Key: k, Val: v})
+			if len(v) == 0 {
+				continue
+			}
+			// TODO: support multiple values
+			if len(v) > 1 {
+				logger.Println("currently, Evans doesn't support multiple header values corresponding to a key")
+			}
+			headers = append(headers, entity.Header{Key: k, Val: v[0]})
 		}
 		if gRPCClient.ReflectionEnabled() {
 			var svcs []entity.Service

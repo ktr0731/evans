@@ -67,9 +67,9 @@ func migrate0610To0611(old string, v *viper.Viper) string {
 	}
 
 	// v0.6.11 modifies the above structure to a map.
-	m := make(map[string]string)
+	m := make(Header)
 	for _, h := range oldHeader {
-		m[h.Key] = h.Val
+		m[h.Key] = []string{h.Val}
 	}
 	v.Set("request.header", m)
 
