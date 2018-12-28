@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 VERSION := $(shell bump show meta/meta.go)
 
-export PATH := _tools:$(PATH)
+export PATH := $(PWD)/_tools:$(PATH)
 export GO111MODULE := on
 
 .PHONY: version
