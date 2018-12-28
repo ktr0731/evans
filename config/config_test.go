@@ -135,7 +135,6 @@ func TestMain(m *testing.M) {
 
 func TestLoad(t *testing.T) {
 	checkValues := func(t *testing.T, c *Config) {
-		require.NotNil(t, c.REPL.Server)
 		if len(c.Default.ProtoFile) == 1 {
 			require.NotEmpty(t, c.Default.ProtoFile[0])
 		}

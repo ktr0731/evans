@@ -15,7 +15,7 @@ func Test_migration(t *testing.T) {
 		return strings.Replace(ver, ".", "_", -1) + ".toml"
 	}
 
-	for oldVer, _ := range migrationScripts {
+	for oldVer := range migrationScripts {
 		t.Run(oldVer, func(t *testing.T) {
 			oldCWD := getWorkDir(t)
 

@@ -34,10 +34,8 @@ type Request struct {
 }
 
 type REPL struct {
-	// TODO: remove this
-	Server            *Server `toml:"server"`
-	PromptFormat      string  `toml:"promptFormat"`
-	InputPromptFormat string  `toml:"inputPromptFormat"`
+	PromptFormat      string `toml:"promptFormat"`
+	InputPromptFormat string `toml:"inputPromptFormat"`
 
 	ColoredOutput bool `toml:"coloredOutput"`
 
@@ -301,7 +299,6 @@ func setupConfig(c *Config) {
 	if (c.Default.ProtoPath == nil) || (len(c.Default.ProtoPath) == 1 && c.Default.ProtoPath[0] == "") {
 		c.Default.ProtoPath = []string{}
 	}
-	c.REPL.Server = c.Server
 }
 
 func Edit() error {
