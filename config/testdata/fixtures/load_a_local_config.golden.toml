@@ -20,11 +20,6 @@
   showsplashtext = true
   splashtextpath = ""
 
-  [repl.server]
-    host = "localhost"
-    port = "3333"
-    reflection = false
-
 [request]
   web = false
 
@@ -36,3 +31,4 @@
   host = "localhost"
   port = "3333"
   reflection = false
+  tls = false
