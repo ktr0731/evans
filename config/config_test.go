@@ -62,8 +62,15 @@ func setupEnv(t *testing.T) (string, string, func()) {
 }
 
 func assertWithGolden(t *testing.T, name string, f func(t *testing.T) *Config) {
+	r := strings.NewReplacer(
+		" ", "_",
+		"=", "-",
+		"'", "",
+		`"`, "",
+		",", "",
+	)
 	normalizeFilename := func(name string) string {
-		fname := strings.Replace(strings.ToLower(name), " ", "_", -1) + ".golden.toml"
+		fname := r.Replace(strings.ToLower(name)) + ".golden.toml"
 		return filepath.Join("testdata", "fixtures", fname)
 	}
 
