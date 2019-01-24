@@ -8,7 +8,7 @@ import (
 	"github.com/ktr0731/evans/meta"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
-	homedir "github.com/mitchellh/go-homedir"
+	xdgbasedir "github.com/zchee/go-xdgbasedir"
 )
 
 var (
@@ -32,10 +32,7 @@ func init() {
 }
 
 func setup() {
-	p, err := resolvePath()
-	if err != nil {
-		panic(err)
-	}
+	p := resolvePath()
 
 	if _, err := os.Stat(filepath.Dir(p)); os.IsNotExist(err) {
 		if err := initCacheFile(p); err != nil {
@@ -91,16 +88,8 @@ func SetInstalledBy(mt MeansType) error {
 	return save()
 }
 
-func resolvePath() (string, error) {
-	base := os.Getenv("XDG_CACHE_HOME")
-	if base == "" {
-		home, err := homedir.Dir()
-		if err != nil {
-			return "", err
-		}
-		return filepath.Join(home, ".cache", meta.AppName, defaultFileName), nil
-	}
-	return filepath.Join(base, meta.AppName, defaultFileName), nil
+func resolvePath() string {
+	return filepath.Join(xdgbasedir.CacheHome(), meta.AppName, defaultFileName)
 }
 
 func initCacheFile(p string) error {
@@ -118,11 +107,12 @@ func initCacheFile(p string) error {
 	})
 }
 
+// Save writes the receiver to the cache file.
+// It may return an *os.PathError if it can't create a new cache file.
+// Also it may return an error if it failed to encode *Cache by TOML.
 func save() error {
-	p, err := resolvePath()
-	if err != nil {
-		return err
-	}
+	p := resolvePath()
+
 	f, err := os.Create(p)
 	if err != nil {
 		return err
