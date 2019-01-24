@@ -27,20 +27,18 @@ type Cache struct {
 	InstalledBy     MeansType `default:"" toml:"installedBy"`
 }
 
+func (c2 *Cache) Save() error {
+	return save()
+}
+
 func init() {
 	setup()
 }
 
 func setup() {
-	p := resolvePath()
+	c = Cache{}
 
-	if _, err := os.Stat(filepath.Dir(p)); os.IsNotExist(err) {
-		if err := initCacheFile(p); err != nil {
-			panic(err)
-		}
-	} else if err != nil {
-		panic(err)
-	}
+	p := resolvePath()
 
 	if _, err := os.Stat(p); os.IsNotExist(err) {
 		if err := initCacheFile(p); err != nil {
@@ -76,22 +74,26 @@ func Clear() error {
 
 // SetUpdateInfo sets an updatable flag to true and
 // the latest version info to passed version.
-func SetUpdateInfo(latest *semver.Version) error {
+func SetUpdateInfo(latest *semver.Version) *Cache {
 	c.UpdateAvailable = true
 	c.LatestVersion = latest.String()
-	return save()
+	c2 := c
+	return &c2
 }
 
 // SetInstalledBy sets means how Evans was installed.
-func SetInstalledBy(mt MeansType) error {
+func SetInstalledBy(mt MeansType) *Cache {
 	c.InstalledBy = mt
-	return save()
+	c2 := c
+	return &c2
 }
 
 func resolvePath() string {
 	return filepath.Join(xdgbasedir.CacheHome(), meta.AppName, defaultFileName)
 }
 
+// initCacheFile creates or overwrites a new cache file with default values.
+// If directories of the file are not found, initCacheFile also creates it.
 func initCacheFile(p string) error {
 	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
 		return err

@@ -9,7 +9,6 @@ import (
 	semver "github.com/ktr0731/go-semver"
 	"github.com/ktr0731/go-updater/github"
 	homedir "github.com/mitchellh/go-homedir"
-	toml "github.com/pelletier/go-toml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
@@ -57,7 +56,7 @@ func TestCache(t *testing.T) {
 	cleanup := setEnv("XDG_CACHE_HOME", testDir)
 	defer cleanup()
 
-	t.Run("config not exist", func(t *testing.T) {
+	t.Run("cache does not exist", func(t *testing.T) {
 		setup()
 		defer func() {
 			os.RemoveAll(testDir)
@@ -65,33 +64,44 @@ func TestCache(t *testing.T) {
 		assert.NotNil(t, Get(), "after setup called, cache file is written in $XDG_CACHE_HOME/testDir but returned cache was nil")
 	})
 
-	t.Run("config exist", func(t *testing.T) {
+	t.Run("cache exists", func(t *testing.T) {
 		setup()
 		defer func() {
 			os.RemoveAll(testDir)
 		}()
 
 		cache := Get()
-		err := SetUpdateInfo(semver.MustParse("1.0.0"))
-		require.NoError(t, err)
+		assert.Equalf(t, c, *cache, "The initial value of the cache must be equal to the value of Get")
+
 		mt := MeansType(github.MeansTypeGitHubRelease)
-		err = SetInstalledBy(mt)
-		require.NoError(t, err)
+		setCache := func() *Cache {
+			unsavedCache := SetUpdateInfo(semver.MustParse("1.0.0"))
+			assert.Equal(t, "1.0.0", unsavedCache.LatestVersion)
+			assert.True(t, unsavedCache.UpdateAvailable)
 
-		p := resolvePath()
-		f, err := os.Create(p)
-		require.NoError(t, err)
-		defer f.Close()
+			unsavedCache = SetInstalledBy(mt)
+			assert.Equal(t, unsavedCache.InstalledBy, mt)
 
-		err = toml.NewEncoder(f).Encode(*cache)
-		require.NoError(t, err)
+			return unsavedCache
+		}
 
-		// get new cached
+		// Call setCache without calling Save.
+		setCache()
+
+		// get new cache value
 		setup()
-
 		newCache := Get()
+		assert.Equal(t, cache, newCache, "newCache must not modified")
+
+		// Call setCache with calling Save.
+		err := setCache().Save()
+		require.NoError(t, err)
+
+		setup()
+		newCache = Get()
+
 		assert.Equal(t, "1.0.0", newCache.LatestVersion)
 		assert.True(t, newCache.UpdateAvailable)
-		assert.Equal(t, newCache.InstalledBy, MeansType(mt))
+		assert.Equal(t, newCache.InstalledBy, mt)
 	})
 }
