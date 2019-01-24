@@ -27,8 +27,18 @@ type Cache struct {
 	InstalledBy     MeansType `default:"" toml:"installedBy"`
 }
 
-func (c2 *Cache) Save() error {
-	return save()
+// Save writes the receiver to the cache file.
+// It returns an *os.PathError if it can't create a new cache file.
+// Also it returns an error if it failed to encode *Cache with TOML format.
+func (c *Cache) Save() error {
+	p := resolvePath()
+
+	f, err := os.Create(p)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return toml.NewEncoder(f).Encode(c)
 }
 
 func init() {
@@ -69,7 +79,7 @@ func Get() *Cache {
 func Clear() error {
 	c.UpdateAvailable = false
 	c.LatestVersion = ""
-	return save()
+	return c.Save()
 }
 
 // SetUpdateInfo sets an updatable flag to true and
@@ -107,18 +117,4 @@ func initCacheFile(p string) error {
 		UpdateAvailable: false,
 		LatestVersion:   "",
 	})
-}
-
-// Save writes the receiver to the cache file.
-// It may return an *os.PathError if it can't create a new cache file.
-// Also it may return an error if it failed to encode *Cache by TOML.
-func save() error {
-	p := resolvePath()
-
-	f, err := os.Create(p)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	return toml.NewEncoder(f).Encode(c)
 }
