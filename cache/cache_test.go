@@ -3,6 +3,7 @@ package cache
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/ktr0731/evans/meta"
@@ -35,7 +36,12 @@ func Test_resolvePath(t *testing.T) {
 
 		home, err := homedir.Dir()
 		require.NoError(t, err, "homedir.Dir must return the home dir")
-		expected := filepath.Join(home, ".cache", meta.AppName, defaultFileName)
+		var expected string
+		if runtime.GOOS == "windows" {
+			expected = filepath.Join(filepath.FromSlash(os.Getenv("APPDATA")), "cache", meta.AppName, defaultFileName)
+		} else {
+			expected = filepath.Join(home, ".cache", meta.AppName, defaultFileName)
+		}
 
 		actual := resolvePath()
 		assert.Equal(t, expected, actual, "resolvePath must return $HOME/.cache as the cache dir")
