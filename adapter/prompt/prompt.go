@@ -19,13 +19,13 @@ type Prompt interface {
 	// Input will be abort when a user enters CTRL+d.
 	Input() (string, error)
 
-	// Select displays a selection consists of opts.
+	// Select displays a selection has options, opts.
 	Select(msg string, opts []string) (string, error)
 
-	// SetPrefix chnages current prompt prefix by passed one.
+	// SetPrefix changes the current prompt prefix by passed one.
 	SetPrefix(prefix string)
 
-	// SetPrefixColor changes current prompt color by passed one.
+	// SetPrefixColor changes the current prompt color by passed one.
 	SetPrefixColor(color color.Color) error
 }
 
@@ -54,9 +54,7 @@ type prompt struct {
 // Prompt will panic when called Run if executor is nil.
 //
 // TODO: Don't declare New as a variable.
-var New = func(executor func(string), completer func(goprompt.Document) []goprompt.Suggest, opt ...goprompt.Option) Prompt {
-	return newPrompt(executor, completer, opt...)
-}
+var New = newPrompt
 
 func newPrompt(executor func(string), completer func(goprompt.Document) []goprompt.Suggest, opt ...goprompt.Option) Prompt {
 	if executor == nil {

@@ -8,7 +8,7 @@ import (
 	"github.com/ktr0731/evans/meta"
 	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
-	homedir "github.com/mitchellh/go-homedir"
+	xdgbasedir "github.com/zchee/go-xdgbasedir"
 )
 
 var (
@@ -27,23 +27,28 @@ type Cache struct {
 	InstalledBy     MeansType `default:"" toml:"installedBy"`
 }
 
+// Save writes the receiver to the cache file.
+// It returns an *os.PathError if it can't create a new cache file.
+// Also it returns an error if it failed to encode *Cache with TOML format.
+func (c *Cache) Save() error {
+	p := resolvePath()
+
+	f, err := os.Create(p)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return toml.NewEncoder(f).Encode(c)
+}
+
 func init() {
 	setup()
 }
 
 func setup() {
-	p, err := resolvePath()
-	if err != nil {
-		panic(err)
-	}
+	c = Cache{}
 
-	if _, err := os.Stat(filepath.Dir(p)); os.IsNotExist(err) {
-		if err := initCacheFile(p); err != nil {
-			panic(err)
-		}
-	} else if err != nil {
-		panic(err)
-	}
+	p := resolvePath()
 
 	if _, err := os.Stat(p); os.IsNotExist(err) {
 		if err := initCacheFile(p); err != nil {
@@ -74,35 +79,31 @@ func Get() *Cache {
 func Clear() error {
 	c.UpdateAvailable = false
 	c.LatestVersion = ""
-	return save()
+	return c.Save()
 }
 
 // SetUpdateInfo sets an updatable flag to true and
 // the latest version info to passed version.
-func SetUpdateInfo(latest *semver.Version) error {
+func SetUpdateInfo(latest *semver.Version) *Cache {
 	c.UpdateAvailable = true
 	c.LatestVersion = latest.String()
-	return save()
+	c2 := c
+	return &c2
 }
 
 // SetInstalledBy sets means how Evans was installed.
-func SetInstalledBy(mt MeansType) error {
+func SetInstalledBy(mt MeansType) *Cache {
 	c.InstalledBy = mt
-	return save()
+	c2 := c
+	return &c2
 }
 
-func resolvePath() (string, error) {
-	base := os.Getenv("XDG_CACHE_HOME")
-	if base == "" {
-		home, err := homedir.Dir()
-		if err != nil {
-			return "", err
-		}
-		return filepath.Join(home, ".cache", meta.AppName, defaultFileName), nil
-	}
-	return filepath.Join(base, meta.AppName, defaultFileName), nil
+func resolvePath() string {
+	return filepath.Join(xdgbasedir.CacheHome(), meta.AppName, defaultFileName)
 }
 
+// initCacheFile creates or overwrites a new cache file with default values.
+// If directories of the file are not found, initCacheFile also creates it.
 func initCacheFile(p string) error {
 	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
 		return err
@@ -116,17 +117,4 @@ func initCacheFile(p string) error {
 		UpdateAvailable: false,
 		LatestVersion:   "",
 	})
-}
-
-func save() error {
-	p, err := resolvePath()
-	if err != nil {
-		return err
-	}
-	f, err := os.Create(p)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	return toml.NewEncoder(f).Encode(c)
 }

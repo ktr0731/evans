@@ -11,7 +11,3 @@ func DefaultColor() Color {
 func (c *Color) Next() {
 	*c = (*c + 1) % 16
 }
-
-func (c *Color) Prev() {
-	*c = (*c - 1) % 16
-}

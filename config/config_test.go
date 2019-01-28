@@ -62,8 +62,15 @@ func setupEnv(t *testing.T) (string, string, func()) {
 }
 
 func assertWithGolden(t *testing.T, name string, f func(t *testing.T) *Config) {
+	r := strings.NewReplacer(
+		" ", "_",
+		"=", "-",
+		"'", "",
+		`"`, "",
+		",", "",
+	)
 	normalizeFilename := func(name string) string {
-		fname := strings.Replace(strings.ToLower(name), " ", "_", -1) + ".golden.toml"
+		fname := r.Replace(strings.ToLower(name)) + ".golden.toml"
 		return filepath.Join("testdata", "fixtures", fname)
 	}
 
@@ -262,6 +269,46 @@ func TestLoad(t *testing.T) {
 
 		return cfg
 	})
+}
+
+func TestEdit(t *testing.T) {
+	cases := map[string]struct {
+		expectedEditor string
+		runEditorErr   error
+	}{
+		"run with default editor": {},
+		"run with $EDITOR":        {expectedEditor: "nvim"},
+	}
+
+	p, err := exec.LookPath("vim")
+	require.NoError(t, err, "TestEdit requires Vim")
+	expected := p // default value
+	for name, c := range cases {
+		c := c
+		t.Run(name, func(t *testing.T) {
+			oldEnv := os.Getenv("EDITOR")
+			os.Setenv("EDITOR", c.expectedEditor)
+			defer os.Setenv("EDITOR", oldEnv)
+
+			var called bool
+			runEditor = func(editor string, cfgPath string) error {
+				expected := expected
+				called = true
+				if c.expectedEditor != "" {
+					expected = c.expectedEditor
+				}
+				assert.Equal(t, expected, editor, "runEditor must be called with the expected editor")
+				return c.runEditorErr
+			}
+
+			err := Edit()
+			assert.NoError(t, err, "Edit must not return an error")
+
+			if !called {
+				t.Error("runEditor must be called")
+			}
+		})
+	}
 }
 
 func getWorkDir(t *testing.T) string {

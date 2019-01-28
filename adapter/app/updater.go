@@ -40,7 +40,7 @@ func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache) error 
 				errCh <- errors.Wrap(err, "failed to instantiate new means, available means not found")
 				return
 			}
-			if err := cache.SetInstalledBy(cache.MeansType(m.Type())); err != nil {
+			if err := cache.SetInstalledBy(cache.MeansType(m.Type())).Save(); err != nil {
 				errCh <- err
 				return
 			}
@@ -62,7 +62,7 @@ func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache) error 
 			return
 		}
 		if updatable {
-			if err := cache.SetUpdateInfo(latest); err != nil {
+			if err := cache.SetUpdateInfo(latest).Save(); err != nil {
 				errCh <- errors.Wrap(err, "failed to write update info to cache")
 				return
 			}
