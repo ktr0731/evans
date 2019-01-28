@@ -38,7 +38,7 @@ func Test_resolvePath(t *testing.T) {
 		require.NoError(t, err, "homedir.Dir must return the home dir")
 		var expected string
 		if runtime.GOOS == "windows" {
-			expected = filepath.Join(filepath.FromSlash(os.Getenv("APPDATA")), "cache", meta.AppName, defaultFileName)
+			expected = filepath.Join(filepath.FromSlash(os.Getenv("LOCALAPPDATA")), "cache", meta.AppName, defaultFileName)
 		} else {
 			expected = filepath.Join(home, ".cache", meta.AppName, defaultFileName)
 		}
