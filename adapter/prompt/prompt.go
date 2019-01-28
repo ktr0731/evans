@@ -19,7 +19,7 @@ type Prompt interface {
 	// Input will be abort when a user enters CTRL+d.
 	Input() (string, error)
 
-	// Select displays a selection which are consists of opts.
+	// Select displays a selection has options, opts.
 	Select(msg string, opts []string) (string, error)
 
 	// SetPrefix changes the current prompt prefix by passed one.
