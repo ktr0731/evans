@@ -7,6 +7,7 @@ import (
 
 var migrationScripts = map[string]func(string, *viper.Viper) string{
 	"0.6.10": migrate0610To0611,
+	"0.6.11": migrate0611To070,
 }
 
 // migrate migrates an old config schema to the latest one.
@@ -77,6 +78,20 @@ func migrate0610To0611(old string, v *viper.Viper) string {
 	v.Set("repl.inputPromptFormat", v.Get("input.promptFormat"))
 	// v0.6.11 removed Input field.
 	v.Set("input", nil)
+
+	return updatedVer
+}
+
+// migrate0611To070 migrates a v0.6.11 config to v0.7.0 config.
+func migrate0611To070(old string, v *viper.Viper) string {
+	const updatedVer = "0.7.0"
+
+	v.Set("meta.configVersion", updatedVer)
+
+	// v0.7.0 added TLS related configs.
+	v.Set("request.cacert", "")
+	v.Set("request.cert", "")
+	v.Set("request.certKey", "")
 
 	return updatedVer
 }

@@ -30,8 +30,11 @@ type Server struct {
 type Header map[string][]string
 
 type Request struct {
-	Header Header `toml:"header"`
-	Web    bool   `toml:"web"`
+	Header      Header `toml:"header"`
+	Web         bool   `toml:"web"`
+	CACertFile  string `toml:"cacert"`
+	CertFile    string `toml:"cert"`
+	CertKeyFile string `toml:"certKey"`
 }
 
 type REPL struct {
@@ -101,12 +104,17 @@ func newDefaultViper() *viper.Viper {
 	v.SetDefault("log.prefix", "evans: ")
 
 	v.SetDefault("request.header", Header{"grpc-client": []string{"evans"}})
+	v.SetDefault("request.cacert", "")
+	v.SetDefault("request.cert", "")
+	v.SetDefault("request.certKey", "")
 	v.SetDefault("request.web", false)
 
 	return v
 }
 
+// bindFlags binds parsed flag values to vp. Note that fs must be parsed.
 func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
+	// kv defines the mapping from a viper config name to a flag name.
 	kv := map[string]string{
 		"default.protoPath":   "path",
 		"default.package":     "package",
@@ -117,6 +125,9 @@ func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
 		"server.tls":          "tls",
 		"request.header":      "header",
 		"request.web":         "web",
+		"request.cacert":      "cacert",
+		"request.cert":        "cert",
+		"request.certKey":     "certkey",
 		"repl.showSplashText": "silent",
 	}
 	for k, v := range kv {

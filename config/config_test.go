@@ -62,6 +62,8 @@ func setupEnv(t *testing.T) (string, string, func()) {
 }
 
 func assertWithGolden(t *testing.T, name string, f func(t *testing.T) *Config) {
+	t.Helper()
+
 	r := strings.NewReplacer(
 		" ", "_",
 		"=", "-",
@@ -76,6 +78,7 @@ func assertWithGolden(t *testing.T, name string, f func(t *testing.T) *Config) {
 
 	t.Run(name, func(t *testing.T) {
 		t.Helper()
+
 		cfg := f(t)
 
 		fname := normalizeFilename(name)

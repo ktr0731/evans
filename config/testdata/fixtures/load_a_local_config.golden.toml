@@ -10,7 +10,7 @@
 
 [meta]
   autoupdate = false
-  configversion = "0.6.11"
+  configversion = "0.7.0"
   updatelevel = "patch"
 
 [repl]
@@ -21,6 +21,9 @@
   splashtextpath = ""
 
 [request]
+  cacert = ""
+  cert = ""
+  certkey = ""
   web = false
 
   [request.header]
