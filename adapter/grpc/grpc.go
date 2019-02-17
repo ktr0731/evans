@@ -6,6 +6,10 @@ import (
 	"io"
 	"strings"
 
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/entity"
@@ -21,20 +25,38 @@ type client struct {
 	*reflectionClient
 }
 
-// NewClient creates a new gRPC client.
-// It dials to the server specified by addr.
-// addr format is same as the first argument of grpc.Dial.
+// NewClient creates a new gRPC client. It dials to the server specified by addr.
+// addr format is the same as the first argument of grpc.Dial.
 // If useReflection is true, the gRPC client enables gRPC reflection.
 // If useTLS is true, the gRPC client establishes a secure connection with the server.
-func NewClient(addr string, useReflection bool, useTLS bool) (entity.GRPCClient, error) {
-	// TODO: secure option
-	var conn *grpc.ClientConn
-	var err error
-	if useTLS {
-		conn, err = grpc.Dial(addr, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
+//
+// If cacert, cert and certKey are not empty, it enables mutual authentication.
+// Note that, if some of cacert, cert, certKey are emtpy and some of these
+// are not empty, NewClient returns an error.
+func NewClient(addr string, useReflection bool, useTLS bool, cacert, cert, certKey string) (entity.GRPCClient, error) {
+	var tlsCfg tls.Config
+	if !useTLS {
+		tlsCfg.InsecureSkipVerify = true
 	} else {
-		conn, err = grpc.Dial(addr, grpc.WithInsecure())
+		// Enable mutual authentication
+		if cacert != "" {
+			certificate, err := tls.LoadX509KeyPair(cert, certKey)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read the client certificate")
+			}
+			b, err := ioutil.ReadFile(cacert)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read the CA certificate")
+			}
+			cp := x509.NewCertPool()
+			if !cp.AppendCertsFromPEM(b) {
+				return nil, errors.Wrap(err, "failed to append the client certificate")
+			}
+			tlsCfg.Certificates = append(tlsCfg.Certificates, certificate)
+			tlsCfg.RootCAs = cp
+		}
 	}
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial to gRPC server")
 	}
