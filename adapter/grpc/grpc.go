@@ -30,31 +30,33 @@ type client struct {
 // If useReflection is true, the gRPC client enables gRPC reflection.
 // If useTLS is true, the gRPC client establishes a secure connection with the server.
 //
-// If cacert, cert and certKey are not empty, it enables mutual authentication.
+// If useTLS, cacert, cert and certKey are not empty, it enables mutual authentication.
 // Note that, if some of cacert, cert, certKey are emtpy and some of these
 // are not empty, NewClient returns an error.
+// Also, if useTLS is false, these params are ignored.
 func NewClient(addr string, useReflection bool, useTLS bool, cacert, cert, certKey string) (entity.GRPCClient, error) {
 	var tlsCfg tls.Config
 	if !useTLS {
 		tlsCfg.InsecureSkipVerify = true
 	} else {
-		// Enable mutual authentication
-		if cacert != "" {
-			certificate, err := tls.LoadX509KeyPair(cert, certKey)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to read the client certificate")
-			}
-			b, err := ioutil.ReadFile(cacert)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to read the CA certificate")
-			}
-			cp := x509.NewCertPool()
-			if !cp.AppendCertsFromPEM(b) {
-				return nil, errors.Wrap(err, "failed to append the client certificate")
-			}
-			tlsCfg.Certificates = append(tlsCfg.Certificates, certificate)
-			tlsCfg.RootCAs = cp
+		if cacert == "" || cert == "" || certKey == "" {
+			return nil, entity.ErrMutualAuthParamsAreNotEnough
 		}
+		// Enable mutual authentication
+		certificate, err := tls.LoadX509KeyPair(cert, certKey)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read the client certificate")
+		}
+		b, err := ioutil.ReadFile(cacert)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read the CA certificate")
+		}
+		cp := x509.NewCertPool()
+		if !cp.AppendCertsFromPEM(b) {
+			return nil, errors.Wrap(err, "failed to append the client certificate")
+		}
+		tlsCfg.Certificates = append(tlsCfg.Certificates, certificate)
+		tlsCfg.RootCAs = cp
 	}
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
 	if err != nil {
