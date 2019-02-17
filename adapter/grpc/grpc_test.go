@@ -42,9 +42,8 @@ func TestNewClient(t *testing.T) {
 				require.Error(t, err, "NewClient must return an error")
 				assert.Equal(t, c.err, err)
 				return
-			} else {
-				require.NoError(t, err, "NewClient must not return an error")
 			}
+			require.NoError(t, err, "NewClient must not return an error")
 		})
 	}
 }

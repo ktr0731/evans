@@ -38,6 +38,7 @@ func TestCLI(t *testing.T) {
 			code          int
 			useReflection bool
 			useWeb        bool
+			useTLS        bool
 		}{
 			{args: "", code: 1},
 			{args: "testdata/helloworld.proto", code: 1},
@@ -58,11 +59,13 @@ func TestCLI(t *testing.T) {
 			{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
 			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true, code: 1},
 			{args: "--web --reflection --service Greeter --call SayHello", useReflection: true, useWeb: true},
+
+			// {args: "--tls --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useTLS: true},
 		}
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer helper.NewServer(t, c.useReflection).Start(c.useWeb).Stop()
+				defer helper.NewServer(t, c.useReflection, c.useTLS).Start(c.useWeb).Stop()
 				defer cleanup()
 
 				in := strings.NewReader(`{ "name": "maho" }`)
@@ -90,6 +93,7 @@ func TestCLI(t *testing.T) {
 			code          int
 			useReflection bool
 			useWeb        bool
+			useTLS        bool
 		}{
 			{args: "--file testdata/in.json", code: 1},
 			{args: "--file testdata/in.json testdata/helloworld.proto", code: 1},
@@ -105,11 +109,13 @@ func TestCLI(t *testing.T) {
 			{args: "--reflection --file testdata/in.json --service Greeter --call SayHello", code: 0, useReflection: true},
 
 			{args: "--web --file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useWeb: true},
+
+			{args: "--tls --file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
 		}
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer helper.NewServer(t, c.useReflection).Start(c.useWeb).Stop()
+				defer helper.NewServer(t, c.useReflection, c.useTLS).Start(c.useWeb).Stop()
 				defer cleanup()
 
 				in := strings.NewReader(`{ "name": "maho" }`)

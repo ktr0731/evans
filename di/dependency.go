@@ -196,7 +196,13 @@ func initGRPCClient(cfg *config.Config) error {
 			}
 			gRPCClient = grpc.NewWebClient(addr, cfg.Server.Reflection, b)
 		} else {
-			gRPCClient, err = grpc.NewClient(addr, cfg.Server.Reflection, cfg.Server.TLS)
+			gRPCClient, err = grpc.NewClient(
+				addr,
+				cfg.Server.Reflection,
+				cfg.Server.TLS,
+				cfg.Request.CACertFile,
+				cfg.Request.CertFile,
+				cfg.Request.CertKeyFile)
 		}
 	})
 	return err
@@ -273,7 +279,9 @@ func initDependencies(cfg *config.Config, in io.Reader) error {
 		)
 	})
 	if err := initer.init(); err != nil {
-		gRPCClient.Close(context.Background())
+		if gRPCClient != nil {
+			gRPCClient.Close(context.Background())
+		}
 		return err
 	}
 	return nil

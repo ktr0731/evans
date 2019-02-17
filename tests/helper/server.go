@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"path/filepath"
 	"sync"
 	"testing"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/ktr0731/evans/tests/helper/server/helloworld"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -25,10 +27,16 @@ type Server struct {
 	err   error
 }
 
-func NewServer(t *testing.T, enableReflection bool) *Server {
-	s := grpc.NewServer()
+func NewServer(t *testing.T, useReflection bool, useTLS bool) *Server {
+	var opts []grpc.ServerOption
+	if useTLS {
+		creds, err := credentials.NewServerTLSFromFile(filepath.Join("testdata", "cert", "127.0.0.1.pem"), filepath.Join("testdata", "cert", "127.0.0.1-key.pem"))
+		require.NoError(t, err)
+		opts = append(opts, grpc.Creds(creds))
+	}
+	s := grpc.NewServer(opts...)
 	helloworld.RegisterGreeterServer(s, srv.NewUnary())
-	if enableReflection {
+	if useReflection {
 		reflection.Register(s)
 	}
 	return &Server{

@@ -61,7 +61,7 @@ func TestREPL(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer helper.NewServer(t, c.useReflection).Start(c.useWeb).Stop()
+				defer helper.NewServer(t, c.useReflection, false).Start(c.useWeb).Stop()
 				defer cleanup()
 
 				out, eout := new(bytes.Buffer), new(bytes.Buffer)
