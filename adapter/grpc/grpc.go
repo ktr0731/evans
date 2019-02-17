@@ -35,13 +35,15 @@ type client struct {
 // are not empty, NewClient returns an error.
 // Also, if useTLS is false, these params are ignored.
 func NewClient(addr string, useReflection bool, useTLS bool, cacert, cert, certKey string) (entity.GRPCClient, error) {
-	var tlsCfg tls.Config
+	var opts []grpc.DialOption
 	if !useTLS {
-		tlsCfg.InsecureSkipVerify = true
+		opts = append(opts, grpc.WithInsecure())
 	} else {
 		if cacert == "" || cert == "" || certKey == "" {
 			return nil, entity.ErrMutualAuthParamsAreNotEnough
 		}
+
+		var tlsCfg tls.Config
 		// Enable mutual authentication
 		certificate, err := tls.LoadX509KeyPair(cert, certKey)
 		if err != nil {
@@ -57,8 +59,9 @@ func NewClient(addr string, useReflection bool, useTLS bool, cacert, cert, certK
 		}
 		tlsCfg.Certificates = append(tlsCfg.Certificates, certificate)
 		tlsCfg.RootCAs = cp
+		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
 	}
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
+	conn, err := grpc.Dial(addr, opts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial to gRPC server")
 	}
