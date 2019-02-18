@@ -4,7 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -13,7 +12,6 @@ import (
 	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/di"
-	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,12 +58,12 @@ func TestCLI(t *testing.T) {
 			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true, code: 1},
 			{args: "--web --reflection --service Greeter --call SayHello", useReflection: true, useWeb: true},
 
-			// {args: "--tls --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useTLS: true},
+			{args: "--tls --host localhost --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useTLS: true},
 		}
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer helper.NewServer(t, c.useReflection, c.useTLS).Start(c.useWeb).Stop()
+				defer newServer(t, c.useReflection, c.useTLS).start(c.useWeb).stop()
 				defer cleanup()
 
 				in := strings.NewReader(`{ "name": "maho" }`)
@@ -110,22 +108,22 @@ func TestCLI(t *testing.T) {
 
 			{args: "--web --file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useWeb: true},
 
-			{args: "--tls --file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
+			{args: "--tls --host localhost --file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useTLS: true},
 		}
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer helper.NewServer(t, c.useReflection, c.useTLS).Start(c.useWeb).Stop()
+				defer newServer(t, c.useReflection, c.useTLS).start(c.useWeb).stop()
 				defer cleanup()
 
 				in := strings.NewReader(`{ "name": "maho" }`)
 				cli.DefaultReader = in
 
-				out := new(bytes.Buffer)
-				ui := cui.New(in, out, ioutil.Discard)
+				out, eout := new(bytes.Buffer), new(bytes.Buffer)
+				ui := cui.New(in, out, eout)
 
 				code := newCommand(ui).Run(strings.Split(c.args, " "))
-				require.Equal(t, c.code, code)
+				require.Equalf(t, c.code, code, "expected %d, but got %d. out = '%s', errout = '%s'", c.code, code, flatten(out.String()), flatten(eout.String()))
 
 				if c.code == 0 {
 					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))

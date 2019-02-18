@@ -39,27 +39,32 @@ func NewClient(addr string, useReflection bool, useTLS bool, cacert, cert, certK
 	if !useTLS {
 		opts = append(opts, grpc.WithInsecure())
 	} else {
-		if cacert == "" || cert == "" || certKey == "" {
-			return nil, entity.ErrMutualAuthParamsAreNotEnough
-		}
+		if cacert != "" && cert != "" && certKey != "" {
+			var tlsCfg tls.Config
+			// Enable mutual authentication
+			certificate, err := tls.LoadX509KeyPair(cert, certKey)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read the client certificate")
+			}
+			b, err := ioutil.ReadFile(cacert)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read the CA certificate")
+			}
+			cp := x509.NewCertPool()
+			if !cp.AppendCertsFromPEM(b) {
+				return nil, errors.Wrap(err, "failed to append the client certificate")
+			}
+			tlsCfg.Certificates = append(tlsCfg.Certificates, certificate)
+			tlsCfg.RootCAs = cp
+			opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
+		} else {
+			if cacert != "" || cert != "" || certKey != "" {
+				return nil, entity.ErrMutualAuthParamsAreNotEnough
+			}
 
-		var tlsCfg tls.Config
-		// Enable mutual authentication
-		certificate, err := tls.LoadX509KeyPair(cert, certKey)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to read the client certificate")
+			// server TLS authentication
+			opts = append(opts, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
 		}
-		b, err := ioutil.ReadFile(cacert)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to read the CA certificate")
-		}
-		cp := x509.NewCertPool()
-		if !cp.AppendCertsFromPEM(b) {
-			return nil, errors.Wrap(err, "failed to append the client certificate")
-		}
-		tlsCfg.Certificates = append(tlsCfg.Certificates, certificate)
-		tlsCfg.RootCAs = cp
-		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
 	}
 	conn, err := grpc.Dial(addr, opts...)
 	if err != nil {

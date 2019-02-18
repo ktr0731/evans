@@ -1,24 +1,28 @@
-package helper
+// +build e2e
+
+package e2e
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
 	"testing"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	srv "github.com/ktr0731/evans/tests/helper/server"
-	"github.com/ktr0731/evans/tests/helper/server/helloworld"
+	srv "github.com/ktr0731/evans/tests/e2e/server"
+	"github.com/ktr0731/evans/tests/e2e/server/helloworld"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 )
 
-type Server struct {
+type server struct {
 	t  *testing.T
 	s  *grpc.Server
 	ws *http.Server
@@ -27,10 +31,12 @@ type Server struct {
 	err   error
 }
 
-func NewServer(t *testing.T, useReflection bool, useTLS bool) *Server {
+func newServer(t *testing.T, useReflection bool, useTLS bool) *server {
 	var opts []grpc.ServerOption
 	if useTLS {
-		creds, err := credentials.NewServerTLSFromFile(filepath.Join("testdata", "cert", "127.0.0.1.pem"), filepath.Join("testdata", "cert", "127.0.0.1-key.pem"))
+		fmt.Println(filepath.Abs(filepath.Join("testdata", "cert", "localhost.pem")))
+		fmt.Println(os.Getwd())
+		creds, err := credentials.NewServerTLSFromFile(filepath.Join("testdata", "cert", "localhost.pem"), filepath.Join("testdata", "cert", "localhost-key.pem"))
 		require.NoError(t, err)
 		opts = append(opts, grpc.Creds(creds))
 	}
@@ -39,13 +45,13 @@ func NewServer(t *testing.T, useReflection bool, useTLS bool) *Server {
 	if useReflection {
 		reflection.Register(s)
 	}
-	return &Server{
+	return &server{
 		t: t,
 		s: s,
 	}
 }
 
-func (s *Server) Start(web bool) *Server {
+func (s *server) start(web bool) *server {
 	if web {
 		ws := grpcweb.WrapServer(
 			s.s,
@@ -87,7 +93,7 @@ func (s *Server) Start(web bool) *Server {
 	return s
 }
 
-func (s *Server) Stop() {
+func (s *server) stop() {
 	if s.gRPCWebEnabled() {
 		s.ws.Shutdown(context.Background())
 		return
@@ -101,11 +107,11 @@ func (s *Server) Stop() {
 	}
 }
 
-func (s *Server) gRPCWebEnabled() bool {
+func (s *server) gRPCWebEnabled() bool {
 	return s.ws != nil
 }
 
-func (s *Server) reportError(err error) {
+func (s *server) reportError(err error) {
 	s.errMu.Lock()
 	defer s.errMu.Unlock()
 	s.err = multierror.Append(s.err, err)

@@ -9,7 +9,6 @@ import (
 
 	"github.com/ktr0731/evans/di"
 	cmd "github.com/ktr0731/evans/tests/e2e/repl"
-	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,6 +21,7 @@ func TestREPL(t *testing.T) {
 			hasErr        bool // error was occurred in repl, false if precondition failed
 			useReflection bool
 			useWeb        bool
+			useTLS        bool
 		}{
 			{args: "", code: 1}, // cannot launch repl case
 			{args: "--package helloworld", code: 1},
@@ -50,6 +50,8 @@ func TestREPL(t *testing.T) {
 
 			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true},
 			{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
+
+			{args: "--tls --host localhost --package helloworld --service Greeter testdata/helloworld.proto", useTLS: true},
 		}
 
 		rh := newREPLHelper([]string{"--silent", "--repl"})
@@ -61,7 +63,7 @@ func TestREPL(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer helper.NewServer(t, c.useReflection, false).Start(c.useWeb).Stop()
+				defer newServer(t, c.useReflection, c.useTLS).start(c.useWeb).stop()
 				defer cleanup()
 
 				out, eout := new(bytes.Buffer), new(bytes.Buffer)
