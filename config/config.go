@@ -73,6 +73,10 @@ type Log struct {
 	Prefix string `toml:"prefix"`
 }
 
+// Get returns the config which loaded from the global and local config files,
+// and command-line flags passed as an argument. Note that fs must have been parsed.
+//
+// The order of priority is flags > local > global.
 func Get(fs *pflag.FlagSet) (*Config, error) {
 	return initConfig(fs)
 }
@@ -315,6 +319,9 @@ func setupConfig(c *Config) {
 	}
 }
 
+// Edit opens the project local config file with an editor.
+// If the local config file is missing, Edit creates a new local config file.
+// $EDITOR is used as an editor if it is configured. Else, Vim is used.
 func Edit() error {
 	p, found := getLocalConfigPath()
 	if !found {

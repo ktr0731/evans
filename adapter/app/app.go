@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"text/tabwriter"
 
-	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
@@ -24,6 +23,7 @@ import (
 	updater "github.com/ktr0731/go-updater"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
+	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
 var (

@@ -4,10 +4,8 @@ package e2e
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -34,8 +32,6 @@ type server struct {
 func newServer(t *testing.T, useReflection bool, useTLS bool) *server {
 	var opts []grpc.ServerOption
 	if useTLS {
-		fmt.Println(filepath.Abs(filepath.Join("testdata", "cert", "localhost.pem")))
-		fmt.Println(os.Getwd())
 		creds, err := credentials.NewServerTLSFromFile(filepath.Join("testdata", "cert", "localhost.pem"), filepath.Join("testdata", "cert", "localhost-key.pem"))
 		require.NoError(t, err)
 		opts = append(opts, grpc.Creds(creds))
