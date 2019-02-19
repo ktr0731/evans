@@ -34,7 +34,7 @@ type client struct {
 // Note that, if some of cacert, cert, certKey are emtpy and some of these
 // are not empty, NewClient returns an error.
 // Also, if useTLS is false, these params are ignored.
-func NewClient(addr string, useReflection bool, useTLS bool, cacert, cert, certKey string) (entity.GRPCClient, error) {
+func NewClient(addr string, useReflection, useTLS bool, cacert, cert, certKey string) (entity.GRPCClient, error) {
 	var opts []grpc.DialOption
 	if !useTLS {
 		opts = append(opts, grpc.WithInsecure())

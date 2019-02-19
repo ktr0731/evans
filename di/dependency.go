@@ -194,7 +194,8 @@ func initGRPCClient(cfg *config.Config) error {
 			if err != nil {
 				return
 			}
-			gRPCClient = grpc.NewWebClient(addr, cfg.Server.Reflection, b)
+			// TODO: TLS
+			gRPCClient = grpc.NewWebClient(addr, b, cfg.Server.Reflection, false, "", "", "")
 		} else {
 			gRPCClient, err = grpc.NewClient(
 				addr,

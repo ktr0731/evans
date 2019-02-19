@@ -18,7 +18,7 @@ type webClient struct {
 	*reflectionClient
 }
 
-func NewWebClient(addr string, useReflection bool, builder port.DynamicBuilder) entity.GRPCClient {
+func NewWebClient(addr string, builder port.DynamicBuilder, useReflection, useTLS bool, cacert, cert, certKey string) entity.GRPCClient {
 	conn := grpcweb.NewClient(addr)
 	client := &webClient{
 		conn:    conn,
