@@ -80,7 +80,7 @@ func (s *server) start(web bool) *server {
 	require.NoError(s.t, err)
 	go func() {
 		err = s.s.Serve(l)
-		if err != nil {
+		if err != nil && err != grpc.ErrServerStopped {
 			s.reportError(err)
 			s.t.Fail()
 			return
