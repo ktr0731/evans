@@ -43,6 +43,13 @@ jobs:
             - build-cache-{{ .Branch }}--
             - build-cache-master--
 
+      - persist_to_workspace:
+          root: /go
+          paths:
+            - "pkg/dept/*"
+            - "pkg/mod/*"
+            - "src/github.com/ktr0731/evans/_tools/*"
+
       - run:
           name: build
           command: make build
@@ -73,17 +80,8 @@ jobs:
     steps:
       - checkout
 
-      - run:
-          name: install bump command
-          command: go get github.com/ktr0731/go-semver/cmd/bump
-
-      - run:
-          name: install deps
-          command: make deps
-
-      - run:
-          name: install tools
-          command: make tools
+      - attach_workspace:
+          at: /go
 
       - run:
           name: update GitHub releases and update brew formula

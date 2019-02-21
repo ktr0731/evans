@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-VERSION := $(shell bump show meta/meta.go)
+VERSION := $(shell _tools/bump show meta/meta.go)
 
 export PATH := $(PWD)/_tools:$(PATH)
 export GO111MODULE := on
@@ -27,7 +27,7 @@ dept:
 
 .PHONY: tools
 tools: dept
-	@dept build
+	@dept -v build
 
 .PHONY: generate
 generate:
