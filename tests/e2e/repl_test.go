@@ -83,6 +83,9 @@ func TestREPL(t *testing.T) {
 				} else {
 					args = append([]string{"--port", srv.port}, args...)
 				}
+				if c.useTLS {
+					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
+				}
 				code := rh.run(args)
 				assert.Equal(t, c.code, code, eout.String())
 

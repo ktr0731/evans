@@ -77,6 +77,9 @@ func TestCLI(t *testing.T) {
 
 				args := strings.Split(c.args, " ")
 				args = append([]string{"--cli", "--port", srv.port}, args...)
+				if c.useTLS {
+					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
+				}
 				code := newCommand(ui).Run(args)
 				require.Equal(t, c.code, code, errOut.String())
 
@@ -126,6 +129,9 @@ func TestCLI(t *testing.T) {
 				ui := cui.New(in, out, eout)
 
 				args := append([]string{"--cli", "--port", srv.port}, strings.Split(c.args, " ")...)
+				if c.useTLS {
+					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
+				}
 				code := newCommand(ui).Run(args)
 				require.Equalf(t, c.code, code, "expected %d, but got %d. out = '%s', errout = '%s'", c.code, code, flatten(out.String()), flatten(eout.String()))
 
