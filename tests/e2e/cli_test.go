@@ -63,7 +63,9 @@ func TestCLI(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer newServer(t, c.useReflection, c.useTLS).start(c.useWeb).stop()
+				srv := newServer(t, c.useReflection, c.useTLS)
+
+				defer srv.start(c.useWeb).stop()
 				defer cleanup()
 
 				in := strings.NewReader(`{ "name": "maho" }`)
@@ -74,7 +76,7 @@ func TestCLI(t *testing.T) {
 				ui := cui.New(in, out, errOut)
 
 				args := strings.Split(c.args, " ")
-				args = append([]string{"--cli"}, args...)
+				args = append([]string{"--cli", "--port", srv.port}, args...)
 				code := newCommand(ui).Run(args)
 				require.Equal(t, c.code, code, errOut.String())
 
@@ -113,7 +115,8 @@ func TestCLI(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer newServer(t, c.useReflection, c.useTLS).start(c.useWeb).stop()
+				srv := newServer(t, c.useReflection, c.useTLS)
+				defer srv.start(c.useWeb).stop()
 				defer cleanup()
 
 				in := strings.NewReader(`{ "name": "maho" }`)
@@ -122,7 +125,8 @@ func TestCLI(t *testing.T) {
 				out, eout := new(bytes.Buffer), new(bytes.Buffer)
 				ui := cui.New(in, out, eout)
 
-				code := newCommand(ui).Run(strings.Split(c.args, " "))
+				args := append([]string{"--cli", "--port", srv.port}, strings.Split(c.args, " ")...)
+				code := newCommand(ui).Run(args)
 				require.Equalf(t, c.code, code, "expected %d, but got %d. out = '%s', errout = '%s'", c.code, code, flatten(out.String()), flatten(eout.String()))
 
 				if c.code == 0 {

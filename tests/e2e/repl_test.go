@@ -63,7 +63,9 @@ func TestREPL(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer newServer(t, c.useReflection, c.useTLS).start(c.useWeb).stop()
+				srv := newServer(t, c.useReflection, c.useTLS)
+
+				defer srv.start(c.useWeb).stop()
 				defer cleanup()
 
 				out, eout := new(bytes.Buffer), new(bytes.Buffer)
@@ -75,6 +77,12 @@ func TestREPL(t *testing.T) {
 				)
 
 				args := strings.Split(c.args, " ")
+				// the first test case.
+				if len(args) == 1 && args[0] == "" {
+					args = []string{"--port", srv.port}
+				} else {
+					args = append([]string{"--port", srv.port}, args...)
+				}
 				code := rh.run(args)
 				assert.Equal(t, c.code, code, eout.String())
 

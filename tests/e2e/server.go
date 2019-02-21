@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	srv "github.com/ktr0731/evans/tests/e2e/server"
 	"github.com/ktr0731/evans/tests/e2e/server/helloworld"
+	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -27,6 +29,8 @@ type server struct {
 
 	errMu sync.Mutex
 	err   error
+
+	port string
 }
 
 func newServer(t *testing.T, useReflection bool, useTLS bool) *server {
@@ -41,13 +45,17 @@ func newServer(t *testing.T, useReflection bool, useTLS bool) *server {
 	if useReflection {
 		reflection.Register(s)
 	}
+	port, err := freeport.GetFreePort()
+	require.NoError(t, err, "failed to get a free port")
 	return &server{
-		t: t,
-		s: s,
+		t:    t,
+		s:    s,
+		port: strconv.Itoa(port),
 	}
 }
 
 func (s *server) start(web bool) *server {
+	addr := ":" + s.port
 	if web {
 		ws := grpcweb.WrapServer(
 			s.s,
@@ -57,7 +65,7 @@ func (s *server) start(web bool) *server {
 		mux := http.NewServeMux()
 		mux.Handle("/", ws)
 		s.ws = &http.Server{
-			Addr:    ":50051",
+			Addr:    addr,
 			Handler: mux,
 		}
 
@@ -76,7 +84,7 @@ func (s *server) start(web bool) *server {
 		return s
 	}
 
-	l, err := net.Listen("tcp", ":50051")
+	l, err := net.Listen("tcp", addr)
 	require.NoError(s.t, err)
 	go func() {
 		err = s.s.Serve(l)

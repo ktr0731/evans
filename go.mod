@@ -33,6 +33,7 @@ require (
 	github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223 // indirect
 	github.com/olekukonko/tablewriter v0.0.1
 	github.com/pelletier/go-toml v1.2.0
+	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.8.0
 	github.com/pkg/term v0.0.0-20181103235908-93e6c9149309 // indirect
 	github.com/rs/cors v1.6.0 // indirect
@@ -46,6 +47,6 @@ require (
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	google.golang.org/genproto v0.0.0-20181107211654-5fc9ac540362 // indirect
 	google.golang.org/grpc v1.16.0
-	gopkg.in/AlecAivazis/survey.v1 v1.6.3 // indirect
+	gopkg.in/AlecAivazis/survey.v1 v1.6.3
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )
