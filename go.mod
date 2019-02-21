@@ -17,7 +17,6 @@ require (
 	github.com/jhump/protoreflect v1.1.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/ktr0731/dept v0.1.1 // indirect
 	github.com/ktr0731/go-semver v0.1.0
 	github.com/ktr0731/go-shellstring v0.1.0
 	github.com/ktr0731/go-updater v0.1.3
@@ -44,6 +43,7 @@ require (
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
 	golang.org/x/net v0.0.0-20181107234226-1c5f79cfb164
+	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	google.golang.org/genproto v0.0.0-20181107211654-5fc9ac540362 // indirect
 	google.golang.org/grpc v1.16.0
 	gopkg.in/AlecAivazis/survey.v1 v1.6.3 // indirect
