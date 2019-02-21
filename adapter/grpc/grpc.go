@@ -30,22 +30,16 @@ type client struct {
 // If useReflection is true, the gRPC client enables gRPC reflection.
 // If useTLS is true, the gRPC client establishes a secure connection with the server.
 //
-// If useTLS, cacert, cert and certKey are not empty, it enables mutual authentication.
-// Note that, if some of cacert, cert, certKey are emtpy and some of these
-// are not empty, NewClient returns an error.
-// Also, if useTLS is false, these params are ignored.
+// The set of cert and certKey enables mutual authentication if useTLS is enabled.
+// If one of it is not found, NewClient returns entity.ErrMutualAuthParamsAreNotEnough.
+// If useTLS is false, cacert, cert and certKey are ignored.
 func NewClient(addr string, useReflection, useTLS bool, cacert, cert, certKey string) (entity.GRPCClient, error) {
 	var opts []grpc.DialOption
 	if !useTLS {
 		opts = append(opts, grpc.WithInsecure())
-	} else {
-		if cacert != "" && cert != "" && certKey != "" {
-			var tlsCfg tls.Config
-			// Enable mutual authentication
-			certificate, err := tls.LoadX509KeyPair(cert, certKey)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to read the client certificate")
-			}
+	} else { // Enable TLS authentication
+		var tlsCfg tls.Config
+		if cacert != "" {
 			b, err := ioutil.ReadFile(cacert)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read the CA certificate")
@@ -54,17 +48,21 @@ func NewClient(addr string, useReflection, useTLS bool, cacert, cert, certKey st
 			if !cp.AppendCertsFromPEM(b) {
 				return nil, errors.Wrap(err, "failed to append the client certificate")
 			}
-			tlsCfg.Certificates = append(tlsCfg.Certificates, certificate)
 			tlsCfg.RootCAs = cp
-			opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
-		} else {
-			if cacert != "" || cert != "" || certKey != "" {
-				return nil, entity.ErrMutualAuthParamsAreNotEnough
-			}
-
-			// server TLS authentication
-			opts = append(opts, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
 		}
+		if cert != "" && certKey != "" {
+			// Enable mutual authentication
+			certificate, err := tls.LoadX509KeyPair(cert, certKey)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read the client certificate")
+			}
+			tlsCfg.Certificates = append(tlsCfg.Certificates, certificate)
+			opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
+		} else if cert != "" || certKey != "" {
+			return nil, entity.ErrMutualAuthParamsAreNotEnough
+		}
+
+		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
 	}
 	conn, err := grpc.Dial(addr, opts...)
 	if err != nil {

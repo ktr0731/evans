@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/ktr0731/evans/entity"
@@ -17,6 +18,9 @@ func Test_fqrnToEndpoint(t *testing.T) {
 }
 
 func TestNewClient(t *testing.T) {
+	certPath := func(s ...string) string {
+		return filepath.Join(append([]string{"testdata", "cert"}, s...)...)
+	}
 	cases := map[string]struct {
 		addr          string
 		useReflection bool
@@ -25,14 +29,20 @@ func TestNewClient(t *testing.T) {
 		cert          string
 		certKey       string
 
-		err error
+		hasErr bool
+		err    error
 	}{
-		"cert is missing":                         {useTLS: true, cert: "foo", cacert: "bar", err: entity.ErrMutualAuthParamsAreNotEnough},
-		"cacert is missing":                       {useTLS: true, cert: "foo", certKey: "bar", err: entity.ErrMutualAuthParamsAreNotEnough},
-		"certKey is missing":                      {useTLS: true, cacert: "foo", cert: "foo", err: entity.ErrMutualAuthParamsAreNotEnough},
-		"cert is missing, but useTLS is false":    {cert: "foo", cacert: "bar"},
-		"cacert is missing, but useTLS is false":  {cert: "foo", certKey: "bar"},
-		"certKey is missing, but useTLS is false": {cacert: "foo", cert: "foo"},
+		"certKey is missing":                      {useTLS: true, cert: "foo", err: entity.ErrMutualAuthParamsAreNotEnough},
+		"cert is missing":                         {useTLS: true, certKey: "bar", err: entity.ErrMutualAuthParamsAreNotEnough},
+		"certKey is missing, but useTLS is false": {cert: "foo"},
+		"cert is missing, but useTLS is false":    {certKey: "foo"},
+		"enable server TLS":                       {useTLS: true},
+		"enable server TLS with a trusted CA":     {useTLS: true, cacert: certPath("rootCA.pem")},
+		"enable mutual TLS":                       {useTLS: true, cert: certPath("localhost.pem"), certKey: certPath("localhost-key.pem")},
+		"enable mutual TLS with a trusted CA":     {useTLS: true, cacert: certPath("rootCA.pem"), cert: certPath("localhost.pem"), certKey: certPath("localhost-key.pem")},
+		"invalid cacert file path":                {useTLS: true, cacert: certPath("fooCA.pem"), hasErr: true},
+		"invalid cert file path":                  {useTLS: true, cert: certPath("foo.pem"), hasErr: true},
+		"invalid cert key file path":              {useTLS: true, certKey: certPath("foo-key.pem"), hasErr: true},
 	}
 	for name, c := range cases {
 		c := c
@@ -41,6 +51,9 @@ func TestNewClient(t *testing.T) {
 			if c.err != nil {
 				require.Error(t, err, "NewClient must return an error")
 				assert.Equal(t, c.err, err)
+				return
+			} else if c.hasErr {
+				require.Error(t, err, "NewClient must return an error")
 				return
 			}
 			require.NoError(t, err, "NewClient must not return an error")
