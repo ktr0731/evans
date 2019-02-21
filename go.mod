@@ -1,7 +1,6 @@
 module github.com/ktr0731/evans
 
 require (
-	github.com/AlecAivazis/survey v1.6.3
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Netflix/go-expect v0.0.0-20180928190340-9d1f4485533b // indirect
 	github.com/c-bata/go-prompt v0.2.3
@@ -15,6 +14,8 @@ require (
 	github.com/improbable-eng/grpc-web v0.0.0-20181111100011-16092bd1d58a
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf // indirect
 	github.com/jhump/protoreflect v1.1.0
+	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
+	github.com/k0kubun/pp v2.3.0+incompatible
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/ktr0731/go-semver v0.1.0

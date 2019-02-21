@@ -233,6 +233,7 @@ func TestLoad(t *testing.T) {
 
 		fs := pflag.NewFlagSet("test", pflag.ExitOnError)
 		fs.String("port", "", "")
+		fs.String("cacert", "", "")
 		fs.StringToString("header", nil, "")
 		fs.StringSlice("path", nil, "")
 		// --port flag changes port number to '8080'. Also --header appends 'foo=bar' and 'hoge=fuga' to 'request.header'.

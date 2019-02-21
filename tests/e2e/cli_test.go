@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -79,6 +80,7 @@ func TestCLI(t *testing.T) {
 				args = append([]string{"--cli", "--port", srv.port}, args...)
 				if c.useTLS {
 					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
+					fmt.Println(args)
 				}
 				code := newCommand(ui).Run(args)
 				require.Equal(t, c.code, code, errOut.String())

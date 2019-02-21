@@ -1,3 +1,6 @@
+// Package config provides config structures, and a mechanism that merges sources
+// such that the global config file, a project local config file and
+// command-line flags.
 package config
 
 import (
@@ -7,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/meta"
 	"github.com/pkg/errors"
@@ -32,9 +36,9 @@ type Header map[string][]string
 type Request struct {
 	Header      Header `toml:"header"`
 	Web         bool   `toml:"web"`
-	CACertFile  string `toml:"cacert"`
-	CertFile    string `toml:"cert"`
-	CertKeyFile string `toml:"certKey"`
+	CACertFile  string `toml:"caCertFile"`
+	CertFile    string `toml:"certFile"`
+	CertKeyFile string `toml:"certKeyFile"`
 }
 
 type REPL struct {
@@ -53,6 +57,8 @@ type Meta struct {
 	UpdateLevel   string `toml:"updateLevel"`
 }
 
+// Each TOML key must be equal the field name in the lower-case.
+// It is a limitation of spf13/viper.
 type Config struct {
 	Default *Default `toml:"default"`
 	Meta    *Meta    `toml:"meta"`
@@ -78,7 +84,12 @@ type Log struct {
 //
 // The order of priority is flags > local > global.
 func Get(fs *pflag.FlagSet) (*Config, error) {
-	return initConfig(fs)
+	cfg, err := initConfig(fs)
+	if err != nil {
+		return nil, err
+	}
+	logger.Printf("the conclusive config: %s\n", pp.Sprint(cfg))
+	return cfg, nil
 }
 
 func newDefaultViper() *viper.Viper {
@@ -108,9 +119,9 @@ func newDefaultViper() *viper.Viper {
 	v.SetDefault("log.prefix", "evans: ")
 
 	v.SetDefault("request.header", Header{"grpc-client": []string{"evans"}})
-	v.SetDefault("request.cacert", "")
-	v.SetDefault("request.cert", "")
-	v.SetDefault("request.certKey", "")
+	v.SetDefault("request.cacertFile", "")
+	v.SetDefault("request.certFile", "")
+	v.SetDefault("request.certKeyFile", "")
 	v.SetDefault("request.web", false)
 
 	return v
@@ -129,9 +140,9 @@ func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
 		"server.tls":          "tls",
 		"request.header":      "header",
 		"request.web":         "web",
-		"request.cacert":      "cacert",
-		"request.cert":        "cert",
-		"request.certKey":     "certkey",
+		"request.cacertFile":  "cacert",
+		"request.certFile":    "cert",
+		"request.certKeyFile": "certkey",
 		"repl.showSplashText": "silent",
 	}
 	for k, v := range kv {
