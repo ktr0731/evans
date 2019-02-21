@@ -81,7 +81,7 @@ jobs:
       - checkout
 
       - attach_workspace:
-          at: /go/pkg
+          at: /go
 
       - run:
           name: update GitHub releases and update brew formula
