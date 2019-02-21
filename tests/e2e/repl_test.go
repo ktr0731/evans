@@ -21,7 +21,9 @@ func TestREPL(t *testing.T) {
 			hasErr        bool // error was occurred in repl, false if precondition failed
 			useReflection bool
 			useWeb        bool
-			useTLS        bool
+
+			specifyCA bool
+			useTLS    bool
 		}{
 			{args: "", code: 1}, // cannot launch repl case
 			{args: "--package helloworld", code: 1},
@@ -51,7 +53,8 @@ func TestREPL(t *testing.T) {
 			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true},
 			{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
 
-			{args: "--tls --host localhost --package helloworld --service Greeter testdata/helloworld.proto", useTLS: true},
+			{args: "--tls --host localhost -r --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
+			{args: "--tls --host localhost -r --service Greeter", useReflection: true, useTLS: true, code: 1},
 		}
 
 		rh := newREPLHelper([]string{"--silent", "--repl"})
@@ -83,7 +86,7 @@ func TestREPL(t *testing.T) {
 				} else {
 					args = append([]string{"--port", srv.port}, args...)
 				}
-				if c.useTLS {
+				if c.useTLS && c.specifyCA {
 					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
 				}
 				code := rh.run(args)

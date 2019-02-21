@@ -101,7 +101,9 @@ func TestCLI(t *testing.T) {
 			code          int
 			useReflection bool
 			useWeb        bool
-			useTLS        bool
+
+			specifyCA bool
+			useTLS    bool
 		}{
 			{args: "--file testdata/in.json", code: 1},
 			{args: "--file testdata/in.json testdata/helloworld.proto", code: 1},
@@ -118,7 +120,8 @@ func TestCLI(t *testing.T) {
 
 			{args: "--web --file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useWeb: true},
 
-			{args: "--tls --host localhost --file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useTLS: true},
+			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
+			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, code: 1},
 		}
 
 		for _, c := range cases {
@@ -134,7 +137,7 @@ func TestCLI(t *testing.T) {
 				ui := cui.New(in, out, eout)
 
 				args := append([]string{"--cli", "--port", srv.port}, strings.Split(c.args, " ")...)
-				if c.useTLS {
+				if c.useTLS && c.specifyCA {
 					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
 				}
 				code := newCommand(ui).Run(args)

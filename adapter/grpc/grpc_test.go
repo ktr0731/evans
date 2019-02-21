@@ -40,9 +40,8 @@ func TestNewClient(t *testing.T) {
 		"enable server TLS with a trusted CA":     {useTLS: true, cacert: certPath("rootCA.pem")},
 		"enable mutual TLS":                       {useTLS: true, cert: certPath("localhost.pem"), certKey: certPath("localhost-key.pem")},
 		"enable mutual TLS with a trusted CA":     {useTLS: true, cacert: certPath("rootCA.pem"), cert: certPath("localhost.pem"), certKey: certPath("localhost-key.pem")},
-		"invalid cacert file path":                {useTLS: true, cacert: certPath("fooCA.pem"), hasErr: true},
-		"invalid cert file path":                  {useTLS: true, cert: certPath("foo.pem"), hasErr: true},
-		"invalid cert key file path":              {useTLS: true, certKey: certPath("foo-key.pem"), hasErr: true},
+		"invalid cacert file path":                {useTLS: true, cacert: "fooCA.pem", hasErr: true},
+		"invalid cert and key file path":          {useTLS: true, cert: "foo.pem", certKey: "foo-key.pem", hasErr: true},
 	}
 	for name, c := range cases {
 		c := c
