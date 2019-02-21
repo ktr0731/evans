@@ -48,7 +48,7 @@ jobs:
           paths:
             - "pkg/dept/*"
             - "pkg/mod/*"
-            - "src/github.com/ktr0731/evans/*"
+            - "src/github.com/ktr0731/evans/_tools/*"
 
       - run:
           name: build
