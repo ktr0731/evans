@@ -34,7 +34,7 @@ type client struct {
 // If one of it is not found, NewClient returns entity.ErrMutualAuthParamsAreNotEnough.
 // If useTLS is false, cacert, cert and certKey are ignored.
 func NewClient(addr string, useReflection, useTLS bool, cacert, cert, certKey string) (entity.GRPCClient, error) {
-	var opts []grpc.DialOption
+	opts := []grpc.DialOption{grpc.WithBlock(), grpc.FailOnNonTempDialError(true)}
 	if !useTLS {
 		opts = append(opts, grpc.WithInsecure())
 	} else { // Enable TLS authentication
