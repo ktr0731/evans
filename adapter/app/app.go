@@ -96,6 +96,10 @@ func (c *Command) parseFlags(args []string) *options {
 	// ignore error because flag set mode is ExitOnError
 	_ = f.Parse(args)
 
+	if opts.insecure && opts.tls {
+		opts.insecure = false
+	}
+
 	c.flagSet = f
 
 	return &opts
@@ -411,10 +415,6 @@ func checkPrecondition(w *wrappedConfig) error {
 
 	if w.cfg.Server.Reflection && w.cfg.Request.Web {
 		return errors.New("gRPC Web server reflection is not supported yet")
-	}
-
-	if w.cfg.Server.TLS && w.cfg.Request.Web {
-		return errors.New("TLS connections with a gRPC Web server are not supported yet")
 	}
 
 	return nil

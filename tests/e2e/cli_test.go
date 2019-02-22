@@ -4,7 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -63,6 +62,8 @@ func TestCLI(t *testing.T) {
 
 			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
 			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, code: 1},
+
+			{args: "--tls --web -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true, code: 1},
 		}
 
 		for _, c := range cases {
@@ -83,7 +84,6 @@ func TestCLI(t *testing.T) {
 				args = append([]string{"--cli", "--port", srv.port}, args...)
 				if c.useTLS && c.specifyCA {
 					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
-					fmt.Println(args)
 				}
 				code := newCommand(ui).Run(args)
 				require.Equal(t, c.code, code, errOut.String())
