@@ -195,6 +195,10 @@ func initGRPCClient(cfg *config.Config) error {
 				return
 			}
 			// TODO: TLS
+			if cfg.Server.TLS || cfg.Request.CACertFile != "" || cfg.Request.CertFile != "" || cfg.Request.CertKeyFile != "" {
+				err = errors.New("currently, gRPC-Web with TLS communication is not supported")
+				return
+			}
 			gRPCClient = grpc.NewWebClient(addr, b, cfg.Server.Reflection, false, "", "", "")
 		} else {
 			gRPCClient, err = grpc.NewClient(
