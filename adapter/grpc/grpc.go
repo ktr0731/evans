@@ -65,7 +65,7 @@ func NewClient(addr string, useReflection, useTLS bool, cacert, cert, certKey st
 
 		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {

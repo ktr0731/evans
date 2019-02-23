@@ -21,9 +21,9 @@
   splashtextpath = ""
 
 [request]
-  cacert = ""
-  cert = ""
-  certkey = ""
+  cacertfile = ""
+  certfile = ""
+  certkeyfile = ""
   web = false
 
   [request.header]

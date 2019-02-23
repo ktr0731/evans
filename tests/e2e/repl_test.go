@@ -54,6 +54,7 @@ func TestREPL(t *testing.T) {
 			{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
 
 			{args: "--tls --host localhost -r --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
+			{args: "--tls --insecure --host localhost -r --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
 			{args: "--tls --host localhost -r --service Greeter", useReflection: true, useTLS: true, code: 1},
 		}
 

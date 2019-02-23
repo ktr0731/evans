@@ -7,7 +7,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-var ErrMutualAuthParamsAreNotEnough = errors.New("cacert, cert and certkey are required to authenticate mutually")
+var ErrMutualAuthParamsAreNotEnough = errors.New("cert and certkey are required to authenticate mutually")
 
 type GRPCClient interface {
 	Invoke(ctx context.Context, fqrn string, req, res interface{}) error
