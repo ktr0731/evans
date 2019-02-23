@@ -3,9 +3,9 @@ package prompt
 import (
 	"io"
 
-	"github.com/AlecAivazis/survey"
 	goprompt "github.com/c-bata/go-prompt"
 	"github.com/ktr0731/evans/color"
+	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
 // Prompt provides interactive interfaces to receive user input.

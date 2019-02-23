@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/ktr0731/evans/tests/helper/server/helloworld"
+	"github.com/ktr0731/evans/tests/e2e/server/helloworld"
 	context "golang.org/x/net/context"
 )
 

@@ -9,7 +9,6 @@ import (
 
 	"github.com/ktr0731/evans/di"
 	cmd "github.com/ktr0731/evans/tests/e2e/repl"
-	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,6 +21,9 @@ func TestREPL(t *testing.T) {
 			hasErr        bool // error was occurred in repl, false if precondition failed
 			useReflection bool
 			useWeb        bool
+
+			specifyCA bool
+			useTLS    bool
 		}{
 			{args: "", code: 1}, // cannot launch repl case
 			{args: "--package helloworld", code: 1},
@@ -50,6 +52,11 @@ func TestREPL(t *testing.T) {
 
 			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true},
 			{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
+
+			{args: "--tls --host localhost -r --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
+			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem --host localhost -r --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
+			{args: "--tls --insecure --host localhost -r --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
+			{args: "--tls --host localhost -r --service Greeter", useReflection: true, useTLS: true, code: 1},
 		}
 
 		rh := newREPLHelper([]string{"--silent", "--repl"})
@@ -61,7 +68,9 @@ func TestREPL(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer helper.NewServer(t, c.useReflection).Start(c.useWeb).Stop()
+				srv := newServer(t, c.useReflection, c.useTLS)
+
+				defer srv.start(c.useWeb).stop()
 				defer cleanup()
 
 				out, eout := new(bytes.Buffer), new(bytes.Buffer)
@@ -73,6 +82,15 @@ func TestREPL(t *testing.T) {
 				)
 
 				args := strings.Split(c.args, " ")
+				// the first test case.
+				if len(args) == 1 && args[0] == "" {
+					args = []string{"--port", srv.port}
+				} else {
+					args = append([]string{"--port", srv.port}, args...)
+				}
+				if c.useTLS && c.specifyCA {
+					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
+				}
 				code := rh.run(args)
 				assert.Equal(t, c.code, code, eout.String())
 

@@ -1,43 +1,61 @@
-package helper
+// +build e2e
+
+package e2e
 
 import (
 	"context"
 	"net"
 	"net/http"
+	"path/filepath"
+	"strconv"
 	"sync"
 	"testing"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	srv "github.com/ktr0731/evans/tests/helper/server"
-	"github.com/ktr0731/evans/tests/helper/server/helloworld"
+	srv "github.com/ktr0731/evans/tests/e2e/server"
+	"github.com/ktr0731/evans/tests/e2e/server/helloworld"
+	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 )
 
-type Server struct {
+type server struct {
 	t  *testing.T
 	s  *grpc.Server
 	ws *http.Server
 
 	errMu sync.Mutex
 	err   error
+
+	port string
 }
 
-func NewServer(t *testing.T, enableReflection bool) *Server {
-	s := grpc.NewServer()
+func newServer(t *testing.T, useReflection bool, useTLS bool) *server {
+	var opts []grpc.ServerOption
+	if useTLS {
+		creds, err := credentials.NewServerTLSFromFile(filepath.Join("testdata", "cert", "localhost.pem"), filepath.Join("testdata", "cert", "localhost-key.pem"))
+		require.NoError(t, err)
+		opts = append(opts, grpc.Creds(creds))
+	}
+	s := grpc.NewServer(opts...)
 	helloworld.RegisterGreeterServer(s, srv.NewUnary())
-	if enableReflection {
+	if useReflection {
 		reflection.Register(s)
 	}
-	return &Server{
-		t: t,
-		s: s,
+	port, err := freeport.GetFreePort()
+	require.NoError(t, err, "failed to get a free port")
+	return &server{
+		t:    t,
+		s:    s,
+		port: strconv.Itoa(port),
 	}
 }
 
-func (s *Server) Start(web bool) *Server {
+func (s *server) start(web bool) *server {
+	addr := ":" + s.port
 	if web {
 		ws := grpcweb.WrapServer(
 			s.s,
@@ -47,7 +65,7 @@ func (s *Server) Start(web bool) *Server {
 		mux := http.NewServeMux()
 		mux.Handle("/", ws)
 		s.ws = &http.Server{
-			Addr:    ":50051",
+			Addr:    addr,
 			Handler: mux,
 		}
 
@@ -66,7 +84,7 @@ func (s *Server) Start(web bool) *Server {
 		return s
 	}
 
-	l, err := net.Listen("tcp", ":50051")
+	l, err := net.Listen("tcp", addr)
 	require.NoError(s.t, err)
 	go func() {
 		err = s.s.Serve(l)
@@ -79,7 +97,7 @@ func (s *Server) Start(web bool) *Server {
 	return s
 }
 
-func (s *Server) Stop() {
+func (s *server) stop() {
 	if s.gRPCWebEnabled() {
 		s.ws.Shutdown(context.Background())
 		return
@@ -93,11 +111,11 @@ func (s *Server) Stop() {
 	}
 }
 
-func (s *Server) gRPCWebEnabled() bool {
+func (s *server) gRPCWebEnabled() bool {
 	return s.ws != nil
 }
 
-func (s *Server) reportError(err error) {
+func (s *server) reportError(err error) {
 	s.errMu.Lock()
 	defer s.errMu.Unlock()
 	s.err = multierror.Append(s.err, err)

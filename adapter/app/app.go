@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"text/tabwriter"
 
-	"github.com/AlecAivazis/survey"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
@@ -24,6 +23,7 @@ import (
 	updater "github.com/ktr0731/go-updater"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
+	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
 var (
@@ -63,6 +63,10 @@ func (c *Command) parseFlags(args []string) *options {
 	f.BoolVarP(&opts.reflection, "reflection", "r", false, "use gRPC reflection")
 	f.BoolVar(&opts.verbose, "verbose", false, "verbose output")
 	f.BoolVarP(&opts.tls, "tls", "t", false, "use a secure TLS connection")
+	f.StringVar(&opts.cacert, "cacert", "", "the CA certificate file for verifying the server")
+	f.StringVar(&opts.cert, "cert", "", "the certificate file for mutual TLS auth. it must be provided with --certkey.")
+	f.StringVar(&opts.certKey, "certkey", "", "the private key file for mutual TLS auth. it must be provided with --cert.")
+	f.BoolVarP(&opts.insecure, "insecure", "k", true, "use an insecure connection (ignored if --tls is enabled)")
 	f.BoolVarP(&opts.version, "version", "v", false, "display version and exit")
 	f.BoolVarP(&opts.help, "help", "h", false, "display help text and exit")
 
@@ -92,6 +96,10 @@ func (c *Command) parseFlags(args []string) *options {
 	// ignore error because flag set mode is ExitOnError
 	_ = f.Parse(args)
 
+	if opts.insecure && opts.tls {
+		opts.insecure = false
+	}
+
 	c.flagSet = f
 
 	return &opts
@@ -116,6 +124,10 @@ type options struct {
 	web        bool
 	reflection bool
 	tls        bool
+	cacert     string
+	cert       string
+	certKey    string
+	insecure   bool
 
 	// meta options
 	verbose bool
@@ -403,10 +415,6 @@ func checkPrecondition(w *wrappedConfig) error {
 
 	if w.cfg.Server.Reflection && w.cfg.Request.Web {
 		return errors.New("gRPC Web server reflection is not supported yet")
-	}
-
-	if w.cfg.Server.TLS && w.cfg.Request.Web {
-		return errors.New("TLS connections with a gRPC Web server are not supported yet")
 	}
 
 	return nil

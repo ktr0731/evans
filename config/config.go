@@ -1,3 +1,6 @@
+// Package config provides config structures, and a mechanism that merges sources
+// such that the global config file, a project local config file and
+// command-line flags.
 package config
 
 import (
@@ -7,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/meta"
 	"github.com/pkg/errors"
@@ -30,8 +34,11 @@ type Server struct {
 type Header map[string][]string
 
 type Request struct {
-	Header Header `toml:"header"`
-	Web    bool   `toml:"web"`
+	Header      Header `toml:"header"`
+	Web         bool   `toml:"web"`
+	CACertFile  string `toml:"caCertFile"`
+	CertFile    string `toml:"certFile"`
+	CertKeyFile string `toml:"certKeyFile"`
 }
 
 type REPL struct {
@@ -50,6 +57,8 @@ type Meta struct {
 	UpdateLevel   string `toml:"updateLevel"`
 }
 
+// Each TOML key must be equal the field name in the lower-case.
+// It is a limitation of spf13/viper.
 type Config struct {
 	Default *Default `toml:"default"`
 	Meta    *Meta    `toml:"meta"`
@@ -70,8 +79,17 @@ type Log struct {
 	Prefix string `toml:"prefix"`
 }
 
+// Get returns the config which loaded from the global and local config files,
+// and command-line flags passed as an argument. Note that fs must have been parsed.
+//
+// The order of priority is flags > local > global.
 func Get(fs *pflag.FlagSet) (*Config, error) {
-	return initConfig(fs)
+	cfg, err := initConfig(fs)
+	if err != nil {
+		return nil, err
+	}
+	logger.Printf("the conclusive config: %s\n", pp.Sprint(cfg))
+	return cfg, nil
 }
 
 func newDefaultViper() *viper.Viper {
@@ -101,12 +119,17 @@ func newDefaultViper() *viper.Viper {
 	v.SetDefault("log.prefix", "evans: ")
 
 	v.SetDefault("request.header", Header{"grpc-client": []string{"evans"}})
+	v.SetDefault("request.cacertFile", "")
+	v.SetDefault("request.certFile", "")
+	v.SetDefault("request.certKeyFile", "")
 	v.SetDefault("request.web", false)
 
 	return v
 }
 
+// bindFlags binds parsed flag values to vp. Note that fs must be parsed.
 func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
+	// kv defines the mapping from a viper config name to a flag name.
 	kv := map[string]string{
 		"default.protoPath":   "path",
 		"default.package":     "package",
@@ -117,6 +140,9 @@ func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
 		"server.tls":          "tls",
 		"request.header":      "header",
 		"request.web":         "web",
+		"request.cacertFile":  "cacert",
+		"request.certFile":    "cert",
+		"request.certKeyFile": "certkey",
 		"repl.showSplashText": "silent",
 	}
 	for k, v := range kv {
@@ -304,6 +330,9 @@ func setupConfig(c *Config) {
 	}
 }
 
+// Edit opens the project local config file with an editor.
+// If the local config file is missing, Edit creates a new local config file.
+// $EDITOR is used as an editor if it is configured. Else, Vim is used.
 func Edit() error {
 	p, found := getLocalConfigPath()
 	if !found {

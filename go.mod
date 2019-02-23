@@ -1,7 +1,6 @@
 module github.com/ktr0731/evans
 
 require (
-	github.com/AlecAivazis/survey v1.6.3
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Netflix/go-expect v0.0.0-20180928190340-9d1f4485533b // indirect
 	github.com/c-bata/go-prompt v0.2.3
@@ -15,8 +14,11 @@ require (
 	github.com/improbable-eng/grpc-web v0.0.0-20181111100011-16092bd1d58a
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf // indirect
 	github.com/jhump/protoreflect v1.1.0
+	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
+	github.com/k0kubun/pp v2.3.0+incompatible
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/kr/pty v1.1.3 // indirect
 	github.com/ktr0731/go-semver v0.1.0
 	github.com/ktr0731/go-shellstring v0.1.0
 	github.com/ktr0731/go-updater v0.1.3
@@ -33,19 +35,23 @@ require (
 	github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223 // indirect
 	github.com/olekukonko/tablewriter v0.0.1
 	github.com/pelletier/go-toml v1.2.0
-	github.com/pkg/errors v0.8.0
+	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
+	github.com/pkg/errors v0.8.1
 	github.com/pkg/term v0.0.0-20181103235908-93e6c9149309 // indirect
 	github.com/rs/cors v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.3.1
-	github.com/stretchr/testify v1.2.2
+	github.com/stretchr/testify v1.3.0
 	github.com/tj/go-spin v1.1.0
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
-	golang.org/x/net v0.0.0-20181107234226-1c5f79cfb164
-	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
-	google.golang.org/genproto v0.0.0-20181107211654-5fc9ac540362 // indirect
-	google.golang.org/grpc v1.16.0
-	gopkg.in/AlecAivazis/survey.v1 v1.6.3 // indirect
+	golang.org/x/crypto v0.0.0-20190222235706-ffb98f73852f // indirect
+	golang.org/x/net v0.0.0-20190213061140-3a22650c66bd
+	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4 // indirect
+	golang.org/x/sys v0.0.0-20190222171317-cd391775e71e // indirect
+	golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2 // indirect
+	google.golang.org/genproto v0.0.0-20190219182410-082222b4a5c5 // indirect
+	google.golang.org/grpc v1.18.0
+	gopkg.in/AlecAivazis/survey.v1 v1.6.3
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )

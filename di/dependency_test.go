@@ -67,3 +67,18 @@ func TestInitEnv(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+func Test_initGRPCClient(t *testing.T) {
+	t.Run("gRPC-Web + TLS is not supported", func(t *testing.T) {
+		cfg := &config.Config{
+			Request: &config.Request{
+				Web: true,
+			},
+			Server: &config.Server{
+				TLS: true,
+			},
+		}
+		err := initGRPCClient(cfg)
+		require.Error(t, err)
+	})
+}

@@ -4,7 +4,6 @@ package e2e
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -13,7 +12,6 @@ import (
 	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/di"
-	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,6 +36,9 @@ func TestCLI(t *testing.T) {
 			code          int
 			useReflection bool
 			useWeb        bool
+
+			specifyCA bool
+			useTLS    bool
 		}{
 			{args: "", code: 1},
 			{args: "testdata/helloworld.proto", code: 1},
@@ -58,11 +59,21 @@ func TestCLI(t *testing.T) {
 			{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
 			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true, code: 1},
 			{args: "--web --reflection --service Greeter --call SayHello", useReflection: true, useWeb: true},
+
+			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
+			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
+			// If both of --tls and --insecure are provided, --insecure is ignored.
+			{args: "--tls --insecure -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
+			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, code: 1},
+
+			{args: "--tls --web -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true, code: 1},
 		}
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer helper.NewServer(t, c.useReflection).Start(c.useWeb).Stop()
+				srv := newServer(t, c.useReflection, c.useTLS)
+
+				defer srv.start(c.useWeb).stop()
 				defer cleanup()
 
 				in := strings.NewReader(`{ "name": "maho" }`)
@@ -73,7 +84,10 @@ func TestCLI(t *testing.T) {
 				ui := cui.New(in, out, errOut)
 
 				args := strings.Split(c.args, " ")
-				args = append([]string{"--cli"}, args...)
+				args = append([]string{"--cli", "--port", srv.port}, args...)
+				if c.useTLS && c.specifyCA {
+					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
+				}
 				code := newCommand(ui).Run(args)
 				require.Equal(t, c.code, code, errOut.String())
 
@@ -90,6 +104,9 @@ func TestCLI(t *testing.T) {
 			code          int
 			useReflection bool
 			useWeb        bool
+
+			specifyCA bool
+			useTLS    bool
 		}{
 			{args: "--file testdata/in.json", code: 1},
 			{args: "--file testdata/in.json testdata/helloworld.proto", code: 1},
@@ -105,21 +122,30 @@ func TestCLI(t *testing.T) {
 			{args: "--reflection --file testdata/in.json --service Greeter --call SayHello", code: 0, useReflection: true},
 
 			{args: "--web --file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useWeb: true},
+
+			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
+			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem  -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
+			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, code: 1},
 		}
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				defer helper.NewServer(t, c.useReflection).Start(c.useWeb).Stop()
+				srv := newServer(t, c.useReflection, c.useTLS)
+				defer srv.start(c.useWeb).stop()
 				defer cleanup()
 
 				in := strings.NewReader(`{ "name": "maho" }`)
 				cli.DefaultReader = in
 
-				out := new(bytes.Buffer)
-				ui := cui.New(in, out, ioutil.Discard)
+				out, eout := new(bytes.Buffer), new(bytes.Buffer)
+				ui := cui.New(in, out, eout)
 
-				code := newCommand(ui).Run(strings.Split(c.args, " "))
-				require.Equal(t, c.code, code)
+				args := append([]string{"--cli", "--port", srv.port}, strings.Split(c.args, " ")...)
+				if c.useTLS && c.specifyCA {
+					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
+				}
+				code := newCommand(ui).Run(args)
+				require.Equalf(t, c.code, code, "expected %d, but got %d. out = '%s', errout = '%s'", c.code, code, flatten(out.String()), flatten(eout.String()))
 
 				if c.code == 0 {
 					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))

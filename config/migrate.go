@@ -9,22 +9,23 @@ var migrationScripts = map[string]func(string, *viper.Viper) string{
 	"0.6.10": migrate0610To0611,
 }
 
-// migrate migrates an old config schema to the latest one.
-// migrate accepts an old version and its config. Migration
-// flow is as follows:
+// migrate migrates an old config schema to the latest one if a new config removes
+// some items that are in an old config. Doesn't need to do something
+// if some new items are added; only in cases of deleted or modified old items.
 //
-//   1. check whether a migration script which migrates the
-//      current version to another version. If it is found,
-//      apply it to the current config v. Each script is
-//      managed by a variable migrationScripts.
+// migrate accepts an old version and its config. Migration flow is as follows:
 //
-//   2. The migration script returns a version which is the
-//      same as an updated version.
+//   1. check whether a migration script which migrates the current version to
+//      another version. If it is found, apply it to the current config v.
+//      Each script is managed by a variable migrationScripts.
 //
-//   3. migrate instructs 1 and 2 again with the returned
-//      version. If there isn't a new migration script,
-//      migrate finishes migration processing.
+//   2. The migration script returns a version which is the same as an updated version.
 //
+//   3. migrate instructs 1 and 2 again with the returned version. If there isn't
+//      a new migration script, migrate finishes migration processing.
+//
+// Note that the latest migration script is not necessarily the same as the Evans's version.
+// However, each version of migrationScripts is corresponds to the Evans's one.
 func migrate(old string, v *viper.Viper) {
 	f, ok := migrationScripts[old]
 	if !ok {

@@ -5,6 +5,11 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
+
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hashicorp/go-multierror"
@@ -21,20 +26,48 @@ type client struct {
 	*reflectionClient
 }
 
-// NewClient creates a new gRPC client.
-// It dials to the server specified by addr.
-// addr format is same as the first argument of grpc.Dial.
+// NewClient creates a new gRPC client. It dials to the server specified by addr.
+// addr format is the same as the first argument of grpc.Dial.
 // If useReflection is true, the gRPC client enables gRPC reflection.
 // If useTLS is true, the gRPC client establishes a secure connection with the server.
-func NewClient(addr string, useReflection bool, useTLS bool) (entity.GRPCClient, error) {
-	// TODO: secure option
-	var conn *grpc.ClientConn
-	var err error
-	if useTLS {
-		conn, err = grpc.Dial(addr, grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")))
-	} else {
-		conn, err = grpc.Dial(addr, grpc.WithInsecure())
+//
+// The set of cert and certKey enables mutual authentication if useTLS is enabled.
+// If one of it is not found, NewClient returns entity.ErrMutualAuthParamsAreNotEnough.
+// If useTLS is false, cacert, cert and certKey are ignored.
+func NewClient(addr string, useReflection, useTLS bool, cacert, cert, certKey string) (entity.GRPCClient, error) {
+	var opts []grpc.DialOption
+	if !useTLS {
+		opts = append(opts, grpc.WithInsecure())
+	} else { // Enable TLS authentication
+		var tlsCfg tls.Config
+		if cacert != "" {
+			b, err := ioutil.ReadFile(cacert)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read the CA certificate")
+			}
+			cp := x509.NewCertPool()
+			if !cp.AppendCertsFromPEM(b) {
+				return nil, errors.Wrap(err, "failed to append the client certificate")
+			}
+			tlsCfg.RootCAs = cp
+		}
+		if cert != "" && certKey != "" {
+			// Enable mutual authentication
+			certificate, err := tls.LoadX509KeyPair(cert, certKey)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read the client certificate")
+			}
+			tlsCfg.Certificates = append(tlsCfg.Certificates, certificate)
+			opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
+		} else if cert != "" || certKey != "" {
+			return nil, entity.ErrMutualAuthParamsAreNotEnough
+		}
+
+		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
+	defer cancel()
+	conn, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial to gRPC server")
 	}

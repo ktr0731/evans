@@ -194,9 +194,20 @@ func initGRPCClient(cfg *config.Config) error {
 			if err != nil {
 				return
 			}
-			gRPCClient = grpc.NewWebClient(addr, cfg.Server.Reflection, b)
+			// TODO: TLS
+			if cfg.Server.TLS || cfg.Request.CACertFile != "" || cfg.Request.CertFile != "" || cfg.Request.CertKeyFile != "" {
+				err = errors.New("currently, gRPC-Web with TLS communication is not supported")
+				return
+			}
+			gRPCClient = grpc.NewWebClient(addr, b, cfg.Server.Reflection, false, "", "", "")
 		} else {
-			gRPCClient, err = grpc.NewClient(addr, cfg.Server.Reflection, cfg.Server.TLS)
+			gRPCClient, err = grpc.NewClient(
+				addr,
+				cfg.Server.Reflection,
+				cfg.Server.TLS,
+				cfg.Request.CACertFile,
+				cfg.Request.CertFile,
+				cfg.Request.CertKeyFile)
 		}
 	})
 	return err
@@ -273,7 +284,9 @@ func initDependencies(cfg *config.Config, in io.Reader) error {
 		)
 	})
 	if err := initer.init(); err != nil {
-		gRPCClient.Close(context.Background())
+		if gRPCClient != nil {
+			gRPCClient.Close(context.Background())
+		}
 		return err
 	}
 	return nil
