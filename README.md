@@ -109,7 +109,7 @@ If your server is enabling [gRPC reflection](https://github.com/grpc/grpc/blob/m
 $ evans -r
 ```
 
-Also if the server requires secure TLS connections, yuo can launch Evans with the `-t` (`--tls`) option.
+Also if the server requires secure TLS connections, you can launch Evans with the `-t` (`--tls`) option.
 ``` sh
 $ evans --tls --host example.com -r
 ```
