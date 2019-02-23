@@ -65,7 +65,7 @@ func (c *Command) parseFlags(args []string) *options {
 	f.BoolVarP(&opts.tls, "tls", "t", false, "use a secure TLS connection")
 	f.StringVar(&opts.cacert, "cacert", "", "the CA certificate file for verifying the server")
 	f.StringVar(&opts.cert, "cert", "", "the certificate file for mutual TLS auth. it must be provided with --certkey.")
-	f.StringVar(&opts.certKey, "certkey", "", "the private key file. it must be provided with --cert.")
+	f.StringVar(&opts.certKey, "certkey", "", "the private key file for mutual TLS auth. it must be provided with --cert.")
 	f.BoolVarP(&opts.insecure, "insecure", "k", true, "use an insecure connection (ignored if --tls is enabled)")
 	f.BoolVarP(&opts.version, "version", "v", false, "display version and exit")
 	f.BoolVarP(&opts.help, "help", "h", false, "display help text and exit")
