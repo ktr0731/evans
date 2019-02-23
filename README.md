@@ -109,9 +109,9 @@ If your server is enabling [gRPC reflection](https://github.com/grpc/grpc/blob/m
 $ evans -r
 ```
 
-Also if the server requires secure TLS connections, yuo can lunch Evans with the `t` (`--tls`) options.
+Also if the server requires secure TLS connections, yuo can launch Evans with the `-t` (`--tls`) option.
 ``` sh
-$ evans --tls
+$ evans --tls --host example.com -r
 ```
 
 To show package names of proto files REPL read:  
