@@ -36,27 +36,25 @@ func (c *reflectionClient) ReflectionEnabled() bool {
 	return c != nil
 }
 
-func (c *reflectionClient) ListServices() ([]entity.Service, []entity.Message, error) {
+func (c *reflectionClient) ListPackages() ([]*entity.Package, error) {
 	ssvcs, err := c.client.ListServices()
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to list services from reflecton enabled gRPC server")
+		return nil, errors.Wrap(err, "failed to list services from reflecton enabled gRPC server")
 	}
 
-	svcs := make([]*desc.ServiceDescriptor, 0, len(ssvcs)-1)
+	var fds []*desc.FileDescriptor
 	for _, s := range ssvcs {
 		if s == reflectionServiceName {
 			continue
 		}
 		svc, err := c.client.ResolveService(s)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		svcs = append(svcs, svc)
+		fds = append(fds, svc.GetFile())
 	}
 
-	esvcs, emsgs := protobuf.ToEntitiesFromServiceDescriptors(svcs)
-
-	return esvcs, emsgs, nil
+	return protobuf.ToEntitiesFrom(fds)
 }
 
 func (c *reflectionClient) Close() {

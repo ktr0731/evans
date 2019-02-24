@@ -58,22 +58,18 @@ func initEnv(cfg *config.Config) (rerr error) {
 			headers = append(headers, entity.Header{Key: k, Val: v[0]})
 		}
 		if gRPCClient.ReflectionEnabled() {
-			var svcs []entity.Service
-			var msgs []entity.Message
-			svcs, msgs, err = gRPCClient.ListServices()
+			desc, err = gRPCClient.ListPackages()
 			if err != nil {
-				rerr = errors.Wrap(err, "failed to list services by gRPC reflection")
+				rerr = errors.Wrap(err, "failed to list packages by gRPC reflection")
 				return
 			}
-			env = environment.NewFromServices(svcs, msgs, headers)
-		} else {
-			env = environment.New(desc, headers)
+		}
+		env = environment.New(desc, headers)
 
-			if pkg := cfg.Default.Package; pkg != "" {
-				if err := env.UsePackage(pkg); err != nil {
-					rerr = errors.Wrapf(err, "failed to set package to env as a default package: %s", pkg)
-					return
-				}
+		if pkg := cfg.Default.Package; pkg != "" {
+			if err := env.UsePackage(pkg); err != nil {
+				rerr = errors.Wrapf(err, "failed to set package to env as a default package: %s", pkg)
+				return
 			}
 		}
 
