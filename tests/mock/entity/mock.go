@@ -1123,7 +1123,7 @@ var (
 // 	               panic("TODO: mock out the Invoke method")
 //             },
 //             ListServicesFunc: func() ([]entity.Service, []entity.Message, error) {
-// 	               panic("TODO: mock out the ListServices method")
+// 	               panic("TODO: mock out the ListPackages method")
 //             },
 //             NewBidiStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
 // 	               panic("TODO: mock out the NewBidiStream method")
@@ -1150,8 +1150,8 @@ type GRPCClientMock struct {
 	// InvokeFunc mocks the Invoke method.
 	InvokeFunc func(ctx context.Context, fqrn string, req interface{}, res interface{}) error
 
-	// ListServicesFunc mocks the ListServices method.
-	ListServicesFunc func() ([]entity.Service, []entity.Message, error)
+	// ListServicesFunc mocks the ListPackages method.
+	ListServicesFunc func() ([]*entity.Package, error)
 
 	// NewBidiStreamFunc mocks the NewBidiStream method.
 	NewBidiStreamFunc func(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error)
@@ -1183,7 +1183,7 @@ type GRPCClientMock struct {
 			// Res is the res argument value.
 			Res interface{}
 		}
-		// ListServices holds details about calls to the ListServices method.
+		// ListPackages holds details about calls to the ListPackages method.
 		ListServices []struct {
 		}
 		// NewBidiStream holds details about calls to the NewBidiStream method.
@@ -1287,10 +1287,10 @@ func (mock *GRPCClientMock) InvokeCalls() []struct {
 	return calls
 }
 
-// ListServices calls ListServicesFunc.
-func (mock *GRPCClientMock) ListServices() ([]entity.Service, []entity.Message, error) {
+// ListPackages calls ListServicesFunc.
+func (mock *GRPCClientMock) ListPackages() ([]*entity.Package, error) {
 	if mock.ListServicesFunc == nil {
-		panic("GRPCClientMock.ListServicesFunc: method is nil but GRPCClient.ListServices was just called")
+		panic("GRPCClientMock.ListServicesFunc: method is nil but GRPCClient.ListPackages was just called")
 	}
 	callInfo := struct {
 	}{}
@@ -1300,7 +1300,7 @@ func (mock *GRPCClientMock) ListServices() ([]entity.Service, []entity.Message, 
 	return mock.ListServicesFunc()
 }
 
-// ListServicesCalls gets all the calls that were made to ListServices.
+// ListServicesCalls gets all the calls that were made to ListPackages.
 // Check the length with:
 //     len(mockedGRPCClient.ListServicesCalls())
 func (mock *GRPCClientMock) ListServicesCalls() []struct {

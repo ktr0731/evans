@@ -36,8 +36,8 @@ func TestREPL(t *testing.T) {
 			{args: "--package helloworld --service foo testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service Greeter testdata/helloworld.proto"},
 
-			{args: "--reflection", hasErr: true, useReflection: true},
-			{args: "--reflection --service Greeter", useReflection: true},
+			{args: "--reflection --package helloworld", hasErr: true, useReflection: true},
+			{args: "--reflection --package helloworld --service Greeter", useReflection: true},
 
 			{args: "--web", useWeb: true, code: 1},
 			{args: "--web --package helloworld", useWeb: true, code: 1},
@@ -50,12 +50,12 @@ func TestREPL(t *testing.T) {
 			{args: "--web --package helloworld --service foo testdata/helloworld.proto", useWeb: true, code: 1},
 			{args: "--web --package helloworld --service Greeter testdata/helloworld.proto", useWeb: true},
 
-			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true},
-			{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
+			{args: "--web --reflection --package helloworld --service Greeter", useReflection: true, useWeb: true},
+			{args: "--web --reflection --package helloworld --service bar", useReflection: true, useWeb: true, code: 1},
 
-			{args: "--tls --host localhost -r --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
-			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem --host localhost -r --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
-			{args: "--tls --insecure --host localhost -r --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
+			{args: "--tls --host localhost -r --package helloworld --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
+			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem --host localhost -r --package helloworld --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
+			{args: "--tls --insecure --host localhost -r --package helloworld --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
 			{args: "--tls --host localhost -r --service Greeter", useReflection: true, useTLS: true, code: 1},
 		}
 
