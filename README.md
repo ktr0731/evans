@@ -9,7 +9,7 @@
  more expressive universal gRPC client
 ```
 
-![](https://user-images.githubusercontent.com/12953836/53421787-98005080-3a21-11e9-80bc-f3c1b421656c.png)
+![](https://user-images.githubusercontent.com/12953836/53422570-0db8ec00-3a23-11e9-84f7-8cc3438fbac1.png)
 
 --- 
 
