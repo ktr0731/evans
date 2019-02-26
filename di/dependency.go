@@ -99,7 +99,7 @@ func initEnv(cfg *config.Config) (rerr error) {
 
 		if svc == "" {
 			svcs, err := env.Services()
-			if err != nil && len(svcs) == 1 {
+			if err == nil && len(svcs) == 1 {
 				svc = svcs[0].Name()
 			}
 		}
