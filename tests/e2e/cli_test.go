@@ -44,15 +44,14 @@ func TestCLI(t *testing.T) {
 			{args: "testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service Greeter testdata/helloworld.proto", code: 1},
-			{args: "--package helloworld --call SayHello testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service Greeter --call SayHello", code: 1},
 			{args: "--package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
 
 			{args: "--reflection", code: 1, useReflection: true},
 			{args: "--reflection --package helloworld --service Greeter", code: 1, useReflection: true},
-			{args: "--reflection --service Greeter", code: 1, useReflection: true},            // Package helloworld package is inferred.
+			{args: "--reflection --service Greeter", code: 1, useReflection: true},            // Package helloworld is inferred.
 			{args: "--reflection --service helloworld.Greeter", code: 1, useReflection: true}, // Specify package by --service flag.
-			{args: "--reflection --call SayHello", code: 1, useReflection: true},
+			{args: "--reflection --call SayHello", useReflection: true},                       // Package helloworld and service Greeter are inferred.
 			{args: "--reflection --service Greeter --call SayHello", useReflection: true},
 
 			{args: "--web --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useWeb: true},
@@ -114,13 +113,11 @@ func TestCLI(t *testing.T) {
 			{args: "--file testdata/in.json testdata/helloworld.proto", code: 1},
 			{args: "--file testdata/in.json --package helloworld testdata/helloworld.proto", code: 1},
 			{args: "--file testdata/in.json --package helloworld --service Greeter testdata/helloworld.proto", code: 1},
-			{args: "--file testdata/in.json --package helloworld --call SayHello testdata/helloworld.proto", code: 1},
 			{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello", code: 1},
 			{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
 
 			{args: "--reflection --file testdata/in.json", code: 1, useReflection: true},
 			{args: "--reflection --file testdata/in.json --service Greeter", code: 1, useReflection: true},
-			{args: "--reflection --file testdata/in.json --call SayHello", code: 1, useReflection: true},
 			{args: "--reflection --file testdata/in.json --service Greeter --call SayHello", code: 0, useReflection: true},
 
 			{args: "--web --file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useWeb: true},
