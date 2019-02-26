@@ -66,16 +66,28 @@ func initEnv(cfg *config.Config) (rerr error) {
 		}
 		env = environment.New(desc, headers)
 
-		if pkg := cfg.Default.Package; pkg != "" {
+		var pkg string
+		if cfg.Default.Package != "" {
+			pkg = cfg.Default.Package
+		} else if pkgs := env.Packages(); len(pkgs) == 1 {
+			pkg = pkgs[0].Name
+		}
+		if pkg != "" {
 			if err := env.UsePackage(pkg); err != nil {
 				rerr = errors.Wrapf(err, "failed to set package to env as a default package: %s", pkg)
 				return
 			}
 		}
 
-		if svc := cfg.Default.Service; svc != "" {
+		var svc string
+		if cfg.Default.Service != "" {
+			svc = cfg.Default.Service
+		} else if svcs, err := env.Services(); err != nil && len(svcs) == 1 {
+			svc = svcs[0].Name()
+		}
+		if svc != "" {
 			if err := env.UseService(svc); err != nil {
-				rerr = errors.Wrapf(err, "failed to set service to env as a default service: %s", svc)
+				rerr = errors.Wrapf(err, "failed to set service '%s' to env as a default service", svc)
 				return
 			}
 		}
