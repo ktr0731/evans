@@ -25,5 +25,6 @@ func TestMain(m *testing.M) {
 
 		// ref. repl.(*executor).execute comments
 		goleak.IgnoreTopFunction("time.Sleep"),
+		goleak.IgnoreTopFunction("runtime.goparkunlock"),
 	)
 }
