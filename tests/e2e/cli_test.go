@@ -48,22 +48,24 @@ func TestCLI(t *testing.T) {
 			{args: "--package helloworld --service Greeter --call SayHello", code: 1},
 			{args: "--package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
 
-			{args: "--reflection ", code: 1, useReflection: true},
-			{args: "--reflection --service helloworld.Greeter", code: 1, useReflection: true},
+			{args: "--reflection", code: 1, useReflection: true},
+			{args: "--reflection --package helloworld --service Greeter", code: 1, useReflection: true},
+			{args: "--reflection --service Greeter", code: 1, useReflection: true},            // Package helloworld package is inferred.
+			{args: "--reflection --service helloworld.Greeter", code: 1, useReflection: true}, // Specify package by --service flag.
 			{args: "--reflection --call SayHello", code: 1, useReflection: true},
-			{args: "--reflection --package helloworld --service Greeter --call SayHello", useReflection: true},
+			{args: "--reflection --service Greeter --call SayHello", useReflection: true},
 
 			{args: "--web --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useWeb: true},
 
-			{args: "--web --reflection --package foo", useReflection: true, useWeb: true, code: 1},
+			{args: "--web --reflection", useReflection: true, useWeb: true, code: 1},
 			{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
 			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true, code: 1},
-			{args: "--web --reflection --package helloworld --service Greeter --call SayHello", useReflection: true, useWeb: true},
+			{args: "--web --reflection --service Greeter --call SayHello", useReflection: true, useWeb: true},
 
-			{args: "--tls -r --package helloworld --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
-			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem -r --package helloworld --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
+			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
+			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
 			// If both of --tls and --insecure are provided, --insecure is ignored.
-			{args: "--tls --insecure -r --package helloworld --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
+			{args: "--tls --insecure -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
 			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, code: 1},
 
 			{args: "--tls --web -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true, code: 1},
@@ -119,12 +121,12 @@ func TestCLI(t *testing.T) {
 			{args: "--reflection --file testdata/in.json", code: 1, useReflection: true},
 			{args: "--reflection --file testdata/in.json --service Greeter", code: 1, useReflection: true},
 			{args: "--reflection --file testdata/in.json --call SayHello", code: 1, useReflection: true},
-			{args: "--reflection --package helloworld --file testdata/in.json --service Greeter --call SayHello", code: 0, useReflection: true},
+			{args: "--reflection --file testdata/in.json --service Greeter --call SayHello", code: 0, useReflection: true},
 
 			{args: "--web --file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useWeb: true},
 
-			{args: "--tls -r --package helloworld --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
-			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem  -r --package helloworld --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
+			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
+			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem  -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
 			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, code: 1},
 		}
 
