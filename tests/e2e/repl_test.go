@@ -28,24 +28,20 @@ func TestREPL(t *testing.T) {
 			{args: "", code: 1}, // cannot launch repl case
 			{args: "--package helloworld", code: 1},
 			{args: "--service Greeter", code: 1},
-			{args: "testdata/helloworld.proto", hasErr: true},
 			{args: "--package helloworld --service Greeter", code: 1},
-			{args: "--package helloworld testdata/helloworld.proto", hasErr: true},
 			{args: "--package foo testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service foo testdata/helloworld.proto", code: 1},
 			{args: "--package helloworld --service Greeter testdata/helloworld.proto"},
 
-			{args: "--reflection --package helloworld", hasErr: true, useReflection: true},
 			{args: "--reflection --package helloworld --service Greeter", useReflection: true},
 			{args: "--reflection --service Greeter", useReflection: true},            // Package helloworld package is inferred.
 			{args: "--reflection --service helloworld.Greeter", useReflection: true}, // Specify package by --service flag.
+			{args: "--reflection", useReflection: true},                              // Package helloworld and service Greeter are inferred.
 
 			{args: "--web", useWeb: true, code: 1},
 			{args: "--web --package helloworld", useWeb: true, code: 1},
 			{args: "--web --service Greeter", useWeb: true, code: 1},
-			{args: "--web testdata/helloworld.proto", useWeb: true, hasErr: true},
 			{args: "--web --package helloworld --service Greeter", useWeb: true, code: 1},
-			{args: "--web --package helloworld testdata/helloworld.proto", useWeb: true, hasErr: true},
 			{args: "--web --package foo --service Greeter testdata/helloworld.proto", useWeb: true, code: 1},
 			{args: "--web --package helloworld --service foo testdata/helloworld.proto", useWeb: true, code: 1},
 			{args: "--web --package helloworld --service Greeter testdata/helloworld.proto", useWeb: true},

@@ -1,19 +1,11 @@
-```
-  ______
- |  ____|
- | |__    __   __   __ _   _ __    ___
- |  __|   \ \ / /  / _. | | '_ \  / __|
- | |____   \ V /  | (_| | | | | | \__ \
- |______|   \_/    \__,_| |_| |_| |___/
+![Evans](https://user-images.githubusercontent.com/12953836/53423552-e5ca8800-3a24-11e9-9927-fe7f3d5f867a.png)
 
- more expressive universal gRPC client
-```
 --- 
 
 [![CircleCI](https://circleci.com/gh/ktr0731/evans/tree/master.svg?style=svg)](https://circleci.com/gh/ktr0731/evans/tree/master)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/32r7s2skrgm9ubva?svg=true)](https://ci.appveyor.com/api/projects/status/32r7s2skrgm9ubva?svg=true)
-[![codecov](https://codecov.io/gh/ktr0731/evans/branch/master/graph/badge.svg)](https://codecov.io/gh/ktr0731/evans)  
-
+[![codecov](https://codecov.io/gh/ktr0731/evans/branch/master/graph/badge.svg)](https://codecov.io/gh/ktr0731/evans)
+[![GoDoc](https://godoc.org/github.com/ktr0731/evans?status.svg)](https://godoc.org/github.com/ktr0731/evans)  
 
 ## Motivation
 Evans has been created to use easier than other existing gRPC clients.  
@@ -447,5 +439,4 @@ At the moment TLS is not supported for gRPC Web.
 
 ## See Also
 Evans (DJ YOSHITAKA)  
-![Evans](https://user-images.githubusercontent.com/12953836/47862601-da7d9c00-de38-11e8-80be-9fc981903f6c.png)  
-[iTunes](https://itunes.apple.com/jp/album/jubeat-original-soundtrack/id325295989)  
+[![Evans](https://user-images.githubusercontent.com/12953836/47862601-da7d9c00-de38-11e8-80be-9fc981903f6c.png)](https://itunes.apple.com/jp/album/jubeat-original-soundtrack/id325295989)
