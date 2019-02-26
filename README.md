@@ -1,15 +1,4 @@
-```
-  ______
- |  ____|
- | |__    __   __   __ _   _ __    ___
- |  __|   \ \ / /  / _. | | '_ \  / __|
- | |____   \ V /  | (_| | | | | | \__ \
- |______|   \_/    \__,_| |_| |_| |___/
-
- more expressive universal gRPC client
-```
-
-![](https://user-images.githubusercontent.com/12953836/53422570-0db8ec00-3a23-11e9-84f7-8cc3438fbac1.png)
+![Evans](https://user-images.githubusercontent.com/12953836/53423552-e5ca8800-3a24-11e9-9927-fe7f3d5f867a.png)
 
 --- 
 
