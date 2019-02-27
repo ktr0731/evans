@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 
 	multierror "github.com/hashicorp/go-multierror"
@@ -66,17 +67,51 @@ func initEnv(cfg *config.Config) (rerr error) {
 		}
 		env = environment.New(desc, headers)
 
-		if pkg := cfg.Default.Package; pkg != "" {
+		// If a package is specified, Evans sets it as default.
+		// The priority is as follows:
+		//
+		// 1. If cfg.Default.Package (command-line flag) isn't empty,
+		//    use it as default package.
+		// 2. If the number of loaded packages is only one, use it.
+		// 3. If cfg.Default.Service isn't empty, Evans tries to interpret
+		//    as a string concating a package and service.
+		//    Evans splits it to two strings with ".", and the first
+		//    string is regarded as the package name.
+		pkg := cfg.Default.Package
+		svc := cfg.Default.Service
+		if pkg == "" && len(env.Packages()) == 1 {
+			pkg = env.Packages()[0].Name
+		}
+		if pkg == "" && svc != "" {
+			i := strings.LastIndex(svc, ".")
+			if i != -1 {
+				pkg = svc[:i]
+				svc = svc[i+1:]
+			}
+		}
+
+		if pkg != "" {
 			if err := env.UsePackage(pkg); err != nil {
 				rerr = errors.Wrapf(err, "failed to set package to env as a default package: %s", pkg)
 				return
 			}
 		}
 
-		if svc := cfg.Default.Service; svc != "" {
+		if svc == "" {
+			svcs, err := env.Services()
+			if err != nil && len(svcs) == 1 {
+				svc = svcs[0].Name()
+			}
+		}
+		if svc != "" {
 			if err := env.UseService(svc); err != nil {
-				rerr = errors.Wrapf(err, "failed to set service to env as a default service: %s", svc)
-				return
+				// If an error is returned, try again with a package
+				// trimmed string.
+				svc = strings.TrimPrefix(svc, pkg+".")
+				if err := env.UseService(svc); err != nil {
+					rerr = errors.Wrapf(err, "failed to set service '%s' to env as a default service", svc)
+					return
+				}
 			}
 		}
 	})
