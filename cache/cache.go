@@ -25,6 +25,7 @@ type Cache struct {
 	UpdateAvailable bool      `default:"false" toml:"updateAvailable"`
 	LatestVersion   string    `default:"" toml:"latestVersion"`
 	InstalledBy     MeansType `default:"" toml:"installedBy"`
+	CommandHistory  []string  `default:"" toml:"commandHistory"`
 }
 
 // Save writes the receiver to the cache file.
@@ -94,6 +95,12 @@ func SetUpdateInfo(latest *semver.Version) *Cache {
 // SetInstalledBy sets means how Evans was installed.
 func SetInstalledBy(mt MeansType) *Cache {
 	c.InstalledBy = mt
+	c2 := c
+	return &c2
+}
+
+func SetCommandHistory(h []string) *Cache {
+	c.CommandHistory = h
 	c2 := c
 	return &c2
 }

@@ -6,7 +6,8 @@ import (
 )
 
 type executor struct {
-	repl *repl
+	repl    *repl
+	history []string
 }
 
 func (e *executor) execute(l string) {
@@ -36,4 +37,6 @@ func (e *executor) execute(l string) {
 
 	e.repl.ui.Println(result)
 	e.repl.prompt.SetPrefix(e.repl.getPrompt())
+
+	e.history = append(e.history, l)
 }

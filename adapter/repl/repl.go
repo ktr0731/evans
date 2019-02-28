@@ -14,9 +14,11 @@ import (
 	goprompt "github.com/c-bata/go-prompt"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/adapter/prompt"
+	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/entity/env"
+	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
 	shellstring "github.com/ktr0731/go-shellstring"
@@ -102,6 +104,8 @@ func newEnv(config *config.REPL, serverConfig *config.Server, env env.Environmen
 	executor := &executor{repl: repl}
 	completer := &completer{cmds: cmds, env: env}
 
+	cache := cache.Get()
+
 	repl.prompt = prompt.New(
 		executor.execute,
 		completer.complete,
@@ -115,6 +119,8 @@ func newEnv(config *config.REPL, serverConfig *config.Server, env env.Environmen
 		goprompt.OptionSelectedSuggestionTextColor(goprompt.Black),
 		goprompt.OptionSelectedDescriptionBGColor(goprompt.Blue),
 		goprompt.OptionSelectedDescriptionTextColor(goprompt.Black),
+
+		goprompt.OptionHistory(cache.CommandHistory),
 	)
 
 	repl.prompt.SetPrefix(repl.getPrompt())
@@ -157,6 +163,7 @@ func (r *repl) eval(l string) (io.Reader, error) {
 }
 
 func (r *repl) start() error {
+	defer r.cleanup()
 	if r.config.ShowSplashText {
 		r.printSplash(r.config.SplashTextPath)
 		defer r.ui.InfoPrintln("Good Bye :)")
@@ -172,6 +179,13 @@ func (r *repl) start() error {
 	<-r.exitCh
 
 	return nil
+}
+
+func (r *repl) cleanup() {
+	prevHistory := cache.Get().CommandHistory
+	if err := cache.SetCommandHistory(append(prevHistory, r.prompt.History()...)).Save(); err != nil {
+		logger.Printf("failed to write command history: %s", err)
+	}
 }
 
 func (r *repl) help(cmds map[string]commander) string {
