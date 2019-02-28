@@ -183,7 +183,17 @@ func (r *repl) start() error {
 
 func (r *repl) cleanup() {
 	prevHistory := cache.Get().CommandHistory
-	if err := cache.SetCommandHistory(append(prevHistory, r.prompt.History()...)).Save(); err != nil {
+	currentHistory := r.prompt.History()
+	history := make([]string, 0, len(prevHistory)+len(currentHistory))
+	encountered := map[string]interface{}{}
+	for _, e := range append(prevHistory, currentHistory...) {
+		if _, found := encountered[e]; found {
+			continue
+		}
+		history = append(history, e)
+		encountered[e] = nil
+	}
+	if err := cache.SetCommandHistory(history).Save(); err != nil {
 		logger.Printf("failed to write command history: %s", err)
 	}
 }
