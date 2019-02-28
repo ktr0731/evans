@@ -26,13 +26,15 @@ func NewPromptV2(prefixFormat string, env env.Environment) *PromptInputter2 {
 func (i *PromptInputter2) Input(req *desc.MessageDescriptor) (proto.Message, error) {
 	inputtedOneOfs := map[string]interface{}{}
 	// TODO: set color
-	for _, oneof := range req.GetOneOfs() {
-		fmt.Printf("--- oneof %s ---\n", oneof.GetName())
-		for _, choice := range oneof.GetChoices() {
-			fmt.Printf("* %s\n", choice.GetName())
-		}
-	}
-	fmt.Println()
+	// for _, oneof := range req.GetOneOfs() {
+	// 	fmt.Printf("--- oneof %s ---\n", oneof.GetName())
+	// 	for _, choice := range oneof.GetChoices() {
+	// 		fmt.Printf("* %s\n", choice.GetName())
+	// 	}
+	// }
+	// fmt.Println()
+
+	// topLevelMsgs := map[string]proto.Message{}
 
 	for _, field := range req.GetFields() {
 		// if field.IsRepeated() {
@@ -43,9 +45,19 @@ func (i *PromptInputter2) Input(req *desc.MessageDescriptor) (proto.Message, err
 		// 	// TODO: oneof
 		// }
 		if isOneOfChoiceField(field) {
-			fmt.Printf("%s (%s) oneof = %s\n", field.GetName(), field.GetType().String(), field.GetOneOf().GetFullyQualifiedName())
+			oneOfName := field.GetOneOf().GetFullyQualifiedName()
+			if _, found := inputtedOneOfs[oneOfName]; found {
+				fmt.Println("SKIP")
+				continue
+			}
+			fmt.Printf("--- oneof %s ---\n", field.GetName())
+			for _, choice := range field.GetOneOf().GetChoices() {
+				fmt.Printf("* %s\n", choice.GetName())
+			}
+			fmt.Printf("%s (%s) oneof = %s\n", field.GetFullyQualifiedName(), field.GetType().String(), field.GetOneOf().GetFullyQualifiedName())
+			inputtedOneOfs[oneOfName] = nil
 		} else {
-			fmt.Printf("%s (%s)\n", field.GetName(), field.GetType().String())
+			fmt.Printf("%s (%s)\n", field.GetFullyQualifiedName(), field.GetType().String())
 		}
 	}
 	return nil, nil

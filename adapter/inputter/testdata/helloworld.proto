@@ -12,6 +12,10 @@ message HelloRequest {
 }
 
 message HelloResponse {
+  message HelloRequest {
+    string name = 1;
+  }
   string name = 1;
   string message = 2;
+  HelloRequest req = 3;
 }
