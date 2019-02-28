@@ -84,5 +84,5 @@ func (c *completer) complete(d prompt.Document) []prompt.Suggest {
 		}
 
 	}
-	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
+	return prompt.FilterFuzzy(s, d.GetWordBeforeCursor(), true)
 }
