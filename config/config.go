@@ -49,6 +49,8 @@ type REPL struct {
 
 	ShowSplashText bool   `toml:"showSplashText"`
 	SplashTextPath string `toml:"splashTextPath"`
+
+	HistorySize int `toml:"historySize"`
 }
 
 type Meta struct {
@@ -110,6 +112,7 @@ func newDefaultViper() *viper.Viper {
 	v.SetDefault("repl.coloredOutput", true)
 	v.SetDefault("repl.showSplashText", true)
 	v.SetDefault("repl.splashTextPath", "")
+	v.SetDefault("repl.historySize", 100)
 
 	v.SetDefault("server.host", "127.0.0.1")
 	v.SetDefault("server.port", "50051")
@@ -315,6 +318,7 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 	if err := v.Unmarshal(&mergedCfg); err != nil {
 		return nil, err
 	}
+
 	return &mergedCfg, nil
 }
 

@@ -182,6 +182,9 @@ func (r *repl) start() error {
 }
 
 func (r *repl) cleanup() {
+	// Merge the previous history which was cached in the last session and
+	// the current history.
+	// The larger index is the later command.
 	prevHistory := cache.Get().CommandHistory
 	currentHistory := r.prompt.History()
 	history := make([]string, 0, len(prevHistory)+len(currentHistory))
@@ -192,6 +195,9 @@ func (r *repl) cleanup() {
 		}
 		history = append(history, e)
 		encountered[e] = nil
+	}
+	if len(history) > r.config.HistorySize {
+		history = history[len(history)-r.config.HistorySize:]
 	}
 	if err := cache.SetCommandHistory(history).Save(); err != nil {
 		logger.Printf("failed to write command history: %s", err)
