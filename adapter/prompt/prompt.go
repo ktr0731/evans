@@ -141,6 +141,5 @@ func (p *prompt) livePrefix() (string, bool) {
 }
 
 func (p *prompt) History() []string {
-	// p.history = cache.Get().CommandHistory
 	return p.history
 }
