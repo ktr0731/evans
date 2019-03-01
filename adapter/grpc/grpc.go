@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/entity"
+	"github.com/ktr0731/evans/logger"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
@@ -94,6 +96,13 @@ func (c *client) Invoke(ctx context.Context, fqrn string, req, res interface{}) 
 	if err != nil {
 		return err
 	}
+	logger.Scriptln(func() []interface{} {
+		b, err := json.MarshalIndent(&req, "", "  ")
+		if err != nil {
+			return nil
+		}
+		return []interface{}{"request:\n" + string(b)}
+	})
 	return c.conn.Invoke(ctx, endpoint, req, res)
 }
 
