@@ -195,6 +195,9 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 				return err
 			}
 			if choice == "finish" {
+				if f.IsRepeated() {
+					return EORF
+				}
 				return nil
 			}
 			// TODO: coloring
