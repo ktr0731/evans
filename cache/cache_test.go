@@ -108,5 +108,10 @@ func TestCache(t *testing.T) {
 		assert.Equal(t, "1.0.0", newCache.UpdateInfo.LatestVersion)
 		assert.True(t, newCache.UpdateInfo.UpdateAvailable)
 		assert.Equal(t, newCache.InstalledBy, mt)
+
+		err = newCache.ClearUpdateInfo()
+		require.NoError(t, err)
+		newCache = Get()
+		assert.Empty(t, newCache.UpdateInfo, "UpdateInfo must be cleared by ClearUpdateInfo, but got non-empty values")
 	})
 }
