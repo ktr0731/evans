@@ -13,6 +13,8 @@ type MockPrompt struct {
 
 	iq []string
 	sq []string
+
+	history []string
 }
 
 func NewMockPrompt(iq, sq []string) *MockPrompt {
@@ -41,6 +43,9 @@ func (p *MockPrompt) Input() (string, error) {
 	} else {
 		p.iq = []string{}
 	}
+
+	p.history = append(p.history, in)
+
 	return in, nil
 }
 
@@ -58,6 +63,10 @@ func (p *MockPrompt) SetPrefixColor(_ color.Color) error {
 	return nil
 }
 
+func (p *MockPrompt) History() []string {
+	return p.history
+}
+
 type MockRepeatedPrompt struct {
 	*MockPrompt
 
@@ -70,8 +79,9 @@ type MockRepeatedPrompt struct {
 
 func NewMockRepeatedPrompt(iq [][]string, sq [][]string) *MockRepeatedPrompt {
 	return &MockRepeatedPrompt{
-		iq: iq,
-		sq: sq,
+		MockPrompt: &MockPrompt{},
+		iq:         iq,
+		sq:         sq,
 	}
 }
 
@@ -97,6 +107,9 @@ func (p *MockRepeatedPrompt) Input() (string, error) {
 	case len(p.iq[0]) == 1:
 		p.iq = p.iq[1:]
 	}
+
+	p.history = append(p.history, in)
+
 	return in, nil
 }
 

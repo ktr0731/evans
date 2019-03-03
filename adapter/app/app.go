@@ -340,13 +340,13 @@ func (c *Command) runAsREPL() error {
 // if config.Meta.AutoUpdate enabled, processUpdate is called asynchronously.
 // other than, processUpdate is called synchronously.
 func (c *Command) processUpdate(ctx context.Context) error {
-	if !c.cache.UpdateAvailable {
+	if !c.cache.UpdateInfo.UpdateAvailable {
 		return nil
 	}
 
-	v := semver.MustParse(c.cache.LatestVersion)
+	v := semver.MustParse(c.cache.UpdateInfo.LatestVersion)
 	if v.LessThan(meta.Version) || v.Equal(meta.Version) {
-		return cache.Clear()
+		return c.cache.ClearUpdateInfo()
 	}
 
 	m, err := newMeans(c.cache)
@@ -370,7 +370,7 @@ func (c *Command) processUpdate(ctx context.Context) error {
 		return err
 	}
 
-	printUpdateInfo(c.ui.Writer(), c.cache.LatestVersion)
+	printUpdateInfo(c.ui.Writer(), c.cache.UpdateInfo.LatestVersion)
 
 	var yes bool
 	if err := survey.AskOne(&survey.Confirm{

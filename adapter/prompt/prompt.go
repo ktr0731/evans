@@ -27,6 +27,10 @@ type Prompt interface {
 
 	// SetPrefixColor changes the current prompt color by passed one.
 	SetPrefixColor(color color.Color) error
+
+	// History returns Input() history as a string slice.
+	// A older command is a newer executed command.
+	History() []string
 }
 
 type prompt struct {
@@ -34,6 +38,8 @@ type prompt struct {
 	currentPrefix string
 
 	hasExecutor bool
+
+	history []string
 
 	// entered is changed from prompt.Enter key bind of c-bata/go-prompt.
 	// c-bata/go-prompt doesn't return EOF (ctrl+d), only returns empty string.
@@ -57,9 +63,17 @@ type prompt struct {
 var New = newPrompt
 
 func newPrompt(executor func(string), completer func(goprompt.Document) []goprompt.Suggest, opt ...goprompt.Option) Prompt {
+	p := &prompt{hasExecutor: executor != nil}
+
+	wrappedExecutor := executor
 	if executor == nil {
-		executor = func(in string) {
+		wrappedExecutor = func(in string) {
 			return
+		}
+	} else {
+		wrappedExecutor = func(in string) {
+			p.history = append(p.history, in)
+			executor(in)
 		}
 	}
 	if completer == nil {
@@ -67,11 +81,8 @@ func newPrompt(executor func(string), completer func(goprompt.Document) []goprom
 			return nil
 		}
 	}
-	p := &prompt{
-		hasExecutor: executor != nil,
-	}
 	p.fieldPrompt = goprompt.New(
-		executor,
+		wrappedExecutor,
 		completer,
 		append(opt,
 			goprompt.OptionLivePrefix(p.livePrefix),
@@ -82,6 +93,7 @@ func newPrompt(executor func(string), completer func(goprompt.Document) []goprom
 				},
 			}),
 		)...)
+
 	return p
 }
 
@@ -126,4 +138,8 @@ func (p *prompt) SetPrefixColor(color color.Color) error {
 
 func (p *prompt) livePrefix() (string, bool) {
 	return p.currentPrefix, true
+}
+
+func (p *prompt) History() []string {
+	return p.history
 }
