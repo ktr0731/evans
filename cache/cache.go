@@ -41,6 +41,7 @@ func (c *Cache) Save() error {
 		return err
 	}
 	defer f.Close()
+	cachedCache = c
 	return toml.NewEncoder(f).Encode(c)
 }
 

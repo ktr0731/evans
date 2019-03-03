@@ -370,7 +370,7 @@ func (c *Command) processUpdate(ctx context.Context) error {
 		return err
 	}
 
-	printUpdateInfo(c.ui.Writer(), c.cache.LatestVersion)
+	printUpdateInfo(c.ui.Writer(), c.cache.UpdateInfo.LatestVersion)
 
 	var yes bool
 	if err := survey.AskOne(&survey.Confirm{
