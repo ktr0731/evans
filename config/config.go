@@ -90,7 +90,9 @@ func Get(fs *pflag.FlagSet) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger.Printf("the conclusive config: %s\n", pp.Sprint(cfg))
+	logger.Scriptf("the conclusive config: %s\n", func() []interface{} {
+		return []interface{}{pp.Sprint(cfg)}
+	})
 	return cfg, nil
 }
 

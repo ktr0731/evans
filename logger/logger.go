@@ -57,6 +57,15 @@ func Scriptln(f func() []interface{}) {
 	Println(args...)
 }
 
+// Scriptf is similar with Scriptln, but for formatting output.
+func Scriptf(format string, f func() []interface{}) {
+	if !enabled {
+		return
+	}
+	args := f()
+	Printf(format, args...)
+}
+
 func newDefaultLogger() *log.Logger {
 	return log.New(ioutil.Discard, "evans: ", 0)
 }
