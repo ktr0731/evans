@@ -1,6 +1,7 @@
 package repl
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -9,57 +10,59 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func Test_repl_cleanup(t *testing.T) {
-	setup := func(t *testing.T) func() {
-		t.Helper()
+var cacheDir string
 
-		dir, err := ioutil.TempDir("", "")
-		require.NoError(t, err)
-		oldCachePath := cache.Path
-		return func() {
-			os.RemoveAll(dir)
-			cache.Path = oldCachePath
-		}
+func init() {
+	dir, err := ioutil.TempDir("", "")
+	if err != nil {
+		panic(err)
 	}
+	cacheDir = dir
+	os.Setenv("XDG_CACHE_HOME", cacheDir)
+}
 
-	cases := map[string]struct {
+func Test_repl_cleanup(t *testing.T) {
+	defer os.RemoveAll(cacheDir)
+
+	// Note that previous command histories are cached.
+	cases := []struct {
+		name        string
 		historySize int
 		inputs      []string
 		expected    []string
 	}{
-		"command history size is greather than max size": {
+		{
+			name:        "no inputs",
 			historySize: 3,
-			inputs:      []string{"miyuki", "kaguya", "chika", "yu"},
-			expected:    []string{"kaguya", "chika", "yu"}, // The oldest command will be discarded.
+			expected:    []string{},
 		},
-		"command history size is less than max size": {
+		{
+			name:        "command history size is less than max size",
 			historySize: 3,
 			inputs:      []string{"miyuki", "kaguya"},
 			expected:    []string{"miyuki", "kaguya"},
 		},
-		// "no inputs": {
-		// 	historySize: 3,
-		// 	expected:    []string{},
-		// },
+		{
+			name:        "command history size is greather than max size",
+			historySize: 3,
+			inputs:      []string{"miyuki", "kaguya", "chika", "yu"},
+			expected:    []string{"kaguya", "chika", "yu"}, // The oldest command will be discarded.
+		},
 	}
 
-	for name, c := range cases {
-		name := name
+	for _, c := range cases {
 		c := c
 
-		t.Run(name, func(t *testing.T) {
-			cleanup := setup(t)
-			defer cleanup()
-
+		t.Run(c.name, func(t *testing.T) {
 			prompt := helper.NewMockPrompt(c.inputs, nil)
 			// Call Input for recording command history.
 			for i := 0; i < len(c.inputs); i++ {
 				prompt.Input()
 			}
 
+			fmt.Printf("%#v", cache.Get())
 			r := &repl{
 				config: &config.REPL{
 					HistorySize: c.historySize,
@@ -69,7 +72,7 @@ func Test_repl_cleanup(t *testing.T) {
 			r.cleanup()
 
 			newCache := cache.Get()
-			assert.Equal(t, newCache.CommandHistory, c.expected)
+			assert.Equal(t, c.expected, newCache.CommandHistory)
 		})
 	}
 }
