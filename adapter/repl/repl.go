@@ -104,8 +104,6 @@ func newEnv(config *config.REPL, serverConfig *config.Server, env env.Environmen
 	executor := &executor{repl: repl}
 	completer := &completer{cmds: cmds, env: env}
 
-	cache := cache.Get()
-
 	repl.prompt = prompt.New(
 		executor.execute,
 		completer.complete,
@@ -120,7 +118,7 @@ func newEnv(config *config.REPL, serverConfig *config.Server, env env.Environmen
 		goprompt.OptionSelectedDescriptionBGColor(goprompt.Blue),
 		goprompt.OptionSelectedDescriptionTextColor(goprompt.Black),
 
-		goprompt.OptionHistory(cache.CommandHistory),
+		goprompt.OptionHistory(cache.Get().CommandHistory),
 	)
 
 	repl.prompt.SetPrefix(repl.getPrompt())
@@ -199,7 +197,7 @@ func (r *repl) cleanup() {
 	if len(history) > r.config.HistorySize {
 		history = history[len(history)-r.config.HistorySize:]
 	}
-	if err := cache.SetCommandHistory(history).Save(); err != nil {
+	if err := cache.Get().SetCommandHistory(history).Save(); err != nil {
 		logger.Printf("failed to write command history: %s", err)
 	}
 }
