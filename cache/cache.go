@@ -44,9 +44,17 @@ func (c *Cache) Save() error {
 	return toml.NewEncoder(f).Encode(c)
 }
 
-// Get returns loaded cache contents.
-// Returned *Cache is NOT goroutine safe.
+// cachedCache holds a loaded cache instantiated by Get.
+// If cachedCache isn't nil, Get returns it straightforwardly.
+var cachedCache *Cache
+
+// Get returns loaded cache contents. To reduce duplicatd function calls,
+// Get caches the result of Get. See cachedCache comments for more implementation details.
 func Get() *Cache {
+	if cachedCache != nil {
+		return cachedCache
+	}
+
 	p := resolvePath()
 
 	if _, err := os.Stat(p); os.IsNotExist(err) {
@@ -79,6 +87,8 @@ func Get() *Cache {
 			panic(err)
 		}
 	}
+
+	cachedCache = &c
 
 	return &c
 }

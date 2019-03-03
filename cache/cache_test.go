@@ -65,6 +65,7 @@ func TestCache(t *testing.T) {
 	t.Run("cache does not exist", func(t *testing.T) {
 		defer func() {
 			os.RemoveAll(testDir)
+			cachedCache = nil // See cachedCache comments for its behavior.
 		}()
 		assert.NotNil(t, Get(), "after setup called, cache file is written in $XDG_CACHE_HOME/testDir but returned cache was nil")
 	})
@@ -72,6 +73,7 @@ func TestCache(t *testing.T) {
 	t.Run("cache exists", func(t *testing.T) {
 		defer func() {
 			os.RemoveAll(testDir)
+			cachedCache = nil
 		}()
 
 		cache := Get()
