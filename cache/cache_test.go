@@ -63,7 +63,6 @@ func TestCache(t *testing.T) {
 	defer cleanup()
 
 	t.Run("cache does not exist", func(t *testing.T) {
-		setup()
 		defer func() {
 			os.RemoveAll(testDir)
 		}()
@@ -71,21 +70,21 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("cache exists", func(t *testing.T) {
-		setup()
 		defer func() {
 			os.RemoveAll(testDir)
 		}()
 
 		cache := Get()
-		assert.Equalf(t, c, *cache, "The initial value of the cache must be equal to the value of Get")
 
 		mt := MeansType(github.MeansTypeGitHubRelease)
 		setCache := func() *Cache {
-			unsavedCache := SetUpdateInfo(semver.MustParse("1.0.0"))
-			assert.Equal(t, "1.0.0", unsavedCache.LatestVersion)
-			assert.True(t, unsavedCache.UpdateAvailable)
+			cache := Get()
 
-			unsavedCache = SetInstalledBy(mt)
+			unsavedCache := cache.SetUpdateInfo(semver.MustParse("1.0.0"))
+			assert.Equal(t, "1.0.0", unsavedCache.UpdateInfo.LatestVersion)
+			assert.True(t, unsavedCache.UpdateInfo.UpdateAvailable)
+
+			unsavedCache = cache.SetInstalledBy(mt)
 			assert.Equal(t, unsavedCache.InstalledBy, mt)
 
 			return unsavedCache
@@ -95,7 +94,6 @@ func TestCache(t *testing.T) {
 		setCache()
 
 		// get new cache value
-		setup()
 		newCache := Get()
 		assert.Equal(t, cache, newCache, "newCache must not modified")
 
@@ -103,11 +101,10 @@ func TestCache(t *testing.T) {
 		err := setCache().Save()
 		require.NoError(t, err)
 
-		setup()
 		newCache = Get()
 
-		assert.Equal(t, "1.0.0", newCache.LatestVersion)
-		assert.True(t, newCache.UpdateAvailable)
+		assert.Equal(t, "1.0.0", newCache.UpdateInfo.LatestVersion)
+		assert.True(t, newCache.UpdateInfo.UpdateAvailable)
 		assert.Equal(t, newCache.InstalledBy, mt)
 	})
 }
