@@ -60,6 +60,7 @@ func Test_repl_cleanup(t *testing.T) {
 			for i := 0; i < len(c.inputs); i++ {
 				prompt.Input()
 			}
+			assert.Len(t, prompt.History(), len(c.inputs), "prompt must hold Input history")
 
 			r := &repl{
 				config: &config.REPL{
