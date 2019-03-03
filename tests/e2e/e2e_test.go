@@ -3,18 +3,12 @@
 package e2e
 
 import (
-	"log"
 	"testing"
 
-	"github.com/ktr0731/evans/cache"
 	"go.uber.org/goleak"
 )
 
 func TestMain(m *testing.M) {
-	if err := cache.Clear(); err != nil {
-		log.Fatal(err)
-	}
-
 	goleak.VerifyTestMain(
 		m,
 		// TODO: invest these leaks

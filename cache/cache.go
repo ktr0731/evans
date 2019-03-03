@@ -24,10 +24,10 @@ type UpdateInfo struct {
 
 // Cache represents cached items.
 type Cache struct {
-	Version        string      `toml:"version"`
-	UpdateInfo     *UpdateInfo `toml:"updateInfo"`
-	InstalledBy    MeansType   `default:"" toml:"installedBy"`
-	CommandHistory []string    `default:"" toml:"commandHistory"`
+	Version        string     `toml:"version"`
+	UpdateInfo     UpdateInfo `toml:"updateInfo"`
+	InstalledBy    MeansType  `default:"" toml:"installedBy"`
+	CommandHistory []string   `default:"" toml:"commandHistory"`
 }
 
 // Save writes the receiver to the cache file.
@@ -97,7 +97,7 @@ func Get() *Cache {
 // ClearUpdateInfo clears c.UpdateInfo.
 // ClearUpdateInfo also saves cleared cache to the file.
 func (c *Cache) ClearUpdateInfo() error {
-	c.UpdateInfo = &UpdateInfo{
+	c.UpdateInfo = UpdateInfo{
 		UpdateAvailable: false,
 		LatestVersion:   "",
 	}
@@ -107,7 +107,7 @@ func (c *Cache) ClearUpdateInfo() error {
 // SetUpdateInfo sets an updatable flag to true and
 // the latest version info to passed version.
 func (c *Cache) SetUpdateInfo(latest *semver.Version) *Cache {
-	c.UpdateInfo = &UpdateInfo{
+	c.UpdateInfo = UpdateInfo{
 		UpdateAvailable: true,
 		LatestVersion:   latest.String(),
 	}

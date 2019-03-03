@@ -1,7 +1,6 @@
 package repl
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -62,7 +61,6 @@ func Test_repl_cleanup(t *testing.T) {
 				prompt.Input()
 			}
 
-			fmt.Printf("%#v", cache.Get())
 			r := &repl{
 				config: &config.REPL{
 					HistorySize: c.historySize,
