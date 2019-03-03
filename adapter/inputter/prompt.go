@@ -47,7 +47,7 @@ func (i *PromptInputter) Input(reqType entity.Message) (proto.Message, error) {
 	fields := reqType.Fields()
 
 	// DarkGreen is the initial color
-	return newFieldInputter(i.prompt, i.prefixFormat, setter, []string{}, false, color.DefaultColor()).Input(fields)
+	return newFieldInputter(i.prompt, i.prefixFormat, setter, []string{}, false, false, color.DefaultColor()).Input(fields)
 }
 
 // fieldInputter inputs each fields of req in interactively
@@ -61,11 +61,14 @@ type fieldInputter struct {
 
 	color color.Color
 
-	// enteredEmptyInput is used to terminate repeated field inputting
-	// if input is empty and enteredEmptyInput is true, exit repeated input prompt
+	// enteredEmptyInput is used to terminate repeated field inputting.
+	// If input is empty and enteredEmptyInput is true, exit repeated input prompt.
 	enteredEmptyInput bool
 
-	// the field has parent field (in other words, the field is child of a message field)
+	// hasDirectCycledParent is true if the direct parent to the current field is a cycled message.
+	hasDirectCycledParent bool
+
+	// The field has parent fields and one or more fields is/are repeated.
 	hasAncestorAndHasRepeatedField bool
 }
 
@@ -75,6 +78,7 @@ func newFieldInputter(
 	setter *protobuf.MessageSetter,
 	ancestor []string,
 	hasAncestorAndHasRepeatedField bool,
+	hasDirectCycledParent bool,
 	color color.Color,
 ) *fieldInputter {
 	return &fieldInputter{
@@ -84,6 +88,7 @@ func newFieldInputter(
 		ancestor:                       ancestor,
 		color:                          color,
 		hasAncestorAndHasRepeatedField: hasAncestorAndHasRepeatedField,
+		hasDirectCycledParent:          hasDirectCycledParent,
 	}
 }
 
@@ -195,6 +200,9 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 				return err
 			}
 			if choice == "finish" {
+				if f.IsRepeated() {
+					return EORF
+				}
 				return nil
 			}
 			// TODO: coloring
@@ -209,6 +217,7 @@ func (i *fieldInputter) inputField(field entity.Field) error {
 			setter,
 			append(i.ancestor, f.FieldName()),
 			i.hasAncestorAndHasRepeatedField || f.IsRepeated(),
+			f.IsCycled(),
 			i.color,
 		).Input(fields)
 		if err != nil {
@@ -262,10 +271,14 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{
 		return "", err
 	}
 
+	// Empty input. See enteredEmptyInput field comments for the behavior
+	// when empty input is entered.
 	if in == "" {
-		// if f is repeated or
-		// ancestor has repeated field
-		if f.IsRepeated() || i.hasAncestorAndHasRepeatedField {
+		// Check whether f.enteredEmptyInput is true or false when this field satisfies one of following conditions.
+		//   - f is a repeated field
+		//   - One or more ancestor has/have repeated field and
+		//     the direct parent is not a cycled field.
+		if f.IsRepeated() || (i.hasAncestorAndHasRepeatedField && !i.hasDirectCycledParent) {
 			if i.enteredEmptyInput {
 				return nil, EORF
 			}

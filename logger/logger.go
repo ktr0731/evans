@@ -1,3 +1,5 @@
+// Package logger provides logging functions.
+// As default, logger discards all passed messages. See SetOutput for more details.
 package logger
 
 import (
@@ -7,13 +9,24 @@ import (
 )
 
 var (
-	defaultLogger = log.New(ioutil.Discard, "evans: ", 0)
+	defaultLogger = newDefaultLogger()
+	enabled       bool
 )
 
+// Reset resets logging all parameters.
+func Reset() {
+	defaultLogger = newDefaultLogger()
+	enabled = false
+}
+
+// SetOutput enables logging that writes out logs to w.
 func SetOutput(w io.Writer) {
+	enabled = true
 	defaultLogger.SetOutput(w)
 }
 
+// SetPrefix changes the log prefix to another one.
+// The default prefix is "evans: ".
 func SetPrefix(p string) {
 	defaultLogger.SetPrefix(p)
 }
@@ -32,4 +45,27 @@ func Fatal(v ...interface{}) {
 
 func Fatalf(format string, v ...interface{}) {
 	defaultLogger.Fatalf(format, v...)
+}
+
+// Scriptln receives a function f which executes something and returns some values
+// as a slice of empty interfaces. If logging is disabled, f is not executed.
+func Scriptln(f func() []interface{}) {
+	if !enabled {
+		return
+	}
+	args := f()
+	Println(args...)
+}
+
+// Scriptf is similar with Scriptln, but for formatting output.
+func Scriptf(format string, f func() []interface{}) {
+	if !enabled {
+		return
+	}
+	args := f()
+	Printf(format, args...)
+}
+
+func newDefaultLogger() *log.Logger {
+	return log.New(ioutil.Discard, "evans: ", 0)
 }

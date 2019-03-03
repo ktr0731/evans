@@ -14,9 +14,11 @@ import (
 	goprompt "github.com/c-bata/go-prompt"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/adapter/prompt"
+	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/di"
 	"github.com/ktr0731/evans/entity/env"
+	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/evans/usecase/port"
 	shellstring "github.com/ktr0731/go-shellstring"
@@ -115,6 +117,8 @@ func newEnv(config *config.REPL, serverConfig *config.Server, env env.Environmen
 		goprompt.OptionSelectedSuggestionTextColor(goprompt.Black),
 		goprompt.OptionSelectedDescriptionBGColor(goprompt.Blue),
 		goprompt.OptionSelectedDescriptionTextColor(goprompt.Black),
+
+		goprompt.OptionHistory(cache.Get().CommandHistory),
 	)
 
 	repl.prompt.SetPrefix(repl.getPrompt())
@@ -157,6 +161,7 @@ func (r *repl) eval(l string) (io.Reader, error) {
 }
 
 func (r *repl) start() error {
+	defer r.cleanup()
 	if r.config.ShowSplashText {
 		r.printSplash(r.config.SplashTextPath)
 		defer r.ui.InfoPrintln("Good Bye :)")
@@ -172,6 +177,29 @@ func (r *repl) start() error {
 	<-r.exitCh
 
 	return nil
+}
+
+func (r *repl) cleanup() {
+	// Merge the previous history which was cached in the last session and
+	// the current history.
+	// The larger index is the later command.
+	prevHistory := cache.Get().CommandHistory
+	currentHistory := r.prompt.History()
+	history := make([]string, 0, len(prevHistory)+len(currentHistory))
+	encountered := map[string]interface{}{}
+	for _, e := range append(prevHistory, currentHistory...) {
+		if _, found := encountered[e]; found {
+			continue
+		}
+		history = append(history, e)
+		encountered[e] = nil
+	}
+	if len(history) > r.config.HistorySize {
+		history = history[len(history)-r.config.HistorySize:]
+	}
+	if err := cache.Get().SetCommandHistory(history).Save(); err != nil {
+		logger.Printf("failed to write command history: %s", err)
+	}
 }
 
 func (r *repl) help(cmds map[string]commander) string {

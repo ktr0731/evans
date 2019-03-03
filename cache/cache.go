@@ -11,20 +11,23 @@ import (
 	xdgbasedir "github.com/zchee/go-xdgbasedir"
 )
 
-var (
-	c               Cache
-	defaultFileName = "cache.toml"
-)
+const defaultFileName = "cache.toml"
 
 type MeansType updater.MeansType
 
 const MeansTypeUndefined MeansType = ""
 
+type UpdateInfo struct {
+	UpdateAvailable bool   `default:"false" toml:"updateAvailable"`
+	LatestVersion   string `default:"" toml:"latestVersion"`
+}
+
 // Cache represents cached items.
 type Cache struct {
-	UpdateAvailable bool      `default:"false" toml:"updateAvailable"`
-	LatestVersion   string    `default:"" toml:"latestVersion"`
-	InstalledBy     MeansType `default:"" toml:"installedBy"`
+	Version        string     `toml:"version"`
+	UpdateInfo     UpdateInfo `toml:"updateInfo"`
+	InstalledBy    MeansType  `default:"" toml:"installedBy"`
+	CommandHistory []string   `default:"" toml:"commandHistory"`
 }
 
 // Save writes the receiver to the cache file.
@@ -38,15 +41,20 @@ func (c *Cache) Save() error {
 		return err
 	}
 	defer f.Close()
+	cachedCache = c
 	return toml.NewEncoder(f).Encode(c)
 }
 
-func init() {
-	setup()
-}
+// cachedCache holds a loaded cache instantiated by Get.
+// If cachedCache isn't nil, Get returns it straightforwardly.
+var cachedCache *Cache
 
-func setup() {
-	c = Cache{}
+// Get returns loaded cache contents. To reduce duplicatd function calls,
+// Get caches the result of Get. See cachedCache comments for more implementation details.
+func Get() *Cache {
+	if cachedCache != nil {
+		return cachedCache
+	}
 
 	p := resolvePath()
 
@@ -64,38 +72,60 @@ func setup() {
 	}
 	defer f.Close()
 
+	var c Cache
 	if _, err := toml.DecodeReader(f, &c); err != nil {
 		panic(err)
 	}
-}
 
-// Get returns loaded cache contents.
-// Returned *Cache is NOT goroutine safe.
-func Get() *Cache {
+	// If c.Version is empty or not equal to the latest version,
+	// it is regarded as an old version.
+	// In such case, we discard the loaded cache.
+	if c.Version == "" || c.Version != meta.Version.String() {
+		if err := initCacheFile(p); err != nil {
+			panic(err)
+		}
+		if _, err := f.Seek(0, 0); err != nil {
+			panic(err)
+		}
+		if _, err := toml.DecodeReader(f, &c); err != nil {
+			panic(err)
+		}
+	}
+
+	cachedCache = &c
+
 	return &c
 }
 
-// Clear clears contents of the cache file.
-func Clear() error {
-	c.UpdateAvailable = false
-	c.LatestVersion = ""
+// ClearUpdateInfo clears c.UpdateInfo.
+// ClearUpdateInfo also saves cleared cache to the file.
+func (c *Cache) ClearUpdateInfo() error {
+	c.UpdateInfo = UpdateInfo{
+		UpdateAvailable: false,
+		LatestVersion:   "",
+	}
 	return c.Save()
 }
 
 // SetUpdateInfo sets an updatable flag to true and
 // the latest version info to passed version.
-func SetUpdateInfo(latest *semver.Version) *Cache {
-	c.UpdateAvailable = true
-	c.LatestVersion = latest.String()
-	c2 := c
-	return &c2
+func (c *Cache) SetUpdateInfo(latest *semver.Version) *Cache {
+	c.UpdateInfo = UpdateInfo{
+		UpdateAvailable: true,
+		LatestVersion:   latest.String(),
+	}
+	return c
 }
 
 // SetInstalledBy sets means how Evans was installed.
-func SetInstalledBy(mt MeansType) *Cache {
+func (c *Cache) SetInstalledBy(mt MeansType) *Cache {
 	c.InstalledBy = mt
-	c2 := c
-	return &c2
+	return c
+}
+
+func (c *Cache) SetCommandHistory(h []string) *Cache {
+	c.CommandHistory = h
+	return c
 }
 
 func resolvePath() string {
@@ -114,7 +144,6 @@ func initCacheFile(p string) error {
 	}
 	defer f.Close()
 	return toml.NewEncoder(f).Encode(Cache{
-		UpdateAvailable: false,
-		LatestVersion:   "",
+		Version: meta.Version.String(),
 	})
 }

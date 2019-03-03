@@ -201,6 +201,52 @@ func TestPrompt_Input(t *testing.T) {
 
 		require.Equal(t, `foo:<key:"key" value:<fuga:"val1" piyo:3>>`, msg.String())
 	})
+
+	t.Run("normal/circulated", func(t *testing.T) {
+		env := testhelper.SetupEnv(t, "circulated.proto", "example", "ExampleService")
+
+		prompt := helper.NewMockRepeatedPrompt(
+			[][]string{{"filter1"}, {"and1"}, {"or1"}, {"or2"}, {"10", "1"}},
+			[][]string{{"dig down"}, {"dig down"}, {"finish"}, {"finish"}, {"finish"}, {"dig down"}, {"finish"}, {"finish"}, {"dig down"}, {"finish"}, {"finish"}, {"finish"}})
+
+		cleanup := injectNewPrompt(prompt)
+		defer cleanup()
+
+		inputter := newPromptInputter(prompt, prefixFormat, env)
+
+		descs := testhelper.ReadProtoAsFileDescriptors(t, "circulated.proto")
+		p, err := protobuf.ToEntitiesFrom(descs)
+		require.NoError(t, err)
+		m := p[0].Messages[1]
+		require.Equal(t, "FooRequest", m.Name())
+
+		msg, err := inputter.Input(m)
+		require.NoError(t, err)
+
+		// Expected:
+		//
+		// {
+		//   "filters": {
+		//     "name": "filter1",
+		//     "and": [
+		//       {
+		//         "name": "and1"
+		//       }
+		//     ],
+		//     "or": [
+		//       {
+		//         "name": "or1"
+		//       },
+		//       {
+		//         "name": "or2"
+		//       }
+		//     ]
+		//   },
+		//   "page": 10,
+		//   "limit": 1
+		// }
+		require.Equal(t, `filters:<name:"filter1" and:<name:"and1"> or:<name:"or1"> or:<name:"or2">> page:10 limit:1`, msg.String())
+	})
 }
 
 func Test_makePrefix(t *testing.T) {
