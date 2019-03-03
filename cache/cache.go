@@ -84,6 +84,9 @@ func Get() *Cache {
 		if err := initCacheFile(p); err != nil {
 			panic(err)
 		}
+		if _, err := f.Seek(0, 0); err != nil {
+			panic(err)
+		}
 		if _, err := toml.DecodeReader(f, &c); err != nil {
 			panic(err)
 		}
