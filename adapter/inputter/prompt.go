@@ -14,10 +14,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	EORF = errors.New("end of repeated field")
-)
-
 // PromptInputter is an implementation of inputting method.
 // it has common logic to input fields interactively.
 // in normal, go-prompt is used as prompt.
