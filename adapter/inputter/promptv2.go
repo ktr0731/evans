@@ -1,6 +1,7 @@
 package inputter
 
 import (
+	"fmt"
 	"io"
 	"strings"
 
@@ -18,13 +19,16 @@ var (
 )
 
 var initialPromptInputterState = promptInputterState{
-	selectedOneOf: make(map[string]interface{}),
-	color:         color.DefaultColor(),
+	appearedMessages: make(map[string]interface{}),
+	selectedOneOf:    make(map[string]interface{}),
+	color:            color.DefaultColor(),
 }
 
 type promptInputterState struct {
 	// Key: FullQualifiedName, Val: nil
 	selectedOneOf map[string]interface{}
+	// Key: FullQualifiedName, Val: nil
+	appearedMessages map[string]interface{}
 
 	ancestor []string
 	color    color.Color
@@ -89,6 +93,8 @@ func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Messa
 		return nil, err
 	}
 
+	i.state.appearedMessages[msg.GetFullyQualifiedName()] = nil
+
 	dmsg := dynamic.NewMessage(msg)
 
 	for _, field := range msg.GetFields() {
@@ -104,6 +110,7 @@ func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Messa
 // inputField tries to set a inputted value to a field of the passed message dmsg.
 // An argument repeat means inputField is called from inputRepeatedField.
 func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescriptor, repeat bool) error {
+	// If a repeated field is found, call inputRepeatedField instead.
 	if !repeat && f.IsRepeated() {
 		return i.inputRepeatedField(dmsg, f)
 	}
@@ -130,34 +137,34 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 			return err
 		}
 	case f.GetMessageType() != nil:
-		// if f.IsCycled() {
-		// 	prefix := strings.Join(i.ancestor, ancestorDelimiter)
-		// 	if prefix != "" {
-		// 		prefix += ancestorDelimiter
-		// 	}
-		// 	prefix += f.FieldName()
-		//
-		// 	choice, err := i.prompt.Select(
-		// 		fmt.Sprintf("circulated field was found. dig down or finish?\nfield: %s (%s)", prefix, f.FQRN()),
-		// 		[]string{"dig down", "finish"},
-		// 	)
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// 	if choice == "finish" {
-		// 		if f.IsRepeated() {
-		// 			return EORF
-		// 		}
-		// 		return nil
-		// 	}
-		// 	// TODO: coloring
-		// 	// i.color.next()
-		// }
+		if _, ok := i.state.appearedMessages[f.GetMessageType().GetFullyQualifiedName()]; ok {
+			prefix := strings.Join(i.state.ancestor, ancestorDelimiter)
+			if prefix != "" {
+				prefix += ancestorDelimiter
+			}
+			prefix += f.GetName()
+
+			choice, err := i.prompt.Select(
+				fmt.Sprintf("circulated field was found. dig down or finish?\nfield: %s (%s)", prefix, f.GetFullyQualifiedName()),
+				[]string{"dig down", "finish"},
+			)
+			if err != nil {
+				return err
+			}
+			if choice == "finish" {
+				if f.IsRepeated() {
+					return EORF
+				}
+				return nil
+			}
+		}
 
 		ancestorLen := len(i.state.ancestor)
 		i.state.ancestor = append(i.state.ancestor, f.GetName())
 		msg, err := i.inputMessage(f.GetMessageType())
-		if err != nil {
+		if errors.Cause(err) == io.EOF {
+			return nil
+		} else if err != nil {
 			return err
 		}
 
