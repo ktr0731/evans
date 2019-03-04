@@ -10,7 +10,6 @@ import (
 	"github.com/ktr0731/evans/adapter/prompt"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/ktr0731/evans/color"
-	"github.com/ktr0731/evans/entity"
 	"github.com/pkg/errors"
 )
 
@@ -93,7 +92,7 @@ func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Messa
 	dmsg := dynamic.NewMessage(msg)
 
 	for _, field := range msg.GetFields() {
-		err := i.inputField(dmsg, field)
+		err := i.inputField(dmsg, field, false)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to set inputted values to message '%s'", msg.GetFullyQualifiedName())
 		}
@@ -102,8 +101,10 @@ func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Messa
 	return dmsg, nil
 }
 
-func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescriptor) error {
-	if f.IsRepeated() {
+// inputField tries to set a inputted value to a field of the passed message dmsg.
+// An argument repeat means inputField is called from inputRepeatedField.
+func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescriptor, repeat bool) error {
+	if !repeat && f.IsRepeated() {
 		return i.inputRepeatedField(dmsg, f)
 	}
 
@@ -120,14 +121,14 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 	}
 
 	switch {
-	// case entity.EnumField:
-	// 	v, err := i.selectEnum(f)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	if err := i.setter.SetField(f, v.Number()); err != nil {
-	// 		return err
-	// 	}
+	case f.GetEnumType() != nil:
+		v, err := i.selectEnum(f)
+		if err != nil {
+			return err
+		}
+		if err := dmsg.TrySetField(f, v.GetNumber()); err != nil {
+			return err
+		}
 	case f.GetMessageType() != nil:
 		// if f.IsCycled() {
 		// 	prefix := strings.Join(i.ancestor, ancestorDelimiter)
@@ -152,22 +153,26 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 		// 	// TODO: coloring
 		// 	// i.color.next()
 		// }
+
+		ancestorLen := len(i.state.ancestor)
+		i.state.ancestor = append(i.state.ancestor, f.GetName())
 		msg, err := i.inputMessage(f.GetMessageType())
-		// msg, err := newFieldInputter(
-		// 	i.prompt,
-		// 	i.prefixFormat,
-		// 	setter,
-		// 	append(i.ancestor, f.FieldName()),
-		// 	i.hasAncestorAndHasRepeatedField || f.IsRepeated(),
-		// 	f.IsCycled(),
-		// 	i.color,
-		// ).Input(fields)
 		if err != nil {
 			return err
 		}
-		if err := dmsg.TrySetField(f, msg); err != nil {
-			return errors.Wrap(err, "failed to set an inputted message to a field")
+
+		if repeat {
+			if err := dmsg.TryAddRepeatedField(f, msg); err != nil {
+				return errors.Wrap(err, "failed to add an inputted message to a repeated field")
+			}
+		} else {
+			if err := dmsg.TrySetField(f, msg); err != nil {
+				return errors.Wrap(err, "failed to set an inputted message to a field")
+			}
 		}
+
+		// Discard appended ancestors after calling above inputMessage.
+		i.state.ancestor = i.state.ancestor[:ancestorLen]
 		i.state.color.Next()
 	default: // Normal fields.
 		i.prompt.SetPrefix(i.makePrefix(f))
@@ -176,8 +181,14 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 			return err
 		}
 
-		if err := dmsg.TrySetField(f, v); err != nil {
-			return errors.Wrapf(err, "failed to set inputted value to field '%s'", f.GetName())
+		if repeat {
+			if err := dmsg.TryAddRepeatedField(f, v); err != nil {
+				return errors.Wrapf(err, "failed to add inputted value to repeated field '%s'", f.GetName())
+			}
+		} else {
+			if err := dmsg.TrySetField(f, v); err != nil {
+				return errors.Wrapf(err, "failed to set inputted value to field '%s'", f.GetName())
+			}
 		}
 	}
 
@@ -202,15 +213,16 @@ func (i *PromptInputter2) selectOneOf(f *desc.FieldDescriptor) (*desc.FieldDescr
 	return fieldOf[choice], nil
 }
 
-func (i *PromptInputter2) selectEnum(enum entity.EnumField) (entity.EnumValue, error) {
-	options := make([]string, 0, len(enum.Values()))
-	valOf := map[string]entity.EnumValue{}
-	for _, v := range enum.Values() {
-		options = append(options, v.Name())
-		valOf[v.Name()] = v
+func (i *PromptInputter2) selectEnum(enum *desc.FieldDescriptor) (*desc.EnumValueDescriptor, error) {
+	values := enum.GetEnumType().GetValues()
+	options := make([]string, 0, len(values))
+	valOf := map[string]*desc.EnumValueDescriptor{}
+	for _, v := range values {
+		options = append(options, v.GetName())
+		valOf[v.GetName()] = v
 	}
 
-	choice, err := i.prompt.Select(enum.Name(), options)
+	choice, err := i.prompt.Select(enum.GetName(), options)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +316,9 @@ func (i *PromptInputter2) inputRepeatedField(dmsg *dynamic.Message, f *desc.Fiel
 			return err
 		}
 
-		if err := i.inputField(dmsg, f); err == EORF || err == io.EOF {
+		err := i.inputField(dmsg, f, true)
+		rerr := errors.Cause(err)
+		if rerr == EORF || rerr == io.EOF {
 			return nil
 		} else if err != nil {
 			return err
