@@ -30,18 +30,18 @@ type PromptInputter struct {
 }
 
 func NewPrompt(prefixFormat string, env env.Environment) *PromptInputter {
-	return newPromptInputter(prompt.New(nil, nil), prefixFormat, env)
-}
-
-func newPromptInputter(prompt prompt.Prompt, prefixFormat string, env env.Environment) *PromptInputter {
 	return &PromptInputter{
-		prompt:       prompt,
+		prompt:       prompt.New(nil, nil),
 		prefixFormat: prefixFormat,
 		env:          env,
 	}
 }
 
-// Input is an implementation of port.Inputter
+// Input receives a Protocol Buffers message descriptor and input each fields
+// by using a prompt interactively.
+// Returned proto.Message is a message that is set each field value inputted by a prompt.
+//
+// Input is an implementation of port.Inputter.
 func (i *PromptInputter) Input(reqType entity.Message) (proto.Message, error) {
 	setter := protobuf.NewMessageSetter(reqType)
 	fields := reqType.Fields()
@@ -297,11 +297,6 @@ func (i *fieldInputter) inputPrimitiveField(f entity.PrimitiveField) (interface{
 func (i *fieldInputter) makePrefix(f entity.PrimitiveField) string {
 	return makePrefix(i.prefixFormat, f, i.ancestor, i.hasAncestorAndHasRepeatedField)
 }
-
-const (
-	repeatedStr       = "<repeated> "
-	ancestorDelimiter = "::"
-)
 
 func makePrefix(s string, f entity.PrimitiveField, ancestor []string, ancestorHasRepeated bool) string {
 	joinedAncestor := strings.Join(ancestor, ancestorDelimiter)
