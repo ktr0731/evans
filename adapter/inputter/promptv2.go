@@ -15,7 +15,9 @@ import (
 )
 
 var (
-	EORF = errors.New("end of repeated field")
+	ErrUnknownOneofFieldName = errors.New("unknown oneof field name")
+	ErrUnknownEnumName       = errors.New("unknown enum name")
+	EORF                     = errors.New("end of repeated field")
 )
 
 // PromptInputter is an implementation of inputting method.
@@ -145,7 +147,7 @@ func (i *fieldInputter) chooseOneof(oneof entity.OneOfField) (entity.Field, erro
 
 	f, ok := fieldOf[choice]
 	if !ok {
-		return nil, errors.Errorf("unknown oneof field '%s'", f.FQRN())
+		return nil, errors.Wrap(ErrUnknownOneofFieldName, choice)
 	}
 
 	return f, nil
@@ -166,7 +168,7 @@ func (i *fieldInputter) chooseEnum(enum entity.EnumField) (entity.EnumValue, err
 
 	c, ok := valOf[choice]
 	if !ok {
-		return nil, errors.Errorf("unknown enum '%s'", choice)
+		return nil, errors.Wrap(ErrUnknownEnumName, choice)
 	}
 
 	return c, nil
