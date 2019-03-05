@@ -18,9 +18,8 @@ message CD {
 message BorrowRequest {
   oneof borrowed {
     Book book = 1;
-    CD cd = 20;
+    CD cd = 2;
   }
-  string foo = 5;
 }
 
 message BorrowResponse {}
