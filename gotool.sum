@@ -114,6 +114,8 @@ github.com/matryer/moq v0.0.0-20181107154629-5df7c6ae5624 h1:C7/M3zfy3BbW6/JMxHs
 github.com/matryer/moq v0.0.0-20181107154629-5df7c6ae5624/go.mod h1:9ELz6aaclSIGnZBoaSLZ3NAl1VTufbOrXBPvtcy6WiQ=
 github.com/matryer/moq v0.0.0-20190211104650-70d7959eb245 h1:leCyxK7/zMzVRGYBxT4+OmOmif9W3SXcuMHwXNnvQRs=
 github.com/matryer/moq v0.0.0-20190211104650-70d7959eb245/go.mod h1:9ELz6aaclSIGnZBoaSLZ3NAl1VTufbOrXBPvtcy6WiQ=
+github.com/matryer/moq v0.0.0-20190226120213-a838c8bc3064 h1:yLUlaglHMoWRoKoh4nfupj1Wo1sMAhQgAtiGsQVGIkY=
+github.com/matryer/moq v0.0.0-20190226120213-a838c8bc3064/go.mod h1:9ELz6aaclSIGnZBoaSLZ3NAl1VTufbOrXBPvtcy6WiQ=
 github.com/mattn/go-colorable v0.0.9 h1:UVL0vNpWh04HeJXV0KLcaT7r06gOH2l4OW6ddYRUIY4=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-isatty v0.0.3/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
