@@ -23,6 +23,7 @@ var initialPromptInputterState = promptInputterState{
 	color:         color.DefaultColor(),
 }
 
+// promptInputterState holds states for inputting a message.
 type promptInputterState struct {
 	// Key: FullQualifiedName, Val: nil
 	selectedOneOf    map[string]interface{}
@@ -108,11 +109,10 @@ func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Messa
 
 	dmsg := dynamic.NewMessage(msg)
 
+	// i.state is message-scoped, so we reset i.state after inputting msg.
 	currentState := i.state.clone()
-	fmt.Printf("[%s] prev::: %#v\n", msg.GetName(), i.state.selectedOneOf)
 	defer func() {
 		i.state = currentState
-		fmt.Printf("[%s] %#v\n", msg.GetName(), i.state.selectedOneOf)
 	}()
 
 	for _, field := range msg.GetFields() {
@@ -244,7 +244,12 @@ func (i *PromptInputter2) selectOneOf(f *desc.FieldDescriptor) (*desc.FieldDescr
 		return nil, err
 	}
 
-	return fieldOf[choice], nil
+	desc, ok := fieldOf[choice]
+	if !ok {
+		return nil, errors.Errorf("invalid choice '%s' selected", choice)
+	}
+
+	return desc, nil
 }
 
 func (i *PromptInputter2) selectEnum(enum *desc.FieldDescriptor) (*desc.EnumValueDescriptor, error) {

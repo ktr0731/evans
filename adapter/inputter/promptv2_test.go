@@ -83,7 +83,7 @@ func TestPrompt2_Input(t *testing.T) {
 	})
 
 	t.Run("normal/oneof", func(t *testing.T) {
-		p := helper.NewMockPrompt([]string{"utaha", "kasumigaoka", "megumi", "kato"}, []string{"book", "Book"})
+		p := helper.NewMockPrompt([]string{"utaha", "kasumigaoka", "megumi", "kato"}, []string{"book", "book"})
 		inputter := newPrompt2(p, prefixFormat)
 
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
@@ -99,7 +99,7 @@ func TestPrompt2_Input(t *testing.T) {
 
 		require.Equal(t, `book:<title:"utaha" author:"kasumigaoka">`, msg.String())
 
-		// Input BorrowRequest again. Oneof field names are case-insensitive.
+		// Input BorrowRequest again.
 		dmsg, err = inputter.Input(m.Desc())
 		require.NoError(t, err)
 
