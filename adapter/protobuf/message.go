@@ -31,3 +31,7 @@ func (m *message) Fields() []entity.Field {
 func (m *message) IsCycled() bool {
 	return m.isCycled
 }
+
+func (m *message) Desc() *desc.MessageDescriptor {
+	return m.d
+}

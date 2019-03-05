@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/jhump/protoreflect/desc"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/entity/testentity"
 	mockentity "github.com/ktr0731/evans/tests/mock/entity"
@@ -69,7 +70,7 @@ func TestCall(t *testing.T) {
 		}
 	}
 	inputter := &mockport.InputterMock{
-		InputFunc: func(entity.Message) (proto.Message, error) { return nil, nil },
+		InputFunc: func(*desc.MessageDescriptor) (proto.Message, error) { return nil, nil },
 	}
 	builder := newDynamicBuilder(t)
 
@@ -128,7 +129,7 @@ func TestCall_ClientStream(t *testing.T) {
 	env := newEnv(t)
 
 	inputter := &mockport.InputterMock{
-		InputFunc: func(entity.Message) (proto.Message, error) { return nil, io.EOF },
+		InputFunc: func(*desc.MessageDescriptor) (proto.Message, error) { return nil, io.EOF },
 	}
 	grpcClient := newGRPCClient(t)
 	builder := newDynamicBuilder(t)
@@ -149,7 +150,7 @@ func TestCall_ServerStream(t *testing.T) {
 
 	t.Run("normal", func(t *testing.T) {
 		inputter := &mockport.InputterMock{
-			InputFunc: func(entity.Message) (proto.Message, error) { return nil, nil },
+			InputFunc: func(*desc.MessageDescriptor) (proto.Message, error) { return nil, nil },
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
 		defer cancel()
@@ -159,7 +160,7 @@ func TestCall_ServerStream(t *testing.T) {
 
 	t.Run("inputting canceled", func(t *testing.T) {
 		inputter := &mockport.InputterMock{
-			InputFunc: func(entity.Message) (proto.Message, error) { return nil, io.EOF },
+			InputFunc: func(*desc.MessageDescriptor) (proto.Message, error) { return nil, io.EOF },
 		}
 		_, err := callServerStreaming(context.Background(), presenter, inputter, grpcClient, builder, rpc)
 		assert.Equal(t, io.EOF, errors.Cause(err))
@@ -176,7 +177,7 @@ func TestCall_BidiStream(t *testing.T) {
 
 	t.Run("client end", func(t *testing.T) {
 		inputter := &mockport.InputterMock{
-			InputFunc: func(entity.Message) (proto.Message, error) { return nil, nil },
+			InputFunc: func(*desc.MessageDescriptor) (proto.Message, error) { return nil, nil },
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
 		defer cancel()

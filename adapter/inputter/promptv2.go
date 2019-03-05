@@ -39,6 +39,17 @@ type promptInputterState struct {
 	hasAncestorAndHasRepeatedField bool
 }
 
+// clone copies itself. Copied map fields refer to another position from the original.
+func (s promptInputterState) clone() promptInputterState {
+	new := s
+	newSelectedOneOf := make(map[string]interface{})
+	for k, v := range s.selectedOneOf {
+		newSelectedOneOf[k] = v
+	}
+	new.selectedOneOf = newSelectedOneOf
+	return new
+}
+
 // PromptInputter2 is an implementation of inputting method.
 // it has common logic to input fields interactively.
 // in normal, go-prompt is used as prompt.
@@ -69,7 +80,7 @@ func newPrompt2(prompt prompt.Prompt, prefixFormat string) *PromptInputter2 {
 //
 // Input is an implementation of port.Inputter.
 func (i *PromptInputter2) Input(req *desc.MessageDescriptor) (proto.Message, error) {
-	i.state = initialPromptInputterState
+	i.state = initialPromptInputterState.clone()
 	m, err := i.inputMessage(req)
 	if err != nil {
 		if e, ok := errors.Cause(err).(*protobuf.ConversionError); ok {
@@ -96,6 +107,13 @@ func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Messa
 	}
 
 	dmsg := dynamic.NewMessage(msg)
+
+	currentState := i.state.clone()
+	fmt.Printf("[%s] prev::: %#v\n", msg.GetName(), i.state.selectedOneOf)
+	defer func() {
+		i.state = currentState
+		fmt.Printf("[%s] %#v\n", msg.GetName(), i.state.selectedOneOf)
+	}()
 
 	for _, field := range msg.GetFields() {
 		err := i.inputField(dmsg, field, false)

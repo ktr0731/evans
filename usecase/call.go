@@ -62,7 +62,7 @@ func callUnary(
 	builder port.DynamicBuilder,
 	rpc entity.RPC,
 ) (proto.Message, error) {
-	req, err := inputter.Input(rpc.RequestMessage())
+	req, err := inputter.Input(rpc.RequestMessage().Desc())
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func callClientStreaming(
 		return nil, errors.Wrap(err, "failed to create client stream")
 	}
 	for {
-		req, err := inputter.Input(rpc.RequestMessage())
+		req, err := inputter.Input(rpc.RequestMessage().Desc())
 		if err := errors.Cause(err); err == io.EOF {
 			break
 		}
@@ -228,7 +228,7 @@ func callServerStreaming(
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create client stream")
 	}
-	req, err := inputter.Input(rpc.RequestMessage())
+	req, err := inputter.Input(rpc.RequestMessage().Desc())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to input request message")
 	}
@@ -265,7 +265,7 @@ func (sw *bidiStreamSendWriter) sendRequest(ctx context.Context) {
 		default:
 		}
 
-		req, err := sw.inputter.Input(sw.rpc.RequestMessage())
+		req, err := sw.inputter.Input(sw.rpc.RequestMessage().Desc())
 		if errors.Cause(err) == io.EOF {
 			sw.s.Close()
 			return
