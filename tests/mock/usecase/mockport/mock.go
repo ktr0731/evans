@@ -5,6 +5,7 @@ package mockport
 
 import (
 	"github.com/golang/protobuf/proto"
+	"github.com/jhump/protoreflect/desc"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 	"io"
@@ -20,6 +21,10 @@ var (
 	lockInputPortMockShow     sync.RWMutex
 )
 
+// Ensure, that InputPortMock does implement InputPort.
+// If this is not the case, regenerate this file with moq.
+var _ port.InputPort = &InputPortMock{}
+
 // InputPortMock is a mock implementation of InputPort.
 //
 //     func TestSomethingThatUsesInputPort(t *testing.T) {
@@ -27,27 +32,27 @@ var (
 //         // make and configure a mocked InputPort
 //         mockedInputPort := &InputPortMock{
 //             CallFunc: func(in1 *port.CallParams) (io.Reader, error) {
-// 	               panic("TODO: mock out the Call method")
+// 	               panic("mock out the Call method")
 //             },
 //             DescribeFunc: func(in1 *port.DescribeParams) (io.Reader, error) {
-// 	               panic("TODO: mock out the Describe method")
+// 	               panic("mock out the Describe method")
 //             },
 //             HeaderFunc: func(in1 *port.HeaderParams) (io.Reader, error) {
-// 	               panic("TODO: mock out the Header method")
+// 	               panic("mock out the Header method")
 //             },
 //             PackageFunc: func(in1 *port.PackageParams) (io.Reader, error) {
-// 	               panic("TODO: mock out the Package method")
+// 	               panic("mock out the Package method")
 //             },
 //             ServiceFunc: func(in1 *port.ServiceParams) (io.Reader, error) {
-// 	               panic("TODO: mock out the Service method")
+// 	               panic("mock out the Service method")
 //             },
 //             ShowFunc: func(in1 *port.ShowParams) (io.Reader, error) {
-// 	               panic("TODO: mock out the Show method")
+// 	               panic("mock out the Show method")
 //             },
 //         }
 //
-//         // TODO: use mockedInputPort in code that requires InputPort
-//         //       and then make assertions.
+//         // use mockedInputPort in code that requires InputPort
+//         // and then make assertions.
 //
 //     }
 type InputPortMock struct {
@@ -294,6 +299,10 @@ var (
 	lockShowableMockShow sync.RWMutex
 )
 
+// Ensure, that ShowableMock does implement Showable.
+// If this is not the case, regenerate this file with moq.
+var _ port.Showable = &ShowableMock{}
+
 // ShowableMock is a mock implementation of Showable.
 //
 //     func TestSomethingThatUsesShowable(t *testing.T) {
@@ -301,12 +310,12 @@ var (
 //         // make and configure a mocked Showable
 //         mockedShowable := &ShowableMock{
 //             ShowFunc: func() string {
-// 	               panic("TODO: mock out the Show method")
+// 	               panic("mock out the Show method")
 //             },
 //         }
 //
-//         // TODO: use mockedShowable in code that requires Showable
-//         //       and then make assertions.
+//         // use mockedShowable in code that requires Showable
+//         // and then make assertions.
 //
 //     }
 type ShowableMock struct {
@@ -351,59 +360,63 @@ var (
 	lockInputterMockInput sync.RWMutex
 )
 
+// Ensure, that InputterMock does implement Inputter.
+// If this is not the case, regenerate this file with moq.
+var _ port.Inputter = &InputterMock{}
+
 // InputterMock is a mock implementation of Inputter.
 //
 //     func TestSomethingThatUsesInputter(t *testing.T) {
 //
 //         // make and configure a mocked Inputter
 //         mockedInputter := &InputterMock{
-//             InputFunc: func(reqMsg entity.Message) (proto.Message, error) {
-// 	               panic("TODO: mock out the Input method")
+//             InputFunc: func(req *desc.MessageDescriptor) (proto.Message, error) {
+// 	               panic("mock out the Input method")
 //             },
 //         }
 //
-//         // TODO: use mockedInputter in code that requires Inputter
-//         //       and then make assertions.
+//         // use mockedInputter in code that requires Inputter
+//         // and then make assertions.
 //
 //     }
 type InputterMock struct {
 	// InputFunc mocks the Input method.
-	InputFunc func(reqMsg entity.Message) (proto.Message, error)
+	InputFunc func(req *desc.MessageDescriptor) (proto.Message, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// Input holds details about calls to the Input method.
 		Input []struct {
-			// ReqMsg is the reqMsg argument value.
-			ReqMsg entity.Message
+			// Req is the req argument value.
+			Req *desc.MessageDescriptor
 		}
 	}
 }
 
 // Input calls InputFunc.
-func (mock *InputterMock) Input(reqMsg entity.Message) (proto.Message, error) {
+func (mock *InputterMock) Input(req *desc.MessageDescriptor) (proto.Message, error) {
 	if mock.InputFunc == nil {
 		panic("InputterMock.InputFunc: method is nil but Inputter.Input was just called")
 	}
 	callInfo := struct {
-		ReqMsg entity.Message
+		Req *desc.MessageDescriptor
 	}{
-		ReqMsg: reqMsg,
+		Req: req,
 	}
 	lockInputterMockInput.Lock()
 	mock.calls.Input = append(mock.calls.Input, callInfo)
 	lockInputterMockInput.Unlock()
-	return mock.InputFunc(reqMsg)
+	return mock.InputFunc(req)
 }
 
 // InputCalls gets all the calls that were made to Input.
 // Check the length with:
 //     len(mockedInputter.InputCalls())
 func (mock *InputterMock) InputCalls() []struct {
-	ReqMsg entity.Message
+	Req *desc.MessageDescriptor
 } {
 	var calls []struct {
-		ReqMsg entity.Message
+		Req *desc.MessageDescriptor
 	}
 	lockInputterMockInput.RLock()
 	calls = mock.calls.Input
@@ -420,6 +433,10 @@ var (
 	lockOutputPortMockShow     sync.RWMutex
 )
 
+// Ensure, that OutputPortMock does implement OutputPort.
+// If this is not the case, regenerate this file with moq.
+var _ port.OutputPort = &OutputPortMock{}
+
 // OutputPortMock is a mock implementation of OutputPort.
 //
 //     func TestSomethingThatUsesOutputPort(t *testing.T) {
@@ -427,27 +444,27 @@ var (
 //         // make and configure a mocked OutputPort
 //         mockedOutputPort := &OutputPortMock{
 //             CallFunc: func(res proto.Message) (io.Reader, error) {
-// 	               panic("TODO: mock out the Call method")
+// 	               panic("mock out the Call method")
 //             },
 //             DescribeFunc: func(showable port.Showable) (io.Reader, error) {
-// 	               panic("TODO: mock out the Describe method")
+// 	               panic("mock out the Describe method")
 //             },
 //             HeaderFunc: func() (io.Reader, error) {
-// 	               panic("TODO: mock out the Header method")
+// 	               panic("mock out the Header method")
 //             },
 //             PackageFunc: func() (io.Reader, error) {
-// 	               panic("TODO: mock out the Package method")
+// 	               panic("mock out the Package method")
 //             },
 //             ServiceFunc: func() (io.Reader, error) {
-// 	               panic("TODO: mock out the Service method")
+// 	               panic("mock out the Service method")
 //             },
 //             ShowFunc: func(showable port.Showable) (io.Reader, error) {
-// 	               panic("TODO: mock out the Show method")
+// 	               panic("mock out the Show method")
 //             },
 //         }
 //
-//         // TODO: use mockedOutputPort in code that requires OutputPort
-//         //       and then make assertions.
+//         // use mockedOutputPort in code that requires OutputPort
+//         // and then make assertions.
 //
 //     }
 type OutputPortMock struct {
@@ -673,6 +690,10 @@ var (
 	lockDynamicBuilderMockNewMessage sync.RWMutex
 )
 
+// Ensure, that DynamicBuilderMock does implement DynamicBuilder.
+// If this is not the case, regenerate this file with moq.
+var _ port.DynamicBuilder = &DynamicBuilderMock{}
+
 // DynamicBuilderMock is a mock implementation of DynamicBuilder.
 //
 //     func TestSomethingThatUsesDynamicBuilder(t *testing.T) {
@@ -680,12 +701,12 @@ var (
 //         // make and configure a mocked DynamicBuilder
 //         mockedDynamicBuilder := &DynamicBuilderMock{
 //             NewMessageFunc: func(m entity.Message) proto.Message {
-// 	               panic("TODO: mock out the NewMessage method")
+// 	               panic("mock out the NewMessage method")
 //             },
 //         }
 //
-//         // TODO: use mockedDynamicBuilder in code that requires DynamicBuilder
-//         //       and then make assertions.
+//         // use mockedDynamicBuilder in code that requires DynamicBuilder
+//         // and then make assertions.
 //
 //     }
 type DynamicBuilderMock struct {
