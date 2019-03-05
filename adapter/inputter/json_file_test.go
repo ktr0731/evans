@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/ktr0731/evans/adapter/inputter"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
 	"github.com/ktr0731/evans/adapter/protobuf"
 	"github.com/stretchr/testify/require"
-	"github.com/ktr0731/evans/adapter/inputter"
 )
 
 func TestJSONFileInputter(t *testing.T) {
@@ -31,7 +31,7 @@ func TestJSONFileInputter(t *testing.T) {
 
 	in := bytes.NewReader([]byte(jsonInput))
 	inputter := inputter.NewJSONFile(in)
-	res, err := inputter.Input(m)
+	res, err := inputter.Input(m.Desc())
 	require.NoError(t, err)
 
 	marshaler := jsonpb.Marshaler{}

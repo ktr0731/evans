@@ -19,16 +19,14 @@ var (
 )
 
 var initialPromptInputterState = promptInputterState{
-	appearedMessages: make(map[string]interface{}),
-	selectedOneOf:    make(map[string]interface{}),
-	color:            color.DefaultColor(),
+	selectedOneOf: make(map[string]interface{}),
+	color:         color.DefaultColor(),
 }
 
 type promptInputterState struct {
 	// Key: FullQualifiedName, Val: nil
-	selectedOneOf map[string]interface{}
-	// Key: FullQualifiedName, Val: nil
-	appearedMessages map[string]interface{}
+	selectedOneOf    map[string]interface{}
+	appearedMessages []string
 
 	ancestor []string
 	color    color.Color
@@ -51,8 +49,13 @@ type PromptInputter2 struct {
 }
 
 func NewPrompt2(prefixFormat string) *PromptInputter2 {
+	return newPrompt2(prompt.New(nil, nil), prefixFormat)
+}
+
+// For testing, the real constructor is separated from NewPrompt.
+func newPrompt2(prompt prompt.Prompt, prefixFormat string) *PromptInputter2 {
 	return &PromptInputter2{
-		prompt:       prompt.New(nil, nil),
+		prompt:       prompt,
 		prefixFormat: prefixFormat,
 		state:        initialPromptInputterState,
 	}
@@ -71,9 +74,8 @@ func (i *PromptInputter2) Input(req *desc.MessageDescriptor) (proto.Message, err
 	if err != nil {
 		if e, ok := errors.Cause(err).(*protobuf.ConversionError); ok {
 			return nil, errors.Errorf("input '%s' is invalid in type %s", e.Val, e.ExpectedType)
-		} else {
-			return nil, err
 		}
+		return nil, err
 	}
 	return m, nil
 }
@@ -92,8 +94,6 @@ func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Messa
 	if err := i.prompt.SetPrefixColor(i.state.color); err != nil {
 		return nil, err
 	}
-
-	i.state.appearedMessages[msg.GetFullyQualifiedName()] = nil
 
 	dmsg := dynamic.NewMessage(msg)
 
@@ -137,7 +137,7 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 			return err
 		}
 	case f.GetMessageType() != nil:
-		if _, ok := i.state.appearedMessages[f.GetMessageType().GetFullyQualifiedName()]; ok {
+		if isAppeared(i.state.appearedMessages, f.GetMessageType().GetFullyQualifiedName()) {
 			prefix := strings.Join(i.state.ancestor, ancestorDelimiter)
 			if prefix != "" {
 				prefix += ancestorDelimiter
@@ -161,6 +161,15 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 
 		ancestorLen := len(i.state.ancestor)
 		i.state.ancestor = append(i.state.ancestor, f.GetName())
+
+		if !f.IsRepeated() {
+			appearMsgsLen := len(i.state.appearedMessages)
+			i.state.appearedMessages = append(i.state.appearedMessages, f.GetMessageType().GetFullyQualifiedName())
+			defer func() {
+				i.state.appearedMessages = i.state.appearedMessages[:appearMsgsLen]
+			}()
+		}
+
 		msg, err := i.inputMessage(f.GetMessageType())
 		if errors.Cause(err) == io.EOF {
 			return nil
@@ -396,4 +405,13 @@ func makePrefix2(s string, f *desc.FieldDescriptor, ancestor []string, ancestorH
 
 func isOneOfField(f *desc.FieldDescriptor) bool {
 	return f.GetOneOf() != nil
+}
+
+func isAppeared(msgs []string, m string) bool {
+	for i := len(msgs) - 1; i >= 0; i-- {
+		if msgs[i] == m {
+			return true
+		}
+	}
+	return false
 }

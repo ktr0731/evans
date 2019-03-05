@@ -5,8 +5,8 @@ import (
 	"io"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/ktr0731/evans/adapter/protobuf"
-	"github.com/ktr0731/evans/entity"
+	"github.com/jhump/protoreflect/desc"
+	"github.com/jhump/protoreflect/dynamic"
 	"github.com/pkg/errors"
 )
 
@@ -20,11 +20,11 @@ func NewJSONFile(in io.Reader) *JSONFile {
 	}
 }
 
-func (i *JSONFile) Input(reqType entity.Message) (proto.Message, error) {
-	req := protobuf.NewDynamicBuilder().NewMessage(reqType)
-	err := i.decoder.Decode(req)
+func (i *JSONFile) Input(req *desc.MessageDescriptor) (proto.Message, error) {
+	dmsg := dynamic.NewMessage(req)
+	err := i.decoder.Decode(dmsg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read input from JSON")
 	}
-	return req, nil
+	return dmsg, nil
 }
