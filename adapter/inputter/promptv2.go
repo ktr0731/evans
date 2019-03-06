@@ -19,15 +19,23 @@ var (
 )
 
 var initialPromptInputterState = promptInputterState{
-	selectedOneOf: make(map[string]interface{}),
-	color:         color.DefaultColor(),
+	selectedOneOf:      make(map[string]interface{}),
+	circulatedMessages: make(map[string][]string),
+	color:              color.DefaultColor(),
 }
 
 // promptInputterState holds states for inputting a message.
 type promptInputterState struct {
-	// Key: FullQualifiedName, Val: nil
-	selectedOneOf    map[string]interface{}
-	appearedMessages []string
+	// Key: fully-qualified message name, Val: nil
+	selectedOneOf map[string]interface{}
+	// circulatedMessages holds a fully-qualified message name,
+	// and the val represents whether the message circulates or not.
+	// If a message circulates, val holds a slice of names from the key message
+	// until the last message.
+	// If a message doesn't circulate, the val is nil.
+	//
+	// A key is assigned at calling a RPC that requires the message.
+	circulatedMessages map[string][]string
 
 	ancestor []string
 	color    color.Color
@@ -48,6 +56,11 @@ func (s promptInputterState) clone() promptInputterState {
 		newSelectedOneOf[k] = v
 	}
 	new.selectedOneOf = newSelectedOneOf
+	newCirculatedMessages := make(map[string][]string)
+	for k, v := range s.circulatedMessages {
+		newCirculatedMessages[k] = v
+	}
+	new.circulatedMessages = newCirculatedMessages
 	return new
 }
 
@@ -155,7 +168,7 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 			return err
 		}
 	case f.GetMessageType() != nil:
-		if isAppeared(i.state.appearedMessages, f.GetMessageType().GetFullyQualifiedName()) {
+		if i.isCirculated(f.GetMessageType(), nil) {
 			prefix := strings.Join(i.state.ancestor, ancestorDelimiter)
 			if prefix != "" {
 				prefix += ancestorDelimiter
@@ -180,13 +193,7 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 		ancestorLen := len(i.state.ancestor)
 		i.state.ancestor = append(i.state.ancestor, f.GetName())
 
-		if !f.IsRepeated() {
-			appearMsgsLen := len(i.state.appearedMessages)
-			i.state.appearedMessages = append(i.state.appearedMessages, f.GetMessageType().GetFullyQualifiedName())
-			defer func() {
-				i.state.appearedMessages = i.state.appearedMessages[:appearMsgsLen]
-			}()
-		}
+		// i.state.appearedMessages = append(i.state.appearedMessages, f.GetMessageType().GetFullyQualifiedName())
 
 		msg, err := i.inputMessage(f.GetMessageType())
 		if errors.Cause(err) == io.EOF {
@@ -274,74 +281,6 @@ func (i *PromptInputter2) selectEnum(enum *desc.FieldDescriptor) (*desc.EnumValu
 	return c, nil
 }
 
-// func (i *PromptInputter2) inputField(field entity.Field) error {
-// 	switch f := field.(type) {
-// 	case entity.EnumField:
-// 		v, err := i.selectEnum(f)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		if err := i.setter.SetField(f, v.Number()); err != nil {
-// 			return err
-// 		}
-// 	case entity.MessageField:
-// 		if f.IsCycled() {
-// 			prefix := strings.Join(i.ancestor, ancestorDelimiter)
-// 			if prefix != "" {
-// 				prefix += ancestorDelimiter
-// 			}
-// 			prefix += f.FieldName()
-//
-// 			choice, err := i.prompt.Select(
-// 				fmt.Sprintf("circulated field was found. dig down or finish?\nfield: %s (%s)", prefix, f.FQRN()),
-// 				[]string{"dig down", "finish"},
-// 			)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			if choice == "finish" {
-// 				if f.IsRepeated() {
-// 					return EORF
-// 				}
-// 				return nil
-// 			}
-// 			// TODO: coloring
-// 			// i.color.next()
-// 		}
-// 		setter := protobuf.NewMessageSetter(f)
-// 		fields := f.Fields()
-//
-// 		msg, err := newFieldInputter(
-// 			i.prompt,
-// 			i.prefixFormat,
-// 			setter,
-// 			append(i.ancestor, f.FieldName()),
-// 			i.hasAncestorAndHasRepeatedField || f.IsRepeated(),
-// 			f.IsCycled(),
-// 			i.color,
-// 		).Input(fields)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		if err := i.setter.SetField(f, msg); err != nil {
-// 			return err
-// 		}
-// 		i.color.Next()
-// 	case entity.PrimitiveField:
-// 		i.prompt.SetPrefix(i.makePrefix(field))
-// 		v, err := i.inputPrimitiveField(f)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		if err := i.setter.SetField(f, v); err != nil {
-// 			return err
-// 		}
-// 	default:
-// 		panic("unknown type: " + field.PBType())
-// 	}
-// 	return nil
-// }
-
 func (i *PromptInputter2) inputRepeatedField(dmsg *dynamic.Message, f *desc.FieldDescriptor) error {
 	old := i.prompt
 	defer func() {
@@ -400,6 +339,42 @@ func (i *PromptInputter2) isSelectedOneOf(f *desc.FieldDescriptor) bool {
 	return ok
 }
 
+func (i *PromptInputter2) isCirculated(m *desc.MessageDescriptor, appeared map[string]interface{}) bool {
+	msgs, ok := i.state.circulatedMessages[m.GetFullyQualifiedName()]
+	if ok {
+		return len(msgs) != 0
+	}
+
+	msgName := m.GetFullyQualifiedName()
+	if _, found := appeared[msgName]; found {
+		return true
+	}
+
+	if appeared == nil {
+		appeared = make(map[string]interface{})
+	}
+	appeared[msgName] = nil
+
+	// TODO: 複数のフィールドが別々に循環している場合は？
+	for _, f := range m.GetFields() {
+		m := f.GetMessageType()
+		if m == nil {
+			continue
+		}
+		// Self-referenced message.
+		if m.GetFullyQualifiedName() == msgName {
+			i.state.circulatedMessages[msgName] = append(i.state.circulatedMessages[msgName], msgName)
+			continue
+		}
+
+		if i.isCirculated(m, appeared) {
+			i.state.circulatedMessages[msgName] = append(i.state.circulatedMessages[msgName], i.state.circulatedMessages[m.GetFullyQualifiedName()]...)
+			continue
+		}
+	}
+	return i.isCirculated(m, appeared)
+}
+
 // makePrefix makes prefix for field f.
 func (i *PromptInputter2) makePrefix(f *desc.FieldDescriptor) string {
 	return makePrefix2(i.prefixFormat, f, i.state.ancestor, i.state.hasAncestorAndHasRepeatedField)
@@ -428,13 +403,4 @@ func makePrefix2(s string, f *desc.FieldDescriptor, ancestor []string, ancestorH
 
 func isOneOfField(f *desc.FieldDescriptor) bool {
 	return f.GetOneOf() != nil
-}
-
-func isAppeared(msgs []string, m string) bool {
-	for i := len(msgs) - 1; i >= 0; i-- {
-		if msgs[i] == m {
-			return true
-		}
-	}
-	return false
 }
