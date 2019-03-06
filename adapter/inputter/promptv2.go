@@ -175,8 +175,9 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 			}
 			prefix += f.GetName()
 
+			fmt.Println(i.state.circulatedMessages)
 			choice, err := i.prompt.Select(
-				fmt.Sprintf("circulated field was found. dig down or finish?\nfield: %s (%s)", prefix, f.GetFullyQualifiedName()),
+				fmt.Sprintf("circulated field was found. dig down or finish?\nfield: %s (%s)", prefix, strings.Join(i.state.circulatedMessages[f.GetMessageType().GetFullyQualifiedName()], ">")),
 				[]string{"dig down", "finish"},
 			)
 			if err != nil {
@@ -286,10 +287,10 @@ func (i *PromptInputter2) inputRepeatedField(dmsg *dynamic.Message, f *desc.Fiel
 	defer func() {
 		i.prompt = old
 	}()
+	i.prompt = prompt.New(nil, nil)
 	// If repeated fields, create new prompt.
 	// The prompt will be terminate with ctrl+d.
 	for {
-		i.prompt = prompt.New(nil, nil)
 		if err := i.prompt.SetPrefixColor(i.state.color); err != nil {
 			return err
 		}
@@ -339,21 +340,30 @@ func (i *PromptInputter2) isSelectedOneOf(f *desc.FieldDescriptor) bool {
 	return ok
 }
 
-func (i *PromptInputter2) isCirculated(m *desc.MessageDescriptor, appeared map[string]interface{}) bool {
-	msgs, ok := i.state.circulatedMessages[m.GetFullyQualifiedName()]
-	if ok {
+func (i *PromptInputter2) isCirculated(m *desc.MessageDescriptor, appeared []string) bool {
+	fmt.Println("CHECK: ", m.GetName(), appeared)
+	msgName := m.GetFullyQualifiedName()
+	msgs, ok := i.state.circulatedMessages[msgName]
+
+	// If the length of appeared is 0, it means this is the first call.
+	circulated := ok && len(appeared) == 0
+	if circulated {
 		return len(msgs) != 0
 	}
-
-	msgName := m.GetFullyQualifiedName()
-	if _, found := appeared[msgName]; found {
+	// If the length of appeared isn't 0, this call is a recursive call.
+	// So, if ok is true, it means isCirculated with m is called previously.
+	if ok {
 		return true
 	}
 
-	if appeared == nil {
-		appeared = make(map[string]interface{})
+	for _, m := range appeared {
+		if m == msgName {
+			return true
+		}
 	}
-	appeared[msgName] = nil
+
+	appeared = append(appeared, msgName)
+	i.state.circulatedMessages[msgName] = nil
 
 	// TODO: 複数のフィールドが別々に循環している場合は？
 	for _, f := range m.GetFields() {
@@ -367,8 +377,10 @@ func (i *PromptInputter2) isCirculated(m *desc.MessageDescriptor, appeared map[s
 			continue
 		}
 
+		fmt.Println("inline isCirculated")
 		if i.isCirculated(m, appeared) {
-			i.state.circulatedMessages[msgName] = append(i.state.circulatedMessages[msgName], i.state.circulatedMessages[m.GetFullyQualifiedName()]...)
+			fmt.Println("CIRCULATED: ", m.GetName(), appeared)
+			i.state.circulatedMessages[msgName] = append(i.state.circulatedMessages[msgName], appeared...)
 			continue
 		}
 	}
