@@ -34,6 +34,8 @@ github.com/hashicorp/errwrap v1.0.0 h1:hLrqtEDnRye3+sgx6z4qVLNuviH3MR5aQ0ykNJa/U
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/go-multierror v1.0.0 h1:iVjPR7a6H0tWELX5NxNe7bYopibicUzc7uPribsnS6o=
 github.com/hashicorp/go-multierror v1.0.0/go.mod h1:dHtQlpGsu+cZNNAkkCN/P3hoUDHhCYQXV3UM06sGGrk=
+github.com/hashicorp/go-version v1.1.0 h1:bPIoEKD27tNdebFGGxxYwcL4nepeY4j1QP23PFRGzg0=
+github.com/hashicorp/go-version v1.1.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
 github.com/hashicorp/hcl v1.0.0 h1:0Anlzjpi4vEasTeNFn2mLJgTSwt0+6sfsiTG8qcWGx4=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
 github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c h1:kp3AxgXgDOmIJFR7bIwqFhwJ2qWar8tEQSE5XXhCfVk=
@@ -63,8 +65,8 @@ github.com/ktr0731/go-semver v0.1.0 h1:lMMpVpGe2RE22RL7T84Tvbjf3sQdQBQlPB5CEDd8K
 github.com/ktr0731/go-semver v0.1.0/go.mod h1:TjFelFcDPet4u9oAtoPsknXxIFQMCxLLMhfAdkQGJCY=
 github.com/ktr0731/go-shellstring v0.1.0 h1:h9l3S060peKAcNOFrEZihYF8ds8rRcPcRxTKvq5Lhfw=
 github.com/ktr0731/go-shellstring v0.1.0/go.mod h1:nkNCnJ36MGqbzvcl9CECP9kZZhO916UbkCkYsjDAOkE=
-github.com/ktr0731/go-updater v0.1.3 h1:vZyuixQZg07gGEfgD7sIzcT7D/j5YwFJ+5NJXu2cMtk=
-github.com/ktr0731/go-updater v0.1.3/go.mod h1:+KbfCokew3R16OHawfzJl1HIiT3tOyManUA5rR2RHSI=
+github.com/ktr0731/go-updater v0.1.4 h1:uhtZq4GiPc6mhwnG3MOowAlA+2QFS9ZdzYNNupNiTno=
+github.com/ktr0731/go-updater v0.1.4/go.mod h1:dsdOg7a9sj6ttcOU5ZxPCtKdm9WeB1hwcX/7oKgz9/0=
 github.com/ktr0731/grpc-test v0.0.0-20181102092628-34f3c19774b5 h1:wheheYNKCIYXSsp79D5mUOeJY7cTkRWhBHdlzyZMYVY=
 github.com/ktr0731/grpc-test v0.0.0-20181102092628-34f3c19774b5/go.mod h1:NuD281ufrVMbvgEgnr6VuppyuiHgRkw3kJ4SmdnhJqk=
 github.com/ktr0731/grpc-web-go-client v0.2.2 h1:SIj0oH8bIcUTRapqWAalj5bfORutBJv9/2ufzR+YX1Q=
@@ -97,6 +99,7 @@ github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2 h1:JhzVVoYvbOACxoUmOs6V/G4D5nPVUW73rKvXxP4XUJc=
 github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2/go.mod h1:iIss55rKnNBTvrwdmkUpLnDpZoAHvWaiq5+iMmen4AE=
+github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/term v0.0.0-20181103235908-93e6c9149309 h1:fkyT/qJE1HfdPl3FT1Xo3nWF6amhivYXPC9OmMBJk3g=
