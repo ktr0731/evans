@@ -17,7 +17,6 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/kr/pty v1.1.3 // indirect
-	github.com/ktr0731/go-semver v0.1.0
 	github.com/ktr0731/go-shellstring v0.1.0
 	github.com/ktr0731/go-updater v0.1.4
 	github.com/ktr0731/grpc-test v0.0.0-20181102092628-34f3c19774b5 // indirect
