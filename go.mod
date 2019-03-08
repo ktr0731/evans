@@ -6,27 +6,23 @@ require (
 	github.com/c-bata/go-prompt v0.2.3
 	github.com/fatih/color v1.7.0
 	github.com/golang/protobuf v1.2.0
-	github.com/google/go-github v17.0.0+incompatible // indirect
-	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
+	github.com/hashicorp/go-version v1.1.0
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/improbable-eng/grpc-web v0.0.0-20181111100011-16092bd1d58a
-	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf // indirect
 	github.com/jhump/protoreflect v1.1.0
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/k0kubun/pp v2.3.0+incompatible
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/kr/pty v1.1.3 // indirect
-	github.com/ktr0731/go-semver v0.1.0
 	github.com/ktr0731/go-shellstring v0.1.0
-	github.com/ktr0731/go-updater v0.1.3
+	github.com/ktr0731/go-updater v0.1.4
 	github.com/ktr0731/grpc-test v0.0.0-20181102092628-34f3c19774b5 // indirect
 	github.com/ktr0731/grpc-web-go-client v0.2.2
 	github.com/mattn/go-colorable v0.0.9
 	github.com/mattn/go-isatty v0.0.4
-	github.com/mattn/go-pipeline v0.0.0-20170920030317-cfb87a531e2b // indirect
 	github.com/mattn/go-runewidth v0.0.3 // indirect
 	github.com/mattn/go-shellwords v1.0.3
 	github.com/mattn/go-tty v0.0.0-20180907095812-13ff1204f104 // indirect

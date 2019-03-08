@@ -12,6 +12,7 @@ import (
 	"text/tabwriter"
 
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/go-version"
 	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/adapter/repl"
@@ -19,7 +20,6 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/meta"
-	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -344,7 +344,7 @@ func (c *Command) processUpdate(ctx context.Context) error {
 		return nil
 	}
 
-	v := semver.MustParse(c.cache.UpdateInfo.LatestVersion)
+	v := version.Must(version.NewSemver(c.cache.UpdateInfo.LatestVersion))
 	if v.LessThan(meta.Version) || v.Equal(meta.Version) {
 		return c.cache.ClearUpdateInfo()
 	}

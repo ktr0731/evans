@@ -1,11 +1,9 @@
 package meta
 
-import (
-	semver "github.com/ktr0731/go-semver"
-)
+import version "github.com/hashicorp/go-version"
 
 const AppName = "evans"
 
 var (
-	Version = semver.MustParse("0.7.2")
+	Version = version.Must(version.NewSemver("0.7.2"))
 )

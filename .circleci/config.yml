@@ -6,6 +6,7 @@ jobs:
       - image: ktr0731/circleci-evans
     environment:
       - GOCACHE: "/tmp/go/cache"
+      - GO111MODULE: "on"
 
     steps:
       - checkout

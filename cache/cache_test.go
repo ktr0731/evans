@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/hashicorp/go-version"
 	"github.com/ktr0731/evans/meta"
-	semver "github.com/ktr0731/go-semver"
 	"github.com/ktr0731/go-updater/github"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/stretchr/testify/assert"
@@ -82,7 +82,7 @@ func TestCache(t *testing.T) {
 		setCache := func() *Cache {
 			cache := Get()
 
-			unsavedCache := cache.SetUpdateInfo(semver.MustParse("1.0.0"))
+			unsavedCache := cache.SetUpdateInfo(version.Must(version.NewSemver("1.0.0")))
 			assert.Equal(t, "1.0.0", unsavedCache.UpdateInfo.LatestVersion)
 			assert.True(t, unsavedCache.UpdateInfo.UpdateAvailable)
 
