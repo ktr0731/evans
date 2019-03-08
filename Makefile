@@ -75,7 +75,7 @@ coverage:
 
 .PHONY: coverage-circleci
 coverage-circleci:
-	go test -cpu 1 -coverpkg ./... -covermode=atomic -tags e2e -coverprofile=coverage.txt $(shell go list -tags e2e ./...)
+	go test -coverpkg ./... -covermode=count -tags e2e -coverprofile=coverage.txt $(shell go list -tags e2e ./...)
 
 .PHONY: coverage-web
 coverage-web: coverage
