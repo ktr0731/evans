@@ -75,7 +75,7 @@ coverage:
 
 .PHONY: coverage-circleci
 coverage-circleci:
-	go test -p 1 -coverpkg ./... -covermode=count -tags e2e -coverprofile=coverage.txt ./...
+	go test -p 1 -coverpkg ./... -covermode=atomic -tags e2e -coverprofile=coverage.txt ./...
 
 .PHONY: coverage-web
 coverage-web: coverage
