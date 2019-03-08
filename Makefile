@@ -56,11 +56,11 @@ format:
 
 .PHONY: unit-test
 unit-test: lint
-	go test -v -race ./...
+	go test -race ./...
 
 .PHONY: e2e-test
 e2e-test: lint
-	go test -v -tags e2e -race ./tests/...
+	go test -tags e2e -race ./tests/...
 
 .PHONY: lint
 lint:
@@ -71,7 +71,7 @@ lint:
 
 .PHONY: coverage
 coverage:
-	go test -v -coverpkg ./... -covermode=atomic -tags e2e -coverprofile=coverage.txt -race $(shell go list -tags e2e ./...)
+	go test -coverpkg ./... -covermode=atomic -tags e2e -coverprofile=coverage.txt -race $(shell go list -tags e2e ./...)
 
 .PHONY: coverage-circleci
 coverage-circleci:
