@@ -71,11 +71,11 @@ lint:
 
 .PHONY: coverage
 coverage:
-	go test -coverpkg ./... -covermode=atomic -tags e2e -coverprofile=coverage.txt -race $(shell go list -tags e2e ./...)
+	go test -coverpkg ./... -covermode=atomic -tags e2e -coverprofile=coverage.txt -race ./...
 
 .PHONY: coverage-circleci
 coverage-circleci:
-	go test -coverpkg ./... -covermode=count -tags e2e -coverprofile=coverage.txt $(shell go list -tags e2e ./...)
+	go test -coverpkg ./... -covermode=count -tags e2e -coverprofile=coverage.txt ./...
 
 .PHONY: coverage-web
 coverage-web: coverage
