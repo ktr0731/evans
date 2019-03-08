@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/hashicorp/go-version"
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/meta"
-	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
 	"github.com/ktr0731/go-updater/brew"
 	"github.com/ktr0731/go-updater/github"
@@ -126,7 +126,7 @@ func printUpdateInfo(w io.Writer, latest string) {
 // newUpdater creates new updater from cached information.
 // updater checks whether UpdateIf is true or false
 // to display update information to the user.
-func newUpdater(cfg *config.Config, v *semver.Version, m updater.Means) *updater.Updater {
+func newUpdater(cfg *config.Config, v *version.Version, m updater.Means) *updater.Updater {
 	u := updater.New(v, m)
 	switch cfg.Meta.UpdateLevel {
 	case "patch":

@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
+	"github.com/hashicorp/go-version"
 	"github.com/ktr0731/evans/meta"
-	semver "github.com/ktr0731/go-semver"
 	updater "github.com/ktr0731/go-updater"
 	xdgbasedir "github.com/zchee/go-xdgbasedir"
 )
@@ -109,7 +109,7 @@ func (c *Cache) ClearUpdateInfo() error {
 
 // SetUpdateInfo sets an updatable flag to true and
 // the latest version info to passed version.
-func (c *Cache) SetUpdateInfo(latest *semver.Version) *Cache {
+func (c *Cache) SetUpdateInfo(latest *version.Version) *Cache {
 	c.UpdateInfo = UpdateInfo{
 		UpdateAvailable: true,
 		LatestVersion:   latest.String(),

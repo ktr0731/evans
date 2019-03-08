@@ -6,8 +6,8 @@ require (
 	github.com/golangci/golangci-lint:/cmd/golangci-lint v1.14.0
 	github.com/google/go-github v17.0.0+incompatible // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
-	github.com/ktr0731/go-semver:/cmd/bump v0.1.1
 	github.com/matryer/moq v0.0.0-20190226120213-a838c8bc3064
+	github.com/ktr0731/bump v0.1.0
 	github.com/mitchellh/colorstring v0.0.0-20150917214807-8631ce90f286 // indirect
 	github.com/mitchellh/gox v0.4.0
 	github.com/mitchellh/iochan v1.0.0 // indirect
