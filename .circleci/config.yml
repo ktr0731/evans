@@ -56,7 +56,10 @@ jobs:
 
       - run:
           name: coverage
-          command: make coverage-circleci
+          command: |
+            go test -coverpkg ./... -covermode=count -coverprofile=coverage-unit.txt $(shell go list ./...)
+            go test -coverpkg ./... -covermode=count -tags e2e -coverprofile=coverage-e2e.txt ./tests/e2e
+            cat coverage-unit.txt coverage-e2e.txt > coverage.txt
 
       - run:
           name: test
