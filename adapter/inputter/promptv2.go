@@ -220,7 +220,14 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 			return err
 		}
 
+		// Don't set empty messages.
+		emptyMsg := len(msg.String()) == 0
+		if emptyMsg && err == io.EOF {
+			return io.EOF
+		}
+
 		if repeat {
+			fmt.Printf("MSG: '%s'\n", msg.String())
 			if err := dmsg.TryAddRepeatedField(f, msg); err != nil {
 				return errors.Wrap(err, "failed to add an inputted message to a repeated field")
 			}
