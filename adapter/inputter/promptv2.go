@@ -340,6 +340,8 @@ func (i *PromptInputter2) isSelectedOneOf(f *desc.FieldDescriptor) bool {
 	return ok
 }
 
+// isCirculated checks whether the passed message m is a circulated message.
+// The second argument appeared holds encountered message names.
 func (i *PromptInputter2) isCirculated(m *desc.MessageDescriptor, appeared []string) bool {
 	fmt.Println("CHECK: ", m.GetName(), appeared)
 	msgName := m.GetFullyQualifiedName()
@@ -362,15 +364,22 @@ func (i *PromptInputter2) isCirculated(m *desc.MessageDescriptor, appeared []str
 		}
 	}
 
-	appeared = append(appeared, msgName)
 	i.state.circulatedMessages[msgName] = nil
 
+	var appended bool
 	// TODO: 複数のフィールドが別々に循環している場合は？
 	for _, f := range m.GetFields() {
+		// If a field isn't message type, it never become to a circulated field.
 		m := f.GetMessageType()
 		if m == nil {
 			continue
 		}
+
+		if !appended {
+			appeared = append(appeared, msgName)
+			appended = true
+		}
+
 		// Self-referenced message.
 		if m.GetFullyQualifiedName() == msgName {
 			i.state.circulatedMessages[msgName] = append(i.state.circulatedMessages[msgName], msgName)
