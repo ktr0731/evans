@@ -141,6 +141,8 @@ func TestPrompt2_Input(t *testing.T) {
 		require.Equal(t, `name:"foo" name:"bar"`, msg.String())
 	})
 
+	// In actual, maps are represented as repeated message fields.
+	// See more details: https://developers.google.com/protocol-buffers/docs/proto#backwards-compatibility
 	t.Run("normal/map", func(t *testing.T) {
 		prompt := helper.NewMockRepeatedPrompt([][]string{
 			{"foo", "", "bar", "", ""},

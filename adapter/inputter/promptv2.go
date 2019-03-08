@@ -15,6 +15,7 @@ import (
 )
 
 var (
+	// EORF represents an inputitng for a repeated field was finished.
 	EORF = errors.New("end of repeated field")
 )
 
@@ -97,6 +98,11 @@ func (i *PromptInputter2) Input(req *desc.MessageDescriptor) (proto.Message, err
 	i.state = initialPromptInputterState.clone()
 	m, err := i.inputMessage(req)
 	if err != nil {
+		// If io.EOF is returned, it means CTRL+d is entered.
+		// In this case, Input skips rest fields and finishes normally.
+		if err == io.EOF {
+			return m, nil
+		}
 		if e, ok := errors.Cause(err).(*protobuf.ConversionError); ok {
 			return nil, errors.Errorf("input '%s' is invalid in type %s", e.Val, e.ExpectedType)
 		}
@@ -115,6 +121,13 @@ func (i *PromptInputter2) Input(req *desc.MessageDescriptor) (proto.Message, err
 //
 // inputMessage is called two times.
 // One for Foo's primitive fields, and another one for bar's primitive fields.
+//
+// inputMessage returns following errors:
+//
+//   - io.EOF:
+//       CTRL+d entered. Never return in the case of repeated message.
+//       inputMessage also returns the first return value what is
+//       the message partially inputted.
 func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Message, error) {
 	if err := i.prompt.SetPrefixColor(i.state.color); err != nil {
 		return nil, err
@@ -129,7 +142,11 @@ func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Messa
 	}()
 
 	for _, field := range msg.GetFields() {
+		fmt.Println(field.GetFullyQualifiedName(), field.GetType(), field.IsRepeated())
 		err := i.inputField(dmsg, field, false)
+		if errors.Cause(err) == io.EOF {
+			return dmsg, io.EOF
+		}
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to set inputted values to message '%s'", msg.GetFullyQualifiedName())
 		}
@@ -140,6 +157,9 @@ func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Messa
 
 // inputField tries to set a inputted value to a field of the passed message dmsg.
 // An argument repeat means inputField is called from inputRepeatedField.
+//
+// inputField returns following errors:
+//   - io.EOF: CTRL+d is entered.
 func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescriptor, repeat bool) error {
 	// If a repeated field is found, call inputRepeatedField instead.
 	if !repeat && f.IsRepeated() {
@@ -194,12 +214,9 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 		ancestorLen := len(i.state.ancestor)
 		i.state.ancestor = append(i.state.ancestor, f.GetName())
 
-		// i.state.appearedMessages = append(i.state.appearedMessages, f.GetMessageType().GetFullyQualifiedName())
-
 		msg, err := i.inputMessage(f.GetMessageType())
-		if errors.Cause(err) == io.EOF {
-			return nil
-		} else if err != nil {
+		// If io.EOF is returned, msg isn't nil (see inputMessage comments).
+		if err != nil && err != io.EOF {
 			return err
 		}
 
@@ -211,6 +228,11 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 			if err := dmsg.TrySetField(f, msg); err != nil {
 				return errors.Wrap(err, "failed to set an inputted message to a field")
 			}
+		}
+
+		// If err is io.EOF, propagate it to the caller after TrySetField/TryAddRepeatedField.
+		if err == io.EOF {
+			return err
 		}
 
 		// Discard appended ancestors after calling above inputMessage.
@@ -296,10 +318,7 @@ func (i *PromptInputter2) inputRepeatedField(dmsg *dynamic.Message, f *desc.Fiel
 		}
 
 		err := i.inputField(dmsg, f, true)
-		rerr := errors.Cause(err)
-		if rerr == EORF || rerr == io.EOF {
-			return nil
-		} else if err != nil {
+		if err != nil {
 			return err
 		}
 
@@ -307,8 +326,13 @@ func (i *PromptInputter2) inputRepeatedField(dmsg *dynamic.Message, f *desc.Fiel
 	}
 }
 
+// inputPrimitiveField reads an input and converts it to a Go type.
+// If CTRL+d is entered, inputPrimitiveField returns io.EOF.
 func (i *PromptInputter2) inputPrimitiveField(f *desc.FieldDescriptor) (interface{}, error) {
 	in, err := i.prompt.Input()
+	if err == io.EOF {
+		return "", io.EOF
+	}
 	if err != nil {
 		return "", errors.Wrap(err, "failed to read user input")
 	}

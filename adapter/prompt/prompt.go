@@ -16,7 +16,7 @@ type Prompt interface {
 	Run()
 
 	// Input receives user entered input.
-	// Input will be abort when a user enters CTRL+d.
+	// Input will be abort if a user enters CTRL+d. Then Input returns io.EOF.
 	Input() (string, error)
 
 	// Select displays a selection has options, opts.
