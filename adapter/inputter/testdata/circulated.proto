@@ -107,3 +107,19 @@ message FooRequest {
 message FooResponse {
     repeated string names = 1;
 }
+
+message G {
+  H h = 1;
+  H h2 = 2;
+}
+
+message H {}
+
+message I {
+  H h = 1;
+  J j = 2;
+}
+
+message J {
+  H h = 1;
+}

@@ -375,29 +375,53 @@ func (i *PromptInputter2) isSelectedOneOf(f *desc.FieldDescriptor) bool {
 }
 
 // isCirculated checks whether the passed message m is a circulated message.
+// TODO: a message is possible to have one or more circulated fields.
 func (i *PromptInputter2) isCirculated(m *desc.MessageDescriptor) bool {
-	// var appearedMessages []string
+	var appearedMsgs []string
 	appeared := make(map[string]interface{})
 
-	var isCirculated func(m *desc.MessageDescriptor) bool
-	isCirculated = func(m *desc.MessageDescriptor) bool {
+	// TODO: isCirculated という名前はよくない
+	var isCirculated func(m *desc.MessageDescriptor) (string, bool)
+	isCirculated = func(m *desc.MessageDescriptor) (string, bool) {
 		appeared[m.GetFullyQualifiedName()] = nil
+		appearedMsgs = append(appearedMsgs, m.GetFullyQualifiedName())
+		copiedAppeared := make(map[string]interface{})
+		for k, v := range appeared {
+			copiedAppeared[k] = v
+		}
+		copiedAppearedMsgs := make([]string, len(appearedMsgs))
+		copy(copiedAppearedMsgs, appearedMsgs)
+
 		for _, field := range m.GetFields() {
 			msg := field.GetMessageType()
 			if msg == nil {
 				continue
 			}
 			if _, found := appeared[msg.GetFullyQualifiedName()]; found {
-				return true
+				return msg.GetFullyQualifiedName(), true
 			}
-			if isCirculated(msg) {
-				return true
+			if msgName, circulated := isCirculated(msg); circulated {
+				for idx := 0; idx < len(appearedMsgs); idx++ {
+					if appearedMsgs[idx] == msgName {
+						i.state.circulatedMessages[appearedMsgs[idx]] = appearedMsgs[idx:]
+					}
+				}
+				return msgName, circulated
 			}
+			appeared = copiedAppeared
+			appearedMsgs = copiedAppearedMsgs
 		}
-		return false
+		return "", false
 	}
 
-	return isCirculated(m)
+	if msgName, circulated := isCirculated(m); circulated {
+		for idx := 0; idx < len(appearedMsgs); idx++ {
+			if appearedMsgs[idx] == msgName {
+				i.state.circulatedMessages[appearedMsgs[idx]] = appearedMsgs[idx:]
+			}
+		}
+	}
+	return len(i.state.circulatedMessages[m.GetFullyQualifiedName()]) != 0
 }
 
 // makePrefix makes prefix for field f.

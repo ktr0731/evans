@@ -227,17 +227,47 @@ func TestPrompt2_Input(t *testing.T) {
 }
 
 func Test2_isCirculated(t *testing.T) {
-	p := &PromptInputter2{}
+	i := NewPrompt2("")
 
 	env := testhelper.SetupEnv(t, "circulated.proto", "example", "Example")
 
-	cases := []string{"A", "Foo", "Hoge", "C", "D", "E", "FooRequest"}
-	for _, msg := range cases {
-		t.Run(msg, func(t *testing.T) {
-			m, err := env.Message(msg)
+	// See circulated.proto for dependency graphs.
+	cases := []struct {
+		name           string
+		isCirculated   bool
+		circulatedMsgs []string
+	}{
+		{name: "A", isCirculated: true, circulatedMsgs: []string{"example.A", "example.B"}},
+
+		{name: "Foo", isCirculated: false},
+		{name: "Self", isCirculated: true, circulatedMsgs: []string{"example.Self"}},
+
+		{name: "Hoge", isCirculated: true, circulatedMsgs: []string{"example.Hoge", "example.Fuga", "example.Piyo"}},
+		{name: "Fuga", isCirculated: true, circulatedMsgs: []string{"example.Fuga", "example.Piyo", "example.Hoge"}},
+		{name: "Piyo", isCirculated: true, circulatedMsgs: []string{"example.Piyo", "example.Hoge", "example.Fuga"}},
+
+		{name: "D", isCirculated: false},
+		{name: "C", isCirculated: true, circulatedMsgs: []string{"example.C", "example.ListC"}},
+
+		{name: "E", isCirculated: true, circulatedMsgs: []string{"example.E", "example.E.M1Entry", "example.F"}},
+		{name: "F", isCirculated: true, circulatedMsgs: []string{"example.F", "example.E", "example.E.M1Entry"}},
+		// TODO: M -> F
+
+		{name: "FooRequest", isCirculated: false},
+		{name: "Filters", isCirculated: true, circulatedMsgs: []string{"example.Filters"}},
+
+		{name: "G", isCirculated: false},
+		{name: "I", isCirculated: false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			m, err := env.Message(c.name)
 			require.NoError(t, err)
 
-			assert.True(t, p.isCirculated(m.Desc()), "isCirculated must return true")
+			assert.Equal(t, c.isCirculated, i.isCirculated(m.Desc()))
+			if c.isCirculated {
+				assert.Equal(t, c.circulatedMsgs, i.state.circulatedMessages[c.circulatedMsgs[0]])
+			}
 		})
 	}
 }
