@@ -103,6 +103,7 @@ func (c *client) Invoke(ctx context.Context, fqrn string, req, res interface{}) 
 		}
 		return []interface{}{"request:\n" + string(b)}
 	})
+	wakeUpClientConn(c.conn)
 	return c.conn.Invoke(ctx, endpoint, req, res)
 }
 
@@ -154,6 +155,7 @@ func (c *client) NewClientStream(ctx context.Context, rpc entity.RPC) (entity.Cl
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to instantiate gRPC stream")
 	}
+	wakeUpClientConn(c.conn)
 	return &clientStream{cs}, nil
 }
 
@@ -208,4 +210,10 @@ func fqrnToEndpoint(fqrn string) (string, error) {
 	}
 
 	return fmt.Sprintf("/%s/%s", strings.Join(sp[:len(sp)-1], "."), sp[len(sp)-1]), nil
+}
+
+func wakeUpClientConn(conn *grpc.ClientConn) {
+	if conn.GetState() == connectivity.TransientFailure {
+		conn.ResetConnectBackoff()
+	}
 }
