@@ -226,6 +226,22 @@ func TestPrompt2_Input(t *testing.T) {
 	})
 }
 
+func Test2_isCirculated(t *testing.T) {
+	p := &PromptInputter2{}
+
+	env := testhelper.SetupEnv(t, "circulated.proto", "example", "Example")
+
+	cases := []string{"A", "Foo", "Hoge", "C", "D", "E", "FooRequest"}
+	for _, msg := range cases {
+		t.Run(msg, func(t *testing.T) {
+			m, err := env.Message(msg)
+			require.NoError(t, err)
+
+			assert.True(t, p.isCirculated(m.Desc()), "isCirculated must return true")
+		})
+	}
+}
+
 func Test2_makePrefix(t *testing.T) {
 	var f *testentity.Fld
 	backup := func(tmp testentity.Fld) func() {

@@ -142,7 +142,6 @@ func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Messa
 	}()
 
 	for _, field := range msg.GetFields() {
-		fmt.Println(field.GetFullyQualifiedName(), field.GetType(), field.IsRepeated())
 		err := i.inputField(dmsg, field, false)
 		if errors.Cause(err) == io.EOF {
 			return dmsg, io.EOF
@@ -156,13 +155,13 @@ func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Messa
 }
 
 // inputField tries to set a inputted value to a field of the passed message dmsg.
-// An argument repeat means inputField is called from inputRepeatedField.
+// An argument partOfRepeatedField means inputField is called from inputRepeatedField.
 //
 // inputField returns following errors:
 //   - io.EOF: CTRL+d is entered.
-func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescriptor, repeat bool) error {
+func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescriptor, partOfRepeatedField bool) error {
 	// If a repeated field is found, call inputRepeatedField instead.
-	if !repeat && f.IsRepeated() {
+	if !partOfRepeatedField && f.IsRepeated() {
 		return i.inputRepeatedField(dmsg, f)
 	}
 
@@ -178,6 +177,12 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 		i.state.selectedOneOf[f.GetOneOf().GetFullyQualifiedName()] = nil
 	}
 
+	old := i.state.hasAncestorAndHasRepeatedField
+	i.state.hasAncestorAndHasRepeatedField = i.state.hasAncestorAndHasRepeatedField || f.IsRepeated()
+	defer func() {
+		i.state.hasAncestorAndHasRepeatedField = old
+	}()
+
 	switch {
 	case f.GetEnumType() != nil:
 		v, err := i.selectEnum(f)
@@ -188,14 +193,13 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 			return err
 		}
 	case f.GetMessageType() != nil:
-		if i.isCirculated(f.GetMessageType(), nil) {
+		if i.isCirculated(f.GetMessageType()) {
 			prefix := strings.Join(i.state.ancestor, ancestorDelimiter)
 			if prefix != "" {
 				prefix += ancestorDelimiter
 			}
 			prefix += f.GetName()
 
-			fmt.Println(i.state.circulatedMessages)
 			choice, err := i.prompt.Select(
 				fmt.Sprintf("circulated field was found. dig down or finish?\nfield: %s (%s)", prefix, strings.Join(i.state.circulatedMessages[f.GetMessageType().GetFullyQualifiedName()], ">")),
 				[]string{"dig down", "finish"},
@@ -226,8 +230,7 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 			return io.EOF
 		}
 
-		if repeat {
-			fmt.Printf("MSG: '%s'\n", msg.String())
+		if partOfRepeatedField {
 			if err := dmsg.TryAddRepeatedField(f, msg); err != nil {
 				return errors.Wrap(err, "failed to add an inputted message to a repeated field")
 			}
@@ -252,7 +255,7 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 			return err
 		}
 
-		if repeat {
+		if partOfRepeatedField {
 			if err := dmsg.TryAddRepeatedField(f, v); err != nil {
 				return errors.Wrapf(err, "failed to add inputted value to repeated field '%s'", f.GetName())
 			}
@@ -353,7 +356,7 @@ func (i *PromptInputter2) inputPrimitiveField(f *desc.FieldDescriptor) (interfac
 		//     the direct parent is not a cycled field.
 		if f.IsRepeated() || (i.state.hasAncestorAndHasRepeatedField && !i.state.hasDirectCycledParent) {
 			if i.state.enteredEmptyInput {
-				return nil, EORF
+				return nil, io.EOF
 			}
 			i.state.enteredEmptyInput = true
 			// ignore the input
@@ -372,59 +375,29 @@ func (i *PromptInputter2) isSelectedOneOf(f *desc.FieldDescriptor) bool {
 }
 
 // isCirculated checks whether the passed message m is a circulated message.
-// The second argument appeared holds encountered message names.
-func (i *PromptInputter2) isCirculated(m *desc.MessageDescriptor, appeared []string) bool {
-	fmt.Println("CHECK: ", m.GetName(), appeared)
-	msgName := m.GetFullyQualifiedName()
-	msgs, ok := i.state.circulatedMessages[msgName]
+func (i *PromptInputter2) isCirculated(m *desc.MessageDescriptor) bool {
+	// var appearedMessages []string
+	appeared := make(map[string]interface{})
 
-	// If the length of appeared is 0, it means this is the first call.
-	circulated := ok && len(appeared) == 0
-	if circulated {
-		return len(msgs) != 0
+	var isCirculated func(m *desc.MessageDescriptor) bool
+	isCirculated = func(m *desc.MessageDescriptor) bool {
+		appeared[m.GetFullyQualifiedName()] = nil
+		for _, field := range m.GetFields() {
+			msg := field.GetMessageType()
+			if msg == nil {
+				continue
+			}
+			if _, found := appeared[msg.GetFullyQualifiedName()]; found {
+				return true
+			}
+			if isCirculated(msg) {
+				return true
+			}
+		}
+		return false
 	}
-	// If the length of appeared isn't 0, this call is a recursive call.
-	// So, if ok is true, it means isCirculated with m is called previously.
-	if ok {
-		return true
-	}
 
-	for _, m := range appeared {
-		if m == msgName {
-			return true
-		}
-	}
-
-	i.state.circulatedMessages[msgName] = nil
-
-	var appended bool
-	// TODO: 複数のフィールドが別々に循環している場合は？
-	for _, f := range m.GetFields() {
-		// If a field isn't message type, it never become to a circulated field.
-		m := f.GetMessageType()
-		if m == nil {
-			continue
-		}
-
-		if !appended {
-			appeared = append(appeared, msgName)
-			appended = true
-		}
-
-		// Self-referenced message.
-		if m.GetFullyQualifiedName() == msgName {
-			i.state.circulatedMessages[msgName] = append(i.state.circulatedMessages[msgName], msgName)
-			continue
-		}
-
-		fmt.Println("inline isCirculated")
-		if i.isCirculated(m, appeared) {
-			fmt.Println("CIRCULATED: ", m.GetName(), appeared)
-			i.state.circulatedMessages[msgName] = append(i.state.circulatedMessages[msgName], appeared...)
-			continue
-		}
-	}
-	return i.isCirculated(m, appeared)
+	return isCirculated(m)
 }
 
 // makePrefix makes prefix for field f.
