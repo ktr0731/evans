@@ -249,7 +249,6 @@ func Test2_isCirculatedField(t *testing.T) {
 		{msgName: "Fuga", fieldName: "piyo", isCirculated: true, circulatedMsgs: []string{"example.Piyo", "example.Hoge", "example.Fuga"}},
 		{msgName: "Piyo", fieldName: "hoge", isCirculated: true, circulatedMsgs: []string{"example.Hoge", "example.Fuga", "example.Piyo"}},
 
-		// TODO: add comments
 		{msgName: "D", fieldName: "m", isCirculated: false, assertFunc: func(t *testing.T, circulatedMsgs map[string][]string) {
 			msgs, ok := circulatedMsgs["example.D.MEntry.value"]
 			require.True(t, ok, "isCirculatedField must record example.D.MEntry.value as a circulated field")
@@ -257,7 +256,6 @@ func Test2_isCirculatedField(t *testing.T) {
 		}},
 		{msgName: "C", fieldName: "list", isCirculated: true, circulatedMsgs: []string{"example.ListC", "example.C"}},
 
-		// TODO: add comments
 		{msgName: "E", fieldName: "m1", isCirculated: true, circulatedMsgs: []string{"example.E.M1Entry", "example.F", "example.E"}},
 		{msgName: "E", fieldName: "m2", isCirculated: true, circulatedMsgs: []string{"example.E.M", "example.F", "example.E"}},
 		{msgName: "F", fieldName: "e", isCirculated: true, circulatedMsgs: []string{"example.E", "example.E.M1Entry", "example.E.M", "example.F"}},

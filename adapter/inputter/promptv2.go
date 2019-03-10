@@ -189,8 +189,14 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 		if err != nil {
 			return err
 		}
-		if err := dmsg.TrySetField(f, v.GetNumber()); err != nil {
-			return err
+		if partOfRepeatedField {
+			if err := dmsg.TryAddRepeatedField(f, v.GetNumber()); err != nil {
+				return err
+			}
+		} else {
+			if err := dmsg.TrySetField(f, v.GetNumber()); err != nil {
+				return err
+			}
 		}
 	case f.GetMessageType() != nil:
 		if i.isCirculatedField(f) {
@@ -328,6 +334,9 @@ func (i *PromptInputter2) inputRepeatedField(dmsg *dynamic.Message, f *desc.Fiel
 		}
 
 		err := i.inputField(dmsg, f, true)
+		if err == EORF {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
