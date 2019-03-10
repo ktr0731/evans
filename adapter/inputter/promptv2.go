@@ -439,7 +439,7 @@ func (i *PromptInputter2) isCirculatedField(f *desc.FieldDescriptor) bool {
 
 // makePrefix makes prefix for field f.
 func (i *PromptInputter2) makePrefix(f *desc.FieldDescriptor) string {
-	return makePrefix2(i.prefixFormat, f, i.state.ancestor, i.state.hasAncestorAndHasRepeatedField)
+	return makePrefix(i.prefixFormat, f, i.state.ancestor, i.state.hasAncestorAndHasRepeatedField)
 }
 
 const (
@@ -447,7 +447,7 @@ const (
 	ancestorDelimiter = "::"
 )
 
-func makePrefix2(s string, f *desc.FieldDescriptor, ancestor []string, ancestorHasRepeated bool) string {
+func makePrefix(s string, f *desc.FieldDescriptor, ancestor []string, ancestorHasRepeated bool) string {
 	joinedAncestor := strings.Join(ancestor, ancestorDelimiter)
 	if joinedAncestor != "" {
 		joinedAncestor += ancestorDelimiter

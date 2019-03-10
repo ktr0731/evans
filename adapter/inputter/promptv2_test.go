@@ -2,13 +2,13 @@ package inputter
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	goprompt "github.com/c-bata/go-prompt"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/adapter/internal/testhelper"
 	"github.com/ktr0731/evans/adapter/prompt"
-	"github.com/ktr0731/evans/entity/testentity"
 	"github.com/ktr0731/evans/tests/helper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -193,7 +193,7 @@ func TestPrompt2_Input(t *testing.T) {
 
 		inputter := newPrompt2(prompt, prefixFormat)
 
-		env := testhelper.SetupEnv(t, "circulated.proto", "example", "ExampleService")
+		env := testhelper.SetupEnv(t, "circulated.proto", "example", "Example")
 		m, err := env.Message("FooRequest")
 		require.NoError(t, err)
 
@@ -292,51 +292,46 @@ func Test2_isCirculatedField(t *testing.T) {
 }
 
 func Test2_makePrefix(t *testing.T) {
-	var f *testentity.Fld
-	backup := func(tmp testentity.Fld) func() {
-		return func() {
-			f = &tmp
-		}
+	cases := map[string]struct {
+		protoName                string
+		pkgName                  string // TODO: remove it.
+		svcName                  string // TODO: remove it.
+		msgName                  string
+		fieldName                string
+		ancestor                 []string
+		ancestorHasRepeatedField bool
+	}{
+		"normal":                                 {protoName: "helloworld.proto", pkgName: "helloworld", svcName: "Greeter", msgName: "HelloRequest", fieldName: "name"},
+		"nested":                                 {protoName: "helloworld.proto", pkgName: "helloworld", svcName: "Greeter", msgName: "HelloRequest", fieldName: "name", ancestor: []string{"Foo", "Bar"}},
+		"repeated (repeated field)":              {protoName: "repeated.proto", pkgName: "helloworld", svcName: "Greeter", msgName: "HelloRequest", fieldName: "name", ancestor: []string{"Foo", "Bar"}},
+		"repeated (ancestor has repeated field)": {protoName: "helloworld.proto", pkgName: "helloworld", svcName: "Greeter", msgName: "HelloRequest", fieldName: "name", ancestor: []string{"Foo", "Bar"}, ancestorHasRepeatedField: true},
+		"repeated (both)":                        {protoName: "repeated.proto", pkgName: "helloworld", svcName: "Greeter", msgName: "HelloRequest", fieldName: "name", ancestor: []string{"Foo", "Bar"}, ancestorHasRepeatedField: true},
 	}
 
-	prefix := "{ancestor}{name} ({type})"
-	f = testentity.NewFld()
-	t.Run("primitive", func(t *testing.T) {
-		expected := fmt.Sprintf("%s (%s)", f.FieldName(), f.PBType())
-		actual := makePrefix(prefix, f, nil, false)
+	const prefix = "{ancestor}{name} ({type})"
 
-		require.Equal(t, expected, actual)
-	})
+	for name, c := range cases {
+		c := c
+		t.Run(name, func(t *testing.T) {
+			env := testhelper.SetupEnv(t, c.protoName, c.pkgName, c.svcName)
+			m, err := env.Message(c.msgName)
+			require.NoError(t, err)
 
-	t.Run("nested", func(t *testing.T) {
-		expected := fmt.Sprintf("Foo::Bar::%s (%s)", f.FieldName(), f.PBType())
-		actual := makePrefix(prefix, f, []string{"Foo", "Bar"}, false)
-		require.Equal(t, expected, actual)
-	})
+			for _, f := range m.Desc().GetFields() {
+				if f.GetName() == c.fieldName {
+					expected := fmt.Sprintf("%s (%s)", strings.Join(append(c.ancestor, f.GetName()), ancestorDelimiter), f.GetType().String())
+					if f.IsRepeated() || c.ancestorHasRepeatedField {
+						expected = repeatedStr + expected
+					}
+					actual := makePrefix(prefix, f, c.ancestor, c.ancestorHasRepeatedField)
 
-	t.Run("repeated (field)", func(t *testing.T) {
-		expected := fmt.Sprintf("<repeated> Foo::Bar::%s (%s)", f.FieldName(), f.PBType())
-		cleanup := backup(*f)
-		defer cleanup()
-		f.FIsRepeated = true
-		actual := makePrefix(prefix, f, []string{"Foo", "Bar"}, false)
-		require.Equal(t, expected, actual, false)
-	})
-
-	t.Run("repeated (ancestor)", func(t *testing.T) {
-		expected := fmt.Sprintf("<repeated> Foo::Bar::%s (%s)", f.FieldName(), f.PBType())
-		actual := makePrefix(prefix, f, []string{"Foo", "Bar"}, true)
-		require.Equal(t, expected, actual, false)
-	})
-
-	t.Run("repeated (both)", func(t *testing.T) {
-		expected := fmt.Sprintf("<repeated> Foo::Bar::%s (%s)", f.FieldName(), f.PBType())
-		cleanup := backup(*f)
-		defer cleanup()
-		f.FIsRepeated = true
-		actual := makePrefix(prefix, f, []string{"Foo", "Bar"}, true)
-		require.Equal(t, expected, actual, false)
-	})
+					require.Equal(t, expected, actual)
+					return
+				}
+			}
+			t.Fatalf("field '%s' is not found", c.fieldName)
+		})
+	}
 }
 
 func injectNewPrompt(p prompt.Prompt) func() {
