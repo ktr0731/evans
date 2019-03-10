@@ -226,48 +226,68 @@ func TestPrompt2_Input(t *testing.T) {
 	})
 }
 
-func Test2_isCirculated(t *testing.T) {
+func Test2_isCirculatedField(t *testing.T) {
 	i := NewPrompt2("")
 
 	env := testhelper.SetupEnv(t, "circulated.proto", "example", "Example")
 
 	// See circulated.proto for dependency graphs.
 	cases := []struct {
-		name           string
+		msgName        string
+		fieldName      string
 		isCirculated   bool
 		circulatedMsgs []string
+		assertFunc     func(t *testing.T, circulatedMsgs map[string][]string)
 	}{
-		{name: "A", isCirculated: true, circulatedMsgs: []string{"example.A", "example.B"}},
+		{msgName: "A", fieldName: "b", isCirculated: true, circulatedMsgs: []string{"example.B", "example.A"}},
+		{msgName: "B", fieldName: "a", isCirculated: true, circulatedMsgs: []string{"example.A", "example.B"}},
 
-		{name: "Foo", isCirculated: false},
-		{name: "Self", isCirculated: true, circulatedMsgs: []string{"example.Self"}},
+		{msgName: "Foo", fieldName: "self", isCirculated: true, circulatedMsgs: []string{"example.Self"}},
+		{msgName: "Self", fieldName: "self", isCirculated: true, circulatedMsgs: []string{"example.Self"}},
 
-		{name: "Hoge", isCirculated: true, circulatedMsgs: []string{"example.Hoge", "example.Fuga", "example.Piyo"}},
-		{name: "Fuga", isCirculated: true, circulatedMsgs: []string{"example.Fuga", "example.Piyo", "example.Hoge"}},
-		{name: "Piyo", isCirculated: true, circulatedMsgs: []string{"example.Piyo", "example.Hoge", "example.Fuga"}},
+		{msgName: "Hoge", fieldName: "fuga", isCirculated: true, circulatedMsgs: []string{"example.Fuga", "example.Piyo", "example.Hoge"}},
+		{msgName: "Fuga", fieldName: "piyo", isCirculated: true, circulatedMsgs: []string{"example.Piyo", "example.Hoge", "example.Fuga"}},
+		{msgName: "Piyo", fieldName: "hoge", isCirculated: true, circulatedMsgs: []string{"example.Hoge", "example.Fuga", "example.Piyo"}},
 
-		{name: "D", isCirculated: false},
-		{name: "C", isCirculated: true, circulatedMsgs: []string{"example.C", "example.ListC"}},
-
-		{name: "E", isCirculated: true, circulatedMsgs: []string{"example.E", "example.E.M1Entry", "example.F"}},
-		{name: "F", isCirculated: true, circulatedMsgs: []string{"example.F", "example.E", "example.E.M1Entry"}},
-		// TODO: M -> F
-
-		{name: "FooRequest", isCirculated: false},
-		{name: "Filters", isCirculated: true, circulatedMsgs: []string{"example.Filters"}},
-
-		{name: "G", isCirculated: false},
-		{name: "I", isCirculated: false},
+		// TODO: add comments
+		{msgName: "D", fieldName: "m", isCirculated: false, assertFunc: func(t *testing.T, circulatedMsgs map[string][]string) {
+			msgs, ok := circulatedMsgs["example.D.MEntry.value"]
+			require.True(t, ok, "isCirculatedField must record example.D.MEntry.value as a circulated field")
+			assert.Equal(t, []string{"example.C", "example.ListC"}, msgs)
+		}},
+		// {msgName: "D", fieldName: "m", isCirculated: true, circulatedMsgs: []string{"example.MEntry", "example.C", "example.ListC"}},
+		// {msgName: "C", isCirculated: true, circulatedMsgs: []string{"example.C", "example.ListC"}},
+		//
+		// {msgName: "E", isCirculated: true, circulatedMsgs: []string{"example.E", "example.E.M1Entry", "example.F"}},
+		// {msgName: "F", isCirculated: true, circulatedMsgs: []string{"example.F", "example.E", "example.E.M1Entry"}},
+		// // TODO: M -> F
+		//
+		// {msgName: "FooRequest", isCirculated: false},
+		// {msgName: "Filters", isCirculated: true, circulatedMsgs: []string{"example.Filters"}},
+		//
+		// {msgName: "G", isCirculated: false},
+		// {msgName: "I", isCirculated: false},
 	}
 	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			m, err := env.Message(c.name)
+		t.Run(c.msgName, func(t *testing.T) {
+			m, err := env.Message(c.msgName)
 			require.NoError(t, err)
 
-			assert.Equal(t, c.isCirculated, i.isCirculated(m.Desc()))
-			if c.isCirculated {
-				assert.Equal(t, c.circulatedMsgs, i.state.circulatedMessages[c.circulatedMsgs[0]])
+			for _, f := range m.Desc().GetFields() {
+				if f.GetName() != c.fieldName {
+					return
+				}
+				assert.Equal(t, c.isCirculated, i.isCirculatedField(f))
+				if c.isCirculated {
+					assert.Equal(t, c.circulatedMsgs, i.state.circulatedMessages[f.GetFullyQualifiedName()])
+				}
+				// pp.Println(i.state.circulatedMessages)
+				if c.assertFunc != nil {
+					c.assertFunc(t, i.state.circulatedMessages)
+				}
+				return
 			}
+			t.Fatalf("field '%s' not found", c.fieldName)
 		})
 	}
 }

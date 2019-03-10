@@ -193,7 +193,7 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 			return err
 		}
 	case f.GetMessageType() != nil:
-		if i.isCirculated(f.GetMessageType()) {
+		if i.isCirculatedField(f) {
 			prefix := strings.Join(i.state.ancestor, ancestorDelimiter)
 			if prefix != "" {
 				prefix += ancestorDelimiter
@@ -374,54 +374,58 @@ func (i *PromptInputter2) isSelectedOneOf(f *desc.FieldDescriptor) bool {
 	return ok
 }
 
-// isCirculated checks whether the passed message m is a circulated message.
+// isCirculatedField checks whether the passed message m is a circulated message.
 // TODO: a message is possible to have one or more circulated fields.
-func (i *PromptInputter2) isCirculated(m *desc.MessageDescriptor) bool {
-	var appearedMsgs []string
+// Field f must be a message field.
+func (i *PromptInputter2) isCirculatedField(f *desc.FieldDescriptor) bool {
+	var appearedFields []*desc.FieldDescriptor
 	appeared := make(map[string]interface{})
 
-	// TODO: isCirculated という名前はよくない
-	var isCirculated func(m *desc.MessageDescriptor) (string, bool)
-	isCirculated = func(m *desc.MessageDescriptor) (string, bool) {
-		appeared[m.GetFullyQualifiedName()] = nil
-		appearedMsgs = append(appearedMsgs, m.GetFullyQualifiedName())
+	// TODO: checkCirculatedField という名前はよくない
+	var checkCirculatedField func(f *desc.FieldDescriptor)
+	checkCirculatedField = func(f *desc.FieldDescriptor) {
+		appeared[f.GetMessageType().GetFullyQualifiedName()] = nil
+		appearedFields = append(appearedFields, f)
 		copiedAppeared := make(map[string]interface{})
 		for k, v := range appeared {
 			copiedAppeared[k] = v
 		}
-		copiedAppearedMsgs := make([]string, len(appearedMsgs))
-		copy(copiedAppearedMsgs, appearedMsgs)
+		copiedAppearedFields := make([]*desc.FieldDescriptor, len(appearedFields))
+		copy(copiedAppearedFields, appearedFields)
 
-		for _, field := range m.GetFields() {
+		defer func() {
+			appeared = copiedAppeared
+			appearedFields = copiedAppearedFields
+		}()
+
+		for _, field := range f.GetMessageType().GetFields() {
 			msg := field.GetMessageType()
 			if msg == nil {
 				continue
 			}
-			if _, found := appeared[msg.GetFullyQualifiedName()]; found {
-				return msg.GetFullyQualifiedName(), true
-			}
-			if msgName, circulated := isCirculated(msg); circulated {
-				for idx := 0; idx < len(appearedMsgs); idx++ {
-					if appearedMsgs[idx] == msgName {
-						i.state.circulatedMessages[appearedMsgs[idx]] = appearedMsgs[idx:]
+			msgName := msg.GetFullyQualifiedName()
+			// もし message がすでに現れていたら循環している
+			// appearedField の先頭から舐めて重複したフィールドを見つけ、
+			// それ以降を循環している部分とする
+			if _, found := appeared[msgName]; found {
+				for idx := 0; idx < len(appearedFields); idx++ {
+					if appearedFields[idx].GetMessageType().GetFullyQualifiedName() != msgName {
+						continue
 					}
+					appearedMsgs := make([]string, len(appearedFields[idx:]))
+					for i, f := range appearedFields[idx:] {
+						appearedMsgs[i] = f.GetMessageType().GetFullyQualifiedName()
+					}
+					i.state.circulatedMessages[appearedFields[idx].GetFullyQualifiedName()] = appearedMsgs
 				}
-				return msgName, circulated
+				return
 			}
-			appeared = copiedAppeared
-			appearedMsgs = copiedAppearedMsgs
+			checkCirculatedField(field)
 		}
-		return "", false
 	}
 
-	if msgName, circulated := isCirculated(m); circulated {
-		for idx := 0; idx < len(appearedMsgs); idx++ {
-			if appearedMsgs[idx] == msgName {
-				i.state.circulatedMessages[appearedMsgs[idx]] = appearedMsgs[idx:]
-			}
-		}
-	}
-	return len(i.state.circulatedMessages[m.GetFullyQualifiedName()]) != 0
+	checkCirculatedField(f)
+	return len(i.state.circulatedMessages[f.GetFullyQualifiedName()]) != 0
 }
 
 // makePrefix makes prefix for field f.
