@@ -255,18 +255,19 @@ func Test2_isCirculatedField(t *testing.T) {
 			require.True(t, ok, "isCirculatedField must record example.D.MEntry.value as a circulated field")
 			assert.Equal(t, []string{"example.C", "example.ListC"}, msgs)
 		}},
-		// {msgName: "D", fieldName: "m", isCirculated: true, circulatedMsgs: []string{"example.MEntry", "example.C", "example.ListC"}},
-		// {msgName: "C", isCirculated: true, circulatedMsgs: []string{"example.C", "example.ListC"}},
-		//
-		// {msgName: "E", isCirculated: true, circulatedMsgs: []string{"example.E", "example.E.M1Entry", "example.F"}},
-		// {msgName: "F", isCirculated: true, circulatedMsgs: []string{"example.F", "example.E", "example.E.M1Entry"}},
-		// // TODO: M -> F
-		//
-		// {msgName: "FooRequest", isCirculated: false},
-		// {msgName: "Filters", isCirculated: true, circulatedMsgs: []string{"example.Filters"}},
-		//
-		// {msgName: "G", isCirculated: false},
-		// {msgName: "I", isCirculated: false},
+		{msgName: "C", fieldName: "list", isCirculated: true, circulatedMsgs: []string{"example.ListC", "example.C"}},
+
+		// TODO: add comments
+		{msgName: "E", fieldName: "m1", isCirculated: true, circulatedMsgs: []string{"example.E.M1Entry", "example.F", "example.E"}},
+		{msgName: "E", fieldName: "m2", isCirculated: true, circulatedMsgs: []string{"example.E.M", "example.F", "example.E"}},
+		{msgName: "F", fieldName: "e", isCirculated: true, circulatedMsgs: []string{"example.E", "example.E.M1Entry", "example.E.M", "example.F"}},
+
+		{msgName: "FooRequest", fieldName: "filters", isCirculated: true, circulatedMsgs: []string{"example.Filters"}},
+		{msgName: "Filters", fieldName: "and", isCirculated: true, circulatedMsgs: []string{"example.Filters"}},
+		{msgName: "Filters", fieldName: "or", isCirculated: true, circulatedMsgs: []string{"example.Filters"}},
+
+		{msgName: "G", isCirculated: false},
+		{msgName: "I", isCirculated: false},
 	}
 	for _, c := range cases {
 		t.Run(c.msgName, func(t *testing.T) {
