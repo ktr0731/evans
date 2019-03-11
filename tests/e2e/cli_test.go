@@ -68,7 +68,7 @@ func TestCLI(t *testing.T) {
 			args: "--package api --service Example --call ServerStreaming testdata/api.proto",
 			assertOut: func(t *testing.T, out string) {
 				// Transform to a JSON-formed text.
-				in := fmt.Sprintf(`[ %s ]`, strings.ReplaceAll(out, "} ", "}, "))
+				in := fmt.Sprintf(`[ %s ]`, strings.Replace(out, "} ", "}, ", -1))
 				s := []struct {
 					Message string `json:"message"`
 				}{}
@@ -87,7 +87,7 @@ func TestCLI(t *testing.T) {
 			args: "--package api --service Example --call BidiStreaming testdata/api.proto",
 			assertOut: func(t *testing.T, out string) {
 				// Transform to a JSON-formed text.
-				in := fmt.Sprintf(`[ %s ]`, strings.ReplaceAll(out, "} ", "}, "))
+				in := fmt.Sprintf(`[ %s ]`, strings.Replace(out, "} ", "}, ", -1))
 				s := []struct {
 					Message string `json:"message"`
 				}{}
