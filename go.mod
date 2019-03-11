@@ -6,11 +6,9 @@ require (
 	github.com/c-bata/go-prompt v0.2.3
 	github.com/fatih/color v1.7.0
 	github.com/golang/protobuf v1.2.0
-	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/go-version v1.1.0
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
-	github.com/improbable-eng/grpc-web v0.0.0-20181111100011-16092bd1d58a
 	github.com/jhump/protoreflect v1.1.0
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/k0kubun/pp v2.3.0+incompatible
@@ -19,7 +17,7 @@ require (
 	github.com/kr/pty v1.1.3 // indirect
 	github.com/ktr0731/go-shellstring v0.1.0
 	github.com/ktr0731/go-updater v0.1.4
-	github.com/ktr0731/grpc-test v0.0.0-20181102092628-34f3c19774b5 // indirect
+	github.com/ktr0731/grpc-test v0.1.0
 	github.com/ktr0731/grpc-web-go-client v0.2.2
 	github.com/mattn/go-colorable v0.0.9
 	github.com/mattn/go-isatty v0.0.4
@@ -28,13 +26,11 @@ require (
 	github.com/mattn/go-tty v0.0.0-20180907095812-13ff1204f104 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/go-homedir v1.0.0
-	github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223 // indirect
 	github.com/olekukonko/tablewriter v0.0.1
 	github.com/pelletier/go-toml v1.2.0
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/term v0.0.0-20181103235908-93e6c9149309 // indirect
-	github.com/rs/cors v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.3.1
 	github.com/stretchr/testify v1.3.0
@@ -42,7 +38,7 @@ require (
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
 	golang.org/x/crypto v0.0.0-20190222235706-ffb98f73852f // indirect
-	golang.org/x/net v0.0.0-20190213061140-3a22650c66bd
+	golang.org/x/net v0.0.0-20190213061140-3a22650c66bd // indirect
 	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4 // indirect
 	golang.org/x/sys v0.0.0-20190222171317-cd391775e71e // indirect
 	golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2 // indirect

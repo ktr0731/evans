@@ -17,9 +17,6 @@ func TestMain(m *testing.M) {
 		goleak.IgnoreTopFunction("github.com/ktr0731/evans/vendor/google.golang.org/grpc.(*ccResolverWrapper).watcher"),
 		goleak.IgnoreTopFunction("github.com/ktr0731/evans/vendor/google.golang.org/grpc.(*addrConn).createTransport"),
 
-		// TODO: fix goroutine leaks
-		goleak.IgnoreTopFunction("github.com/ktr0731/grpc-test/server.(*Server).Serve.func2"),
-
 		// ref. repl.(*executor).execute comments
 		goleak.IgnoreTopFunction("time.Sleep"),
 		goleak.IgnoreTopFunction("runtime.goparkunlock"),
