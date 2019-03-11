@@ -4,18 +4,14 @@ package e2e
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/di"
-	"github.com/ktr0731/grpc-test/server"
-	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -94,22 +90,8 @@ func TestCLI(t *testing.T) {
 	for _, c := range cases {
 		c := c
 		t.Run(c.args, func(t *testing.T) {
-			port, err := freeport.GetFreePort()
-			require.NoError(t, err, "failed to get a free port for gRPC test server")
-
-			addr := fmt.Sprintf(":%d", port)
-			opts := []server.Option{server.WithAddr(addr)}
-			if c.useReflection {
-				opts = append(opts, server.WithReflection())
-			}
-			if c.useTLS {
-				opts = append(opts, server.WithTLS())
-			}
-			if c.useWeb {
-				opts = append(opts, server.WithProtocol(server.ProtocolImprobableGRPCWeb))
-			}
-
-			defer server.New(opts...).Serve().Stop()
+			srv, port := newServer(t, c.useReflection, c.useTLS, c.useWeb)
+			defer srv.Serve().Stop()
 			defer cleanup()
 
 			in := strings.NewReader(`{ "name": "maho" }`)
@@ -120,7 +102,7 @@ func TestCLI(t *testing.T) {
 			ui := cui.New(in, out, errOut)
 
 			args := strings.Split(c.args, " ")
-			args = append([]string{"--cli", "--port", strconv.Itoa(port)}, args...)
+			args = append([]string{"--cli", "--port", port}, args...)
 			if c.useTLS && c.specifyCA {
 				args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
 			}
