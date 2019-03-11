@@ -4,14 +4,18 @@ package e2e
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/ktr0731/evans/adapter/cli"
 	"github.com/ktr0731/evans/adapter/cui"
 	"github.com/ktr0731/evans/di"
+	"github.com/ktr0731/grpc-test/server"
+	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,126 +34,102 @@ func TestCLI(t *testing.T) {
 		cli.DefaultReader = os.Stdin
 	}()
 
-	t.Run("from stdin", func(t *testing.T) {
-		cases := []struct {
-			args          string
-			code          int
-			useReflection bool
-			useWeb        bool
+	cases := []struct {
+		args string
+		code int
 
-			specifyCA bool
-			useTLS    bool
-		}{
-			{args: "", code: 1},
-			{args: "testdata/helloworld.proto", code: 1},
-			{args: "--package helloworld testdata/helloworld.proto", code: 1},
-			{args: "--package helloworld --service Greeter testdata/helloworld.proto", code: 1},
-			{args: "--package helloworld --service Greeter --call SayHello", code: 1},
-			{args: "--package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
+		// Server config
+		useReflection bool
+		useWeb        bool
+		useTLS        bool
+		specifyCA     bool
+	}{
+		{args: "", code: 1},
+		{args: "testdata/api.proto", code: 1},
+		{args: "--package api testdata/api.proto", code: 1},
+		{args: "--package api --service Example testdata/api.proto", code: 1},
+		{args: "--package api --service Example --call Unary", code: 1},
+		{args: "--package api --service Example --call Unary testdata/api.proto"},
 
-			{args: "--reflection", code: 1, useReflection: true},
-			{args: "--reflection --package helloworld --service Greeter", code: 1, useReflection: true},
-			{args: "--reflection --service Greeter", code: 1, useReflection: true},            // Package helloworld is inferred.
-			{args: "--reflection --service helloworld.Greeter", code: 1, useReflection: true}, // Specify package by --service flag.
-			{args: "--reflection --call SayHello", useReflection: true},                       // Package helloworld and service Greeter are inferred.
-			{args: "--reflection --service Greeter --call SayHello", useReflection: true},
+		{args: "--reflection", code: 1, useReflection: true},
+		{args: "--reflection --package api --service Example", code: 1, useReflection: true},
+		{args: "--reflection --service Example", code: 1, useReflection: true},     // Package api is inferred.
+		{args: "--reflection --service api.Example", code: 1, useReflection: true}, // Specify package by --service flag.
+		{args: "--reflection --call Unary", useReflection: true},                   // Package api and service Example are inferred.
+		{args: "--reflection --service Example --call Unary", useReflection: true},
 
-			{args: "--web --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useWeb: true},
+		{args: "--web --package api --service Example --call Unary testdata/api.proto", useWeb: true},
 
-			{args: "--web --reflection", useReflection: true, useWeb: true, code: 1},
-			{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
-			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true, code: 1},
-			{args: "--web --reflection --service Greeter --call SayHello", useReflection: true, useWeb: true},
+		{args: "--web --reflection", useReflection: true, useWeb: true, code: 1},
+		{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
+		{args: "--web --reflection --service Example", useReflection: true, useWeb: true, code: 1},
+		{args: "--web --reflection --service Example --call Unary", useReflection: true, useWeb: true},
 
-			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
-			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
-			// If both of --tls and --insecure are provided, --insecure is ignored.
-			{args: "--tls --insecure -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
-			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, code: 1},
+		{args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true},
+		{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true},
+		// If both of --tls and --insecure are provided, --insecure is ignored.
+		{args: "--tls --insecure -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true},
+		{args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, code: 1},
 
-			{args: "--tls --web -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true, code: 1},
-		}
+		{args: "--tls --web -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, code: 1},
 
-		for _, c := range cases {
-			t.Run(c.args, func(t *testing.T) {
-				srv := newServer(t, c.useReflection, c.useTLS)
+		{args: "--file testdata/in.json", code: 1},
+		{args: "--file testdata/in.json testdata/api.proto", code: 1},
+		{args: "--file testdata/in.json --package api testdata/api.proto", code: 1},
+		{args: "--file testdata/in.json --package api --service Example testdata/api.proto", code: 1},
+		{args: "--file testdata/in.json --package api --service Example --call Unary", code: 1},
+		{args: "--file testdata/in.json --package api --service Example --call Unary testdata/api.proto"},
 
-				defer srv.start(c.useWeb).stop()
-				defer cleanup()
+		{args: "--reflection --file testdata/in.json", code: 1, useReflection: true},
+		{args: "--reflection --file testdata/in.json --service Example", code: 1, useReflection: true},
+		{args: "--reflection --file testdata/in.json --service Example --call Unary", code: 0, useReflection: true},
 
-				in := strings.NewReader(`{ "name": "maho" }`)
-				cli.DefaultReader = in
+		{args: "--web --file testdata/in.json --package api --service Example --call Unary testdata/api.proto", useWeb: true},
 
-				out := new(bytes.Buffer)
-				errOut := new(bytes.Buffer)
-				ui := cui.New(in, out, errOut)
+		{args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true},
+		{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem  -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true},
+		{args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, code: 1},
+	}
 
-				args := strings.Split(c.args, " ")
-				args = append([]string{"--cli", "--port", srv.port}, args...)
-				if c.useTLS && c.specifyCA {
-					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
-				}
-				code := newCommand(ui).Run(args)
-				require.Equal(t, c.code, code, errOut.String())
+	for _, c := range cases {
+		c := c
+		t.Run(c.args, func(t *testing.T) {
+			port, err := freeport.GetFreePort()
+			require.NoError(t, err, "failed to get a free port for gRPC test server")
 
-				if c.code == 0 {
-					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()), errOut.String())
-				}
-			})
-		}
-	})
+			addr := fmt.Sprintf(":%d", port)
+			opts := []server.Option{server.WithAddr(addr)}
+			if c.useReflection {
+				opts = append(opts, server.WithReflection())
+			}
+			if c.useTLS {
+				opts = append(opts, server.WithTLS())
+			}
+			if c.useWeb {
+				opts = append(opts, server.WithProtocol(server.ProtocolImprobableGRPCWeb))
+			}
 
-	t.Run("from file", func(t *testing.T) {
-		cases := []struct {
-			args          string
-			code          int
-			useReflection bool
-			useWeb        bool
+			defer server.New(opts...).Serve().Stop()
+			defer cleanup()
 
-			specifyCA bool
-			useTLS    bool
-		}{
-			{args: "--file testdata/in.json", code: 1},
-			{args: "--file testdata/in.json testdata/helloworld.proto", code: 1},
-			{args: "--file testdata/in.json --package helloworld testdata/helloworld.proto", code: 1},
-			{args: "--file testdata/in.json --package helloworld --service Greeter testdata/helloworld.proto", code: 1},
-			{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello", code: 1},
-			{args: "--file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto"},
+			in := strings.NewReader(`{ "name": "maho" }`)
+			cli.DefaultReader = in
 
-			{args: "--reflection --file testdata/in.json", code: 1, useReflection: true},
-			{args: "--reflection --file testdata/in.json --service Greeter", code: 1, useReflection: true},
-			{args: "--reflection --file testdata/in.json --service Greeter --call SayHello", code: 0, useReflection: true},
+			out := new(bytes.Buffer)
+			errOut := new(bytes.Buffer)
+			ui := cui.New(in, out, errOut)
 
-			{args: "--web --file testdata/in.json --package helloworld --service Greeter --call SayHello testdata/helloworld.proto", useWeb: true},
+			args := strings.Split(c.args, " ")
+			args = append([]string{"--cli", "--port", strconv.Itoa(port)}, args...)
+			if c.useTLS && c.specifyCA {
+				args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
+			}
+			code := newCommand(ui).Run(args)
+			require.Equal(t, c.code, code, errOut.String())
 
-			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
-			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem  -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
-			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, code: 1},
-		}
-
-		for _, c := range cases {
-			t.Run(c.args, func(t *testing.T) {
-				srv := newServer(t, c.useReflection, c.useTLS)
-				defer srv.start(c.useWeb).stop()
-				defer cleanup()
-
-				in := strings.NewReader(`{ "name": "maho" }`)
-				cli.DefaultReader = in
-
-				out, eout := new(bytes.Buffer), new(bytes.Buffer)
-				ui := cui.New(in, out, eout)
-
-				args := append([]string{"--cli", "--port", srv.port}, strings.Split(c.args, " ")...)
-				if c.useTLS && c.specifyCA {
-					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
-				}
-				code := newCommand(ui).Run(args)
-				require.Equalf(t, c.code, code, "expected %d, but got %d. out = '%s', errout = '%s'", c.code, code, flatten(out.String()), flatten(eout.String()))
-
-				if c.code == 0 {
-					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()))
-				}
-			})
-		}
-	})
+			if c.code == 0 {
+				assert.Equal(t, `{ "message": "hello, maho" }`, flatten(out.String()), errOut.String())
+			}
+		})
+	}
 }
