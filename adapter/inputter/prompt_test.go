@@ -14,14 +14,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPrompt2_Input(t *testing.T) {
+func TestPrompt_Input(t *testing.T) {
 	const prefixFormat = ">"
 
 	t.Run("normal/simple", func(t *testing.T) {
 		env := testhelper.SetupEnv(t, "helloworld.proto", "helloworld", "Greeter")
 
 		p := helper.NewMockPrompt([]string{"rin", "shima"}, nil)
-		inputter := newPrompt2(p, prefixFormat)
+		inputter := newPrompt(p, prefixFormat)
 
 		rpc, err := env.RPC("SayHello")
 		require.NoError(t, err)
@@ -39,7 +39,7 @@ func TestPrompt2_Input(t *testing.T) {
 		env := testhelper.SetupEnv(t, "nested.proto", "library", "Library")
 
 		p := helper.NewMockPrompt([]string{"eriri", "spencer", "sawamura"}, nil)
-		inputter := newPrompt2(p, prefixFormat)
+		inputter := newPrompt(p, prefixFormat)
 
 		rpc, err := env.RPC("BorrowBook")
 		require.NoError(t, err)
@@ -55,7 +55,7 @@ func TestPrompt2_Input(t *testing.T) {
 
 	t.Run("normal/enum", func(t *testing.T) {
 		p := helper.NewMockPrompt(nil, []string{"PHILOSOPHY"})
-		inputter := newPrompt2(p, prefixFormat)
+		inputter := newPrompt(p, prefixFormat)
 
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 		m, err := env.Message("Book")
@@ -72,7 +72,7 @@ func TestPrompt2_Input(t *testing.T) {
 
 	t.Run("error/enum:invalid enum name", func(t *testing.T) {
 		p := helper.NewMockPrompt(nil, []string{"kumiko"})
-		inputter := newPrompt2(p, prefixFormat)
+		inputter := newPrompt(p, prefixFormat)
 
 		env := testhelper.SetupEnv(t, "enum.proto", "library", "")
 		m, err := env.Message("Book")
@@ -84,7 +84,7 @@ func TestPrompt2_Input(t *testing.T) {
 
 	t.Run("normal/oneof", func(t *testing.T) {
 		p := helper.NewMockPrompt([]string{"utaha", "kasumigaoka", "megumi", "kato"}, []string{"book", "book"})
-		inputter := newPrompt2(p, prefixFormat)
+		inputter := newPrompt(p, prefixFormat)
 
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 		m, err := env.Message("BorrowRequest")
@@ -111,7 +111,7 @@ func TestPrompt2_Input(t *testing.T) {
 
 	t.Run("error/oneof:invalid oneof field name", func(t *testing.T) {
 		p := helper.NewMockPrompt([]string{"bar"}, []string{"Book"})
-		inputter := newPrompt2(p, prefixFormat)
+		inputter := newPrompt(p, prefixFormat)
 
 		env := testhelper.SetupEnv(t, "oneof.proto", "shop", "")
 		m, err := env.Message("BorrowRequest")
@@ -129,7 +129,7 @@ func TestPrompt2_Input(t *testing.T) {
 		cleanup := injectNewPrompt(p)
 		defer cleanup()
 
-		inputter := newPrompt2(p, prefixFormat)
+		inputter := newPrompt(p, prefixFormat)
 
 		env := testhelper.SetupEnv(t, "repeated.proto", "helloworld", "")
 		m, err := env.Message("HelloRequest")
@@ -151,7 +151,7 @@ func TestPrompt2_Input(t *testing.T) {
 		cleanup := injectNewPrompt(prompt)
 		defer cleanup()
 
-		inputter := newPrompt2(prompt, prefixFormat)
+		inputter := newPrompt(prompt, prefixFormat)
 
 		env := testhelper.SetupEnv(t, "map.proto", "example", "")
 		m, err := env.Message("PrimitiveRequest")
@@ -171,7 +171,7 @@ func TestPrompt2_Input(t *testing.T) {
 		cleanup := injectNewPrompt(prompt)
 		defer cleanup()
 
-		inputter := newPrompt2(prompt, prefixFormat)
+		inputter := newPrompt(prompt, prefixFormat)
 
 		env := testhelper.SetupEnv(t, "map.proto", "example", "")
 		m, err := env.Message("MessageRequest")
@@ -191,7 +191,7 @@ func TestPrompt2_Input(t *testing.T) {
 		cleanup := injectNewPrompt(prompt)
 		defer cleanup()
 
-		inputter := newPrompt2(prompt, prefixFormat)
+		inputter := newPrompt(prompt, prefixFormat)
 
 		env := testhelper.SetupEnv(t, "circulated.proto", "example", "Example")
 		m, err := env.Message("FooRequest")
@@ -226,8 +226,8 @@ func TestPrompt2_Input(t *testing.T) {
 	})
 }
 
-func Test2_isCirculatedField(t *testing.T) {
-	i := NewPrompt2("")
+func Test_isCirculatedField(t *testing.T) {
+	i := NewPrompt("")
 
 	env := testhelper.SetupEnv(t, "circulated.proto", "example", "Example")
 
@@ -291,7 +291,7 @@ func Test2_isCirculatedField(t *testing.T) {
 	}
 }
 
-func Test2_makePrefix(t *testing.T) {
+func Test_makePrefix(t *testing.T) {
 	cases := map[string]struct {
 		protoName                string
 		pkgName                  string // TODO: remove it.

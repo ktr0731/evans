@@ -197,13 +197,13 @@ func initJSONFileInputter(in io.Reader) error {
 }
 
 var (
-	promptInputter     *inputter.PromptInputter2
+	promptInputter     *inputter.PromptInputter
 	promptInputterOnce sync.Once
 )
 
 func initPromptInputter(cfg *config.Config) error {
 	promptInputterOnce.Do(func() {
-		promptInputter = inputter.NewPrompt2(cfg.REPL.InputPromptFormat)
+		promptInputter = inputter.NewPrompt(cfg.REPL.InputPromptFormat)
 	})
 	return nil
 }

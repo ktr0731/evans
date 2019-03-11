@@ -65,22 +65,22 @@ func (s promptInputterState) clone() promptInputterState {
 	return new
 }
 
-// PromptInputter2 is an implementation of inputting method.
+// PromptInputter is an implementation of inputting method.
 // it has common logic to input fields interactively.
 // in normal, go-prompt is used as prompt.
-type PromptInputter2 struct {
+type PromptInputter struct {
 	prompt       prompt.Prompt
 	prefixFormat string
 	state        promptInputterState
 }
 
-func NewPrompt2(prefixFormat string) *PromptInputter2 {
-	return newPrompt2(prompt.New(nil, nil), prefixFormat)
+func NewPrompt(prefixFormat string) *PromptInputter {
+	return newPrompt(prompt.New(nil, nil), prefixFormat)
 }
 
 // For testing, the real constructor is separated from NewPrompt.
-func newPrompt2(prompt prompt.Prompt, prefixFormat string) *PromptInputter2 {
-	return &PromptInputter2{
+func newPrompt(prompt prompt.Prompt, prefixFormat string) *PromptInputter {
+	return &PromptInputter{
 		prompt:       prompt,
 		prefixFormat: prefixFormat,
 		state:        initialPromptInputterState,
@@ -94,7 +94,7 @@ func newPrompt2(prompt prompt.Prompt, prefixFormat string) *PromptInputter2 {
 // Note that Input resets the previous state when it is called again.
 //
 // Input is an implementation of port.Inputter.
-func (i *PromptInputter2) Input(req *desc.MessageDescriptor) (proto.Message, error) {
+func (i *PromptInputter) Input(req *desc.MessageDescriptor) (proto.Message, error) {
 	i.state = initialPromptInputterState.clone()
 	m, err := i.inputMessage(req)
 	if err != nil {
@@ -128,7 +128,7 @@ func (i *PromptInputter2) Input(req *desc.MessageDescriptor) (proto.Message, err
 //       CTRL+d entered. Never return in the case of repeated message.
 //       inputMessage also returns the first return value what is
 //       the message partially inputted.
-func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Message, error) {
+func (i *PromptInputter) inputMessage(msg *desc.MessageDescriptor) (proto.Message, error) {
 	if err := i.prompt.SetPrefixColor(i.state.color); err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (i *PromptInputter2) inputMessage(msg *desc.MessageDescriptor) (proto.Messa
 //
 // inputField returns following errors:
 //   - io.EOF: CTRL+d is entered.
-func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescriptor, partOfRepeatedField bool) error {
+func (i *PromptInputter) inputField(dmsg *dynamic.Message, f *desc.FieldDescriptor, partOfRepeatedField bool) error {
 	// If a repeated field is found, call inputRepeatedField instead.
 	if !partOfRepeatedField && f.IsRepeated() {
 		return i.inputRepeatedField(dmsg, f)
@@ -275,7 +275,7 @@ func (i *PromptInputter2) inputField(dmsg *dynamic.Message, f *desc.FieldDescrip
 	return nil
 }
 
-func (i *PromptInputter2) selectOneOf(f *desc.FieldDescriptor) (*desc.FieldDescriptor, error) {
+func (i *PromptInputter) selectOneOf(f *desc.FieldDescriptor) (*desc.FieldDescriptor, error) {
 	oneof := f.GetOneOf()
 
 	options := make([]string, len(oneof.GetChoices()))
@@ -298,7 +298,7 @@ func (i *PromptInputter2) selectOneOf(f *desc.FieldDescriptor) (*desc.FieldDescr
 	return desc, nil
 }
 
-func (i *PromptInputter2) selectEnum(enum *desc.FieldDescriptor) (*desc.EnumValueDescriptor, error) {
+func (i *PromptInputter) selectEnum(enum *desc.FieldDescriptor) (*desc.EnumValueDescriptor, error) {
 	values := enum.GetEnumType().GetValues()
 	options := make([]string, 0, len(values))
 	valOf := map[string]*desc.EnumValueDescriptor{}
@@ -320,7 +320,7 @@ func (i *PromptInputter2) selectEnum(enum *desc.FieldDescriptor) (*desc.EnumValu
 	return c, nil
 }
 
-func (i *PromptInputter2) inputRepeatedField(dmsg *dynamic.Message, f *desc.FieldDescriptor) error {
+func (i *PromptInputter) inputRepeatedField(dmsg *dynamic.Message, f *desc.FieldDescriptor) error {
 	old := i.prompt
 	defer func() {
 		i.prompt = old
@@ -347,7 +347,7 @@ func (i *PromptInputter2) inputRepeatedField(dmsg *dynamic.Message, f *desc.Fiel
 
 // inputPrimitiveField reads an input and converts it to a Go type.
 // If CTRL+d is entered, inputPrimitiveField returns io.EOF.
-func (i *PromptInputter2) inputPrimitiveField(f *desc.FieldDescriptor) (interface{}, error) {
+func (i *PromptInputter) inputPrimitiveField(f *desc.FieldDescriptor) (interface{}, error) {
 	in, err := i.prompt.Input()
 	if err == io.EOF {
 		return "", io.EOF
@@ -378,7 +378,7 @@ func (i *PromptInputter2) inputPrimitiveField(f *desc.FieldDescriptor) (interfac
 	return protobuf.ConvertValue2(in, f)
 }
 
-func (i *PromptInputter2) isSelectedOneOf(f *desc.FieldDescriptor) bool {
+func (i *PromptInputter) isSelectedOneOf(f *desc.FieldDescriptor) bool {
 	_, ok := i.state.selectedOneOf[f.GetOneOf().GetFullyQualifiedName()]
 	return ok
 }
@@ -386,7 +386,7 @@ func (i *PromptInputter2) isSelectedOneOf(f *desc.FieldDescriptor) bool {
 // isCirculatedField checks whether the passed message m is a circulated message.
 // TODO: a message is possible to have one or more circulated fields.
 // Field f must be a message field.
-func (i *PromptInputter2) isCirculatedField(f *desc.FieldDescriptor) bool {
+func (i *PromptInputter) isCirculatedField(f *desc.FieldDescriptor) bool {
 	var appearedFields []*desc.FieldDescriptor
 	appeared := make(map[string]interface{})
 
@@ -438,7 +438,7 @@ func (i *PromptInputter2) isCirculatedField(f *desc.FieldDescriptor) bool {
 }
 
 // makePrefix makes prefix for field f.
-func (i *PromptInputter2) makePrefix(f *desc.FieldDescriptor) string {
+func (i *PromptInputter) makePrefix(f *desc.FieldDescriptor) string {
 	return makePrefix(i.prefixFormat, f, i.state.ancestor, i.state.hasAncestorAndHasRepeatedField)
 }
 
