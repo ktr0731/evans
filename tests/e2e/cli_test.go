@@ -4,6 +4,8 @@ package e2e
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -23,6 +25,14 @@ func flatten(s string) string {
 	return re.ReplaceAllString(s, " ")
 }
 
+const (
+	normalIn           = `{ "name": "maho" }`
+	normalOut          = `{ "message": "hello, maho" }`
+	clientStreamingIn  = `{ "name": "ash" } { "name": "eiji" }`
+	clientStreamingOut = `{ "message": "you sent requests 2 times (ash, eiji)." }`
+	bidiStreamingIn    = clientStreamingIn
+)
+
 func TestCLI(t *testing.T) {
 	cleanup := di.Reset
 
@@ -31,6 +41,8 @@ func TestCLI(t *testing.T) {
 	}()
 
 	cases := []struct {
+		// in specifies the stdin input. Ignored if --file is specified.
+		in   string
 		args string
 		code int
 
@@ -39,52 +51,103 @@ func TestCLI(t *testing.T) {
 		useWeb        bool
 		useTLS        bool
 		specifyCA     bool
+
+		// Expected output. Ignored if it is empty.
+		out string
+		// assertOut is called if it isn't nil.
+		assertOut func(t *testing.T, out string)
 	}{
-		{args: "", code: 1},
-		{args: "testdata/api.proto", code: 1},
-		{args: "--package api testdata/api.proto", code: 1},
-		{args: "--package api --service Example testdata/api.proto", code: 1},
-		{args: "--package api --service Example --call Unary", code: 1},
-		{args: "--package api --service Example --call Unary testdata/api.proto"},
+		{in: normalIn, args: "", code: 1},
+		{in: normalIn, args: "testdata/api.proto", code: 1},
+		{in: normalIn, args: "--package api testdata/api.proto", code: 1},
+		{in: normalIn, args: "--package api --service Example testdata/api.proto", code: 1},
+		{in: normalIn, args: "--package api --service Example --call Unary", code: 1},
+		{in: normalIn, args: "--package api --service Example --call Unary testdata/api.proto", out: normalOut},
+		{
+			in:   normalIn,
+			args: "--package api --service Example --call ServerStreaming testdata/api.proto",
+			assertOut: func(t *testing.T, out string) {
+				// Transform to a JSON-formed text.
+				in := fmt.Sprintf(`[ %s ]`, strings.ReplaceAll(out, "} ", "}, "))
+				s := []struct {
+					Message string `json:"message"`
+				}{}
+				err := json.Unmarshal([]byte(in), &s)
+				require.NoError(t, err, "json.Unmarshal must parse the response message")
 
-		{args: "--reflection", code: 1, useReflection: true},
-		{args: "--reflection --package api --service Example", code: 1, useReflection: true},
-		{args: "--reflection --service Example", code: 1, useReflection: true},     // Package api is inferred.
-		{args: "--reflection --service api.Example", code: 1, useReflection: true}, // Specify package by --service flag.
-		{args: "--reflection --call Unary", useReflection: true},                   // Package api and service Example are inferred.
-		{args: "--reflection --service Example --call Unary", useReflection: true},
+				assert.NotZero(t, s, "the response message must have one or more JSON texts, but missing")
+				for i, f := range s {
+					assert.Equal(t, f.Message, fmt.Sprintf("hello maho, I greet %d times.", i+1), "each message must contain text such that 'hello maho, I greet {n} times.'")
+				}
+			},
+		},
+		{in: clientStreamingIn, args: "--package api --service Example --call ClientStreaming testdata/api.proto", out: clientStreamingOut},
+		{
+			in:   bidiStreamingIn,
+			args: "--package api --service Example --call BidiStreaming testdata/api.proto",
+			assertOut: func(t *testing.T, out string) {
+				// Transform to a JSON-formed text.
+				in := fmt.Sprintf(`[ %s ]`, strings.ReplaceAll(out, "} ", "}, "))
+				s := []struct {
+					Message string `json:"message"`
+				}{}
+				err := json.Unmarshal([]byte(in), &s)
+				require.NoError(t, err, "json.Unmarshal must parse the response message")
 
-		{args: "--web --package api --service Example --call Unary testdata/api.proto", useWeb: true},
+				assert.NotZero(t, s, "the response message must have one or more JSON texts, but missing")
+				// First, the server greets for "ash" at least one times.
+				// After that, the server also greets for "eiji".
+				name := "ash"
+				var i int
+				for _, f := range s {
+					if name != "eiji" && strings.HasPrefix(f.Message, "hello eiji, ") {
+						name = "eiji"
+						i = 0
+					}
+					assert.Equal(t, f.Message, fmt.Sprintf("hello %s, I greet %d times.", name, i+1), "each message must contain text such that 'hello (ash|eiji), I greet {n} times.'")
+					i++
+				}
+			},
+		},
 
-		{args: "--web --reflection", useReflection: true, useWeb: true, code: 1},
-		{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
-		{args: "--web --reflection --service Example", useReflection: true, useWeb: true, code: 1},
-		{args: "--web --reflection --service Example --call Unary", useReflection: true, useWeb: true},
+		{in: normalIn, args: "--reflection", code: 1, useReflection: true},
+		{in: normalIn, args: "--reflection --package api --service Example", code: 1, useReflection: true},
+		{in: normalIn, args: "--reflection --service Example", code: 1, useReflection: true},     // Package api is inferred.
+		{in: normalIn, args: "--reflection --service api.Example", code: 1, useReflection: true}, // Specify package by --service flag.
+		{in: normalIn, args: "--reflection --call Unary", useReflection: true, out: normalOut},   // Package api and service Example are inferred.
+		{in: normalIn, args: "--reflection --service Example --call Unary", useReflection: true, out: normalOut},
 
-		{args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true},
-		{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true},
+		{in: normalIn, args: "--web --package api --service Example --call Unary testdata/api.proto", useWeb: true, out: normalOut},
+
+		{in: normalIn, args: "--web --reflection", useReflection: true, useWeb: true, code: 1},
+		{in: normalIn, args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
+		{in: normalIn, args: "--web --reflection --service Example", useReflection: true, useWeb: true, code: 1},
+		{in: normalIn, args: "--web --reflection --service Example --call Unary", useReflection: true, useWeb: true, out: normalOut},
+
+		{in: normalIn, args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
+		{in: normalIn, args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
 		// If both of --tls and --insecure are provided, --insecure is ignored.
-		{args: "--tls --insecure -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true},
-		{args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, code: 1},
+		{in: normalIn, args: "--tls --insecure -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
+		{in: normalIn, args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, code: 1},
 
-		{args: "--tls --web -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, code: 1},
+		{in: normalIn, args: "--tls --web -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, code: 1},
 
 		{args: "--file testdata/in.json", code: 1},
 		{args: "--file testdata/in.json testdata/api.proto", code: 1},
 		{args: "--file testdata/in.json --package api testdata/api.proto", code: 1},
 		{args: "--file testdata/in.json --package api --service Example testdata/api.proto", code: 1},
 		{args: "--file testdata/in.json --package api --service Example --call Unary", code: 1},
-		{args: "--file testdata/in.json --package api --service Example --call Unary testdata/api.proto"},
+		{args: "--file testdata/in.json --package api --service Example --call Unary testdata/api.proto", out: normalOut},
 
 		{args: "--reflection --file testdata/in.json", code: 1, useReflection: true},
 		{args: "--reflection --file testdata/in.json --service Example", code: 1, useReflection: true},
-		{args: "--reflection --file testdata/in.json --service Example --call Unary", code: 0, useReflection: true},
+		{args: "--reflection --file testdata/in.json --service Example --call Unary", useReflection: true, out: normalOut},
 
-		{args: "--web --file testdata/in.json --package api --service Example --call Unary testdata/api.proto", useWeb: true},
+		{args: "--web --file testdata/in.json --package api --service Example --call Unary testdata/api.proto", useWeb: true, out: normalOut},
 
-		{args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true},
-		{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem  -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true},
-		{args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, code: 1},
+		{args: "--file testdata/in.json --tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
+		{args: "--file testdata/in.json --tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem  -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
+		{args: "--file testdata/in.json --tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, code: 1},
 	}
 
 	for _, c := range cases {
@@ -94,7 +157,7 @@ func TestCLI(t *testing.T) {
 			defer srv.Serve().Stop()
 			defer cleanup()
 
-			in := strings.NewReader(`{ "name": "maho" }`)
+			in := strings.NewReader(c.in)
 			cli.DefaultReader = in
 
 			out := new(bytes.Buffer)
@@ -110,7 +173,13 @@ func TestCLI(t *testing.T) {
 			require.Equal(t, c.code, code, errOut.String())
 
 			if c.code == 0 {
-				assert.Equal(t, `{ "message": "hello, maho" }`, flatten(out.String()), errOut.String())
+				out := flatten(out.String())
+				if len(c.out) != 0 {
+					assert.Equal(t, c.out, out, errOut.String())
+				}
+				if c.assertOut != nil {
+					c.assertOut(t, out)
+				}
 			}
 		})
 	}
