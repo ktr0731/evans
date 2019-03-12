@@ -33,6 +33,7 @@
 
 [server]
   host = "localhost"
+  name = ""
   port = "3333"
   reflection = false
   tls = false
