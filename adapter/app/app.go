@@ -66,6 +66,7 @@ func (c *Command) parseFlags(args []string) *options {
 	f.StringVar(&opts.cacert, "cacert", "", "the CA certificate file for verifying the server")
 	f.StringVar(&opts.cert, "cert", "", "the certificate file for mutual TLS auth. it must be provided with --certkey.")
 	f.StringVar(&opts.certKey, "certkey", "", "the private key file for mutual TLS auth. it must be provided with --cert.")
+	f.StringVar(&opts.serverName, "servername", "", "override the server name used to verify the hostname (ignored if --tls is disabled)")
 	f.BoolVarP(&opts.insecure, "insecure", "k", true, "use an insecure connection (ignored if --tls is enabled)")
 	f.BoolVarP(&opts.version, "version", "v", false, "display version and exit")
 	f.BoolVarP(&opts.help, "help", "h", false, "display help text and exit")
@@ -127,6 +128,7 @@ type options struct {
 	cacert     string
 	cert       string
 	certKey    string
+	serverName string
 	insecure   bool
 
 	// meta options
