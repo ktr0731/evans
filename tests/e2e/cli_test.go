@@ -63,6 +63,7 @@ func TestCLI(t *testing.T) {
 		{in: normalIn, args: "--package api --service Example testdata/api.proto", code: 1},
 		{in: normalIn, args: "--package api --service Example --call Unary", code: 1},
 		{in: normalIn, args: "--package api --service Example --call Unary testdata/api.proto", out: normalOut},
+		{in: clientStreamingIn, args: "--package api --service Example --call ClientStreaming testdata/api.proto", out: clientStreamingOut},
 		{
 			in:   normalIn,
 			args: "--package api --service Example --call ServerStreaming testdata/api.proto",
@@ -81,7 +82,6 @@ func TestCLI(t *testing.T) {
 				}
 			},
 		},
-		{in: clientStreamingIn, args: "--package api --service Example --call ClientStreaming testdata/api.proto", out: clientStreamingOut},
 		{
 			in:   bidiStreamingIn,
 			args: "--package api --service Example --call BidiStreaming testdata/api.proto",
@@ -123,6 +123,40 @@ func TestCLI(t *testing.T) {
 		{in: normalIn, args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
 		{in: normalIn, args: "--web --reflection --service Example", useReflection: true, useWeb: true, code: 1},
 		{in: normalIn, args: "--web --reflection --service Example --call Unary", useReflection: true, useWeb: true, out: normalOut},
+		{in: clientStreamingIn, args: "--web --reflection --service Example --call ClientStreaming testdata/api.proto", useReflection: true, useWeb: true, out: clientStreamingOut},
+		{
+			in:            normalIn,
+			args:          "--web --reflection --service Example --call ServerStreaming testdata/api.proto",
+			useReflection: true,
+			useWeb:        true,
+			assertOut: func(t *testing.T, out string) {
+				s := toStruct(t, out)
+				for i, f := range s {
+					assert.Equal(t, f.Message, fmt.Sprintf("hello maho, I greet %d times.", i+1), "each message must contain text such that 'hello maho, I greet {n} times.'")
+				}
+			},
+		},
+		{
+			in:            bidiStreamingIn,
+			args:          "--web --reflection --service Example --call BidiStreaming testdata/api.proto",
+			useReflection: true,
+			useWeb:        true,
+			assertOut: func(t *testing.T, out string) {
+				s := toStruct(t, out)
+				// First, the server greets for "ash" at least one times.
+				// After that, the server also greets for "eiji".
+				name := "ash"
+				var i int
+				for _, f := range s {
+					if name != "eiji" && strings.HasPrefix(f.Message, "hello eiji, ") {
+						name = "eiji"
+						i = 0
+					}
+					assert.Equal(t, f.Message, fmt.Sprintf("hello %s, I greet %d times.", name, i+1), "each message must contain text such that 'hello (ash|eiji), I greet {n} times.'")
+					i++
+				}
+			},
+		},
 
 		{in: normalIn, args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
 		{in: normalIn, args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
@@ -183,4 +217,19 @@ func TestCLI(t *testing.T) {
 			}
 		})
 	}
+}
+
+// toStruct converts a response string to a structured one.
+func toStruct(t *testing.T, out string) []struct {
+	Message string `json:"message"`
+} {
+	// Transform to a JSON-formed text.
+	in := fmt.Sprintf(`[ %s ]`, strings.Replace(out, "} ", "}, ", -1))
+	s := []struct {
+		Message string `json:"message"`
+	}{}
+	err := json.Unmarshal([]byte(in), &s)
+	require.NoError(t, err, "json.Unmarshal must parse the response message")
+	assert.NotZero(t, s, "the response message must have one or more JSON texts, but missing")
+	return s
 }

@@ -73,12 +73,6 @@ func NewClient(addr string, useReflection, useTLS bool, cacert, cert, certKey st
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial to gRPC server")
 	}
-	switch s := conn.GetState(); s {
-	case connectivity.TransientFailure:
-		return nil, errors.Errorf("connection transient failure, is the gRPC server running?: %s", s)
-	case connectivity.Shutdown:
-		return nil, errors.Errorf("the gRPC server was closed: %s", s)
-	}
 
 	client := &client{
 		conn: conn,
