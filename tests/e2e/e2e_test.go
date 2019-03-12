@@ -22,6 +22,10 @@ func TestMain(m *testing.M) {
 		goleak.IgnoreTopFunction("github.com/ktr0731/evans/vendor/google.golang.org/grpc.(*ccResolverWrapper).watcher"),
 		goleak.IgnoreTopFunction("github.com/ktr0731/evans/vendor/google.golang.org/grpc.(*addrConn).createTransport"),
 
+		// TODO: fix grpc-web-go-client
+		goleak.IgnoreTopFunction("net/http.(*persistConn).writeLoop"),
+		goleak.IgnoreTopFunction("net/http.(*persistConn).readLoop"),
+
 		// ref. repl.(*executor).execute comments
 		goleak.IgnoreTopFunction("time.Sleep"),
 		goleak.IgnoreTopFunction("runtime.goparkunlock"),
