@@ -234,6 +234,7 @@ func initGRPCClient(cfg *config.Config) error {
 		} else {
 			gRPCClient, err = grpc.NewClient(
 				addr,
+				cfg.Server.Name,
 				cfg.Server.Reflection,
 				cfg.Server.TLS,
 				cfg.Request.CACertFile,

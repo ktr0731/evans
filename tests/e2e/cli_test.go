@@ -62,6 +62,7 @@ func TestCLI(t *testing.T) {
 			{args: "--web --reflection --service Greeter --call SayHello", useReflection: true, useWeb: true},
 
 			{args: "--tls -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
+			{args: "--tls -r --servername localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
 			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},
 			// If both of --tls and --insecure are provided, --insecure is ignored.
 			{args: "--tls --insecure -r --host localhost --service Greeter --call SayHello", useReflection: true, useTLS: true, specifyCA: true},

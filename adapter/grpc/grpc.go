@@ -30,13 +30,15 @@ type client struct {
 
 // NewClient creates a new gRPC client. It dials to the server specified by addr.
 // addr format is the same as the first argument of grpc.Dial.
+// If serverName is not empty, it overrides the gRPC server name used to
+// verify the hostname on the returned certificates.
 // If useReflection is true, the gRPC client enables gRPC reflection.
 // If useTLS is true, the gRPC client establishes a secure connection with the server.
 //
 // The set of cert and certKey enables mutual authentication if useTLS is enabled.
 // If one of it is not found, NewClient returns entity.ErrMutualAuthParamsAreNotEnough.
 // If useTLS is false, cacert, cert and certKey are ignored.
-func NewClient(addr string, useReflection, useTLS bool, cacert, cert, certKey string) (entity.GRPCClient, error) {
+func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert, certKey string) (entity.GRPCClient, error) {
 	var opts []grpc.DialOption
 	if !useTLS {
 		opts = append(opts, grpc.WithInsecure())
@@ -60,12 +62,15 @@ func NewClient(addr string, useReflection, useTLS bool, cacert, cert, certKey st
 				return nil, errors.Wrap(err, "failed to read the client certificate")
 			}
 			tlsCfg.Certificates = append(tlsCfg.Certificates, certificate)
-			opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
 		} else if cert != "" || certKey != "" {
 			return nil, entity.ErrMutualAuthParamsAreNotEnough
 		}
 
-		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
+		creds := credentials.NewTLS(&tlsCfg)
+		if serverName != "" {
+			creds.OverrideServerName(serverName)
+		}
+		opts = append(opts, grpc.WithTransportCredentials(creds))
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
 	defer cancel()
