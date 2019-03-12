@@ -136,27 +136,27 @@ func TestCLI(t *testing.T) {
 				}
 			},
 		},
-		{
-			in:            bidiStreamingIn,
-			args:          "--web --reflection --service Example --call BidiStreaming testdata/api.proto",
-			useReflection: true,
-			useWeb:        true,
-			assertOut: func(t *testing.T, out string) {
-				s := toStruct(t, out)
-				// First, the server greets for "ash" at least one times.
-				// After that, the server also greets for "eiji".
-				name := "ash"
-				var i int
-				for _, f := range s {
-					if name != "eiji" && strings.HasPrefix(f.Message, "hello eiji, ") {
-						name = "eiji"
-						i = 0
-					}
-					assert.Equal(t, f.Message, fmt.Sprintf("hello %s, I greet %d times.", name, i+1), "each message must contain text such that 'hello (ash|eiji), I greet {n} times.'")
-					i++
-				}
-			},
-		},
+		// {
+		// 	in:            bidiStreamingIn,
+		// 	args:          "--web --reflection --service Example --call BidiStreaming testdata/api.proto",
+		// 	useReflection: true,
+		// 	useWeb:        true,
+		// 	assertOut: func(t *testing.T, out string) {
+		// 		s := toStruct(t, out)
+		// 		// First, the server greets for "ash" at least one times.
+		// 		// After that, the server also greets for "eiji".
+		// 		name := "ash"
+		// 		var i int
+		// 		for _, f := range s {
+		// 			if name != "eiji" && strings.HasPrefix(f.Message, "hello eiji, ") {
+		// 				name = "eiji"
+		// 				i = 0
+		// 			}
+		// 			assert.Equal(t, f.Message, fmt.Sprintf("hello %s, I greet %d times.", name, i+1), "each message must contain text such that 'hello (ash|eiji), I greet {n} times.'")
+		// 			i++
+		// 		}
+		// 	},
+		// },
 
 		{in: normalIn, args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
 		{in: normalIn, args: "--tls -r --servername localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
