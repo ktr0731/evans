@@ -159,6 +159,7 @@ func TestCLI(t *testing.T) {
 		},
 
 		{in: normalIn, args: "--tls -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
+		{in: normalIn, args: "--tls -r --servername localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
 		{in: normalIn, args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
 		// If both of --tls and --insecure are provided, --insecure is ignored.
 		{in: normalIn, args: "--tls --insecure -r --host localhost --service Example --call Unary", useReflection: true, useTLS: true, specifyCA: true, out: normalOut},
