@@ -42,9 +42,9 @@ func newGRPCClient(t *testing.T) *mockentity.GRPCClientMock {
 		},
 		NewBidiStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
 			return &mockentity.BidiStreamMock{
-				SendFunc:    func(req proto.Message) error { return nil },
-				ReceiveFunc: func(res *proto.Message) error { return nil },
-				CloseFunc:   func() error { return nil },
+				SendFunc:      func(req proto.Message) error { return nil },
+				ReceiveFunc:   func(res *proto.Message) error { return nil },
+				CloseSendFunc: func() error { return nil },
 			}, nil
 		},
 	}

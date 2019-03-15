@@ -95,13 +95,7 @@ func (c *client) Invoke(ctx context.Context, fqrn string, req, res interface{}) 
 	if err != nil {
 		return err
 	}
-	logger.Scriptln(func() []interface{} {
-		b, err := json.MarshalIndent(&req, "", "  ")
-		if err != nil {
-			return nil
-		}
-		return []interface{}{"request:\n" + string(b)}
-	})
+	loggingRequest(req)
 	wakeUpClientConn(c.conn)
 	return c.conn.Invoke(ctx, endpoint, req, res)
 }
@@ -129,8 +123,9 @@ type clientStream struct {
 	cs grpc.ClientStream
 }
 
-func (s *clientStream) Send(m proto.Message) error {
-	return s.cs.SendMsg(m)
+func (s *clientStream) Send(req proto.Message) error {
+	loggingRequest(req)
+	return s.cs.SendMsg(req)
 }
 
 func (s *clientStream) CloseAndReceive(res *proto.Message) error {
@@ -178,15 +173,16 @@ type bidiStream struct {
 	s *serverStream
 }
 
-func (s *bidiStream) Send(res proto.Message) error {
-	return s.s.cs.SendMsg(res)
+func (s *bidiStream) Send(req proto.Message) error {
+	loggingRequest(req)
+	return s.s.cs.SendMsg(req)
 }
 
 func (s *bidiStream) Receive(res *proto.Message) error {
 	return s.s.cs.RecvMsg(*res)
 }
 
-func (s *bidiStream) Close() error {
+func (s *bidiStream) CloseSend() error {
 	return s.s.cs.CloseSend()
 }
 
@@ -215,4 +211,14 @@ func wakeUpClientConn(conn *grpc.ClientConn) {
 	if conn.GetState() == connectivity.TransientFailure {
 		conn.ResetConnectBackoff()
 	}
+}
+
+func loggingRequest(req interface{}) {
+	logger.Scriptln(func() []interface{} {
+		b, err := json.MarshalIndent(&req, "", "  ")
+		if err != nil {
+			return nil
+		}
+		return []interface{}{"request:\n" + string(b)}
+	})
 }
