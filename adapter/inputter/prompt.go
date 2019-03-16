@@ -14,11 +14,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	// EORF represents an inputitng for a repeated field was finished.
-	EORF = errors.New("end of repeated field")
-)
-
 var initialPromptInputterState = promptInputterState{
 	selectedOneOf:      make(map[string]interface{}),
 	circulatedMessages: make(map[string][]string),
@@ -215,7 +210,7 @@ func (i *PromptInputter) inputField(dmsg *dynamic.Message, f *desc.FieldDescript
 			}
 			if choice == "finish" {
 				if f.IsRepeated() {
-					return EORF
+					return io.EOF
 				}
 				return nil
 			}
@@ -334,7 +329,7 @@ func (i *PromptInputter) inputRepeatedField(dmsg *dynamic.Message, f *desc.Field
 		}
 
 		err := i.inputField(dmsg, f, true)
-		if err == EORF {
+		if err == io.EOF {
 			return nil
 		}
 		if err != nil {
