@@ -64,6 +64,7 @@ func TestCLI(t *testing.T) {
 		{in: normalIn, args: "--package api --service Example testdata/api.proto", code: 1},
 		{in: normalIn, args: "--package api --service Example --call Unary", code: 1},
 		{in: normalIn, args: "--package api --service Example --call Unary testdata/api.proto", out: normalOut},
+		{in: normalIn, args: "--package api --service Example --call Unary --header foo=bar testdata/api.proto", out: normalOut},
 		{in: clientStreamingIn, args: "--package api --service Example --call ClientStreaming testdata/api.proto", out: clientStreamingOut},
 		{
 			in:   normalIn,

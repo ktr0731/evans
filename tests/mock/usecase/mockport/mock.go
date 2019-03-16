@@ -5,7 +5,6 @@ package mockport
 
 import (
 	"github.com/golang/protobuf/proto"
-	"github.com/jhump/protoreflect/desc"
 	"github.com/ktr0731/evans/entity"
 	"github.com/ktr0731/evans/usecase/port"
 	"io"
@@ -353,74 +352,6 @@ func (mock *ShowableMock) ShowCalls() []struct {
 	lockShowableMockShow.RLock()
 	calls = mock.calls.Show
 	lockShowableMockShow.RUnlock()
-	return calls
-}
-
-var (
-	lockInputterMockInput sync.RWMutex
-)
-
-// Ensure, that InputterMock does implement Inputter.
-// If this is not the case, regenerate this file with moq.
-var _ port.Inputter = &InputterMock{}
-
-// InputterMock is a mock implementation of Inputter.
-//
-//     func TestSomethingThatUsesInputter(t *testing.T) {
-//
-//         // make and configure a mocked Inputter
-//         mockedInputter := &InputterMock{
-//             InputFunc: func(req *desc.MessageDescriptor) (proto.Message, error) {
-// 	               panic("mock out the Input method")
-//             },
-//         }
-//
-//         // use mockedInputter in code that requires Inputter
-//         // and then make assertions.
-//
-//     }
-type InputterMock struct {
-	// InputFunc mocks the Input method.
-	InputFunc func(req *desc.MessageDescriptor) (proto.Message, error)
-
-	// calls tracks calls to the methods.
-	calls struct {
-		// Input holds details about calls to the Input method.
-		Input []struct {
-			// Req is the req argument value.
-			Req *desc.MessageDescriptor
-		}
-	}
-}
-
-// Input calls InputFunc.
-func (mock *InputterMock) Input(req *desc.MessageDescriptor) (proto.Message, error) {
-	if mock.InputFunc == nil {
-		panic("InputterMock.InputFunc: method is nil but Inputter.Input was just called")
-	}
-	callInfo := struct {
-		Req *desc.MessageDescriptor
-	}{
-		Req: req,
-	}
-	lockInputterMockInput.Lock()
-	mock.calls.Input = append(mock.calls.Input, callInfo)
-	lockInputterMockInput.Unlock()
-	return mock.InputFunc(req)
-}
-
-// InputCalls gets all the calls that were made to Input.
-// Check the length with:
-//     len(mockedInputter.InputCalls())
-func (mock *InputterMock) InputCalls() []struct {
-	Req *desc.MessageDescriptor
-} {
-	var calls []struct {
-		Req *desc.MessageDescriptor
-	}
-	lockInputterMockInput.RLock()
-	calls = mock.calls.Input
-	lockInputterMockInput.RUnlock()
 	return calls
 }
 

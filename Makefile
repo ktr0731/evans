@@ -32,7 +32,7 @@ tools: dept
 .PHONY: generate
 generate:
 ifneq ($(shell git diff entity),)
-	moq -pkg mockentity -out tests/mock/entity/mock.go entity Field Message Service RPC ClientStream ServerStream BidiStream GRPCClient
+	moq -pkg mockentity -out tests/mock/entity/mock.go entity Field Message Service RPC
 endif
 
 ifneq ($(shell git diff entity/env),)
@@ -40,7 +40,7 @@ ifneq ($(shell git diff entity/env),)
 endif
 
 ifneq ($(shell git diff usecase/port),)
-	moq -pkg mockport -out tests/mock/usecase/mockport/mock.go usecase/port InputPort Showable Inputter OutputPort DynamicBuilder
+	moq -pkg mockport -out tests/mock/usecase/mockport/mock.go usecase/port InputPort Showable OutputPort DynamicBuilder
 endif
 
 .PHONY: build
