@@ -1,35 +1,9 @@
 syntax = "proto3";
 package example;
 
-service Example {
-  // A+-----+
-  // ^      v
-  // +-----+B
-  rpc Request (A) returns (B) {}
-
-  // Foo+-->Self+-+
-  //         ^    |
-  //         +----+
-  rpc Request2 (Foo) returns (B) {}
-
-
-  // Hoge+-->Fuga+-->Piyo
-  //  ^                +
-  //  |                |
-  //  +----------------+
-  rpc Request3 (Hoge) returns (B) {}
-
-  //     oneof
-  // C+-------->ListC
-  // ^             +
-  // |   repeated  |
-  // +-------------+
-  rpc Request4 (C) returns (B) {}
-  rpc Request5 (D) returns (B) {}
-  rpc Request6 (E) returns (B) {}
-  rpc Foo(FooRequest) returns (FooResponse);
-}
-
+// A+-----+
+// ^      v
+// +-----+B
 message A {
   B b = 1;
 }
@@ -38,16 +12,22 @@ message B {
   A a = 1;
 }
 
-message Foo {
+// C+-->Self+--+
+//        ^    |
+//        +----+
+message C {
   Self self = 1;
 }
 
 message Self {
-  string hoge = 1;
-  Self self = 2;
+  Self self = 1;
 }
 
-message Hoge {
+// D+-->Fuga+-->Piyo
+//       ^        +
+//       |        |
+//       +--------+
+message D {
   Fuga fuga = 1;
   string dummy1 = 2;
 }
@@ -58,38 +38,48 @@ message Fuga {
 }
 
 message Piyo {
-  Hoge hoge = 1;
+  D d = 1;
   string dummy3 = 2;
 }
 
-message C {
+//     oneof
+// E+-------->List
+// ^            +
+// |  repeated  |
+// +------------+
+message E {
   oneof oneof {
-    ListC list = 1;
+    List list = 1;
     string str = 2;
   }
 }
 
-message ListC {
-  repeated C a = 1;
+message List {
+  repeated E a = 1;
 }
 
-message D {
-  map<string, C> m = 1;
+//    repeated
+// G+---------->M1Entry
+// ^              +
+// |              v
+// +-------------+H
+message F {
+  map<string, E> m = 1;
 }
 
 // field m1 and m2 have the same structure.
-message E {
-  map<string, F> m1 = 1;
+message G {
+  map<string, H> m1 = 1;
 
   message M {
     string key = 1;
-    F val = 2;
+    H val = 2;
   }
   repeated M m2 = 2;
 }
 
-message F {
-  E e = 1;
+message H {
+  G g = 1;
 }
 
 message Filters {
@@ -104,22 +94,20 @@ message FooRequest {
     int32 limit = 3;
 }
 
-message FooResponse {
-    repeated string names = 1;
+message Q {
+  K k = 1;
+  K k2 = 2;
 }
 
-message G {
-  H h = 1;
-  H h2 = 2;
-}
-
-message H {}
+message K {}
 
 message I {
-  H h = 1;
+  K k = 1;
   J j = 2;
 }
 
 message J {
-  H h = 1;
+  K k = 1;
 }
+
+message empty {}

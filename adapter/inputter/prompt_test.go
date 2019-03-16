@@ -193,7 +193,7 @@ func TestPrompt_Input(t *testing.T) {
 
 		inputter := newPrompt(prompt, prefixFormat)
 
-		env := testhelper.SetupEnv(t, "circulated.proto", "example", "Example")
+		env := testhelper.SetupEnv(t, "circulated.proto", "example", "")
 		m, err := env.Message("FooRequest")
 		require.NoError(t, err)
 
@@ -229,7 +229,7 @@ func TestPrompt_Input(t *testing.T) {
 func Test_isCirculatedField(t *testing.T) {
 	i := NewPrompt("")
 
-	env := testhelper.SetupEnv(t, "circulated.proto", "example", "Example")
+	env := testhelper.SetupEnv(t, "circulated.proto", "example", "")
 
 	// See circulated.proto for dependency graphs.
 	cases := []struct {
@@ -242,29 +242,29 @@ func Test_isCirculatedField(t *testing.T) {
 		{msgName: "A", fieldName: "b", isCirculated: true, circulatedMsgs: []string{"example.B", "example.A"}},
 		{msgName: "B", fieldName: "a", isCirculated: true, circulatedMsgs: []string{"example.A", "example.B"}},
 
-		{msgName: "Foo", fieldName: "self", isCirculated: true, circulatedMsgs: []string{"example.Self"}},
+		{msgName: "C", fieldName: "self", isCirculated: true, circulatedMsgs: []string{"example.Self"}},
 		{msgName: "Self", fieldName: "self", isCirculated: true, circulatedMsgs: []string{"example.Self"}},
 
-		{msgName: "Hoge", fieldName: "fuga", isCirculated: true, circulatedMsgs: []string{"example.Fuga", "example.Piyo", "example.Hoge"}},
-		{msgName: "Fuga", fieldName: "piyo", isCirculated: true, circulatedMsgs: []string{"example.Piyo", "example.Hoge", "example.Fuga"}},
-		{msgName: "Piyo", fieldName: "hoge", isCirculated: true, circulatedMsgs: []string{"example.Hoge", "example.Fuga", "example.Piyo"}},
+		{msgName: "D", fieldName: "fuga", isCirculated: true, circulatedMsgs: []string{"example.Fuga", "example.Piyo", "example.D"}},
+		{msgName: "Fuga", fieldName: "piyo", isCirculated: true, circulatedMsgs: []string{"example.Piyo", "example.D", "example.Fuga"}},
+		{msgName: "Piyo", fieldName: "hoge", isCirculated: true, circulatedMsgs: []string{"example.D", "example.Fuga", "example.Piyo"}},
 
-		{msgName: "D", fieldName: "m", isCirculated: false, assertFunc: func(t *testing.T, circulatedMsgs map[string][]string) {
-			msgs, ok := circulatedMsgs["example.D.MEntry.value"]
-			require.True(t, ok, "isCirculatedField must record example.D.MEntry.value as a circulated field")
-			assert.Equal(t, []string{"example.C", "example.ListC"}, msgs)
+		{msgName: "F", fieldName: "m", isCirculated: false, assertFunc: func(t *testing.T, circulatedMsgs map[string][]string) {
+			msgs, ok := circulatedMsgs["example.F.MEntry.value"]
+			require.True(t, ok, "isCirculatedField must record example.F.MEntry.value as a circulated field")
+			assert.Equal(t, []string{"example.E", "example.List"}, msgs)
 		}},
-		{msgName: "C", fieldName: "list", isCirculated: true, circulatedMsgs: []string{"example.ListC", "example.C"}},
+		{msgName: "E", fieldName: "list", isCirculated: true, circulatedMsgs: []string{"example.List", "example.E"}},
 
-		{msgName: "E", fieldName: "m1", isCirculated: true, circulatedMsgs: []string{"example.E.M1Entry", "example.F", "example.E"}},
-		{msgName: "E", fieldName: "m2", isCirculated: true, circulatedMsgs: []string{"example.E.M", "example.F", "example.E"}},
-		{msgName: "F", fieldName: "e", isCirculated: true, circulatedMsgs: []string{"example.E", "example.E.M1Entry", "example.E.M", "example.F"}},
+		{msgName: "G", fieldName: "m1", isCirculated: true, circulatedMsgs: []string{"example.G.M1Entry", "example.H", "example.G"}},
+		{msgName: "G", fieldName: "m2", isCirculated: true, circulatedMsgs: []string{"example.G.M", "example.H", "example.G"}},
+		{msgName: "H", fieldName: "g", isCirculated: true, circulatedMsgs: []string{"example.G", "example.G.M1Entry", "example.G.M", "example.H"}},
 
 		{msgName: "FooRequest", fieldName: "filters", isCirculated: true, circulatedMsgs: []string{"example.Filters"}},
 		{msgName: "Filters", fieldName: "and", isCirculated: true, circulatedMsgs: []string{"example.Filters"}},
 		{msgName: "Filters", fieldName: "or", isCirculated: true, circulatedMsgs: []string{"example.Filters"}},
 
-		{msgName: "G", isCirculated: false},
+		{msgName: "Q", isCirculated: false},
 		{msgName: "I", isCirculated: false},
 	}
 	for _, c := range cases {

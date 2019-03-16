@@ -40,7 +40,7 @@ ifneq ($(shell git diff entity/env),)
 endif
 
 ifneq ($(shell git diff usecase/port),)
-	moq -pkg mockport -out tests/mock/usecase/mockport/mock.go usecase/port InputPort Showable OutputPort DynamicBuilder
+	moq -pkg mockport -out tests/mock/usecase/mockport/mock.go usecase/port OutputPort
 endif
 
 .PHONY: build
