@@ -19,6 +19,10 @@ var (
 	lockFieldMockType       sync.RWMutex
 )
 
+// Ensure, that FieldMock does implement Field.
+// If this is not the case, regenerate this file with moq.
+var _ entity.Field = &FieldMock{}
+
 // FieldMock is a mock implementation of Field.
 //
 //     func TestSomethingThatUsesField(t *testing.T) {
@@ -26,24 +30,24 @@ var (
 //         // make and configure a mocked Field
 //         mockedField := &FieldMock{
 //             FQRNFunc: func() string {
-// 	               panic("TODO: mock out the FQRN method")
+// 	               panic("mock out the FQRN method")
 //             },
 //             FieldNameFunc: func() string {
-// 	               panic("TODO: mock out the FieldName method")
+// 	               panic("mock out the FieldName method")
 //             },
 //             IsRepeatedFunc: func() bool {
-// 	               panic("TODO: mock out the IsRepeated method")
+// 	               panic("mock out the IsRepeated method")
 //             },
 //             PBTypeFunc: func() string {
-// 	               panic("TODO: mock out the PBType method")
+// 	               panic("mock out the PBType method")
 //             },
 //             TypeFunc: func() entity.FieldType {
-// 	               panic("TODO: mock out the Type method")
+// 	               panic("mock out the Type method")
 //             },
 //         }
 //
-//         // TODO: use mockedField in code that requires Field
-//         //       and then make assertions.
+//         // use mockedField in code that requires Field
+//         // and then make assertions.
 //
 //     }
 type FieldMock struct {
@@ -218,6 +222,10 @@ var (
 	lockMessageMockName     sync.RWMutex
 )
 
+// Ensure, that MessageMock does implement Message.
+// If this is not the case, regenerate this file with moq.
+var _ entity.Message = &MessageMock{}
+
 // MessageMock is a mock implementation of Message.
 //
 //     func TestSomethingThatUsesMessage(t *testing.T) {
@@ -225,18 +233,18 @@ var (
 //         // make and configure a mocked Message
 //         mockedMessage := &MessageMock{
 //             FieldsFunc: func() []entity.Field {
-// 	               panic("TODO: mock out the Fields method")
+// 	               panic("mock out the Fields method")
 //             },
 //             IsCycledFunc: func() bool {
-// 	               panic("TODO: mock out the IsCycled method")
+// 	               panic("mock out the IsCycled method")
 //             },
 //             NameFunc: func() string {
-// 	               panic("TODO: mock out the Name method")
+// 	               panic("mock out the Name method")
 //             },
 //         }
 //
-//         // TODO: use mockedMessage in code that requires Message
-//         //       and then make assertions.
+//         // use mockedMessage in code that requires Message
+//         // and then make assertions.
 //
 //     }
 type MessageMock struct {
@@ -347,6 +355,10 @@ var (
 	lockServiceMockRPCs sync.RWMutex
 )
 
+// Ensure, that ServiceMock does implement Service.
+// If this is not the case, regenerate this file with moq.
+var _ entity.Service = &ServiceMock{}
+
 // ServiceMock is a mock implementation of Service.
 //
 //     func TestSomethingThatUsesService(t *testing.T) {
@@ -354,18 +366,18 @@ var (
 //         // make and configure a mocked Service
 //         mockedService := &ServiceMock{
 //             FQRNFunc: func() string {
-// 	               panic("TODO: mock out the FQRN method")
+// 	               panic("mock out the FQRN method")
 //             },
 //             NameFunc: func() string {
-// 	               panic("TODO: mock out the Name method")
+// 	               panic("mock out the Name method")
 //             },
 //             RPCsFunc: func() []entity.RPC {
-// 	               panic("TODO: mock out the RPCs method")
+// 	               panic("mock out the RPCs method")
 //             },
 //         }
 //
-//         // TODO: use mockedService in code that requires Service
-//         //       and then make assertions.
+//         // use mockedService in code that requires Service
+//         // and then make assertions.
 //
 //     }
 type ServiceMock struct {
@@ -480,6 +492,10 @@ var (
 	lockRPCMockStreamDesc        sync.RWMutex
 )
 
+// Ensure, that RPCMock does implement RPC.
+// If this is not the case, regenerate this file with moq.
+var _ entity.RPC = &RPCMock{}
+
 // RPCMock is a mock implementation of RPC.
 //
 //     func TestSomethingThatUsesRPC(t *testing.T) {
@@ -487,30 +503,30 @@ var (
 //         // make and configure a mocked RPC
 //         mockedRPC := &RPCMock{
 //             FQRNFunc: func() string {
-// 	               panic("TODO: mock out the FQRN method")
+// 	               panic("mock out the FQRN method")
 //             },
 //             IsClientStreamingFunc: func() bool {
-// 	               panic("TODO: mock out the IsClientStreaming method")
+// 	               panic("mock out the IsClientStreaming method")
 //             },
 //             IsServerStreamingFunc: func() bool {
-// 	               panic("TODO: mock out the IsServerStreaming method")
+// 	               panic("mock out the IsServerStreaming method")
 //             },
 //             NameFunc: func() string {
-// 	               panic("TODO: mock out the Name method")
+// 	               panic("mock out the Name method")
 //             },
 //             RequestMessageFunc: func() entity.Message {
-// 	               panic("TODO: mock out the RequestMessage method")
+// 	               panic("mock out the RequestMessage method")
 //             },
 //             ResponseMessageFunc: func() entity.Message {
-// 	               panic("TODO: mock out the ResponseMessage method")
+// 	               panic("mock out the ResponseMessage method")
 //             },
 //             StreamDescFunc: func() *grpc.StreamDesc {
-// 	               panic("TODO: mock out the StreamDesc method")
+// 	               panic("mock out the StreamDesc method")
 //             },
 //         }
 //
-//         // TODO: use mockedRPC in code that requires RPC
-//         //       and then make assertions.
+//         // use mockedRPC in code that requires RPC
+//         // and then make assertions.
 //
 //     }
 type RPCMock struct {
@@ -748,6 +764,10 @@ var (
 	lockClientStreamMockSend            sync.RWMutex
 )
 
+// Ensure, that ClientStreamMock does implement ClientStream.
+// If this is not the case, regenerate this file with moq.
+var _ entity.ClientStream = &ClientStreamMock{}
+
 // ClientStreamMock is a mock implementation of ClientStream.
 //
 //     func TestSomethingThatUsesClientStream(t *testing.T) {
@@ -755,15 +775,15 @@ var (
 //         // make and configure a mocked ClientStream
 //         mockedClientStream := &ClientStreamMock{
 //             CloseAndReceiveFunc: func(res *proto.Message) error {
-// 	               panic("TODO: mock out the CloseAndReceive method")
+// 	               panic("mock out the CloseAndReceive method")
 //             },
 //             SendFunc: func(req proto.Message) error {
-// 	               panic("TODO: mock out the Send method")
+// 	               panic("mock out the Send method")
 //             },
 //         }
 //
-//         // TODO: use mockedClientStream in code that requires ClientStream
-//         //       and then make assertions.
+//         // use mockedClientStream in code that requires ClientStream
+//         // and then make assertions.
 //
 //     }
 type ClientStreamMock struct {
@@ -855,6 +875,10 @@ var (
 	lockServerStreamMockSend    sync.RWMutex
 )
 
+// Ensure, that ServerStreamMock does implement ServerStream.
+// If this is not the case, regenerate this file with moq.
+var _ entity.ServerStream = &ServerStreamMock{}
+
 // ServerStreamMock is a mock implementation of ServerStream.
 //
 //     func TestSomethingThatUsesServerStream(t *testing.T) {
@@ -862,15 +886,15 @@ var (
 //         // make and configure a mocked ServerStream
 //         mockedServerStream := &ServerStreamMock{
 //             ReceiveFunc: func(res *proto.Message) error {
-// 	               panic("TODO: mock out the Receive method")
+// 	               panic("mock out the Receive method")
 //             },
 //             SendFunc: func(req proto.Message) error {
-// 	               panic("TODO: mock out the Send method")
+// 	               panic("mock out the Send method")
 //             },
 //         }
 //
-//         // TODO: use mockedServerStream in code that requires ServerStream
-//         //       and then make assertions.
+//         // use mockedServerStream in code that requires ServerStream
+//         // and then make assertions.
 //
 //     }
 type ServerStreamMock struct {
@@ -958,10 +982,14 @@ func (mock *ServerStreamMock) SendCalls() []struct {
 }
 
 var (
-	lockBidiStreamMockClose   sync.RWMutex
-	lockBidiStreamMockReceive sync.RWMutex
-	lockBidiStreamMockSend    sync.RWMutex
+	lockBidiStreamMockCloseSend sync.RWMutex
+	lockBidiStreamMockReceive   sync.RWMutex
+	lockBidiStreamMockSend      sync.RWMutex
 )
+
+// Ensure, that BidiStreamMock does implement BidiStream.
+// If this is not the case, regenerate this file with moq.
+var _ entity.BidiStream = &BidiStreamMock{}
 
 // BidiStreamMock is a mock implementation of BidiStream.
 //
@@ -969,24 +997,24 @@ var (
 //
 //         // make and configure a mocked BidiStream
 //         mockedBidiStream := &BidiStreamMock{
-//             CloseFunc: func() error {
-// 	               panic("TODO: mock out the Close method")
+//             CloseSendFunc: func() error {
+// 	               panic("mock out the CloseSend method")
 //             },
 //             ReceiveFunc: func(res *proto.Message) error {
-// 	               panic("TODO: mock out the Receive method")
+// 	               panic("mock out the Receive method")
 //             },
 //             SendFunc: func(req proto.Message) error {
-// 	               panic("TODO: mock out the Send method")
+// 	               panic("mock out the Send method")
 //             },
 //         }
 //
-//         // TODO: use mockedBidiStream in code that requires BidiStream
-//         //       and then make assertions.
+//         // use mockedBidiStream in code that requires BidiStream
+//         // and then make assertions.
 //
 //     }
 type BidiStreamMock struct {
-	// CloseFunc mocks the Close method.
-	CloseFunc func() error
+	// CloseSendFunc mocks the CloseSend method.
+	CloseSendFunc func() error
 
 	// ReceiveFunc mocks the Receive method.
 	ReceiveFunc func(res *proto.Message) error
@@ -996,8 +1024,8 @@ type BidiStreamMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// Close holds details about calls to the Close method.
-		Close []struct {
+		// CloseSend holds details about calls to the CloseSend method.
+		CloseSend []struct {
 		}
 		// Receive holds details about calls to the Receive method.
 		Receive []struct {
@@ -1012,29 +1040,29 @@ type BidiStreamMock struct {
 	}
 }
 
-// Close calls CloseFunc.
-func (mock *BidiStreamMock) Close() error {
-	if mock.CloseFunc == nil {
-		panic("BidiStreamMock.CloseFunc: method is nil but BidiStream.Close was just called")
+// CloseSend calls CloseSendFunc.
+func (mock *BidiStreamMock) CloseSend() error {
+	if mock.CloseSendFunc == nil {
+		panic("BidiStreamMock.CloseSendFunc: method is nil but BidiStream.CloseSend was just called")
 	}
 	callInfo := struct {
 	}{}
-	lockBidiStreamMockClose.Lock()
-	mock.calls.Close = append(mock.calls.Close, callInfo)
-	lockBidiStreamMockClose.Unlock()
-	return mock.CloseFunc()
+	lockBidiStreamMockCloseSend.Lock()
+	mock.calls.CloseSend = append(mock.calls.CloseSend, callInfo)
+	lockBidiStreamMockCloseSend.Unlock()
+	return mock.CloseSendFunc()
 }
 
-// CloseCalls gets all the calls that were made to Close.
+// CloseSendCalls gets all the calls that were made to CloseSend.
 // Check the length with:
-//     len(mockedBidiStream.CloseCalls())
-func (mock *BidiStreamMock) CloseCalls() []struct {
+//     len(mockedBidiStream.CloseSendCalls())
+func (mock *BidiStreamMock) CloseSendCalls() []struct {
 } {
 	var calls []struct {
 	}
-	lockBidiStreamMockClose.RLock()
-	calls = mock.calls.Close
-	lockBidiStreamMockClose.RUnlock()
+	lockBidiStreamMockCloseSend.RLock()
+	calls = mock.calls.CloseSend
+	lockBidiStreamMockCloseSend.RUnlock()
 	return calls
 }
 
@@ -1103,12 +1131,16 @@ func (mock *BidiStreamMock) SendCalls() []struct {
 var (
 	lockGRPCClientMockClose             sync.RWMutex
 	lockGRPCClientMockInvoke            sync.RWMutex
-	lockGRPCClientMockListServices      sync.RWMutex
+	lockGRPCClientMockListPackages      sync.RWMutex
 	lockGRPCClientMockNewBidiStream     sync.RWMutex
 	lockGRPCClientMockNewClientStream   sync.RWMutex
 	lockGRPCClientMockNewServerStream   sync.RWMutex
 	lockGRPCClientMockReflectionEnabled sync.RWMutex
 )
+
+// Ensure, that GRPCClientMock does implement GRPCClient.
+// If this is not the case, regenerate this file with moq.
+var _ entity.GRPCClient = &GRPCClientMock{}
 
 // GRPCClientMock is a mock implementation of GRPCClient.
 //
@@ -1117,30 +1149,30 @@ var (
 //         // make and configure a mocked GRPCClient
 //         mockedGRPCClient := &GRPCClientMock{
 //             CloseFunc: func(ctx context.Context) error {
-// 	               panic("TODO: mock out the Close method")
+// 	               panic("mock out the Close method")
 //             },
 //             InvokeFunc: func(ctx context.Context, fqrn string, req interface{}, res interface{}) error {
-// 	               panic("TODO: mock out the Invoke method")
+// 	               panic("mock out the Invoke method")
 //             },
-//             ListServicesFunc: func() ([]entity.Service, []entity.Message, error) {
-// 	               panic("TODO: mock out the ListPackages method")
+//             ListPackagesFunc: func() ([]*entity.Package, error) {
+// 	               panic("mock out the ListPackages method")
 //             },
 //             NewBidiStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {
-// 	               panic("TODO: mock out the NewBidiStream method")
+// 	               panic("mock out the NewBidiStream method")
 //             },
 //             NewClientStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.ClientStream, error) {
-// 	               panic("TODO: mock out the NewClientStream method")
+// 	               panic("mock out the NewClientStream method")
 //             },
 //             NewServerStreamFunc: func(ctx context.Context, rpc entity.RPC) (entity.ServerStream, error) {
-// 	               panic("TODO: mock out the NewServerStream method")
+// 	               panic("mock out the NewServerStream method")
 //             },
 //             ReflectionEnabledFunc: func() bool {
-// 	               panic("TODO: mock out the ReflectionEnabled method")
+// 	               panic("mock out the ReflectionEnabled method")
 //             },
 //         }
 //
-//         // TODO: use mockedGRPCClient in code that requires GRPCClient
-//         //       and then make assertions.
+//         // use mockedGRPCClient in code that requires GRPCClient
+//         // and then make assertions.
 //
 //     }
 type GRPCClientMock struct {
@@ -1150,8 +1182,8 @@ type GRPCClientMock struct {
 	// InvokeFunc mocks the Invoke method.
 	InvokeFunc func(ctx context.Context, fqrn string, req interface{}, res interface{}) error
 
-	// ListServicesFunc mocks the ListPackages method.
-	ListServicesFunc func() ([]*entity.Package, error)
+	// ListPackagesFunc mocks the ListPackages method.
+	ListPackagesFunc func() ([]*entity.Package, error)
 
 	// NewBidiStreamFunc mocks the NewBidiStream method.
 	NewBidiStreamFunc func(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error)
@@ -1184,7 +1216,7 @@ type GRPCClientMock struct {
 			Res interface{}
 		}
 		// ListPackages holds details about calls to the ListPackages method.
-		ListServices []struct {
+		ListPackages []struct {
 		}
 		// NewBidiStream holds details about calls to the NewBidiStream method.
 		NewBidiStream []struct {
@@ -1287,29 +1319,29 @@ func (mock *GRPCClientMock) InvokeCalls() []struct {
 	return calls
 }
 
-// ListPackages calls ListServicesFunc.
+// ListPackages calls ListPackagesFunc.
 func (mock *GRPCClientMock) ListPackages() ([]*entity.Package, error) {
-	if mock.ListServicesFunc == nil {
-		panic("GRPCClientMock.ListServicesFunc: method is nil but GRPCClient.ListPackages was just called")
+	if mock.ListPackagesFunc == nil {
+		panic("GRPCClientMock.ListPackagesFunc: method is nil but GRPCClient.ListPackages was just called")
 	}
 	callInfo := struct {
 	}{}
-	lockGRPCClientMockListServices.Lock()
-	mock.calls.ListServices = append(mock.calls.ListServices, callInfo)
-	lockGRPCClientMockListServices.Unlock()
-	return mock.ListServicesFunc()
+	lockGRPCClientMockListPackages.Lock()
+	mock.calls.ListPackages = append(mock.calls.ListPackages, callInfo)
+	lockGRPCClientMockListPackages.Unlock()
+	return mock.ListPackagesFunc()
 }
 
-// ListServicesCalls gets all the calls that were made to ListPackages.
+// ListPackagesCalls gets all the calls that were made to ListPackages.
 // Check the length with:
-//     len(mockedGRPCClient.ListServicesCalls())
-func (mock *GRPCClientMock) ListServicesCalls() []struct {
+//     len(mockedGRPCClient.ListPackagesCalls())
+func (mock *GRPCClientMock) ListPackagesCalls() []struct {
 } {
 	var calls []struct {
 	}
-	lockGRPCClientMockListServices.RLock()
-	calls = mock.calls.ListServices
-	lockGRPCClientMockListServices.RUnlock()
+	lockGRPCClientMockListPackages.RLock()
+	calls = mock.calls.ListPackages
+	lockGRPCClientMockListPackages.RUnlock()
 	return calls
 }
 

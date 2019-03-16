@@ -16,43 +16,45 @@ import (
 func TestREPL(t *testing.T) {
 	t.Run("call", func(t *testing.T) {
 		cases := []struct {
-			args          string
-			code          int  // exit code, 1 when precondition failed
-			hasErr        bool // error was occurred in repl, false if precondition failed
+			args string
+			code int // exit code, 1 if precondition failed
+
+			hasErr bool // error was occurred in repl, false if precondition failed
+
+			// Server config
 			useReflection bool
 			useWeb        bool
-
-			specifyCA bool
-			useTLS    bool
+			specifyCA     bool
+			useTLS        bool
 		}{
 			{args: "", code: 1}, // cannot launch repl case
-			{args: "--package helloworld", code: 1},
-			{args: "--service Greeter", code: 1},
-			{args: "--package helloworld --service Greeter", code: 1},
-			{args: "--package foo testdata/helloworld.proto", code: 1},
-			{args: "--package helloworld --service foo testdata/helloworld.proto", code: 1},
-			{args: "--package helloworld --service Greeter testdata/helloworld.proto"},
+			{args: "--package api", code: 1},
+			{args: "--service Example", code: 1},
+			{args: "--package api --service Example", code: 1},
+			{args: "--package foo testdata/api.proto", code: 1},
+			{args: "--package api --service foo testdata/api.proto", code: 1},
+			{args: "--package api --service Example testdata/api.proto"},
 
-			{args: "--reflection --package helloworld --service Greeter", useReflection: true},
-			{args: "--reflection --service Greeter", useReflection: true},            // Package helloworld package is inferred.
-			{args: "--reflection --service helloworld.Greeter", useReflection: true}, // Specify package by --service flag.
-			{args: "--reflection", useReflection: true},                              // Package helloworld and service Greeter are inferred.
+			{args: "--reflection --package api --service Example", useReflection: true},
+			{args: "--reflection --service Example", useReflection: true},     // Package api package is inferred.
+			{args: "--reflection --service api.Example", useReflection: true}, // Specify package by --service flag.
+			{args: "--reflection", useReflection: true},                       // Package api and service Example are inferred.
 
 			{args: "--web", useWeb: true, code: 1},
-			{args: "--web --package helloworld", useWeb: true, code: 1},
-			{args: "--web --service Greeter", useWeb: true, code: 1},
-			{args: "--web --package helloworld --service Greeter", useWeb: true, code: 1},
-			{args: "--web --package foo --service Greeter testdata/helloworld.proto", useWeb: true, code: 1},
-			{args: "--web --package helloworld --service foo testdata/helloworld.proto", useWeb: true, code: 1},
-			{args: "--web --package helloworld --service Greeter testdata/helloworld.proto", useWeb: true},
+			{args: "--web --package api", useWeb: true, code: 1},
+			{args: "--web --service Example", useWeb: true, code: 1},
+			{args: "--web --package api --service Example", useWeb: true, code: 1},
+			{args: "--web --package foo --service Example testdata/api.proto", useWeb: true, code: 1},
+			{args: "--web --package api --service foo testdata/api.proto", useWeb: true, code: 1},
+			{args: "--web --package api --service Example testdata/api.proto", useWeb: true},
 
-			{args: "--web --reflection --service Greeter", useReflection: true, useWeb: true},
+			{args: "--web --reflection --service Example", useReflection: true, useWeb: true},
 			{args: "--web --reflection --service bar", useReflection: true, useWeb: true, code: 1},
 
-			{args: "--tls --host localhost -r --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
-			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem --host localhost -r --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
-			{args: "--tls --insecure --host localhost -r --service Greeter", useReflection: true, specifyCA: true, useTLS: true},
-			{args: "--tls --host localhost -r --service Greeter", useReflection: true, useTLS: true, code: 1},
+			{args: "--tls --host localhost -r --service Example", useReflection: true, specifyCA: true, useTLS: true},
+			{args: "--tls --cert testdata/cert/localhost.pem --certkey testdata/cert/localhost-key.pem --host localhost -r --service Example", useReflection: true, specifyCA: true, useTLS: true},
+			{args: "--tls --insecure --host localhost -r --service Example", useReflection: true, specifyCA: true, useTLS: true},
+			{args: "--tls --host localhost -r --service Example", useReflection: true, useTLS: true, code: 1},
 		}
 
 		rh := newREPLHelper([]string{"--silent", "--repl"})
@@ -64,9 +66,8 @@ func TestREPL(t *testing.T) {
 
 		for _, c := range cases {
 			t.Run(c.args, func(t *testing.T) {
-				srv := newServer(t, c.useReflection, c.useTLS)
-
-				defer srv.start(c.useWeb).stop()
+				srv, port := newServer(t, c.useReflection, c.useTLS, c.useWeb)
+				defer srv.Serve().Stop()
 				defer cleanup()
 
 				out, eout := new(bytes.Buffer), new(bytes.Buffer)
@@ -74,15 +75,15 @@ func TestREPL(t *testing.T) {
 				rh.ew = eout
 
 				rh.registerInput(
-					cmd.Call("SayHello", "maho"),
+					cmd.Call("Unary", "maho"),
 				)
 
 				args := strings.Split(c.args, " ")
 				// the first test case.
 				if len(args) == 1 && args[0] == "" {
-					args = []string{"--port", srv.port}
+					args = []string{"--port", port}
 				} else {
-					args = append([]string{"--port", srv.port}, args...)
+					args = append([]string{"--port", port}, args...)
 				}
 				if c.useTLS && c.specifyCA {
 					args = append([]string{"--cacert", "testdata/cert/rootCA.pem"}, args...)
@@ -95,7 +96,7 @@ func TestREPL(t *testing.T) {
 				}
 				// normal case
 				if c.code == 0 && !c.hasErr {
-					assert.Equal(t, `{ "message": "Hello, maho!" }`, flatten(out.String()), eout.String())
+					assert.Equal(t, `{ "message": "hello, maho" }`, flatten(out.String()), eout.String())
 				}
 			})
 		}

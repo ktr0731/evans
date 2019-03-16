@@ -3,10 +3,22 @@
 package e2e
 
 import (
+	"fmt"
+	"io/ioutil"
+	"strconv"
 	"testing"
 
+	"github.com/ktr0731/evans/logger"
+	"github.com/ktr0731/grpc-test/server"
+	"github.com/phayes/freeport"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 )
+
+func init() {
+	// Enable logging, but discard actual output.
+	logger.SetOutput(ioutil.Discard)
+}
 
 func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(
@@ -21,4 +33,23 @@ func TestMain(m *testing.M) {
 		goleak.IgnoreTopFunction("time.Sleep"),
 		goleak.IgnoreTopFunction("runtime.goparkunlock"),
 	)
+}
+
+func newServer(t *testing.T, useReflection, useTLS, useWeb bool) (*server.Server, string) {
+	port, err := freeport.GetFreePort()
+	require.NoError(t, err, "failed to get a free port for gRPC test server")
+
+	addr := fmt.Sprintf(":%d", port)
+	opts := []server.Option{server.WithAddr(addr)}
+	if useReflection {
+		opts = append(opts, server.WithReflection())
+	}
+	if useTLS {
+		opts = append(opts, server.WithTLS())
+	}
+	if useWeb {
+		opts = append(opts, server.WithProtocol(server.ProtocolImprobableGRPCWeb))
+	}
+
+	return server.New(opts...), strconv.Itoa(port)
 }
