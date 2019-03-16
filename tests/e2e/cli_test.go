@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -221,16 +222,26 @@ func TestCLI(t *testing.T) {
 }
 
 // toStruct converts a response string to a structured one.
-func toStruct(t *testing.T, out string) []struct {
+func toStruct(t *testing.T, out string) (res []struct {
 	Message string `json:"message"`
-} {
+}) {
 	// Transform to a JSON-formed text.
-	in := fmt.Sprintf(`[ %s ]`, strings.Replace(out, "} ", "}, ", -1))
-	s := []struct {
-		Message string `json:"message"`
-	}{}
-	err := json.Unmarshal([]byte(in), &s)
-	require.NoError(t, err, "json.Unmarshal must parse the response message")
-	assert.NotZero(t, s, "the response message must have one or more JSON texts, but missing")
-	return s
+	dec := json.NewDecoder(strings.NewReader(out))
+	for {
+		var s struct {
+			Message string `json:"message"`
+		}
+		err := dec.Decode(&s)
+		if err == io.EOF {
+			break
+		}
+		require.NoError(t, err, "dec.Decode must parse the response message")
+		res = append(res, s)
+	}
+	// s := []struct {
+	// 	Message string `json:"message"`
+	// }{}
+	// err := json.Unmarshal([]byte(in), &s)
+	assert.NotZero(t, res, "the response message must have one or more JSON texts, but missing")
+	return
 }
