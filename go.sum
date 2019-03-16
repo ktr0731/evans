@@ -78,7 +78,7 @@ github.com/ktr0731/go-updater v0.1.4 h1:uhtZq4GiPc6mhwnG3MOowAlA+2QFS9ZdzYNNupNi
 github.com/ktr0731/go-updater v0.1.4/go.mod h1:dsdOg7a9sj6ttcOU5ZxPCtKdm9WeB1hwcX/7oKgz9/0=
 github.com/ktr0731/grpc-test v0.1.0 h1:8SL5oLwHCHJ9gv9cL2eSMXTDDnmHyBAZMaOSEnKzOCc=
 github.com/ktr0731/grpc-test v0.1.0/go.mod h1:deptvEeND4faWsF2MGTanL6/2SaX8lgdmF3yEXWge5U=
-github.com/ktr0731/grpc-web-go-client v0.2.4 h1:z2f3YBMXpxFmf0r/CmcxJwHiPBFcj8WzoYoSiAERfXo=
+github.com/ktr0731/grpc-web-go-client v0.2.4 h1:dR/FIfw5MOeBXRIYZZwEkUVqCIm7GnbRpfXYkGzt20s=
 github.com/ktr0731/grpc-web-go-client v0.2.4/go.mod h1:vYLMZfzRBm2F/Lp8XQC9rtUiyibbKhOZbOqRbPC5dfw=
 github.com/ktr0731/modfile v1.11.2/go.mod h1:LzNwnHJWHbuDh3BO17lIqzqDldXqGu1HCydWH3SinE0=
 github.com/magiconair/properties v1.8.0 h1:LLgXmsheXeRoUOBOjtwPQCWIYqM/LU1ayDtDePerRcY=
