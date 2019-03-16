@@ -4,14 +4,21 @@ package e2e
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"testing"
 
+	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/grpc-test/server"
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 )
+
+func init() {
+	// Enable logging, but discard actual output.
+	logger.SetOutput(ioutil.Discard)
+}
 
 func TestMain(m *testing.M) {
 	goleak.VerifyTestMain(
@@ -21,10 +28,6 @@ func TestMain(m *testing.M) {
 		goleak.IgnoreTopFunction("github.com/ktr0731/evans/vendor/google.golang.org/grpc.(*ccBalancerWrapper).watcher"),
 		goleak.IgnoreTopFunction("github.com/ktr0731/evans/vendor/google.golang.org/grpc.(*ccResolverWrapper).watcher"),
 		goleak.IgnoreTopFunction("github.com/ktr0731/evans/vendor/google.golang.org/grpc.(*addrConn).createTransport"),
-
-		// TODO: fix grpc-web-go-client
-		goleak.IgnoreTopFunction("net/http.(*persistConn).writeLoop"),
-		goleak.IgnoreTopFunction("net/http.(*persistConn).readLoop"),
 
 		// ref. repl.(*executor).execute comments
 		goleak.IgnoreTopFunction("time.Sleep"),
