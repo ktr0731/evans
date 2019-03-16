@@ -46,7 +46,7 @@ func TestNewClient(t *testing.T) {
 	for name, c := range cases {
 		c := c
 		t.Run(name, func(t *testing.T) {
-			_, err := NewClient(c.addr, c.useReflection, c.useTLS, c.cacert, c.cert, c.certKey)
+			_, err := NewClient(c.addr, "", c.useReflection, c.useTLS, c.cacert, c.cert, c.certKey)
 			if c.err != nil {
 				require.Error(t, err, "NewClient must return an error")
 				assert.Equal(t, c.err, err)

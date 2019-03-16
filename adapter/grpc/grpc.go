@@ -30,13 +30,15 @@ type client struct {
 
 // NewClient creates a new gRPC client. It dials to the server specified by addr.
 // addr format is the same as the first argument of grpc.Dial.
+// If serverName is not empty, it overrides the gRPC server name used to
+// verify the hostname on the returned certificates.
 // If useReflection is true, the gRPC client enables gRPC reflection.
 // If useTLS is true, the gRPC client establishes a secure connection with the server.
 //
 // The set of cert and certKey enables mutual authentication if useTLS is enabled.
 // If one of it is not found, NewClient returns entity.ErrMutualAuthParamsAreNotEnough.
 // If useTLS is false, cacert, cert and certKey are ignored.
-func NewClient(addr string, useReflection, useTLS bool, cacert, cert, certKey string) (entity.GRPCClient, error) {
+func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert, certKey string) (entity.GRPCClient, error) {
 	var opts []grpc.DialOption
 	if !useTLS {
 		opts = append(opts, grpc.WithInsecure())
@@ -60,24 +62,21 @@ func NewClient(addr string, useReflection, useTLS bool, cacert, cert, certKey st
 				return nil, errors.Wrap(err, "failed to read the client certificate")
 			}
 			tlsCfg.Certificates = append(tlsCfg.Certificates, certificate)
-			opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
 		} else if cert != "" || certKey != "" {
 			return nil, entity.ErrMutualAuthParamsAreNotEnough
 		}
 
-		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tlsCfg)))
+		creds := credentials.NewTLS(&tlsCfg)
+		if serverName != "" {
+			creds.OverrideServerName(serverName)
+		}
+		opts = append(opts, grpc.WithTransportCredentials(creds))
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial to gRPC server")
-	}
-	switch s := conn.GetState(); s {
-	case connectivity.TransientFailure:
-		return nil, errors.Errorf("connection transient failure, is the gRPC server running?: %s", s)
-	case connectivity.Shutdown:
-		return nil, errors.Errorf("the gRPC server was closed: %s", s)
 	}
 
 	client := &client{
@@ -96,13 +95,7 @@ func (c *client) Invoke(ctx context.Context, fqrn string, req, res interface{}) 
 	if err != nil {
 		return err
 	}
-	logger.Scriptln(func() []interface{} {
-		b, err := json.MarshalIndent(&req, "", "  ")
-		if err != nil {
-			return nil
-		}
-		return []interface{}{"request:\n" + string(b)}
-	})
+	loggingRequest(req)
 	wakeUpClientConn(c.conn)
 	return c.conn.Invoke(ctx, endpoint, req, res)
 }
@@ -130,8 +123,9 @@ type clientStream struct {
 	cs grpc.ClientStream
 }
 
-func (s *clientStream) Send(m proto.Message) error {
-	return s.cs.SendMsg(m)
+func (s *clientStream) Send(req proto.Message) error {
+	loggingRequest(req)
+	return s.cs.SendMsg(req)
 }
 
 func (s *clientStream) CloseAndReceive(res *proto.Message) error {
@@ -179,15 +173,16 @@ type bidiStream struct {
 	s *serverStream
 }
 
-func (s *bidiStream) Send(res proto.Message) error {
-	return s.s.cs.SendMsg(res)
+func (s *bidiStream) Send(req proto.Message) error {
+	loggingRequest(req)
+	return s.s.cs.SendMsg(req)
 }
 
 func (s *bidiStream) Receive(res *proto.Message) error {
 	return s.s.cs.RecvMsg(*res)
 }
 
-func (s *bidiStream) Close() error {
+func (s *bidiStream) CloseSend() error {
 	return s.s.cs.CloseSend()
 }
 
@@ -216,4 +211,14 @@ func wakeUpClientConn(conn *grpc.ClientConn) {
 	if conn.GetState() == connectivity.TransientFailure {
 		conn.ResetConnectBackoff()
 	}
+}
+
+func loggingRequest(req interface{}) {
+	logger.Scriptln(func() []interface{} {
+		b, err := json.MarshalIndent(&req, "", "  ")
+		if err != nil {
+			return nil
+		}
+		return []interface{}{"request:\n" + string(b)}
+	})
 }

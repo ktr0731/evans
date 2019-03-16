@@ -29,6 +29,7 @@ type Server struct {
 	Port       string `toml:"port"`
 	Reflection bool   `toml:"reflection"`
 	TLS        bool   `toml:"tls"`
+	Name       string `toml:"name"`
 }
 
 type Header map[string][]string
@@ -120,6 +121,7 @@ func newDefaultViper() *viper.Viper {
 	v.SetDefault("server.port", "50051")
 	v.SetDefault("server.reflection", false)
 	v.SetDefault("server.tls", false)
+	v.SetDefault("server.name", "")
 
 	v.SetDefault("log.prefix", "evans: ")
 
@@ -143,6 +145,7 @@ func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
 		"server.port":         "port",
 		"server.reflection":   "reflection",
 		"server.tls":          "tls",
+		"server.name":         "servername",
 		"request.header":      "header",
 		"request.web":         "web",
 		"request.cacertFile":  "cacert",

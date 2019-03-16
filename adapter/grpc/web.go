@@ -37,6 +37,9 @@ func (c *webClient) Invoke(ctx context.Context, fqrn string, req, res interface{
 	if err != nil {
 		return errors.Wrap(err, "failed to convert FQRN to endpoint")
 	}
+
+	loggingRequest(req)
+
 	request := grpcweb.NewRequest(endpoint, req.(proto.Message), res.(proto.Message))
 	res, err = c.conn.Unary(ctx, request)
 	return err
@@ -49,6 +52,7 @@ type webClientStream struct {
 }
 
 func (s *webClientStream) Send(req proto.Message) error {
+	loggingRequest(req)
 	request := s.newRequest(req)
 	return s.conn.Send(request)
 }
@@ -93,6 +97,7 @@ type webServerStream struct {
 }
 
 func (s *webServerStream) Send(req proto.Message) (err error) {
+	loggingRequest(req)
 	s.conn, err = s.newClient(req)
 	return
 }
@@ -143,6 +148,7 @@ type webBidiStream struct {
 }
 
 func (s *webBidiStream) Send(req proto.Message) error {
+	loggingRequest(req)
 	request := s.newRequest(req)
 	return s.conn.Send(request)
 }
@@ -156,8 +162,8 @@ func (s *webBidiStream) Receive(res *proto.Message) error {
 	return nil
 }
 
-func (s *webBidiStream) Close() error {
-	return s.conn.Close()
+func (s *webBidiStream) CloseSend() error {
+	return s.conn.CloseSend()
 }
 
 func (c *webClient) NewBidiStream(ctx context.Context, rpc entity.RPC) (entity.BidiStream, error) {

@@ -1019,9 +1019,9 @@ func (mock *ServerStreamMock) SendCalls() []struct {
 }
 
 var (
-	lockBidiStreamMockClose   sync.RWMutex
-	lockBidiStreamMockReceive sync.RWMutex
-	lockBidiStreamMockSend    sync.RWMutex
+	lockBidiStreamMockCloseSend sync.RWMutex
+	lockBidiStreamMockReceive   sync.RWMutex
+	lockBidiStreamMockSend      sync.RWMutex
 )
 
 // Ensure, that BidiStreamMock does implement BidiStream.
@@ -1034,8 +1034,8 @@ var _ entity.BidiStream = &BidiStreamMock{}
 //
 //         // make and configure a mocked BidiStream
 //         mockedBidiStream := &BidiStreamMock{
-//             CloseFunc: func() error {
-// 	               panic("mock out the Close method")
+//             CloseSendFunc: func() error {
+// 	               panic("mock out the CloseSend method")
 //             },
 //             ReceiveFunc: func(res *proto.Message) error {
 // 	               panic("mock out the Receive method")
@@ -1050,8 +1050,8 @@ var _ entity.BidiStream = &BidiStreamMock{}
 //
 //     }
 type BidiStreamMock struct {
-	// CloseFunc mocks the Close method.
-	CloseFunc func() error
+	// CloseSendFunc mocks the CloseSend method.
+	CloseSendFunc func() error
 
 	// ReceiveFunc mocks the Receive method.
 	ReceiveFunc func(res *proto.Message) error
@@ -1061,8 +1061,8 @@ type BidiStreamMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// Close holds details about calls to the Close method.
-		Close []struct {
+		// CloseSend holds details about calls to the CloseSend method.
+		CloseSend []struct {
 		}
 		// Receive holds details about calls to the Receive method.
 		Receive []struct {
@@ -1077,29 +1077,29 @@ type BidiStreamMock struct {
 	}
 }
 
-// Close calls CloseFunc.
-func (mock *BidiStreamMock) Close() error {
-	if mock.CloseFunc == nil {
-		panic("BidiStreamMock.CloseFunc: method is nil but BidiStream.Close was just called")
+// CloseSend calls CloseSendFunc.
+func (mock *BidiStreamMock) CloseSend() error {
+	if mock.CloseSendFunc == nil {
+		panic("BidiStreamMock.CloseSendFunc: method is nil but BidiStream.CloseSend was just called")
 	}
 	callInfo := struct {
 	}{}
-	lockBidiStreamMockClose.Lock()
-	mock.calls.Close = append(mock.calls.Close, callInfo)
-	lockBidiStreamMockClose.Unlock()
-	return mock.CloseFunc()
+	lockBidiStreamMockCloseSend.Lock()
+	mock.calls.CloseSend = append(mock.calls.CloseSend, callInfo)
+	lockBidiStreamMockCloseSend.Unlock()
+	return mock.CloseSendFunc()
 }
 
-// CloseCalls gets all the calls that were made to Close.
+// CloseSendCalls gets all the calls that were made to CloseSend.
 // Check the length with:
-//     len(mockedBidiStream.CloseCalls())
-func (mock *BidiStreamMock) CloseCalls() []struct {
+//     len(mockedBidiStream.CloseSendCalls())
+func (mock *BidiStreamMock) CloseSendCalls() []struct {
 } {
 	var calls []struct {
 	}
-	lockBidiStreamMockClose.RLock()
-	calls = mock.calls.Close
-	lockBidiStreamMockClose.RUnlock()
+	lockBidiStreamMockCloseSend.RLock()
+	calls = mock.calls.CloseSend
+	lockBidiStreamMockCloseSend.RUnlock()
 	return calls
 }
 

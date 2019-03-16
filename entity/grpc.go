@@ -32,7 +32,7 @@ type ServerStream interface {
 type BidiStream interface {
 	Send(req proto.Message) error
 	Receive(res *proto.Message) error
-	Close() error
+	CloseSend() error
 }
 
 type GRPCReflectionClient interface {
