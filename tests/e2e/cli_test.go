@@ -198,7 +198,11 @@ func TestCLI(t *testing.T) {
 
 			out := new(bytes.Buffer)
 			errOut := new(bytes.Buffer)
-			ui := cui.New(in, out, errOut)
+			ui := cui.New(
+				cui.Reader(in),
+				cui.Writer(out),
+				cui.ErrWriter(errOut),
+			)
 
 			args := strings.Split(c.args, " ")
 			args = append([]string{"--cli", "--port", port}, args...)

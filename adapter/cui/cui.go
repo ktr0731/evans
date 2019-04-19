@@ -26,22 +26,17 @@ type basicUI struct {
 }
 
 // New creates a new UI with passed io.Reader, io.Writers.
-// In normal case, you can use NewBasic instead of New.
-func New(r io.Reader, w, ew io.Writer) UI {
-	return &basicUI{
-		reader:    r,
-		writer:    w,
-		errWriter: ew,
-	}
-}
-
-// NewBasic creates a new UI with stdin, stdout, stderr.
-func NewBasic() UI {
-	return &basicUI{
+func New(opts ...Option) UI {
+	// Creates a new UI with stdin, stdout, stderr.
+	ui := &basicUI{
 		reader:    os.Stdin,
 		writer:    colorable.NewColorableStdout(),
 		errWriter: colorable.NewColorableStderr(),
 	}
+	for _, opt := range opts {
+		opt(ui)
+	}
+	return ui
 }
 
 func (u *basicUI) fprintln(w io.Writer, a interface{}) {

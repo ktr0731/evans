@@ -173,11 +173,7 @@ type Command struct {
 
 // New instantiate CLI interface.
 // ui is used for both of CLI mode and REPL mode.
-// If ui is nil, cui.NewBasicUI will be used.
 func New(ui cui.UI) *Command {
-	if ui == nil {
-		ui = cui.NewBasic()
-	}
 	return &Command{
 		name:    meta.AppName,
 		version: meta.Version.String(),
