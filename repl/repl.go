@@ -27,7 +27,7 @@ type REPL struct {
 	cfg       *config.REPL
 	serverCfg *config.Server
 	prompt    prompt.Prompt
-	ui        *cui.UI
+	ui        cui.UI
 
 	cmds    map[string]commander
 	aliases map[string]string
@@ -47,7 +47,7 @@ var commands = map[string]commander{
 
 // New instantiates a new REPL instance. New always calls p.SetPrefix for display the server addr.
 // New may return an error if some of passed arguments are invalid.
-func New(cfg *config.Config, p prompt.Prompt, ui *cui.UI, pkgName, svcName string) (*REPL, error) {
+func New(cfg *config.Config, p prompt.Prompt, ui cui.UI, pkgName, svcName string) (*REPL, error) {
 	cmds := commands
 	// Each value must be a key of cmds.
 	aliases := map[string]string{
@@ -126,7 +126,7 @@ func (r *REPL) cleanup(ctx context.Context) {
 
 func (r *REPL) runCommand(cmdName string, args []string) error {
 	if cmdName == "help" {
-		fmt.Fprintln(r.ui.Writer, r.helpText())
+		r.ui.Output(r.helpText())
 		return nil
 	}
 
@@ -142,7 +142,7 @@ func (r *REPL) runCommand(cmdName string, args []string) error {
 
 	if len(args) != 0 {
 		if args[0] == "-h" || args[0] == "--help" {
-			fmt.Fprintln(r.ui.Writer, cmd.Help())
+			r.ui.Output(cmd.Help())
 			return nil
 		}
 	}
@@ -150,7 +150,7 @@ func (r *REPL) runCommand(cmdName string, args []string) error {
 	if err := cmd.Validate(args); err != nil {
 		return err
 	}
-	if err := cmd.Run(r.ui.Writer, args); err != nil {
+	if err := cmd.Run(r.ui.Writer(), args); err != nil {
 		return err
 	}
 

@@ -19,7 +19,7 @@ import (
 var DefaultCLIReader io.Reader = os.Stdin
 
 // RunAsCLIMode starts Evans as CLI mode.
-func RunAsCLIMode(cfg *config.Config, call, file string, ui *cui.UI) error {
+func RunAsCLIMode(cfg *config.Config, call, file string, ui cui.UI) error {
 	if call == "" {
 		return errors.New("flag --call must not be empty")
 	}
@@ -89,7 +89,7 @@ func RunAsCLIMode(cfg *config.Config, call, file string, ui *cui.UI) error {
 		}
 	}
 
-	err = usecase.CallRPC(ctx, ui.Writer, call)
+	err = usecase.CallRPC(ctx, ui.Writer(), call)
 	if err != nil {
 		return errors.Wrapf(err, "failed to call RPC '%s'", call)
 	}

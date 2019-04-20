@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func RunAsREPLMode(cfg *config.Config, ui *cui.UI) error {
+func RunAsREPLMode(cfg *config.Config, ui cui.UI) error {
 	var result error
 	gRPCClient, err := newGRPCClient(cfg)
 	if err != nil {

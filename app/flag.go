@@ -84,7 +84,7 @@ func (f *flags) validate() error {
 func (a *App) parseFlags(args []string) (*flags, error) {
 	f := pflag.NewFlagSet("main", pflag.ContinueOnError)
 	f.SortFlags = false
-	f.SetOutput(a.cui.Writer)
+	f.SetOutput(a.cui.Writer())
 
 	var flags flags
 
@@ -144,7 +144,7 @@ func (a *App) parseFlags(args []string) (*flags, error) {
 			fmt.Fprintf(w, "        %s\t%s\n", cmd, usage)
 		})
 		w.Flush()
-		fmt.Fprintf(a.cui.Writer, usageFormat, meta.AppName, buf.String())
+		fmt.Fprintf(a.cui.Writer(), usageFormat, meta.AppName, buf.String())
 	}
 
 	// ignore error because flag set mode is ExitOnError

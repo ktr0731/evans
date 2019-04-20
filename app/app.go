@@ -18,7 +18,7 @@ import (
 
 // App is the root component for running the application.
 type App struct {
-	cui *cui.UI
+	cui cui.UI
 
 	flagSet *pflag.FlagSet
 
@@ -27,7 +27,7 @@ type App struct {
 
 // New instantiates a new App instance. If cui is nil, the default UI will be used.
 // Note that cui is also used for the REPL UI if the mode is REPL mode.
-func New(cui *cui.UI) *App {
+func New(cui cui.UI) *App {
 	return &App{
 		cui: cui,
 	}
@@ -51,10 +51,6 @@ func (a *App) Run(args []string) int {
 }
 
 func (a *App) run(args []string) error {
-	if a.cui == nil {
-		a.cui = cui.DefaultUI()
-	}
-
 	flags, err := a.parseFlags(args)
 	if err != nil {
 		return err
@@ -107,9 +103,9 @@ func (a *App) run(args []string) error {
 
 		if a.cfg.Config.Meta.AutoUpdate {
 			eg.Go(func() error {
-				return processUpdate(ctx, a.cfg.Config, a.cui.Writer)
+				return processUpdate(ctx, a.cfg.Config, a.cui.Writer())
 			})
-		} else if err := processUpdate(ctx, a.cfg.Config, a.cui.Writer); err != nil {
+		} else if err := processUpdate(ctx, a.cfg.Config, a.cui.Writer()); err != nil {
 			return errors.Wrap(err, "failed to update Evans")
 		}
 
