@@ -16,8 +16,7 @@ func TestNew(t *testing.T) {
 	cases := map[string]struct {
 		ui cui.UI
 	}{
-		"normal": {ui: cui.NewBasic()},
-		"if ui is nil, default implementation will be used": {},
+		"normal": {ui: cui.New()},
 	}
 
 	for name, c := range cases {

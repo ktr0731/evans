@@ -74,7 +74,11 @@ func (h *replHelper) run(args []string) int {
 		h.ew = os.Stderr
 	}
 
-	ui := cui.New(h.r, h.w, h.ew)
+	ui := cui.New(
+		cui.Reader(h.r),
+		cui.Writer(h.w),
+		cui.ErrWriter(h.ew),
+	)
 	cli := newCommand(ui)
 
 	h.iq = append(h.iq, repl.Exit()...)
