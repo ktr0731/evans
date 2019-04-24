@@ -4,8 +4,7 @@ require (
 	github.com/Songmu/retry v0.1.0 // indirect
 	github.com/golang/protobuf:/protoc-gen-go v1.2.0
 	github.com/golangci/golangci-lint:/cmd/golangci-lint v1.14.0
-	github.com/google/go-github v17.0.0+incompatible // indirect
-	github.com/google/go-querystring v1.0.0 // indirect
+	github.com/goreleaser/goreleaser v0.106.0
 	github.com/ktr0731/bump v0.1.0
 	github.com/matryer/moq v0.0.0-20190211104650-70d7959eb245
 	github.com/mitchellh/colorstring v0.0.0-20150917214807-8631ce90f286 // indirect
