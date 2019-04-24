@@ -83,7 +83,7 @@ coverage-web: coverage
 
 .PHONY: brew-update
 brew-update:
-	bash .circleci/scripts/entrypoint.bash $(VERSION)
+	bash .circleci/scripts/release.bash $(VERSION)
 
 .PHONY: depgraph
 depgraph:

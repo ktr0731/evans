@@ -85,7 +85,7 @@ jobs:
           at: /go
 
       - run:
-          name: update GitHub releases and update brew formula
+          name: update GitHub Releases and update Homebrew formula
           command: make brew-update
 
 workflows:
