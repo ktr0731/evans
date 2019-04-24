@@ -24,9 +24,9 @@ if [ "$LATEST_VERSION" = "" ] || [ "$VERSION" = "$LATEST_VERSION" ]; then
   exit 0
 fi
 
-git config --global user.email "$GIT_EMAIL"
-git config --global user.name "$GIT_NAME"
+git tag "$VERSION"
+git tag "v$VERSION" "$VERSION" # tagging another one which has "v" prefix for Go Modules.
+git push origin "$VERSION"
+git push origin "v$VERSION"
 
-bash .circleci/scripts/build-assets.bash "$VERSION"
-bash .circleci/scripts/create-new-release.bash "$VERSION"
-bash .circleci/scripts/update-brew-formula.bash "$VERSION"
+goreleaser
