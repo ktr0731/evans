@@ -1,0 +1,42 @@
+before:
+  hooks:
+    - make deps
+builds:
+-
+  env:
+    - CGO_ENABLED=0
+  goos:
+    - darwin
+    - linux
+    - windows
+  goarch:
+    - amd64
+    - arm
+    - '386'
+  ldflags:
+    - '-X github.com/ktr0731/evans/vendor/github.com/ktr0731/go-updater/github.isGitHubReleasedBinary=true'
+archives:
+- name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+brew:
+  github:
+    owner: ktr0731
+    name: homebrew-evans
+
+  url_template: "http://github.com/ktr0731/evans/releases/download/{{ .Tag }}/{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}.tar.gz"
+
+  commit_author:
+    name: ktr0731
+    email: ktr@syfm.me
+
+  homepage: "https://evans.syfm.me"
+
+  description: "Evans: more expressive universal gRPC client"
+
+  install: |
+    bin.install "evans"
