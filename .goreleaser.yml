@@ -13,8 +13,10 @@ builds:
     - amd64
     - arm
     - '386'
+  flags:
+    - -tags netgo
   ldflags:
-    - '-X github.com/ktr0731/evans/vendor/github.com/ktr0731/go-updater/github.isGitHubReleasedBinary=true'
+    - '-extldflags "-static" -X github.com/ktr0731/evans/vendor/github.com/ktr0731/go-updater/github.isGitHubReleasedBinary=true'
 archives:
 - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
 checksum:
