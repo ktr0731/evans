@@ -1,0 +1,11 @@
+syntax = "proto3";
+package api;
+
+message Person {
+  string name = 1;
+}
+
+message Book {
+  string title = 1;
+  string author = 2;
+}

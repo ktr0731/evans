@@ -13,38 +13,32 @@ var (
 	enabled       bool
 )
 
-// Reset resets logging all parameters.
+// Reset resets all logging parameters.
 func Reset() {
 	defaultLogger = newDefaultLogger()
 	enabled = false
 }
 
 // SetOutput enables logging that writes out logs to w.
+// Note that SetOutput works only once. To perform SetOutput again,
+// it is neccessary to call Reset before it.
 func SetOutput(w io.Writer) {
+	if enabled {
+		Println("logger: ignored SetOutput because it is already called. please call Reset before calling again.")
+		return
+	}
 	enabled = true
 	defaultLogger.SetOutput(w)
 }
 
-// SetPrefix changes the log prefix to another one.
-// The default prefix is "evans: ".
-func SetPrefix(p string) {
-	defaultLogger.SetPrefix(p)
-}
-
+// Println provides fmt.Println like logging.
 func Println(v ...interface{}) {
 	defaultLogger.Println(v...)
 }
 
+// Printf provides fmt.Printf like logging.
 func Printf(format string, v ...interface{}) {
 	defaultLogger.Printf(format, v...)
-}
-
-func Fatal(v ...interface{}) {
-	defaultLogger.Fatal(v...)
-}
-
-func Fatalf(format string, v ...interface{}) {
-	defaultLogger.Fatalf(format, v...)
 }
 
 // Scriptln receives a function f which executes something and returns some values

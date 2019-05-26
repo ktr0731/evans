@@ -1,23 +1,33 @@
 package usecase
 
 import (
-	"io"
+	"strings"
 
-	"github.com/ktr0731/evans/entity/env"
-	"github.com/ktr0731/evans/usecase/port"
+	"github.com/ktr0731/evans/grpc"
+	"github.com/ktr0731/evans/logger"
 )
 
-func Header(
-	params *port.HeaderParams,
-	outputPort port.OutputPort,
-	env env.Environment,
-) (io.Reader, error) {
-	for _, h := range params.Headers {
-		if h.NeedToRemove {
-			env.RemoveHeader(h.Key)
-		} else {
-			env.AddHeader(h)
-		}
+func AddHeader(k, v string) {
+	dm.AddHeader(k, v)
+}
+func (m *dependencyManager) AddHeader(k, v string) {
+	if strings.ToLower(k) == "user-agent" {
+		logger.Println(`warning: cannot add a header named "user-agent"`)
+		return
 	}
-	return outputPort.Header()
+	m.state.headers.Add(k, v)
+}
+
+func RemoveHeader(k string) {
+	dm.RemoveHeader(k)
+}
+func (m *dependencyManager) RemoveHeader(k string) {
+	m.state.headers.Remove(k)
+}
+
+func ListHeaders() grpc.Headers {
+	return dm.ListHeaders()
+}
+func (m *dependencyManager) ListHeaders() grpc.Headers {
+	return m.state.headers
 }

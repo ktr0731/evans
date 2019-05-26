@@ -1,10 +1,11 @@
 // Package config provides config structures, and a mechanism that merges sources
 // such that the global config file, a project local config file and
-// command-line flags.
+// command line flags.
 package config
 
 import (
 	"encoding/csv"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"github.com/k0kubun/pp"
 	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/meta"
+	"github.com/ktr0731/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -48,9 +50,10 @@ type REPL struct {
 
 	ColoredOutput bool `toml:"coloredOutput"`
 
-	ShowSplashText bool   `toml:"showSplashText"`
+	Silent         bool   `toml:"silent"`
 	SplashTextPath string `toml:"splashTextPath"`
 
+	// TODO: Split history files between projects.
 	HistorySize int `toml:"historySize"`
 }
 
@@ -71,6 +74,43 @@ type Config struct {
 	Request *Request `toml:"request"`
 }
 
+// ValidationError contains errors that describes invalid config conditions.
+type ValidationError struct {
+	Err *multierror.Error
+}
+
+// Error returns ValidationError's error text.
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("invalid config condition: %s", e.Err.Error())
+}
+
+// Validate defines invalid conditions and validates whether c has invalid condtions.
+// For example, in the case of CLI mode, c must have package, service and call values.
+// Validate returns ValidationError if some conditions are invalid.
+func (c *Config) Validate() error {
+	var result *multierror.Error
+	invalidCases := []struct {
+		name string
+		cond bool
+	}{
+		{"port must not be empty", len(c.Server.Port) == 0},
+		{"certFile config or --cert flag required", c.Request.CertFile == "" && c.Request.CertKeyFile != ""},
+		{"certKeyFile config or --certkey flag required", c.Request.CertFile != "" && c.Request.CertKeyFile == ""},
+		{"one or more proto files, or gRPC reflection required", len(c.Default.ProtoFile) == 0 && !c.Server.Reflection},
+		// TODO: support it.
+		{"currently, gRPC-Web with TLS communication is not supported", c.Request.Web && c.Server.TLS},
+	}
+	for _, c := range invalidCases {
+		if c.cond {
+			result = multierror.Append(result, errors.New(c.name))
+		}
+	}
+	if result != nil {
+		return &ValidationError{Err: result}
+	}
+	return nil
+}
+
 type Default struct {
 	ProtoPath []string `toml:"protoPath"`
 	ProtoFile []string `toml:"protoFile"`
@@ -83,7 +123,7 @@ type Log struct {
 }
 
 // Get returns the config which loaded from the global and local config files,
-// and command-line flags passed as an argument. Note that fs must have been parsed.
+// and command line flags passed as an argument. Note that fs must have been parsed.
 //
 // The order of priority is flags > local > global.
 func Get(fs *pflag.FlagSet) (*Config, error) {
@@ -113,7 +153,7 @@ func newDefaultViper() *viper.Viper {
 	v.SetDefault("repl.promptFormat", "{package}.{sevice}@{addr}:{port}")
 	v.SetDefault("repl.inputPromptFormat", "{ancestor}{name} ({type}) => ")
 	v.SetDefault("repl.coloredOutput", true)
-	v.SetDefault("repl.showSplashText", true)
+	v.SetDefault("repl.silent", false)
 	v.SetDefault("repl.splashTextPath", "")
 	v.SetDefault("repl.historySize", 100)
 
@@ -151,7 +191,7 @@ func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
 		"request.cacertFile":  "cacert",
 		"request.certFile":    "cert",
 		"request.certKeyFile": "certkey",
-		"repl.showSplashText": "silent",
+		"repl.silent":         "silent",
 	}
 	for k, v := range kv {
 		f := fs.Lookup(v)
@@ -159,14 +199,27 @@ func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
 			logger.Printf("flag is not found: %s-%s", k, v)
 			continue
 		}
-		// TODO: cleanup this special case.
-		if k == "repl.showSplashText" {
-			// If --silent is disabled, showSplashText is true.
-			vp.Set(k, f.Value.String() != "true")
-			continue
-		}
 
 		switch f.Value.Type() {
+		case "slice of strings":
+			currentMap := vp.GetStringMapStringSlice(k)
+			newMap := stringToStringSliceToMap(f.Value.String())
+			encountered := make(map[string]map[string]interface{})
+			for k, v := range currentMap {
+				encountered[k] = make(map[string]interface{})
+				for _, vv := range v {
+					encountered[k][vv] = nil
+				}
+			}
+			for k, v := range newMap {
+				for _, vv := range v {
+					if _, ok := encountered[k][vv]; ok {
+						continue
+					}
+					currentMap[k] = append(currentMap[k], vv)
+				}
+			}
+			vp.Set(k, currentMap)
 		case "stringToString":
 			// There is pflag.StringToString which converts 'key=val' to a map structure.
 			// However, currently, we don't use BindPFlag because it has some bugs.
@@ -190,6 +243,29 @@ func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
 		}
 		vp.BindPFlag(k, f)
 	}
+}
+
+// stringToStringSliceToMap converts (app.stringToStringSliceValue).String() to a map.
+// If some errors occur, stringToStringSliceToMap returns an empty map.
+func stringToStringSliceToMap(val string) map[string][]string {
+	val = strings.Trim(val, "[]")
+	if len(val) == 0 {
+		return nil
+	}
+	r := csv.NewReader(strings.NewReader(val))
+	ss, err := r.Read()
+	if err != nil {
+		return nil
+	}
+	out := make(map[string][]string, len(ss))
+	for _, pair := range ss {
+		kv := strings.SplitN(pair, "=", 2)
+		if len(kv) != 2 {
+			return nil
+		}
+		out[kv[0]] = strings.Split(kv[1], ",")
+	}
+	return out
 }
 
 // stringToStringToMap converts (pflag.stringToStringValue).String() to a map.
@@ -363,11 +439,25 @@ func Edit() error {
 	return runEditor(editor, p)
 }
 
+// EditGlobal is the same as Edit, but edit the global config.
+func EditGlobal() error {
+	p, found := getGlobalConfigPath()
+	if !found {
+		logger.Printf("global config is not found. create a new global config to %s", p)
+		if _, err := writeLatestDefaultConfig(p); err != nil {
+			return err
+		}
+	}
+	editor := getEditor()
+	if editor == "" {
+		return errors.New("--edit requires one of $EDITOR value or Vim")
+	}
+	return runEditor(editor, p)
+}
+
 var runEditor = func(editor string, cfgPath string) error {
 	cmd := exec.Command(editor, cfgPath)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		return errors.Wrapf(err, "failed to execute %s", editor)
 	}
@@ -391,6 +481,15 @@ func getLocalConfigPath() (string, bool) {
 	}
 	p, err := filepath.Abs(localConfigName)
 	return p, err == nil
+}
+
+// getGlobalConfig returns always the global config path.
+// If the file is missing, it returns false as the second returned value.
+func getGlobalConfigPath() (string, bool) {
+	cfgDir := filepath.Join(xdgbasedir.ConfigHome(), "evans")
+	path := filepath.Join(cfgDir, globalConfigName)
+	_, err := os.Stat(path)
+	return path, err != nil
 }
 
 func lookupProjectRootPath() (string, bool) {
