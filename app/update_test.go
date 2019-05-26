@@ -122,18 +122,18 @@ func Test_checkUpdate(t *testing.T) {
 			},
 			updateLevel: "patch",
 		},
-		// "the means for installation returns an error": {
-		// 	cacheGetFunc: func() (*cache.Cache, error) {
-		// 		return &cache.Cache{
-		// 			UpdateInfo: cache.UpdateInfo{
-		// 				InstalledBy: cache.MeansType(github.MeansTypeGitHubRelease),
-		// 			},
-		// 		}, nil
-		// 	},
-		// 	meansBuilderOption: dummyMeansBuilderOption{
-		// 		err: errors.New("an error"),
-		// 	},
-		// },
+		"the means for installation returns an error": {
+			cacheGetFunc: func() (*cache.Cache, error) {
+				return &cache.Cache{
+					UpdateInfo: cache.UpdateInfo{
+						InstalledBy: cache.MeansType(github.MeansTypeGitHubRelease),
+					},
+				}, nil
+			},
+			meansBuilderOption: dummyMeansBuilderOption{
+				err: errors.New("an error"),
+			},
+		},
 		"patch update available": {
 			cacheGetFunc: func() (*cache.Cache, error) {
 				return &cache.Cache{

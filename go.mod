@@ -13,7 +13,8 @@ require (
 	github.com/hashicorp/go-version v1.2.0
 	github.com/jhump/protoreflect v1.1.0
 	github.com/k0kubun/pp v2.3.0+incompatible
-	github.com/ktr0731/evans v0.7.3
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
+	github.com/kr/pty v1.1.3 // indirect
 	github.com/ktr0731/go-multierror v0.0.0-20171204182908-b7773ae21874
 	github.com/ktr0731/go-shellstring v0.1.0
 	github.com/ktr0731/go-updater v0.1.4
@@ -22,7 +23,9 @@ require (
 	github.com/manifoldco/promptui v0.3.2
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7
+	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mattn/go-tty v0.0.0-20181127064339-e4f871175a2f // indirect
+	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/nicksnyder/go-i18n v1.10.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.1

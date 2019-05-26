@@ -123,6 +123,8 @@ github.com/mattn/go-pipeline v0.0.0-20170920030317-cfb87a531e2b h1:tllLy4xWlUKqX
 github.com/mattn/go-pipeline v0.0.0-20170920030317-cfb87a531e2b/go.mod h1:THCMZVX5asLpinN+6hFlR1xKFcFsaDpAtUltGqZauBM=
 github.com/mattn/go-runewidth v0.0.3 h1:a+kO+98RDGEfo6asOGMmpodZq4FNtnGP54yps8BzLR4=
 github.com/mattn/go-runewidth v0.0.3/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
+github.com/mattn/go-runewidth v0.0.4 h1:2BvfKmzob6Bmd4YsL0zygOqfdFnK7GR4QL06Do4/p7Y=
+github.com/mattn/go-runewidth v0.0.4/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
 github.com/mattn/go-shellwords v1.0.3/go.mod h1:3xCvwCdWdlDJUrvuMn7Wuy9eWs4pE8vqg+NOMyg4B2o=
 github.com/mattn/go-tty v0.0.0-20180907095812-13ff1204f104/go.mod h1:XPvLUNfbS4fJH25nqRHfWLMa1ONC8Amw+mIA639KxkE=
 github.com/mattn/go-tty v0.0.0-20181127064339-e4f871175a2f h1:4P7Ul+TAnk92vTeVkXs6VLjmf1EhrYtDRa03PCYY6VM=
