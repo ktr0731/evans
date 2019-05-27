@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -73,12 +74,14 @@ func TestREPL_printSplash(t *testing.T) {
 		t.Errorf("unexpected splash: %s", w.String())
 	}
 
-	w.Reset()
-	// Replace with ~ for testing ~/ replacing logic.
-	path := strings.Replace(f.Name(), home, "~", 1)
-	r.printSplash(path)
-	if w.String() != "hi.\n" {
-		t.Errorf("unexpected splash: %s", w.String())
+	if runtime.GOOS != "windows" {
+		w.Reset()
+		// Replace with ~ for testing ~/ replacing logic.
+		path := strings.Replace(f.Name(), home, "~", 1)
+		r.printSplash(path)
+		if w.String() != "hi.\n" {
+			t.Errorf("unexpected splash: %s", w.String())
+		}
 	}
 }
 
