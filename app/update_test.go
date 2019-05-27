@@ -232,6 +232,11 @@ func Test_checkUpdate(t *testing.T) {
 }
 
 func Test_processUpdate(t *testing.T) {
+	oldMeans := means
+	defer func() {
+		means = oldMeans
+	}()
+
 	oldSyscallExec := syscallExec
 	defer func() {
 		syscallExec = oldSyscallExec
@@ -331,6 +336,19 @@ func Test_processUpdate(t *testing.T) {
 					cache.Get = oldCacheGetFunc
 				}()
 				cache.Get = c.cacheGetFunc
+			}
+
+			cache, err := c.cacheGetFunc()
+			if err != nil {
+				t.Fatalf("cacheGetFunc must not return an error, but got '%s'", err)
+			}
+			means = map[updater.MeansType]updater.MeansBuilder{
+				// Assign a dummy means builder as the GitHub Releases means.
+				github.MeansTypeGitHubRelease: dummyMeansBuilder(dummyMeansBuilderOption{
+					installed: true,
+					typeName:  string(cache.UpdateInfo.InstalledBy),
+					version:   cache.UpdateInfo.LatestVersion,
+				}),
 			}
 
 			surveyAskOne = func(_ survey.Prompt, res interface{}, _ survey.Validator, _ ...survey.AskOpt) error {

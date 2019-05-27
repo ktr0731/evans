@@ -48,8 +48,8 @@ func TestREPL_printSplash(t *testing.T) {
 	}
 
 	r.printSplash("")
-	if w.String() != defaultSplashText+"\n" {
-		t.Errorf("unexpected default splash: %s", w.String())
+	if diff := cmp.Diff(w.String(), defaultSplashText+"\n"); diff != "" {
+		t.Errorf("unexpected default splash: %s", diff)
 	}
 
 	home, err := os.UserHomeDir()
