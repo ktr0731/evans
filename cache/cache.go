@@ -72,7 +72,9 @@ var decodeTOML = func(r io.Reader, i interface{}) error {
 
 // Get returns loaded cache contents. To reduce duplicatd function calls,
 // Get caches the result of Get. See CachedCache comments for more implementation details.
-var Get = func() (*Cache, error) {
+var Get = get
+
+func get() (*Cache, error) {
 	if CachedCache != nil {
 		return CachedCache, nil
 	}

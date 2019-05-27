@@ -2,17 +2,17 @@ package repl
 
 import "testing"
 
-type cmdTestCase struct {
-	cmd       commander
-	testCases []testCase
-}
-
-type testCase struct {
-	args   []string
-	hasErr bool
-}
-
 func TestValidate(t *testing.T) {
+	type testCase struct {
+		args   []string
+		hasErr bool
+	}
+
+	type cmdTestCase struct {
+		cmd       commander
+		testCases []testCase
+	}
+
 	cases := map[string]cmdTestCase{
 		"desc": cmdTestCase{
 			cmd: &descCommand{},
@@ -73,10 +73,8 @@ func TestValidate(t *testing.T) {
 					if err == nil {
 						t.Errorf("Validate must return an error, but got nil")
 					}
-				} else {
-					if err != nil {
-						t.Errorf("Validate must not return an error, but got '%s'", err)
-					}
+				} else if err != nil {
+					t.Errorf("Validate must not return an error, but got '%s'", err)
 				}
 			})
 		}

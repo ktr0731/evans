@@ -6,10 +6,6 @@ import "github.com/pkg/errors"
 // ListRPCs lists all RPC belong to the selected service.
 // If svcName is empty, the currently selected service will be used.
 // In this case, ListRPCs doesn't modify the currently selected service.
-//
-// ListRPCs may return these errors:
-//
-//   -
 func ListRPCs(svcName string) ([]*grpc.RPC, error) {
 	return dm.ListRPCs(svcName)
 }

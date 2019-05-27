@@ -7,6 +7,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/c-bata/go-prompt v0.2.3
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
+	github.com/fatih/color v1.7.0
 	github.com/golang/protobuf v1.3.1
 	github.com/google/go-cmp v0.3.0
 	github.com/hashicorp/go-multierror v1.0.0
@@ -23,7 +24,7 @@ require (
 	github.com/ktr0731/grpc-test v0.1.2
 	github.com/ktr0731/grpc-web-go-client v0.2.2
 	github.com/manifoldco/promptui v0.3.2
-	github.com/mattn/go-colorable v0.1.1 // indirect
+	github.com/mattn/go-colorable v0.1.1
 	github.com/mattn/go-isatty v0.0.7
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mattn/go-tty v0.0.0-20181127064339-e4f871175a2f // indirect
