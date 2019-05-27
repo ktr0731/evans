@@ -91,6 +91,10 @@ func (a *App) run(args []string) error {
 	}
 	a.cfg = cfg
 
+	if cfg.REPL.ColoredOutput {
+		a.cui = cui.NewColored(a.cui)
+	}
+
 	isCLIMode := (cfg.cli || mode.IsCLIMode(cfg.file))
 	if cfg.repl || !isCLIMode {
 		baseCtx, cancel := context.WithCancel(context.Background())
