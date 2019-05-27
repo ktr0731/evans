@@ -39,8 +39,7 @@ func TestREPL_printSplash(t *testing.T) {
 	usecase.Clear()
 
 	w := new(bytes.Buffer)
-	ui := cui.DefaultUI()
-	ui.Writer = w
+	ui := cui.New(cui.Writer(w))
 
 	r, err := New(dummyCfg, prompt.New(), ui, "", "")
 	if err != nil {

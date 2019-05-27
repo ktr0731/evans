@@ -308,10 +308,7 @@ func TestE2E_CLI(t *testing.T) {
 			defer stopServer()
 
 			outBuf, eoutBuf := new(bytes.Buffer), new(bytes.Buffer)
-			cui := &cui.UI{
-				Writer:    outBuf,
-				ErrWriter: eoutBuf,
-			}
+			cui := cui.New(cui.Writer(outBuf), cui.ErrWriter(eoutBuf))
 
 			args := commonFlags
 			args = append([]string{"--port", port}, args...)

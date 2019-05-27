@@ -275,9 +275,7 @@ func TestE2E_REPL(t *testing.T) {
 			}
 
 			w, ew := new(bytes.Buffer), new(bytes.Buffer)
-			ui := cui.DefaultUI()
-			ui.Writer = w
-			ui.ErrWriter = ew
+			ui := cui.New(cui.Writer(w), cui.ErrWriter(ew))
 
 			a := app.New(ui)
 			code := a.Run(args)

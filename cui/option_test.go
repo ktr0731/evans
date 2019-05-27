@@ -8,26 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestReader(t *testing.T) {
-	cases := map[string]struct {
-		r        io.Reader
-		expected io.Reader
-	}{
-		"normal": {
-			r:        os.Stdin,
-			expected: os.Stdin,
-		},
-	}
-
-	for name, c := range cases {
-		t.Run(name, func(t *testing.T) {
-			ui := &basicUI{}
-			Reader(c.r)(ui)
-			assert.Equal(t, c.expected, ui.reader)
-		})
-	}
-}
-
 func TestWriter(t *testing.T) {
 	cases := map[string]struct {
 		w        io.Writer
