@@ -63,8 +63,8 @@ func (c *client) ListPackages() ([]*desc.FileDescriptor, error) {
 		return nil, errors.Wrap(err, "failed to list services from reflecton enabled gRPC server")
 	}
 
-	fds := make([]*desc.FileDescriptor, len(ssvcs))
-	for i, s := range ssvcs {
+	fds := make([]*desc.FileDescriptor, 0, len(ssvcs))
+	for _, s := range ssvcs {
 		if s == reflectionServiceName {
 			continue
 		}
@@ -72,7 +72,7 @@ func (c *client) ListPackages() ([]*desc.FileDescriptor, error) {
 		if err != nil {
 			return nil, err
 		}
-		fds[i] = svc.GetFile()
+		fds = append(fds, svc.GetFile())
 	}
 
 	return fds, nil

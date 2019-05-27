@@ -82,7 +82,7 @@ func TestE2E_CLI(t *testing.T) {
 			expectedCode: 1,
 		},
 		"cannot launch CLI mode because --package is invalid value": {
-			args:         "--package foo --service Example --call Unary -file testdata/unary_call.in testdata/test.proto",
+			args:         "--package foo --service Example --call Unary --file testdata/unary_call.in testdata/test.proto",
 			expectedCode: 1,
 		},
 		"cannot launch CLI mode because --service is invalid value": {
