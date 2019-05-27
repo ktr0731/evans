@@ -25,7 +25,9 @@ func init() {
 	flag.Parse()
 	if *update {
 		os.RemoveAll(filepath.Join("testdata", "fixtures"))
-		os.MkdirAll(filepath.Join("testdata", "fixtures"), 0755)
+		if err := os.MkdirAll(filepath.Join("testdata", "fixtures"), 0755); err != nil {
+			panic(fmt.Sprintf("failed to create fixture dirs: %s", err))
+		}
 	}
 }
 

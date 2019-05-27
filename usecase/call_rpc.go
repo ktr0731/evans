@@ -53,8 +53,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		if err != nil {
 			return err
 		}
-		io.WriteString(w, out)
-		io.WriteString(w, "\n") // Break line.
+		if _, err := io.WriteString(w, out+"\n"); err != nil {
+			return err
+		}
 		return nil
 	}
 

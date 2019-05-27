@@ -129,7 +129,9 @@ func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert
 
 		creds := credentials.NewTLS(&tlsCfg)
 		if serverName != "" {
-			creds.OverrideServerName(serverName)
+			if err := creds.OverrideServerName(serverName); err != nil {
+				return nil, errors.Wrapf(err, "failed to override the server name by '%s'", serverName)
+			}
 		}
 		opts = append(opts, gogrpc.WithTransportCredentials(creds))
 	}

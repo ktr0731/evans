@@ -64,6 +64,7 @@ func TestValidate(t *testing.T) {
 		},
 	}
 	for cmdName, cmdTestCase := range cases {
+		cmdTestCase := cmdTestCase
 		for _, c := range cmdTestCase.testCases {
 			c := c
 			t.Run(cmdName, func(t *testing.T) {

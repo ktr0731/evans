@@ -95,3 +95,7 @@ linters:
     - gochecknoinits
     - gochecknoglobals
     - interfacer
+    - lll
+    - scopelint
+    - maligned
+    - gocyclo

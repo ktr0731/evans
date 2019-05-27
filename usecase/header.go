@@ -15,7 +15,9 @@ func (m *dependencyManager) AddHeader(k, v string) {
 		logger.Println(`warning: cannot add a header named "user-agent"`)
 		return
 	}
-	m.state.headers.Add(k, v)
+	if err := m.state.headers.Add(k, v); err != nil {
+		logger.Printf("failed to add a header %s=%s: %s", k, v, err)
+	}
 }
 
 func RemoveHeader(k string) {

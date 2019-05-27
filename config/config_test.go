@@ -47,7 +47,7 @@ func setupEnv(t *testing.T) (string, string, func()) {
 		t.Fatalf("failed to create a temp dir to setup testing enviroment: %s", err)
 	}
 
-	os.Chdir(dir)
+	mustChdir(t, dir)
 	oldEnv := os.Getenv("XDG_CONFIG_HOME")
 	cfgDir := filepath.Join(dir, "config")
 	os.Setenv("XDG_CONFIG_HOME", cfgDir)
@@ -55,7 +55,7 @@ func setupEnv(t *testing.T) (string, string, func()) {
 	mkdir(t, evansCfgDir)
 
 	return dir, evansCfgDir, func() {
-		os.Chdir(cwd)
+		mustChdir(t, cwd)
 		os.Setenv("XDG_CONFIG_HOME", oldEnv)
 		os.RemoveAll(dir)
 		viper.Reset()
@@ -213,7 +213,7 @@ func TestLoad(t *testing.T) {
 		// global.toml was changed protopath, request.header and port to '["bar"]', 'grpc-client = "evans"' and '3333'.
 		copyFile(t, filepath.Join(projDir, ".evans.toml"), filepath.Join(oldCWD, "testdata", "local.toml"))
 
-		os.Chdir(projDir)
+		mustChdir(t, projDir)
 		err := exec.Command("git", "init").Run()
 		if err != nil {
 			t.Fatalf("failed to init a pseudo project: %s", err)
@@ -242,7 +242,7 @@ func TestLoad(t *testing.T) {
 		// global.toml was changed protopath, request.header and port to '["bar"]', 'grpc-client = "evans"' and '3333'.
 		copyFile(t, filepath.Join(projDir, ".evans.toml"), filepath.Join(oldCWD, "testdata", "local.toml"))
 
-		os.Chdir(projDir)
+		mustChdir(t, projDir)
 		err := exec.Command("git", "init").Run()
 		if err != nil {
 			t.Fatalf("failed to init a pseudo project: %s", err)
@@ -253,7 +253,7 @@ func TestLoad(t *testing.T) {
 		fs.StringToString("header", nil, "")
 		fs.StringSlice("path", nil, "")
 		// --port flag changes port number to '8080'. Also --header appends 'foo=bar' and 'hoge=fuga' to 'request.header'.
-		fs.Parse([]string{
+		_ = fs.Parse([]string{
 			"--port", "8080",
 			"--path", "yoko.touma",
 			"--header", "foo=bar", "--header", "hoge=fuga",
@@ -279,7 +279,7 @@ func TestLoad(t *testing.T) {
 		fs := pflag.NewFlagSet("test", pflag.ExitOnError)
 		fs.String("port", "", "")
 		// --port flag changes port number to '8080'.
-		fs.Parse([]string{"--port", "8080"})
+		_ = fs.Parse([]string{"--port", "8080"})
 
 		cfg := mustGet(t, fs)
 
@@ -319,8 +319,8 @@ func TestEdit(t *testing.T) {
 					t.Fatalf("failed to get the working dir: %s", err)
 				}
 				dir := os.TempDir()
-				os.Chdir(dir)
-				defer os.Chdir(wd)
+				mustChdir(t, dir)
+				defer mustChdir(t, wd)
 				defer os.Remove(dir)
 			}
 
@@ -417,6 +417,8 @@ func getWorkDir(t *testing.T) string {
 }
 
 func copyFile(t *testing.T, to, from string) {
+	t.Helper()
+
 	tf, err := os.Create(to)
 	if err != nil {
 		t.Fatalf("failed to create a config file: %s", err)
@@ -427,7 +429,9 @@ func copyFile(t *testing.T, to, from string) {
 		t.Fatalf("failed to open a prepared config file: %s", err)
 	}
 	defer ff.Close()
-	io.Copy(tf, ff)
+	if _, err := io.Copy(tf, ff); err != nil {
+		t.Fatalf("io.Copy must not return an error, but got '%s'", err)
+	}
 }
 
 func mkdir(t *testing.T, dir string) {
@@ -443,4 +447,10 @@ func mustGet(t *testing.T, fs *pflag.FlagSet) *Config {
 		t.Fatalf("Get must not return any errors, but got '%s'", err)
 	}
 	return cfg
+}
+
+func mustChdir(t *testing.T, dir string) {
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("Chdir must not return an error, but got '%s'", err)
+	}
 }

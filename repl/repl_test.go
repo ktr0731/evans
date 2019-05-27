@@ -64,7 +64,9 @@ func TestREPL_printSplash(t *testing.T) {
 	defer os.Remove(f.Name())
 	defer f.Close()
 
-	io.WriteString(f, "hi.")
+	if _, err := io.WriteString(f, "hi."); err != nil {
+		t.Fatalf("WriteString must not return an error, but got %s", err)
+	}
 
 	w.Reset()
 	r.printSplash(f.Name())

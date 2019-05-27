@@ -332,7 +332,9 @@ func Test_processUpdate(t *testing.T) {
 			}
 
 			var buf bytes.Buffer
-			processUpdate(context.Background(), &config.Config{Meta: &c.cfgMeta}, &buf)
+			if err := processUpdate(context.Background(), &config.Config{Meta: &c.cfgMeta}, &buf); err != nil {
+				t.Errorf("must not return an error, but got '%s'", err)
+			}
 		})
 	}
 }

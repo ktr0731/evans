@@ -9,7 +9,9 @@ func Test_stringToStringSliceValue(t *testing.T) {
 	v := newStringToStringValue(map[string][]string{
 		"ogiso": []string{"setsuna"},
 	}, &m)
-	v.Set("touma=kazusa,touma=youko")
+	if err := v.Set("touma=kazusa,touma=youko"); err != nil {
+		t.Fatalf("Set must not return an error, but got '%s'", err)
+	}
 	const expected = `["touma=kazusa,youko"]`
 	actual := v.String()
 	if expected != actual {

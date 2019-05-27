@@ -236,7 +236,7 @@ func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
 			vp.Set(k, currentSlice)
 			continue
 		}
-		vp.BindPFlag(k, f)
+		_ = vp.BindPFlag(k, f)
 	}
 }
 
@@ -365,7 +365,9 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 		migrate(old, v)
 		// Update the global config with the migrated config.
 		logger.Println("migrated the global config to the structure of the latest version")
-		v.WriteConfig()
+		if err := v.WriteConfig(); err != nil {
+			return nil, errors.Wrapf(err, "failed to write config")
+		}
 	}
 
 	var globalCfg Config

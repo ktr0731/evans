@@ -14,6 +14,7 @@ func Test_migration(t *testing.T) {
 	}
 
 	for oldVer := range migrationScripts {
+		oldVer := oldVer
 		t.Run(oldVer, func(t *testing.T) {
 			oldCWD := getWorkDir(t)
 

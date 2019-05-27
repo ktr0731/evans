@@ -79,7 +79,9 @@ func startServer(t *testing.T, useTLS, useReflection, useWeb bool) (func(), stri
 	go srv.Serve()
 
 	return func() {
-		srv.Stop()
+		if err := srv.Stop(); err != nil {
+			t.Fatalf("Stop must not return an error, but got '%s'", err)
+		}
 	}, strconv.Itoa(port)
 }
 

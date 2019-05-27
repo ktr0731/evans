@@ -66,11 +66,15 @@ func main() {
 	testCaseName := goprompt.Input("testcase name: ", func(goprompt.Document) []goprompt.Suggest { return nil })
 	if testCaseName == "" {
 		fmt.Println("abort")
-		f.Write(src)
+		if _, err := f.Write(src); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to write src to the file: %s", err)
+		}
 		os.Exit(1)
 	}
 
-	generateFile(f, string(src), testCaseName, p.inputHistory, args)
+	if err := generateFile(f, string(src), testCaseName, p.inputHistory, args); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to generate a file: %s", err)
+	}
 
 	os.Exit(code)
 }
@@ -183,8 +187,8 @@ func generateFile(w io.Writer, src, testCaseName string, input, args []string) e
 	if err != nil {
 		return errors.Wrap(err, "failed to format modified source code")
 	}
-	w.Write(b)
-	return nil
+	_, err = w.Write(b)
+	return err
 }
 
 type recorderPrompt struct {

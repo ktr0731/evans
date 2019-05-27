@@ -69,7 +69,5 @@ func RunAsREPLMode(cfg *config.Config, ui *cui.UI) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to launch a new REPL")
 	}
-	repl.Run(ctx)
-
-	return nil
+	return repl.Run(ctx)
 }
