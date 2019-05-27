@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"time"
 
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
@@ -39,7 +40,11 @@ func RunAsCLIMode(cfg *config.Config, call, file string, ui cui.UI) error {
 	if err != nil {
 		injectResult = multierror.Append(injectResult, err)
 	} else {
-		defer gRPCClient.Close(context.Background()) // TODO: ctx
+		defer func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			gRPCClient.Close(ctx)
+		}()
 	}
 
 	spec, err := newSpec(cfg, gRPCClient)

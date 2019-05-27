@@ -37,8 +37,12 @@ func TestHeaders_Add(t *testing.T) {
 
 func TestHeaders_Add_distinct(t *testing.T) {
 	h := grpc.Headers{}
-	h.Add("touma", "kazusa")
-	h.Add("touma", "kazusa")
+	if err := h.Add("touma", "kazusa"); err != nil {
+		t.Fatalf("Add must not return an error, but got '%s'", err)
+	}
+	if err := h.Add("touma", "kazusa"); err != nil {
+		t.Fatalf("Add must not return an error, but got '%s'", err)
+	}
 	expected := []string{"kazusa"}
 	if diff := cmp.Diff(expected, h["touma"]); diff != "" {
 		t.Errorf("-want, +got\n%s", diff)
