@@ -3,7 +3,6 @@ module github.com/ktr0731/evans
 go 1.12
 
 require (
-	github.com/BurntSushi/toml v0.3.1
 	github.com/Netflix/go-expect v0.0.0-20180928190340-9d1f4485533b // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/c-bata/go-prompt v0.2.3

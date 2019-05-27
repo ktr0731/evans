@@ -3,10 +3,7 @@ package cache
 import (
 	"io"
 	"os"
-	"path/filepath"
 	"testing"
-
-	"github.com/BurntSushi/toml"
 )
 
 func TestMain(m *testing.M) {
@@ -20,7 +17,6 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
-	os.RemoveAll(filepath.Dir(resolvePath()))
 	os.Setenv("XDG_CACHE_HOME", oldCacheDir)
 	CachedCache = nil
 
@@ -38,13 +34,13 @@ func TestCache(t *testing.T) {
 
 	t.Run("the file is empty", func(t *testing.T) {
 		CachedCache = nil
-		oldTOMLDecoder := tomlDecodeReader
+		oldDecodeTOML := decodeTOML
 		defer func() {
-			tomlDecodeReader = oldTOMLDecoder
+			decodeTOML = oldDecodeTOML
 		}()
 		// Do nothing.
-		tomlDecodeReader = func(r io.Reader, v interface{}) (toml.MetaData, error) {
-			return toml.MetaData{}, nil
+		decodeTOML = func(r io.Reader, v interface{}) error {
+			return nil
 		}
 		_, err := Get()
 		if err != nil {
