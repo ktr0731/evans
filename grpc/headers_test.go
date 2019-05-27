@@ -3,6 +3,7 @@ package grpc_test
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/ktr0731/evans/grpc"
 )
 
@@ -31,5 +32,15 @@ func TestHeaders_Add(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+func TestHeaders_Add_distinct(t *testing.T) {
+	h := grpc.Headers{}
+	h.Add("touma", "kazusa")
+	h.Add("touma", "kazusa")
+	expected := []string{"kazusa"}
+	if diff := cmp.Diff(expected, h["touma"]); diff != "" {
+		t.Errorf("-want, +got\n%s", diff)
 	}
 }

@@ -19,11 +19,24 @@ func (h Headers) Add(k, v string) error {
 			}
 		}
 	}
-	h[k] = append(h[k], v)
+	h[k] = distinct(append(h[k], v))
 	return nil
 }
 
 // Remove deletes values corresponds to a key k.
 func (h Headers) Remove(k string) {
 	delete(h, k)
+}
+
+// distinct removes duplicated elements.
+func distinct(s []string) []string {
+	newSlice := make([]string, 0, len(s))
+	encountered := map[string]interface{}{}
+	for _, v := range s {
+		if _, found := encountered[v]; !found {
+			newSlice = append(newSlice, v)
+			encountered[v] = nil
+		}
+	}
+	return newSlice
 }
