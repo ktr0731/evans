@@ -45,8 +45,7 @@ var commands = map[string]commander{
 	"desc": &descCommand{},
 }
 
-// New instantiates a new REPL instance.
-// New always calls p.SetPrefix for display the server addr.
+// New instantiates a new REPL instance. New always calls p.SetPrefix for display the server addr.
 // New may return an error if some of passed arguments are invalid.
 func New(cfg *config.Config, p prompt.Prompt, ui *cui.UI, pkgName, svcName string) (*REPL, error) {
 	cmds := commands

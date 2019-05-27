@@ -43,15 +43,13 @@ type Type struct {
 	// FullyQualifiedName is the name that contains the package name this Type belongs.
 	FullyQualifiedName string
 
-	// New instantiates a new instance of Type.  It is used for decode
-	// requests and responses.
+	// New instantiates a new instance of Type.  It is used for decode requests and responses.
 	New func() (interface{}, error)
 }
 
 // Client represents the gRPC client.
 type Client interface {
-	// Invoke invokes a request req to the gRPC server. Then, Invoke decodes
-	// the response to res.
+	// Invoke invokes a request req to the gRPC server. Then, Invoke decodes the response to res.
 	Invoke(ctx context.Context, fqrn string, req, res interface{}) error
 
 	// NewClientStream creates a new client stream.

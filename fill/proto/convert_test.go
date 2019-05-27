@@ -133,7 +133,8 @@ func Test_convertValue(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(c.expected, actual) {
-				t.Errorf("expected '%v' (type = %T), but got '%v' (type = %T)", c.expected, c.expected, actual, actual)
+				t.Errorf("expected '%v' (type = %T), but got '%v' (type = %T)",
+					c.expected, c.expected, actual, actual)
 			}
 		})
 	}

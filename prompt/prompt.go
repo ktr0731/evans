@@ -25,7 +25,7 @@ func (s *stdout) Close() error {
 }
 
 func init() {
-	// Override readline.Stdout to supress ringing bell.
+	// Override readline.Stdout to suppress ringing bell.
 	// See more details: https://github.com/manifoldco/promptui/issues/49#issuecomment-428801411
 	readline.Stdout = &stdout{}
 }
@@ -39,15 +39,13 @@ var (
 // Color represents a valid color for a prompt prefix.
 type Color goprompt.Color
 
-// Next returns the next color of c.
-// Note that Next will circular if c is the end of colors.
+// Next returns the next color of c. Note that Next will circular if c is the end of colors.
 func (c *Color) Next() {
 	*c = (*c + 1) % 16
 }
 
 type Prompt interface {
-	// Input reads keyboard input.
-	// If ctrl+d is entered, Input returns io.EOF.
+	// Input reads keyboard input. If ctrl+d is entered, Input returns io.EOF.
 	Input() (string, error)
 	Select(message string, options []string) (selected string, _ error)
 
@@ -60,13 +58,11 @@ type Prompt interface {
 	// SetCompleter set a completer for prompt completion.
 	SetCompleter(c Completer)
 
-	// SetCommandHistory set a command history.
-	// The order of history is asc.
+	// SetCommandHistory set a command history. The order of history is asc.
 	SetCommandHistory(history []string)
 }
 
-// New instantiates a new Prompt implementation.
-// New will be replaced when e2egen command is executed.
+// New instantiates a new Prompt implementation. New will be replaced when e2egen command is executed.
 // Initially, Prompt doesn't have a prefix, so you have to call SetPrefix for displaying it.
 var New = newPrompt
 
@@ -113,9 +109,8 @@ type prompt struct {
 	options        []goprompt.Option
 
 	// entered will be changed by prompt.Enter key bind of c-bata/go-prompt.
-	// c-bata/go-prompt doesn't return EOF (ctrl+d), only returns empty string
-	// when ctrl+d is entered. So Evans cannot determine whether empty input
-	// is EOF or just entered.
+	// c-bata/go-prompt doesn't return EOF (ctrl+d), only returns empty string when ctrl+d is entered.
+	// So Evans cannot determine whether empty input is EOF or just entered.
 	// Therefore, Evans uses a tricky method to detect EOF.
 	//
 	// 1. Register a key bind for enter key by OptionAddKeyBind.

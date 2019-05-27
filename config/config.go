@@ -1,6 +1,5 @@
-// Package config provides config structures, and a mechanism that merges sources
-// such that the global config file, a project local config file and
-// command line flags.
+// Package config provides config structures, and a mechanism that merges sources such that the global config file,
+// a project local config file and command line flags.
 package config
 
 import (
@@ -63,8 +62,7 @@ type Meta struct {
 	UpdateLevel   string `toml:"updateLevel"`
 }
 
-// Each TOML key must be equal the field name in the lower-case.
-// It is a limitation of spf13/viper.
+// Each TOML key must be equal the field name in the lower-case. It is a limitation of spf13/viper.
 type Config struct {
 	Default *Default `toml:"default"`
 	Meta    *Meta    `toml:"meta"`
@@ -144,8 +142,7 @@ func newDefaultViper() *viper.Viper {
 	v.SetDefault("default.package", "")
 	v.SetDefault("default.service", "")
 
-	// We set the default version to v0.6.10
-	// because the structure of Config is changed at v0.6.11.
+	// We set the default version to v0.6.10 because the structure of Config is changed at v0.6.11.
 	v.SetDefault("meta.configVersion", "0.6.10")
 	v.SetDefault("meta.autoUpdate", false)
 	v.SetDefault("meta.updateLevel", "patch")
@@ -235,9 +232,7 @@ func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
 			// So, we don't use BindPFlag.
 			currentSlice := vp.GetStringSlice(k)
 			newSlice := stringSliceToSlice(f.Value.String())
-			for _, v := range newSlice {
-				currentSlice = append(currentSlice, v)
-			}
+			currentSlice = append(currentSlice, newSlice...)
 			vp.Set(k, currentSlice)
 			continue
 		}

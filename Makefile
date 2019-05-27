@@ -54,10 +54,7 @@ e2e-test: lint
 
 .PHONY: lint
 lint:
-	golangci-lint run --disable-all \
-		--build-tags e2e \
-		-E 'deadcode,govet,golint' \
-		./...
+	golangci-lint run ./...
 
 .PHONY: coverage
 coverage:

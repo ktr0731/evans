@@ -168,16 +168,17 @@ func TestLoad(t *testing.T) {
 		}
 	}
 
-	assertWithGolden(t, "create a default global config if both of global and local config are not found", func(t *testing.T) *Config {
-		_, _, cleanup := setupEnv(t)
-		defer cleanup()
+	assertWithGolden(t, "create a default global config if both of global and local config are not found",
+		func(t *testing.T) *Config {
+			_, _, cleanup := setupEnv(t)
+			defer cleanup()
 
-		cfg := mustGet(t, nil)
+			cfg := mustGet(t, nil)
 
-		checkValues(t, cfg)
+			checkValues(t, cfg)
 
-		return cfg
-	})
+			return cfg
+		})
 
 	assertWithGolden(t, "load a global config if local config is not found", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)

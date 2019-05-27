@@ -72,12 +72,14 @@ func TestE2E_REPL(t *testing.T) {
 			input: []interface{}{"call Unary", "kaguya"},
 		},
 		"call ClientStreaming": {
-			args:  "testdata/test.proto",
-			input: []interface{}{"call ClientStreaming", "kaguya", "chika", "miko", io.EOF}, // io.EOF means end of inputting.
+			args: "testdata/test.proto",
+			// io.EOF means end of inputting.
+			input: []interface{}{"call ClientStreaming", "kaguya", "chika", "miko", io.EOF},
 		},
 		"call BidiStreaming": {
-			args:  "testdata/test.proto",
-			input: []interface{}{"call BidiStreaming", "kaguya", "chika", "miko", io.EOF}, // io.EOF means end of inputting.
+			args: "testdata/test.proto",
+			// io.EOF means end of inputting.
+			input: []interface{}{"call BidiStreaming", "kaguya", "chika", "miko", io.EOF},
 		},
 		"call UnaryMessage": {
 			args:  "testdata/test.proto",

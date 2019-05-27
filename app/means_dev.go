@@ -1,7 +1,6 @@
 // +build dev
 
-// means_dev.go treats the default means for updating to a dummy.
-// To enable dev build, run the following command.
+// means_dev.go treats the default means for updating to a dummy. To enable dev build, run the following command.
 //
 //   $ make build-dev
 //

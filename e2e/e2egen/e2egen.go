@@ -1,16 +1,13 @@
 // Package main provides a generator for E2E test cases.
 //
-// e2egen generates a new testcase stub from execution result.
-// e2egen accepts following args.
+// e2egen generates a new testcase stub from execution result. e2egen accepts following args.
 //
 //   e2egen <file> <Evans flags>
 //
-// file is the source code of REPL E2E test. Updated code is written to it.
-// Evans flags are options of Evans.
+// file is the source code of REPL E2E test. Updated code is written to it. Evans flags are options of Evans.
 //
 // First, e2egen tries to read source code from file.
-// Second, e2egen launches Evans with Evans flags. In this time, e2egen records
-// all input from the prompt internally.
+// Second, e2egen launches Evans with Evans flags. In this time, e2egen records all input from the prompt internally.
 // Third, e2egen generates updated source code that appended the new testcase.
 package main
 

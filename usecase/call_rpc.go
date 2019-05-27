@@ -10,15 +10,9 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// CallRPC constructs a request with input source such that prompt inputting, stdin or a file.
-// After that, it sends the request to the gRPC server and decodes the response body to res.
-// Note that req and res must be JSON-decodable structs.
-// The output is written to w.
-//
-// CallRPC may return these errors:
-//
-//   -
-//
+// CallRPC constructs a request with input source such that prompt inputting, stdin or a file. After that, it sends
+// the request to the gRPC server and decodes the response body to res.
+// Note that req and res must be JSON-decodable structs. The output is written to w.
 func CallRPC(ctx context.Context, w io.Writer, rpcName string) error {
 	return dm.CallRPC(ctx, w, rpcName)
 }
@@ -30,7 +24,10 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	newRequest := func() (interface{}, error) {
 		req, err := rpc.RequestType.New()
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to instantiate an instance of the request type '%s'", rpc.RequestType.FullyQualifiedName)
+			return nil, errors.Wrapf(
+				err,
+				"failed to instantiate an instance of the request type '%s'",
+				rpc.RequestType.FullyQualifiedName)
 		}
 		err = m.filler.Fill(req)
 		if err == io.EOF {
@@ -44,7 +41,10 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	newResponse := func() (interface{}, error) {
 		res, err := rpc.ResponseType.New()
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to instantiate an instance of the response type '%s'", rpc.RequestType.FullyQualifiedName)
+			return nil, errors.Wrapf(
+				err,
+				"failed to instantiate an instance of the response type '%s'",
+				rpc.RequestType.FullyQualifiedName)
 		}
 		return res, nil
 	}
@@ -90,7 +90,10 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				case err == io.EOF:
 					return nil
 				case err != nil:
-					return errors.Wrapf(err, "failed to receive a response from the server stream '%s'", streamDesc.StreamName)
+					return errors.Wrapf(
+						err,
+						"failed to receive a response from the server stream '%s'",
+						streamDesc.StreamName)
 				}
 				if err := flushResponse(res); err != nil {
 					return err
@@ -103,7 +106,10 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				req, err := newRequest()
 				if err == io.EOF {
 					if err := stream.CloseSend(); err != nil {
-						return errors.Wrapf(err, "failed to close the stream of RPC '%s'", streamDesc.StreamName)
+						return errors.Wrapf(
+							err,
+							"failed to close the stream of RPC '%s'",
+							streamDesc.StreamName)
 					}
 					return nil
 				}
@@ -111,7 +117,10 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 					return err
 				}
 				if err := stream.Send(req); err != nil {
-					return errors.Wrapf(err, "failed to send a RPC to the client stream '%s'", streamDesc.StreamName)
+					return errors.Wrapf(
+						err,
+						"failed to send a RPC to the client stream '%s'",
+						streamDesc.StreamName)
 				}
 			}
 		})
@@ -134,7 +143,10 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	case rpc.IsClientStreaming:
 		stream, err := m.gRPCClient.NewClientStream(ctx, streamDesc, rpc.FullyQualifiedName)
 		if err != nil {
-			return errors.Wrapf(err, "failed to create a new client stream for RPC '%s'", streamDesc.StreamName)
+			return errors.Wrapf(
+				err,
+				"failed to create a new client stream for RPC '%s'",
+				streamDesc.StreamName)
 		}
 		for {
 			req, err := newRequest()
@@ -144,7 +156,10 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 					return err
 				}
 				if err := stream.CloseAndReceive(res); err != nil {
-					return errors.Wrapf(err, "failed to close the stream of RPC '%s'", streamDesc.StreamName)
+					return errors.Wrapf(
+						err,
+						"failed to close the stream of RPC '%s'",
+						streamDesc.StreamName)
 				}
 				if err := flushResponse(res); err != nil {
 					return err
@@ -155,7 +170,10 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				return err
 			}
 			if err := stream.Send(req); err != nil {
-				return errors.Wrapf(err, "failed to send a RPC to the client stream '%s'", streamDesc.StreamName)
+				return errors.Wrapf(
+					err,
+					"failed to send a RPC to the client stream '%s'",
+					streamDesc.StreamName)
 			}
 		}
 
@@ -171,14 +189,20 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	case rpc.IsServerStreaming:
 		stream, err := m.gRPCClient.NewServerStream(ctx, streamDesc, rpc.FullyQualifiedName)
 		if err != nil {
-			return errors.Wrapf(err, "failed to create a new server stream for RPC '%s'", streamDesc.StreamName)
+			return errors.Wrapf(
+				err,
+				"failed to create a new server stream for RPC '%s'",
+				streamDesc.StreamName)
 		}
 		req, err := newRequest()
 		if err != nil {
 			return err
 		}
 		if err := stream.Send(req); err != nil {
-			return errors.Wrapf(err, "failed to send a RPC to the server stream '%s'", streamDesc.StreamName)
+			return errors.Wrapf(
+				err,
+				"failed to send a RPC to the server stream '%s'",
+				streamDesc.StreamName)
 		}
 
 		for {
@@ -193,15 +217,17 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			case err == io.EOF:
 				return nil
 			case err != nil:
-				return errors.Wrapf(err, "failed to receive a response from the server stream '%s'", streamDesc.StreamName)
+				return errors.Wrapf(
+					err,
+					"failed to receive a response from the server stream '%s'",
+					streamDesc.StreamName)
 			}
 			if err := flushResponse(res); err != nil {
 				return err
 			}
 		}
 
-	// If both of rpc.IsServerStreaming and rpc.IsClientStreaming are nil,
-	// it means its RPC is an unary RPC.
+	// If both of rpc.IsServerStreaming and rpc.IsClientStreaming are nil, it means its RPC is an unary RPC.
 	// Unary RPCs are processed by the following instruction.
 	//
 	//   1. Create a new request and fill input to it.

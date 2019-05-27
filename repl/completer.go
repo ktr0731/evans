@@ -12,8 +12,7 @@ type completer struct {
 	cmds map[string]commander
 }
 
-// Complete completes suggestions from the input.
-// In the completion, if an error is occurred, it will be ignored.
+// Complete completes suggestions from the input. In the completion, if an error is occurred, it will be ignored.
 func (c *completer) Complete(d prompt.Document) (s []*prompt.Suggest) {
 	bc := d.TextBeforeCursor()
 	if bc == "" {

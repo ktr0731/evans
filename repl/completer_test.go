@@ -9,7 +9,6 @@ import (
 )
 
 type dummyDocument struct {
-	wordBeforeCursor string
 	textBeforeCursor string
 }
 
@@ -64,18 +63,20 @@ func TestCompleter(t *testing.T) {
 			doc := &dummyDocument{textBeforeCursor: c.text}
 			suggestions := cmpl.Complete(doc)
 			if c.isDefault {
-				if len(suggestions) != 0 && strings.HasPrefix(suggestions[len(suggestions)-1].Text, "--help") {
+				if len(suggestions) != 0 &&
+					strings.HasPrefix(suggestions[len(suggestions)-1].Text, "--help") {
 					t.Errorf("in default completion, it must not return --help suggestion")
 				}
 			} else {
-				if len(suggestions) != 0 && !strings.HasPrefix(suggestions[len(suggestions)-1].Text, "--help") {
+				if len(suggestions) != 0 &&
+					!strings.HasPrefix(suggestions[len(suggestions)-1].Text, "--help") {
 					t.Errorf("completion must return --help suggestion at the final suggestion")
 				}
 			}
 
 			if c.isEmpty {
 				if n := len(suggestions); n != 0 {
-					t.Errorf("completion must not return any suggestions, but got %d suggestions", n)
+					t.Errorf("completion must not return any suggestions, but got %d", n)
 				}
 			} else {
 				if n := len(suggestions); n == 0 {

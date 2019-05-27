@@ -30,8 +30,7 @@ func NewInteractiveFiller(prompt prompt.Prompt, prefixFormat string) *Interactiv
 }
 
 // Fill receives v that is an instance of *dynamic.Message.
-// Fill let you input each field interactively by using a prompt.
-// v will be set field values inputted by a prompt.
+// Fill let you input each field interactively by using a prompt. v will be set field values inputted by a prompt.
 //
 // Note that Fill resets the previous state when it is called again.
 func (f *InteractiveFiller) Fill(v interface{}) error {
@@ -61,15 +60,13 @@ func (f *InteractiveFiller) Fill(v interface{}) error {
 //    string baz = 2;
 //  }
 //
-// inputMessage is called two times.
-// One for Foo's primitive fields, and another one for bar's primitive fields.
+// inputMessage is called two times. One for Foo's primitive fields, and another one for bar's primitive fields.
 //
 // inputMessage returns following errors:
 //
 //   - io.EOF:
 //       CTRL+d entered. Never return in the case of repeated message.
-//       inputMessage also returns the first return value what is
-//       the message partially inputted.
+//       inputMessage also returns the first return value what is the message partially inputted.
 //
 func (f *InteractiveFiller) inputMessage(dmsg *dynamic.Message) error {
 	f.prompt.SetPrefixColor(f.state.color)
@@ -285,14 +282,12 @@ func (f *InteractiveFiller) inputPrimitiveField(field *desc.FieldDescriptor) (in
 		return "", errors.Wrap(err, "failed to read user input")
 	}
 
-	// Empty input. See enteredEmptyInput field comments for the behavior
-	// when empty input is entered.
+	// Empty input. See enteredEmptyInput field comments for the behavior when empty input is entered.
 	if in == "" {
 		// Check whether field.enteredEmptyInput is true or false
 		// when this field satisfies one of following conditions.
 		//   - field is a repeated field
-		//   - One or more ancestor has/have repeated field and
-		//     the direct parent is not a cycled field.
+		//   - One or more ancestor has/have repeated field and the direct parent is not a cycled field.
 		if field.IsRepeated() || (f.state.hasAncestorAndHasRepeatedField && !f.state.hasDirectCycledParent) {
 			if f.state.enteredEmptyInput {
 				return nil, io.EOF
@@ -313,8 +308,7 @@ func (f *InteractiveFiller) isSelectedOneOf(field *desc.FieldDescriptor) bool {
 	return ok
 }
 
-// isCirculatedField checks whether the passed message m is a circulated message.
-// Field f must be a message field.
+// isCirculatedField checks whether the passed message m is a circulated message. Field f must be a message field.
 func (f *InteractiveFiller) isCirculatedField(field *desc.FieldDescriptor) bool {
 	var appearedFields []*desc.FieldDescriptor
 	appeared := make(map[string]interface{})
@@ -382,8 +376,7 @@ type promptInputterState struct {
 	selectedOneOf map[string]interface{}
 	// circulatedMessages holds a fully-qualified message name,
 	// and the val represents whether the message circulates or not.
-	// If a message circulates, val holds a slice of names from the key message
-	// until the last message.
+	// If a message circulates, val holds a slice of names from the key message until the last message.
 	// If a message doesn't circulate, the val is nil.
 	//
 	// A key is assigned at calling a RPC that requires the message.

@@ -19,8 +19,7 @@ import (
 	_ "github.com/ktr0731/evans/e2e/statik"
 )
 
-// TestMain prepares the test environment for E2E testing.
-// TestMain do following things for clean up the environment.
+// TestMain prepares the test environment for E2E testing. TestMain do following things for clean up the environment.
 //
 //   - Set log output to ioutil.Discard.
 //   - Remove .evans.toml in this project root.
@@ -55,15 +54,6 @@ func TestMain(m *testing.M) {
 
 	goleak.VerifyTestMain(m)
 }
-
-// func startServer(t *testing.T, useTLS, useReflection, useWeb bool) (func(), string) {
-// 	t.Helper()
-// 	stop, port, err := server.Start(useTLS, useReflection, useWeb)
-// 	if err != nil {
-// 		t.Fatalf("cannot start the E2E testing server: %s", err)
-// 	}
-// 	return stop, port
-// }
 
 func startServer(t *testing.T, useTLS, useReflection, useWeb bool) (func(), string) {
 	t.Helper()

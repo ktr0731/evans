@@ -1,12 +1,11 @@
 // Package idl represents an Interface Definition Language (IDL) for gRPC.
-// In general, Protocol Buffers is used as the IDL. However, it is possible to use
-// another IDLs such that FlatBuffers.
+// In general, Protocol Buffers is used as the IDL. However, it is possible to use another IDLs such that FlatBuffers.
 //
 // Note that IDLs are independent from encoding.Codec of gRPC.
 // It is possible to use a different languages for interface defining and encoding
 // (e.g. use Protocol Buffers as an IDL, and use JSON as a codec).
 //
-// TODO: Currently, Evans only supports Protocol Buffers as an IDL.
+// Currently, Evans only supports Protocol Buffers as an IDL.
 package idl
 
 import (
@@ -26,8 +25,7 @@ var (
 
 // Spec represents the interface specification from loaded IDL files.
 type Spec interface {
-	// PackageNames returns all package names.
-	// The returned slice is ordered by ascending order.
+	// PackageNames returns all package names. The returned slice is ordered by ascending order.
 	PackageNames() []string
 
 	// ServiceNames returns all service names belongs to the passed package name pkgName.

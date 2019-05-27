@@ -20,8 +20,7 @@ func Reset() {
 }
 
 // SetOutput enables logging that writes out logs to w.
-// Note that SetOutput works only once. To perform SetOutput again,
-// it is neccessary to call Reset before it.
+// Note that SetOutput works only once. To perform SetOutput again, it is necessary to call Reset before it.
 func SetOutput(w io.Writer) {
 	if enabled {
 		Println("logger: ignored SetOutput because it is already called. please call Reset before calling again.")
@@ -41,8 +40,8 @@ func Printf(format string, v ...interface{}) {
 	defaultLogger.Printf(format, v...)
 }
 
-// Scriptln receives a function f which executes something and returns some values
-// as a slice of empty interfaces. If logging is disabled, f is not executed.
+// Scriptln receives a function f which executes something and returns some values as a slice of empty interfaces.
+// If logging is disabled, f is not executed.
 func Scriptln(f func() []interface{}) {
 	if !enabled {
 		return

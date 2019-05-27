@@ -1,6 +1,5 @@
 // Package grpcreflection provides gRPC reflection client.
-// Currently, gRPC reflection depends on Protocol Buffers, so we split this package
-// from grpc package.
+// Currently, gRPC reflection depends on Protocol Buffers, so we split this package from grpc package.
 package grpcreflection
 
 import (
@@ -54,9 +53,9 @@ func (c *client) ListPackages() ([]*desc.FileDescriptor, error) {
 	if err != nil {
 		msg := status.Convert(err).Message()
 		// Check whether the error message contains TLS related error.
-		// If the server didn't enable TLS, the error message contains
-		// the first string. If Evans didn't enable TLS against to
-		// the TLS enabled server, the error message contains the second string.
+		// If the server didn't enable TLS, the error message contains the first string.
+		// If Evans didn't enable TLS against to the TLS enabled server, the error message contains
+		// the second string.
 		if strings.Contains(msg, "tls: first record does not look like a TLS handshake") ||
 			strings.Contains(msg, "latest connection error: <nil>") {
 			return nil, ErrTLSHandshakeFailed
@@ -64,8 +63,8 @@ func (c *client) ListPackages() ([]*desc.FileDescriptor, error) {
 		return nil, errors.Wrap(err, "failed to list services from reflecton enabled gRPC server")
 	}
 
-	var fds []*desc.FileDescriptor
-	for _, s := range ssvcs {
+	fds := make([]*desc.FileDescriptor, len(ssvcs))
+	for i, s := range ssvcs {
 		if s == reflectionServiceName {
 			continue
 		}
@@ -73,7 +72,7 @@ func (c *client) ListPackages() ([]*desc.FileDescriptor, error) {
 		if err != nil {
 			return nil, err
 		}
-		fds = append(fds, svc.GetFile())
+		fds[i] = svc.GetFile()
 	}
 
 	return fds, nil

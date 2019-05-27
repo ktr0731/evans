@@ -4,9 +4,10 @@
 package repl
 
 import (
+	"sync"
+
 	"github.com/ktr0731/evans/grpc"
 	"github.com/ktr0731/evans/idl"
-	"sync"
 )
 
 var (

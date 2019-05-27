@@ -15,8 +15,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DefaultCLIReader is the reader that is read for inputting request values.
-// It is exported for E2E testing.
+// DefaultCLIReader is the reader that is read for inputting request values. It is exported for E2E testing.
 var DefaultCLIReader io.Reader = os.Stdin
 
 // RunAsCLIMode starts Evans as CLI mode.

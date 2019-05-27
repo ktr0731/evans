@@ -35,8 +35,7 @@ type Cache struct {
 	CommandHistory []string   `default:"" toml:"commandHistory"`
 }
 
-// Save writes the receiver to the cache file.
-// It returns an *os.PathError if it can't create a new cache file.
+// Save writes the receiver to the cache file. It returns an *os.PathError if it can't create a new cache file.
 // Also it returns an error if it failed to encode *Cache with TOML format.
 func (c *Cache) Save() error {
 	p := resolvePath()
@@ -89,8 +88,7 @@ var Get = func() (*Cache, error) {
 		return nil, errors.Wrap(err, "failed to decode loaded cache content")
 	}
 
-	// If c.Version is empty or not equal to the latest version,
-	// it is regarded as an old version.
+	// If c.Version is empty or not equal to the latest version, it is regarded as an old version.
 	// In such case, we clear the loaded cache.
 	if c.Version == "" || c.Version != meta.Version.String() {
 		if err := initCacheFile(p); err != nil {

@@ -91,16 +91,32 @@ func TestREPL_makePrefix(t *testing.T) {
 		hasErr   bool
 		expected string
 	}{
-		"package and service unselected":                            {expected: "127.0.0.1:50051> "},
-		"package selected":                                          {pkgName: "api", expected: "api@127.0.0.1:50051> "},
-		"package and service selected":                              {pkgName: "api", svcName: "Example", expected: "api.Example@127.0.0.1:50051> "},
-		"New returns an error (spec.ServiceNames returns an error)": {pkgName: "api", ServiceNamesErr: errors.New("an error"), hasErr: true},
-		"New returns an error (spec.RPCs returns an error)":         {pkgName: "api", svcName: "Example", RPCsErr: errors.New("an error"), hasErr: true},
+		"package and service unselected": {expected: "127.0.0.1:50051> "},
+		"package selected":               {pkgName: "api", expected: "api@127.0.0.1:50051> "},
+		"package and service selected": {
+			pkgName:  "api",
+			svcName:  "Example",
+			expected: "api.Example@127.0.0.1:50051> ",
+		},
+		"New returns an error (ServiceNames returns it)": {
+			pkgName:         "api",
+			ServiceNamesErr: errors.New("an error"),
+			hasErr:          true,
+		},
+		"New returns an error (RPCs returns it)": {
+			pkgName: "api",
+			svcName: "Example",
+			RPCsErr: errors.New("an error"),
+			hasErr:  true,
+		},
 	}
 
 	for name, c := range cases {
 		c := c
-		dummyCfg := &config.Config{REPL: &config.REPL{}, Server: &config.Server{Host: "127.0.0.1", Port: "50051"}}
+		dummyCfg := &config.Config{
+			REPL:   &config.REPL{},
+			Server: &config.Server{Host: "127.0.0.1", Port: "50051"},
+		}
 		dummySpec := &SpecMock{
 			ServiceNamesFunc: func(pkgName string) ([]string, error) {
 				return nil, c.ServiceNamesErr

@@ -25,8 +25,7 @@ type dependencyManager struct {
 	state state
 }
 
-// state has the domain state modified by each usecase logic.
-// The default value is used as the initial value.
+// state has the domain state modified by each usecase logic. The default value is used as the initial value.
 type state struct {
 	selectedPackage string
 	selectedService string
@@ -44,8 +43,7 @@ func (s state) clone() state {
 	}
 }
 
-// Inject corresponds an implementation to an interface type.
-// Inject clears the previous states if it exists.
+// Inject corresponds an implementation to an interface type. Inject clears the previous states if it exists.
 func Inject(
 	spec idl.Spec,
 	filler fill.Filler,

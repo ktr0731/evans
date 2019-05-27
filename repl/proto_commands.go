@@ -38,13 +38,14 @@ func (c *descCommand) Run(w io.Writer, args []string) error {
 
 	table := tablewriter.NewWriter(w)
 	table.SetHeader([]string{"field", "type", "repeated"})
-	var rows [][]string
-	for _, field := range td.(*desc.MessageDescriptor).GetFields() {
-		rows = append(rows, []string{
+	fields := td.(*desc.MessageDescriptor).GetFields()
+	rows := make([][]string, len(fields))
+	for i, field := range fields {
+		rows[i] = []string{
 			field.GetName(),
 			presentTypeName(field),
 			strconv.FormatBool(field.IsRepeated() && !field.IsMap()),
-		})
+		}
 	}
 
 	sort.Slice(rows, func(i, j int) bool {
@@ -62,7 +63,10 @@ func presentTypeName(f *desc.FieldDescriptor) string {
 	switch f.GetType() {
 	case descriptor.FieldDescriptorProto_TYPE_MESSAGE:
 		if f.IsMap() {
-			typeName = fmt.Sprintf("map<%s, %s>", presentTypeName(f.GetMapKeyType()), presentTypeName(f.GetMapValueType()))
+			typeName = fmt.Sprintf(
+				"map<%s, %s>",
+				presentTypeName(f.GetMapKeyType()),
+				presentTypeName(f.GetMapValueType()))
 		} else {
 			typeName += fmt.Sprintf(" (%s)", f.GetMessageType().GetName())
 		}

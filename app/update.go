@@ -21,8 +21,7 @@ import (
 	"gopkg.in/AlecAivazis/survey.v1"
 )
 
-// checkUpdate checks whether an update exists.
-// Update checking is instructed by following steps:
+// checkUpdate checks whether an update exists. Update checking is instructed by following steps:
 //   1. Extract the application cache.
 //   2. If install means is known, use it as an update means.
 //      If install means is unknown, checkUpdate selects an available means from candidates.
@@ -157,8 +156,7 @@ func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer) error {
 	return nil
 }
 
-// update updates Evans to the latest version.
-// If interrupted by a key, update will be canceled.
+// update updates Evans to the latest version. If interrupted by a key, update will be canceled.
 func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -212,8 +210,7 @@ func printUpdateInfo(w io.Writer, latest string) {
 	fmt.Fprintf(w, updateInfoFormat, meta.Version, latest)
 }
 
-// newUpdater creates new updater from cached information.
-// updater checks whether UpdateIf is true or false
+// newUpdater creates new updater from cached information. updater checks whether UpdateIf is true or false
 // to display update information to the user.
 func newUpdater(cfg *config.Config, v *version.Version, m updater.Means) *updater.Updater {
 	u := updater.New(v, m)

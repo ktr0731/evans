@@ -19,8 +19,7 @@ func NewSilentFiller(in io.Reader) *SilentFiller {
 	}
 }
 
-// Fill fills values of each field from a JSON string.
-// If the JSON string is invalid JSON format or v is a nil pointer,
+// Fill fills values of each field from a JSON string. If the JSON string is invalid JSON format or v is a nil pointer,
 // Fill returns ErrCodecMismatch.
 func (f *SilentFiller) Fill(v interface{}) error {
 	err := f.dec.Decode(v)

@@ -101,14 +101,22 @@ func (a *App) parseFlags(args []string) (*flags, error) {
 	f.StringSliceVar(&flags.common.path, "path", nil, "proto file paths")
 	f.StringVar(&flags.common.host, "host", "", "gRPC server host")
 	f.StringVarP(&flags.common.port, "port", "p", "50051", "gRPC server port")
-	f.Var(newStringToStringValue(nil, &flags.common.header), "header", "default headers that set to each requests (example: foo=bar)")
+	f.Var(
+		newStringToStringValue(nil, &flags.common.header),
+		"header", "default headers that set to each requests (example: foo=bar)")
 	f.BoolVar(&flags.common.web, "web", false, "use gRPC-Web protocol")
 	f.BoolVarP(&flags.common.reflection, "reflection", "r", false, "use gRPC reflection")
 	f.BoolVarP(&flags.common.tls, "tls", "t", false, "use a secure TLS connection")
 	f.StringVar(&flags.common.cacert, "cacert", "", "the CA certificate file for verifying the server")
-	f.StringVar(&flags.common.cert, "cert", "", "the certificate file for mutual TLS auth. it must be provided with --certkey.")
-	f.StringVar(&flags.common.certKey, "certkey", "", "the private key file for mutual TLS auth. it must be provided with --cert.")
-	f.StringVar(&flags.common.serverName, "servername", "", "override the server name used to verify the hostname (ignored if --tls is disabled)")
+	f.StringVar(
+		&flags.common.cert,
+		"cert", "", "the certificate file for mutual TLS auth. it must be provided with --certkey.")
+	f.StringVar(
+		&flags.common.certKey,
+		"certkey", "", "the private key file for mutual TLS auth. it must be provided with --cert.")
+	f.StringVar(
+		&flags.common.serverName,
+		"servername", "", "override the server name used to verify the hostname (ignored if --tls is disabled)")
 
 	f.BoolVarP(&flags.meta.edit, "edit", "e", false, "edit the project config file by using $EDITOR")
 	f.BoolVar(&flags.meta.editGlobal, "edit-global", false, "edit the global config file by using $EDITOR")

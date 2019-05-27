@@ -77,8 +77,7 @@ func convertValue(pv string, fieldType descriptor.FieldDescriptorProto_Type) (in
 
 	// Use strconv.Unquote to interpret byte literals and Unicode literals.
 	// For example, a user inputs `\x6f\x67\x69\x73\x6f`,
-	// His expects "ogiso" in string, but backslashes in the input are
-	// not interpreted as an escape sequence.
+	// His expects "ogiso" in string, but backslashes in the input are not interpreted as an escape sequence.
 	// So, we need to call strconv.Unquote to interpret backslashes as an escape sequence.
 	case descriptor.FieldDescriptorProto_TYPE_BYTES:
 		pv, err = strconv.Unquote(`"` + pv + `"`)

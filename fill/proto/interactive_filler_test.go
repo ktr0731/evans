@@ -11,6 +11,6 @@ func TestInteractiveProtoFiller(t *testing.T) {
 	f := proto.NewInteractiveFiller(nil, "")
 	err := f.Fill("invalid type")
 	if err != fill.ErrCodecMismatch {
-		t.Errorf("filler must return fil.ErrCodecMismatch because the arg is invalid type, but got unexpected error: %s", err)
+		t.Errorf("must return fill.ErrCodecMismatch because the arg is invalid type, but got: %s", err)
 	}
 }

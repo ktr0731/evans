@@ -150,8 +150,7 @@ func LoadFiles(importPaths []string, fnames []string) (idl.Spec, error) {
 	return newSpec(fileDescs)
 }
 
-// LoadByReflection receives a gRPC reflection client, then tries to instantiate
-// a new idl.Spec by using gRPC reflection.
+// LoadByReflection receives a gRPC reflection client, then tries to instantiate a new idl.Spec by using gRPC reflection.
 func LoadByReflection(client grpcreflection.Client) (idl.Spec, error) {
 	fileDescs, err := client.ListPackages()
 	if err != nil {

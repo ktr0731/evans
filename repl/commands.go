@@ -51,8 +51,7 @@ func (c *packageCommand) Validate(args []string) error {
 
 func (c *packageCommand) Run(_ io.Writer, args []string) error {
 	err := usecase.UsePackage(args[0])
-	switch errors.Cause(err) {
-	case idl.ErrUnknownPackageName:
+	if errors.Cause(err) == idl.ErrUnknownPackageName {
 		return errors.Errorf("unknown package name '%s'", args[0])
 	}
 	return err

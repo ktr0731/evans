@@ -25,8 +25,7 @@ type App struct {
 	cfg *mergedConfig
 }
 
-// New instantiates a new App instance.
-// If cui is nil, the default UI will be used.
+// New instantiates a new App instance. If cui is nil, the default UI will be used.
 // Note that cui is also used for the REPL UI if the mode is REPL mode.
 func New(cui *cui.UI) *App {
 	return &App{
@@ -110,34 +109,28 @@ func (a *App) run(args []string) error {
 			eg.Go(func() error {
 				return processUpdate(ctx, a.cfg.Config, a.cui.Writer)
 			})
-		} else {
-			if err := processUpdate(ctx, a.cfg.Config, a.cui.Writer); err != nil {
-				return errors.Wrap(err, "failed to update Evans")
-			}
+		} else if err := processUpdate(ctx, a.cfg.Config, a.cui.Writer); err != nil {
+			return errors.Wrap(err, "failed to update Evans")
 		}
 
 		if err := mode.RunAsREPLMode(a.cfg.Config, a.cui); err != nil {
 			return errors.Wrap(err, "failed to run REPL mode")
 		}
 
-		// Always call cancel func because it is hope to abort update checking
-		// if REPL mode is finished before update checking.
-		// If update checking is finished before REPL mode, cancel do nothing.
+		// Always call cancel func because it is hope to abort update checking if REPL mode is finished
+		// before update checking. If update checking is finished before REPL mode, cancel do nothing.
 		cancel()
 		if err := eg.Wait(); err != nil {
 			return errors.Wrap(err, "failed to check application update")
 		}
-	} else {
-		if err := mode.RunAsCLIMode(a.cfg.Config, a.cfg.call, a.cfg.file, a.cui); err != nil {
-			return errors.Wrap(err, "failed to run CLI mode")
-		}
+	} else if err := mode.RunAsCLIMode(a.cfg.Config, a.cfg.call, a.cfg.file, a.cui); err != nil {
+		return errors.Wrap(err, "failed to run CLI mode")
 	}
 
 	return nil
 }
 
-// printUsage shows the command usage text to cui.Writer and exit.
-// Do not call it before calling parseFlags.
+// printUsage shows the command usage text to cui.Writer and exit. Do not call it before calling parseFlags.
 func (a *App) printUsage() {
 	a.flagSet.Usage()
 }
@@ -147,8 +140,7 @@ func (a *App) printVersion() {
 	a.cui.Output(fmt.Sprintf("%s %s", meta.AppName, meta.Version.String()))
 }
 
-// mergedConfig represents the conclusive config.
-// Common config items are stored to *config.Config.
+// mergedConfig represents the conclusive config. Common config items are stored to *config.Config.
 // Flags that can be specified by command line only are represented as fields.
 type mergedConfig struct {
 	*config.Config
