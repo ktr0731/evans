@@ -1,3 +1,4 @@
+// Package cui defines charcter user interfaces for I/O.
 package cui
 
 import (

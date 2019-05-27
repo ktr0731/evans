@@ -1,3 +1,4 @@
+// Package cache provides a cache mechanism for the app.
 package cache
 
 import (
@@ -30,7 +31,6 @@ func (i UpdateInfo) UpdateAvailable() bool {
 
 // Cache represents cached items.
 type Cache struct {
-	// TODO: いらない？
 	Version        string     `toml:"version"`
 	UpdateInfo     UpdateInfo `toml:"updateInfo"`
 	CommandHistory []string   `default:"" toml:"commandHistory"`
