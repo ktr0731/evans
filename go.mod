@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/BurntSushi/toml v0.3.1
+	github.com/Netflix/go-expect v0.0.0-20180928190340-9d1f4485533b // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/c-bata/go-prompt v0.2.3
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
@@ -11,7 +12,9 @@ require (
 	github.com/google/go-cmp v0.3.0
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/go-version v1.2.0
+	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/jhump/protoreflect v1.1.0
+	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/k0kubun/pp v2.3.0+incompatible
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kr/pty v1.1.3 // indirect

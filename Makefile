@@ -38,19 +38,15 @@ build-dev: deps
 	go build -tags dev
 
 .PHONY: test
-test: format unit-test e2e-test
+test: format gotest
 
 .PHONY: format
 format:
 	go mod tidy
 
-.PHONY: unit-test
-unit-test: lint
+.PHONY: gotest
+gotest: lint
 	go test -race ./...
-
-.PHONY: e2e-test
-e2e-test: lint
-	go test -tags e2e -race ./e2e/...
 
 .PHONY: lint
 lint:
