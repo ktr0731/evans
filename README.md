@@ -77,7 +77,7 @@ $ brew install evans
 ```
 
 ### **[Deprecated]** go get
-Go v1.11.5 (with mod-aware mode) or later required.  
+Go v1.12 (with mod-aware mode) or later required.  
 `go get` installation is not supported officially.
 ``` sh
 $ go get github.com/ktr0731/evans
