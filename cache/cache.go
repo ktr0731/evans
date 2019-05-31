@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/go-updater"
@@ -53,32 +52,15 @@ func (c *Cache) Save() error {
 		return err
 	}
 	defer f.Close()
-	cachedCacheMu.Lock()
-	defer cachedCacheMu.Unlock()
-	CachedCache = c
 	return toml.NewEncoder(f).Encode(*c)
 }
-
-var (
-	cachedCacheMu sync.Mutex
-	// CachedCache holds a loaded cache instantiated by Get.
-	// If CachedCache isn't nil, Get returns it straightforwardly.
-	CachedCache *Cache
-)
 
 var decodeTOML = func(r io.Reader, i interface{}) error {
 	return toml.NewDecoder(r).Decode(i)
 }
 
-// Get returns loaded cache contents. To reduce duplicatd function calls,
-// Get caches the result of Get. See CachedCache comments for more implementation details.
-var Get = get
-
-func get() (*Cache, error) {
-	if CachedCache != nil {
-		return CachedCache, nil
-	}
-
+// Get returns loaded cache contents.
+func Get() (*Cache, error) {
 	p := resolvePath()
 
 	if _, err := os.Stat(p); os.IsNotExist(err) {
@@ -113,10 +95,6 @@ func get() (*Cache, error) {
 			return nil, errors.Wrap(err, "failed to decode cache content")
 		}
 	}
-
-	cachedCacheMu.Lock()
-	defer cachedCacheMu.Unlock()
-	CachedCache = &c
 
 	return &c, nil
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/logger"
@@ -97,19 +98,24 @@ func (a *App) run(args []string) error {
 
 	isCLIMode := (cfg.cli || mode.IsCLIMode(cfg.file))
 	if cfg.repl || !isCLIMode {
+		cache, err := cache.Get()
+		if err != nil {
+			return errors.Wrap(err, "failed to get the cache content")
+		}
+
 		baseCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		eg, ctx := errgroup.WithContext(baseCtx)
 		// Run update checker asynchronously.
 		eg.Go(func() error {
-			return checkUpdate(ctx, a.cfg.Config)
+			return checkUpdate(ctx, a.cfg.Config, cache)
 		})
 
 		if a.cfg.Config.Meta.AutoUpdate {
 			eg.Go(func() error {
-				return processUpdate(ctx, a.cfg.Config, a.cui.Writer())
+				return processUpdate(ctx, a.cfg.Config, a.cui.Writer(), cache)
 			})
-		} else if err := processUpdate(ctx, a.cfg.Config, a.cui.Writer()); err != nil {
+		} else if err := processUpdate(ctx, a.cfg.Config, a.cui.Writer(), cache); err != nil {
 			return errors.Wrap(err, "failed to update Evans")
 		}
 

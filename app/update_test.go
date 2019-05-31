@@ -75,8 +75,7 @@ func Test_checkUpdate(t *testing.T) {
 	patchUpdatedVersion := fmt.Sprintf("v%d.%d.%d", meta.Version.Segments()[0], meta.Version.Segments()[1], meta.Version.Segments()[2]+1)
 
 	cases := map[string]struct {
-		// Package cache. If cacheGetFunc is not nil, replace real implementation by it.
-		cacheGetFunc func() (*cache.Cache, error)
+		cache *cache.Cache
 
 		meansBuilderOption dummyMeansBuilderOption
 
@@ -87,35 +86,27 @@ func Test_checkUpdate(t *testing.T) {
 		noChanges bool
 	}{
 		"no updates if the means for installation is unavailable (in the case of means builder returns error)": {
-			cacheGetFunc: func() (*cache.Cache, error) {
-				return &cache.Cache{UpdateInfo: cache.UpdateInfo{InstalledBy: "dummy"}}, nil
-			},
+			cache: &cache.Cache{UpdateInfo: cache.UpdateInfo{InstalledBy: "dummy"}},
 			meansBuilderOption: dummyMeansBuilderOption{
 				err: errors.New("an error"),
 			},
 		},
 		"no updates if no available means (in the case of MeansBuilder.Installed returns false )": {
-			cacheGetFunc: func() (*cache.Cache, error) {
-				return &cache.Cache{}, nil
-			},
+			cache: &cache.Cache{},
 			meansBuilderOption: dummyMeansBuilderOption{
 				installed: false,
 			},
 		},
 		"an error returns if all candidate means return an error": {
-			cacheGetFunc: func() (*cache.Cache, error) {
-				return &cache.Cache{}, nil
-			},
+			cache: &cache.Cache{},
 			meansBuilderOption: dummyMeansBuilderOption{
 				err: errors.New("an error"),
 			},
 			hasErr: true,
 		},
 		"means found from condidate means": {
-			cacheGetFunc: func() (*cache.Cache, error) {
-				return &cache.Cache{
-					SaveFunc: func() error { return nil },
-				}, nil
+			cache: &cache.Cache{
+				SaveFunc: func() error { return nil },
 			},
 			meansBuilderOption: dummyMeansBuilderOption{
 				installed: true,
@@ -125,25 +116,21 @@ func Test_checkUpdate(t *testing.T) {
 			updateLevel: "patch",
 		},
 		"the means for installation returns an error": {
-			cacheGetFunc: func() (*cache.Cache, error) {
-				return &cache.Cache{
-					UpdateInfo: cache.UpdateInfo{
-						InstalledBy: cache.MeansType(github.MeansTypeGitHubRelease),
-					},
-				}, nil
+			cache: &cache.Cache{
+				UpdateInfo: cache.UpdateInfo{
+					InstalledBy: cache.MeansType(github.MeansTypeGitHubRelease),
+				},
 			},
 			meansBuilderOption: dummyMeansBuilderOption{
 				err: errors.New("an error"),
 			},
 		},
 		"patch update available": {
-			cacheGetFunc: func() (*cache.Cache, error) {
-				return &cache.Cache{
-					SaveFunc: func() error { return nil },
-					UpdateInfo: cache.UpdateInfo{
-						InstalledBy: cache.MeansType(github.MeansTypeGitHubRelease),
-					},
-				}, nil
+			cache: &cache.Cache{
+				SaveFunc: func() error { return nil },
+				UpdateInfo: cache.UpdateInfo{
+					InstalledBy: cache.MeansType(github.MeansTypeGitHubRelease),
+				},
 			},
 			meansBuilderOption: dummyMeansBuilderOption{
 				installed: true,
@@ -153,13 +140,11 @@ func Test_checkUpdate(t *testing.T) {
 			updateLevel: "patch",
 		},
 		"minor update available": {
-			cacheGetFunc: func() (*cache.Cache, error) {
-				return &cache.Cache{
-					SaveFunc: func() error { return nil },
-					UpdateInfo: cache.UpdateInfo{
-						InstalledBy: cache.MeansType(github.MeansTypeGitHubRelease),
-					},
-				}, nil
+			cache: &cache.Cache{
+				SaveFunc: func() error { return nil },
+				UpdateInfo: cache.UpdateInfo{
+					InstalledBy: cache.MeansType(github.MeansTypeGitHubRelease),
+				},
 			},
 			meansBuilderOption: dummyMeansBuilderOption{
 				installed: true,
@@ -169,11 +154,9 @@ func Test_checkUpdate(t *testing.T) {
 			updateLevel: "minor",
 		},
 		"major update available": {
-			cacheGetFunc: func() (*cache.Cache, error) {
-				return &cache.Cache{
-					SaveFunc:   func() error { return nil },
-					UpdateInfo: cache.UpdateInfo{InstalledBy: cache.MeansType(github.MeansTypeGitHubRelease)},
-				}, nil
+			cache: &cache.Cache{
+				SaveFunc:   func() error { return nil },
+				UpdateInfo: cache.UpdateInfo{InstalledBy: cache.MeansType(github.MeansTypeGitHubRelease)},
 			},
 			meansBuilderOption: dummyMeansBuilderOption{
 				installed: true,
@@ -182,29 +165,16 @@ func Test_checkUpdate(t *testing.T) {
 			},
 			updateLevel: "major",
 		},
-		"checkUpdate fails because cache.Get returns an error": {
-			cacheGetFunc: func() (*cache.Cache, error) { return nil, errors.New("an error") },
-			hasErr:       true,
-		},
 	}
 
 	for name, c := range cases {
 		c := c
 		t.Run(name, func(t *testing.T) {
-			if c.cacheGetFunc != nil {
-				oldCacheGetFunc := cache.Get
-				defer func() {
-					cache.Get = oldCacheGetFunc
-				}()
-				cache.Get = c.cacheGetFunc
-			}
-
 			means = map[updater.MeansType]updater.MeansBuilder{
 				// Assign a dummy means builder as the GitHub Releases means.
 				github.MeansTypeGitHubRelease: dummyMeansBuilder(c.meansBuilderOption),
 			}
-			cache.CachedCache = &cache.Cache{}
-			err := checkUpdate(context.Background(), &config.Config{Meta: &config.Meta{UpdateLevel: c.updateLevel}})
+			err := checkUpdate(context.Background(), &config.Config{Meta: &config.Meta{UpdateLevel: c.updateLevel}}, c.cache)
 			if c.hasErr {
 				if err == nil {
 					t.Errorf("checkUpdate must return an error, but got nil")
@@ -216,7 +186,11 @@ func Test_checkUpdate(t *testing.T) {
 			}
 
 			if c.noChanges {
-				if diff := cmp.Diff(*cache.CachedCache, cache.Cache{}); diff != "" {
+				c, err := cache.Get()
+				if err != nil {
+					t.Fatalf("cache.Get must not return an error, but got '%s'", err)
+				}
+				if diff := cmp.Diff(*c, cache.Cache{}); diff != "" {
 					t.Errorf("diff found:\n%s", diff)
 				}
 			}
@@ -248,23 +222,20 @@ func Test_processUpdate(t *testing.T) {
 	}()
 
 	cases := map[string]struct {
-		// Package cache. If cacheGetFunc is not nil, replace real implementation by it.
-		cacheGetFunc func() (*cache.Cache, error)
+		cache *cache.Cache
 
 		cfgMeta config.Meta
 
 		surveyAskOneResult bool
 	}{
 		"askOne prompt returns yes": {
-			cacheGetFunc: func() (*cache.Cache, error) {
-				return &cache.Cache{
-					SaveFunc: func() error { return nil },
-					UpdateInfo: cache.UpdateInfo{
-						InstalledBy:   cache.MeansType(github.MeansTypeGitHubRelease),
-						LatestVersion: "0.2.0",
-					},
-					Version: "0.1.0",
-				}, nil
+			cache: &cache.Cache{
+				SaveFunc: func() error { return nil },
+				UpdateInfo: cache.UpdateInfo{
+					InstalledBy:   cache.MeansType(github.MeansTypeGitHubRelease),
+					LatestVersion: "0.2.0",
+				},
+				Version: "0.1.0",
 			},
 			cfgMeta: config.Meta{
 				UpdateLevel: "patch",
@@ -272,14 +243,12 @@ func Test_processUpdate(t *testing.T) {
 			surveyAskOneResult: true,
 		},
 		"askOne prompt returns false": {
-			cacheGetFunc: func() (*cache.Cache, error) {
-				return &cache.Cache{
-					UpdateInfo: cache.UpdateInfo{
-						InstalledBy:   cache.MeansType(github.MeansTypeGitHubRelease),
-						LatestVersion: "0.2.0",
-					},
-					Version: "0.1.0",
-				}, nil
+			cache: &cache.Cache{
+				UpdateInfo: cache.UpdateInfo{
+					InstalledBy:   cache.MeansType(github.MeansTypeGitHubRelease),
+					LatestVersion: "0.2.0",
+				},
+				Version: "0.1.0",
 			},
 			cfgMeta: config.Meta{
 				UpdateLevel: "patch",
@@ -287,15 +256,13 @@ func Test_processUpdate(t *testing.T) {
 			surveyAskOneResult: false,
 		},
 		"do nothing if cached version <= the current version": {
-			cacheGetFunc: func() (*cache.Cache, error) {
-				return &cache.Cache{
-					SaveFunc: func() error { return nil },
-					UpdateInfo: cache.UpdateInfo{
-						InstalledBy:   cache.MeansType(github.MeansTypeGitHubRelease),
-						LatestVersion: "0.0.1",
-					},
-					Version: "0.1.0",
-				}, nil
+			cache: &cache.Cache{
+				SaveFunc: func() error { return nil },
+				UpdateInfo: cache.UpdateInfo{
+					InstalledBy:   cache.MeansType(github.MeansTypeGitHubRelease),
+					LatestVersion: "0.0.1",
+				},
+				Version: "0.1.0",
 			},
 			cfgMeta: config.Meta{
 				UpdateLevel: "patch",
@@ -303,15 +270,13 @@ func Test_processUpdate(t *testing.T) {
 			surveyAskOneResult: false,
 		},
 		"AutoUpdate enabled": {
-			cacheGetFunc: func() (*cache.Cache, error) {
-				return &cache.Cache{
-					SaveFunc: func() error { return nil },
-					UpdateInfo: cache.UpdateInfo{
-						InstalledBy:   cache.MeansType(github.MeansTypeGitHubRelease),
-						LatestVersion: "0.2.0",
-					},
-					Version: "0.1.0",
-				}, nil
+			cache: &cache.Cache{
+				SaveFunc: func() error { return nil },
+				UpdateInfo: cache.UpdateInfo{
+					InstalledBy:   cache.MeansType(github.MeansTypeGitHubRelease),
+					LatestVersion: "0.2.0",
+				},
+				Version: "0.1.0",
 			},
 			cfgMeta: config.Meta{
 				AutoUpdate:  true,
@@ -323,24 +288,12 @@ func Test_processUpdate(t *testing.T) {
 	for name, c := range cases {
 		c := c
 		t.Run(name, func(t *testing.T) {
-			if c.cacheGetFunc != nil {
-				oldCacheGetFunc := cache.Get
-				defer func() {
-					cache.Get = oldCacheGetFunc
-				}()
-				cache.Get = c.cacheGetFunc
-			}
-
-			cache, err := c.cacheGetFunc()
-			if err != nil {
-				t.Fatalf("cacheGetFunc must not return an error, but got '%s'", err)
-			}
 			means = map[updater.MeansType]updater.MeansBuilder{
 				// Assign a dummy means builder as the GitHub Releases means.
 				github.MeansTypeGitHubRelease: dummyMeansBuilder(dummyMeansBuilderOption{
 					installed: true,
-					typeName:  string(cache.UpdateInfo.InstalledBy),
-					version:   cache.UpdateInfo.LatestVersion,
+					typeName:  string(c.cache.UpdateInfo.InstalledBy),
+					version:   c.cache.UpdateInfo.LatestVersion,
 				}),
 			}
 
@@ -351,7 +304,7 @@ func Test_processUpdate(t *testing.T) {
 			}
 
 			var buf bytes.Buffer
-			if err := processUpdate(context.Background(), &config.Config{Meta: &c.cfgMeta}, &buf); err != nil {
+			if err := processUpdate(context.Background(), &config.Config{Meta: &c.cfgMeta}, &buf, c.cache); err != nil {
 				t.Errorf("must not return an error, but got '%s'", err)
 			}
 		})
@@ -360,15 +313,7 @@ func Test_processUpdate(t *testing.T) {
 
 func Test_update(t *testing.T) {
 	updater := updater.New(meta.Version, &dummyMeans{dummyMeansBuilderOption: dummyMeansBuilderOption{version: "v1.0.0"}})
-	oldCacheGetFunc := cache.Get
-	cache.Get = func() (*cache.Cache, error) {
-		return &cache.Cache{SaveFunc: func() error { return nil }}, nil
-	}
-	defer func() {
-		cache.Get = oldCacheGetFunc
-	}()
-
-	err := update(context.Background(), ioutil.Discard, updater)
+	err := update(context.Background(), ioutil.Discard, updater, &cache.Cache{SaveFunc: func() error { return nil }})
 	if err != nil {
 		t.Errorf("update must not return an error, but got '%s'", err)
 	}

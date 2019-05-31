@@ -7,8 +7,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	CachedCache = nil
-
 	// Create a temp dir to reserve dir name. But remove it, and create again later.
 	dir := os.TempDir()
 
@@ -18,14 +16,11 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	os.Setenv("XDG_CACHE_HOME", oldCacheDir)
-	CachedCache = nil
-
 	os.Exit(code)
 }
 
 func TestCache(t *testing.T) {
 	t.Run("Get creates a new one", func(t *testing.T) {
-		CachedCache = nil
 		_, err := Get()
 		if err != nil {
 			t.Fatalf("Get must not return an error, but got '%s'", err)
@@ -33,7 +28,6 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("the file is empty", func(t *testing.T) {
-		CachedCache = nil
 		oldDecodeTOML := decodeTOML
 		defer func() {
 			decodeTOML = oldDecodeTOML
@@ -49,7 +43,6 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("Save", func(t *testing.T) {
-		CachedCache = nil
 		c, err := Get()
 		if err != nil {
 			t.Fatalf("Get must not return an error, but got '%s'", err)

@@ -22,17 +22,14 @@ import (
 )
 
 // checkUpdate checks whether an update exists. Update checking is instructed by following steps:
-//   1. Extract the application cache.
-//   2. If install means is known, use it as an update means.
+//   1. If install means is known, use it as an update means.
 //      If install means is unknown, checkUpdate selects an available means from candidates.
-//   3. Check whether update exists. It it is found, cache the latest version.
-func checkUpdate(ctx context.Context, cfg *config.Config) error {
-	c, err := cache.Get()
-	if err != nil {
-		return errors.Wrap(err, "failed to get the cache")
-	}
-
-	var m updater.Means
+//   2. Check whether update exists. It it is found, cache the latest version.
+func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache) error {
+	var (
+		m   updater.Means
+		err error
+	)
 	switch c.UpdateInfo.InstalledBy {
 	case cache.MeansTypeUndefined:
 		meansBuilders := make([]updater.MeansBuilder, 0, len(means))
@@ -85,11 +82,7 @@ var (
 // processUpdate checks new changes and updates Evans in accordance with user's selection.
 // If config.Meta.AutoUpdate enabled, processUpdate is called asynchronously.
 // Other than, processUpdate is called synchronously.
-func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer) error {
-	c, err := cache.Get()
-	if err != nil {
-		return errors.Wrap(err, "failed to get the cache content")
-	}
+func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer, c *cache.Cache) error {
 	if !c.UpdateInfo.UpdateAvailable() {
 		return nil
 	}
@@ -119,7 +112,7 @@ func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer) error {
 	// If auto update is enabled, do process update without user's confirmation.
 	if cfg.Meta.AutoUpdate {
 		// If canceled, ignore and return
-		err := update(ctx, ioutil.Discard, newUpdater(cfg, meta.Version, m))
+		err := update(ctx, ioutil.Discard, newUpdater(cfg, meta.Version, m), c)
 		if errors.Cause(err) == context.Canceled {
 			return nil
 		}
@@ -141,7 +134,7 @@ func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer) error {
 	}
 
 	// If canceled, ignore and return
-	err = update(ctx, w, newUpdater(cfg, meta.Version, m))
+	err = update(ctx, w, newUpdater(cfg, meta.Version, m), c)
 	if errors.Cause(err) == context.Canceled {
 		return nil
 	} else if err != nil {
@@ -157,7 +150,7 @@ func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer) error {
 }
 
 // update updates Evans to the latest version. If interrupted by a key, update will be canceled.
-func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater) error {
+func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater, c *cache.Cache) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -184,10 +177,6 @@ func update(ctx context.Context, infoWriter io.Writer, updater *updater.Updater)
 			}
 			// update successful
 			fmt.Fprintf(infoWriter, "\r             \r✔ updated!\n\n")
-			c, err := cache.Get()
-			if err != nil {
-				return errors.Wrap(err, "failed to get the cache")
-			}
 			c.UpdateInfo = cache.UpdateInfo{}
 			if err := c.Save(); err != nil {
 				return errors.Wrap(err, "failed to clear the cache")
