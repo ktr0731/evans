@@ -10,10 +10,8 @@ import (
 )
 
 var (
-	defaultState = state{
-		headers: grpc.Headers{},
-	}
-	dm = &dependencyManager{}
+	defaultState = state{}
+	dm           = &dependencyManager{}
 )
 
 type dependencyManager struct {
@@ -29,18 +27,6 @@ type dependencyManager struct {
 type state struct {
 	selectedPackage string
 	selectedService string
-	headers         grpc.Headers
-}
-
-// clone copies itself deeply.
-func (s state) clone() state {
-	headers := grpc.Headers{}
-	for k, v := range s.headers {
-		headers[k] = v
-	}
-	return state{
-		headers: headers,
-	}
 }
 
 // Inject corresponds an implementation to an interface type. Inject clears the previous states if it exists.
@@ -65,7 +51,7 @@ func (m *dependencyManager) Inject(
 		gRPCClient: gRPCClient,
 		presenter:  presenter,
 
-		state: defaultState.clone(),
+		state: defaultState,
 	}
 }
 

@@ -15,7 +15,7 @@ func (m *dependencyManager) AddHeader(k, v string) {
 		logger.Println(`warning: cannot add a header named "user-agent"`)
 		return
 	}
-	if err := m.state.headers.Add(k, v); err != nil {
+	if err := m.gRPCClient.Headers().Add(k, v); err != nil {
 		logger.Printf("failed to add a header %s=%s: %s", k, v, err)
 	}
 }
@@ -24,12 +24,12 @@ func RemoveHeader(k string) {
 	dm.RemoveHeader(k)
 }
 func (m *dependencyManager) RemoveHeader(k string) {
-	m.state.headers.Remove(k)
+	m.gRPCClient.Headers().Remove(k)
 }
 
 func ListHeaders() grpc.Headers {
 	return dm.ListHeaders()
 }
 func (m *dependencyManager) ListHeaders() grpc.Headers {
-	return m.state.headers
+	return m.gRPCClient.Headers()
 }

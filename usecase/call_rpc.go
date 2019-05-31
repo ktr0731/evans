@@ -60,7 +60,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	}
 
 	md := metadata.New(nil)
-	for k, v := range m.state.headers {
+	for k, v := range m.ListHeaders() {
 		md.Append(k, v...)
 	}
 	ctx = metadata.NewOutgoingContext(ctx, md)

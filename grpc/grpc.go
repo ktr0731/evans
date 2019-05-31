@@ -64,6 +64,9 @@ type Client interface {
 	// Close closes all connections the client has.
 	Close(ctx context.Context) error
 
+	// Headers returns all headers (metadata) Client has.
+	Headers() Headers
+
 	grpcreflection.Client
 }
 
@@ -84,7 +87,8 @@ type BidiStream interface {
 }
 
 type client struct {
-	conn *gogrpc.ClientConn
+	conn    *gogrpc.ClientConn
+	headers Headers
 
 	grpcreflection.Client
 }
@@ -143,7 +147,8 @@ func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert
 	}
 
 	client := &client{
-		conn: conn,
+		conn:    conn,
+		headers: Headers{},
 	}
 
 	if useReflection {
@@ -190,6 +195,10 @@ func (c *client) Close(ctx context.Context) error {
 	case err := <-doneCh:
 		return err
 	}
+}
+
+func (c *client) Headers() Headers {
+	return c.headers
 }
 
 type clientStream struct {

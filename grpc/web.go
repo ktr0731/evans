@@ -11,7 +11,8 @@ import (
 )
 
 type webClient struct {
-	conn *grpcweb.ClientConn
+	conn    *grpcweb.ClientConn
+	headers Headers
 
 	grpcreflection.Client
 }
@@ -22,7 +23,8 @@ func NewWebClient(addr string, useReflection, useTLS bool, cacert, cert, certKey
 		panic(err)
 	}
 	client := &webClient{
-		conn: conn,
+		conn:    conn,
+		headers: Headers{},
 	}
 
 	if useReflection {
@@ -176,4 +178,8 @@ func (c *webClient) Close(ctx context.Context) error {
 		c.Client.Reset()
 	}
 	return nil
+}
+
+func (c *webClient) Headers() Headers {
+	return c.headers
 }
