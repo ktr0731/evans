@@ -14,7 +14,7 @@ builds:
     - arm
     - '386'
   flags:
-    - -tags netgo
+    - -tags=github
   ldflags:
     - '-extldflags "-static" -X github.com/ktr0731/evans/vendor/github.com/ktr0731/go-updater/github.isGitHubReleasedBinary=true'
 archives:

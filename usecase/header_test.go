@@ -3,30 +3,34 @@ package usecase
 import (
 	"testing"
 
-	"github.com/ktr0731/evans/entity"
-	"github.com/ktr0731/evans/tests/mock/entity/mockenv"
-	"github.com/ktr0731/evans/usecase/internal/usecasetest"
-	"github.com/ktr0731/evans/usecase/port"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/google/go-cmp/cmp"
+	"github.com/ktr0731/evans/grpc"
 )
 
 func TestHeader(t *testing.T) {
-	params := &port.HeaderParams{
-		Headers: []*entity.Header{
-			{Key: "tsukasa", Val: "ayatsuji"},
-			{Key: "miya", Val: "tachibana", NeedToRemove: true},
-		},
+	defer Clear()
+	client, err := grpc.NewClient("", "", false, false, "", "", "")
+	if err != nil {
+		t.Fatalf("grpc.NewClient must not return an error, but got '%s'", err)
 	}
-	presenter := usecasetest.NewPresenter()
-	env := &mockenv.EnvironmentMock{
-		AddHeaderFunc:    func(*entity.Header) {},
-		RemoveHeaderFunc: func(string) {},
+	Inject(nil, nil, client, nil)
+
+	AddHeader("kumiko", "oumae")
+
+	expected := grpc.Headers{"kumiko": []string{"oumae"}}
+	if diff := cmp.Diff(dm.ListHeaders(), expected); diff != "" {
+		t.Errorf("unexpected header:\n%s", diff)
 	}
 
-	r, err := Header(params, presenter, env)
-	require.NoError(t, err)
-	assert.Equal(t, r, nil)
+	// if a header contains "user-agent" as the header name, it will be ignored.
+	AddHeader("User-Agent", "Evans")
+	if diff := cmp.Diff(dm.ListHeaders(), expected); diff != "" {
+		t.Errorf("unexpected header:\n%s", diff)
+	}
 
-	assert.Len(t, env.RemoveHeaderCalls(), 1)
+	RemoveHeader("kumiko")
+	expected = grpc.Headers{}
+	if diff := cmp.Diff(dm.ListHeaders(), expected); diff != "" {
+		t.Errorf("unexpected header:\n%s", diff)
+	}
 }

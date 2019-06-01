@@ -1,0 +1,17 @@
+syntax = "proto3";
+package api;
+
+import "message.proto";
+
+service Example {
+  rpc RPC(Request) returns (Response) {}
+}
+
+message Request {
+  Person person = 1;
+  Book book = 2;
+}
+
+message Response {
+  string message = 1;
+}

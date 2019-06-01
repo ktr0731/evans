@@ -12,12 +12,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/ktr0731/evans/logger"
 	toml "github.com/pelletier/go-toml"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 )
 
@@ -44,9 +43,11 @@ func setupEnv(t *testing.T) (string, string, func()) {
 	cwd := getWorkDir(t)
 
 	dir, err := ioutil.TempDir("", "")
-	require.NoError(t, err, "failed to create a temp dir to setup testing enviroment")
+	if err != nil {
+		t.Fatalf("failed to create a temp dir to setup testing enviroment: %s", err)
+	}
 
-	os.Chdir(dir)
+	mustChdir(t, dir)
 	oldEnv := os.Getenv("XDG_CONFIG_HOME")
 	cfgDir := filepath.Join(dir, "config")
 	os.Setenv("XDG_CONFIG_HOME", cfgDir)
@@ -54,7 +55,7 @@ func setupEnv(t *testing.T) (string, string, func()) {
 	mkdir(t, evansCfgDir)
 
 	return dir, evansCfgDir, func() {
-		os.Chdir(cwd)
+		mustChdir(t, cwd)
 		os.Setenv("XDG_CONFIG_HOME", oldEnv)
 		os.RemoveAll(dir)
 		viper.Reset()
@@ -62,6 +63,8 @@ func setupEnv(t *testing.T) (string, string, func()) {
 }
 
 func assertWithGolden(t *testing.T, name string, f func(t *testing.T) *Config) {
+	t.Helper()
+
 	r := strings.NewReplacer(
 		" ", "_",
 		"=", "-",
@@ -75,7 +78,6 @@ func assertWithGolden(t *testing.T, name string, f func(t *testing.T) *Config) {
 	}
 
 	t.Run(name, func(t *testing.T) {
-		t.Helper()
 		cfg := f(t)
 
 		fname := normalizeFilename(name)
@@ -89,18 +91,26 @@ func assertWithGolden(t *testing.T, name string, f func(t *testing.T) *Config) {
 			logger.Printf("golden updated: %s", fname)
 			return
 		}
-		require.NoError(t, err, "failed to load a golden file")
+		if err != nil {
+			t.Fatalf("failed to load a golden file: %s", err)
+		}
 		defer f.Close()
 
 		err = v.ReadConfig(f)
-		require.NoError(t, err, "failed to read golden file")
+		if err != nil {
+			t.Fatalf("failed to read golden file: %s", err)
+		}
 
 		var expected Config
 		err = v.Unmarshal(&expected)
-		require.NoError(t, err, "failed to unmarshal a golden file")
+		if err != nil {
+			t.Fatalf("failed to unmarshal a golden file: %s", err)
+		}
 		setupConfig(&expected)
 
-		assert.EqualValues(t, expected, *cfg)
+		if diff := cmp.Diff(expected, *cfg); diff != "" {
+			t.Errorf("-want, +got\n%s", diff)
+		}
 	})
 }
 
@@ -113,10 +123,14 @@ func createGolden(t *testing.T, fname string, cfg *Config) {
 		log.Fatal(err)
 	}
 	f, err := os.Create(fname)
-	require.NoError(t, err, "failed to create a file")
+	if err != nil {
+		t.Fatalf("failed to create a file: %s", err)
+	}
 	defer f.Close()
 	_, err = tree.WriteTo(f)
-	require.NoError(t, err, "failed to encode cfg as a TOML format")
+	if err != nil {
+		t.Fatalf("failed to encode cfg as a TOML format: %s", err)
+	}
 }
 
 func structToMap(i interface{}) interface{} {
@@ -143,24 +157,28 @@ func TestMain(m *testing.M) {
 func TestLoad(t *testing.T) {
 	checkValues := func(t *testing.T, c *Config) {
 		if len(c.Default.ProtoFile) == 1 {
-			require.NotEmpty(t, c.Default.ProtoFile[0])
+			if len(c.Default.ProtoFile[0]) == 0 {
+				t.Fatalf("Default.ProtoFile must not empty")
+			}
 		}
 		if len(c.Default.ProtoPath) == 1 {
-			require.NotEmpty(t, c.Default.ProtoPath[0])
+			if len(c.Default.ProtoPath[0]) == 0 {
+				t.Fatalf("Default.ProtoPath must not empty")
+			}
 		}
 	}
 
-	assertWithGolden(t, "create a default global config if both of global and local config are not found", func(t *testing.T) *Config {
-		_, _, cleanup := setupEnv(t)
-		defer cleanup()
+	assertWithGolden(t, "create a default global config if both of global and local config are not found",
+		func(t *testing.T) *Config {
+			_, _, cleanup := setupEnv(t)
+			defer cleanup()
 
-		cfg, err := Get(nil)
-		require.NoError(t, err, "Get must not return any errors")
+			cfg := mustGet(t, nil)
 
-		checkValues(t, cfg)
+			checkValues(t, cfg)
 
-		return cfg
-	})
+			return cfg
+		})
 
 	assertWithGolden(t, "load a global config if local config is not found", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)
@@ -172,8 +190,7 @@ func TestLoad(t *testing.T) {
 		// default config was changed host and port to 'localhost' and '3000'.
 		copyFile(t, filepath.Join(cfgDir, "config.toml"), filepath.Join(oldCWD, "testdata", "global.toml"))
 
-		cfg, err := Get(nil)
-		require.NoError(t, err, "Get must not return any errors")
+		cfg := mustGet(t, nil)
 
 		checkValues(t, cfg)
 
@@ -196,12 +213,13 @@ func TestLoad(t *testing.T) {
 		// global.toml was changed protopath, request.header and port to '["bar"]', 'grpc-client = "evans"' and '3333'.
 		copyFile(t, filepath.Join(projDir, ".evans.toml"), filepath.Join(oldCWD, "testdata", "local.toml"))
 
-		os.Chdir(projDir)
+		mustChdir(t, projDir)
 		err := exec.Command("git", "init").Run()
-		require.NoError(t, err, "failed to init a pseudo project")
+		if err != nil {
+			t.Fatalf("failed to init a pseudo project: %s", err)
+		}
 
-		cfg, err := Get(nil)
-		require.NoError(t, err, "Get must not return any errors")
+		cfg := mustGet(t, nil)
 
 		checkValues(t, cfg)
 
@@ -224,23 +242,24 @@ func TestLoad(t *testing.T) {
 		// global.toml was changed protopath, request.header and port to '["bar"]', 'grpc-client = "evans"' and '3333'.
 		copyFile(t, filepath.Join(projDir, ".evans.toml"), filepath.Join(oldCWD, "testdata", "local.toml"))
 
-		os.Chdir(projDir)
+		mustChdir(t, projDir)
 		err := exec.Command("git", "init").Run()
-		require.NoError(t, err, "failed to init a pseudo project")
+		if err != nil {
+			t.Fatalf("failed to init a pseudo project: %s", err)
+		}
 
 		fs := pflag.NewFlagSet("test", pflag.ExitOnError)
 		fs.String("port", "", "")
 		fs.StringToString("header", nil, "")
 		fs.StringSlice("path", nil, "")
 		// --port flag changes port number to '8080'. Also --header appends 'foo=bar' and 'hoge=fuga' to 'request.header'.
-		fs.Parse([]string{
+		_ = fs.Parse([]string{
 			"--port", "8080",
 			"--path", "yoko.touma",
 			"--header", "foo=bar", "--header", "hoge=fuga",
 		})
 
-		cfg, err := Get(fs)
-		require.NoError(t, err, "Get must not return any errors")
+		cfg := mustGet(t, fs)
 
 		checkValues(t, cfg)
 
@@ -260,10 +279,9 @@ func TestLoad(t *testing.T) {
 		fs := pflag.NewFlagSet("test", pflag.ExitOnError)
 		fs.String("port", "", "")
 		// --port flag changes port number to '8080'.
-		fs.Parse([]string{"--port", "8080"})
+		_ = fs.Parse([]string{"--port", "8080"})
 
-		cfg, err := Get(fs)
-		require.NoError(t, err, "Get must not return any errors")
+		cfg := mustGet(t, fs)
 
 		checkValues(t, cfg)
 
@@ -273,15 +291,84 @@ func TestLoad(t *testing.T) {
 
 func TestEdit(t *testing.T) {
 	cases := map[string]struct {
+		outsideGitRepo bool
+		runEditorErr   error // If it isn't nil, runEditor returns it.
 		expectedEditor string
-		runEditorErr   error
+		hasErr         bool
+	}{
+		"run with default editor": {},
+		"run with $EDITOR":        {expectedEditor: "nvim"},
+		"Edit returns an error because it is outside a Git repo": {outsideGitRepo: true, hasErr: true},
+	}
+
+	p, err := exec.LookPath("vim")
+	if err != nil {
+		t.Fatalf("TestEdit requires Vim")
+	}
+	expected := p // default value
+	for name, c := range cases {
+		c := c
+		t.Run(name, func(t *testing.T) {
+			oldEnv := os.Getenv("EDITOR")
+			os.Setenv("EDITOR", c.expectedEditor)
+			defer os.Setenv("EDITOR", oldEnv)
+
+			if c.outsideGitRepo {
+				wd, err := os.Getwd()
+				if err != nil {
+					t.Fatalf("failed to get the working dir: %s", err)
+				}
+				dir := os.TempDir()
+				mustChdir(t, dir)
+				defer mustChdir(t, wd)
+				defer os.Remove(dir)
+			}
+
+			var called bool
+			runEditor = func(editor string, cfgPath string) error {
+				expected := expected
+				called = true
+				if c.expectedEditor != "" {
+					expected = c.expectedEditor
+				}
+				if expected != editor {
+					t.Errorf("runEditor must be called with the expected editor (expected = %s, actual = %s)", expected, editor)
+				}
+				return c.runEditorErr
+			}
+
+			err := Edit()
+			if c.hasErr {
+				if err == nil {
+					t.Error("Edit must return an error, but got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Edit must not return an error, but got '%s'", err)
+			}
+
+			if !called {
+				t.Error("runEditor must be called")
+			}
+		})
+	}
+}
+
+func TestEditGlobal(t *testing.T) {
+	cases := map[string]struct {
+		runEditorErr   error // If it isn't nil, runEditor returns it.
+		expectedEditor string
+		hasErr         bool
 	}{
 		"run with default editor": {},
 		"run with $EDITOR":        {expectedEditor: "nvim"},
 	}
 
 	p, err := exec.LookPath("vim")
-	require.NoError(t, err, "TestEdit requires Vim")
+	if err != nil {
+		t.Fatalf("TestEdit requires Vim")
+	}
 	expected := p // default value
 	for name, c := range cases {
 		c := c
@@ -297,12 +384,22 @@ func TestEdit(t *testing.T) {
 				if c.expectedEditor != "" {
 					expected = c.expectedEditor
 				}
-				assert.Equal(t, expected, editor, "runEditor must be called with the expected editor")
+				if expected != editor {
+					t.Errorf("runEditor must be called with the expected editor (expected = %s, actual = %s)", expected, editor)
+				}
 				return c.runEditorErr
 			}
 
-			err := Edit()
-			assert.NoError(t, err, "Edit must not return an error")
+			err := EditGlobal()
+			if c.hasErr {
+				if err == nil {
+					t.Error("Edit must return an error, but got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Edit must not return an error, but got '%s'", err)
+			}
 
 			if !called {
 				t.Error("runEditor must be called")
@@ -313,21 +410,47 @@ func TestEdit(t *testing.T) {
 
 func getWorkDir(t *testing.T) string {
 	cwd, err := os.Getwd()
-	require.NoError(t, err, "failed to get the working dir")
+	if err != nil {
+		t.Fatalf("failed to get the working dir: %s", err)
+	}
 	return cwd
 }
 
 func copyFile(t *testing.T, to, from string) {
+	t.Helper()
+
 	tf, err := os.Create(to)
-	require.NoError(t, err, "failed to create a config file")
+	if err != nil {
+		t.Fatalf("failed to create a config file: %s", err)
+	}
 	defer tf.Close()
 	ff, err := os.Open(from)
-	require.NoError(t, err, "failed to open a prepared config file")
+	if err != nil {
+		t.Fatalf("failed to open a prepared config file: %s", err)
+	}
 	defer ff.Close()
-	io.Copy(tf, ff)
+	if _, err := io.Copy(tf, ff); err != nil {
+		t.Fatalf("io.Copy must not return an error, but got '%s'", err)
+	}
 }
 
 func mkdir(t *testing.T, dir string) {
 	err := os.MkdirAll(dir, 0755)
-	require.NoError(t, err, "failed to create dirs")
+	if err != nil {
+		t.Fatalf("failed to create dirs: %s", err)
+	}
+}
+
+func mustGet(t *testing.T, fs *pflag.FlagSet) *Config {
+	cfg, err := Get(fs)
+	if err != nil {
+		t.Fatalf("Get must not return any errors, but got '%s'", err)
+	}
+	return cfg
+}
+
+func mustChdir(t *testing.T, dir string) {
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("Chdir must not return an error, but got '%s'", err)
+	}
 }

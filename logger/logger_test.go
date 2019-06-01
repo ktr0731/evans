@@ -5,18 +5,34 @@ import (
 	"testing"
 
 	"github.com/ktr0731/evans/logger"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestScriptln(t *testing.T) {
-	t.Run("logger must write the result of Scriptln to w, but got empty result", func(t *testing.T) {
+	t.Run("logger must write the result of Scriptln/Scriptf to w", func(t *testing.T) {
 		defer logger.Reset()
 		w := new(bytes.Buffer)
 		logger.SetOutput(w)
 		logger.Scriptln(func() []interface{} {
 			return []interface{}{"aoi", "miyamori"}
 		})
-		assert.NotEmpty(t, w.String())
+		if w.Len() == 0 {
+			t.Errorf("Scriptln must write the result to w, but empty")
+		}
+		if expected := "evans: aoi miyamori\n"; w.String() != expected {
+			t.Errorf("expected = '%s', but got '%s'", expected, w.String())
+		}
+
+		w.Truncate(0)
+
+		logger.Scriptf("%s-%s", func() []interface{} {
+			return []interface{}{"aoi", "miyamori"}
+		})
+		if w.Len() == 0 {
+			t.Errorf("Scriptf must write the result to w, but empty")
+		}
+		if expected := "evans: aoi-miyamori\n"; w.String() != expected {
+			t.Errorf("expected = '%s', but got '%s'", expected, w.String())
+		}
 	})
 
 	t.Run("logger must not write the result of Scriptln to w because SetOutput is not called", func(t *testing.T) {
@@ -25,6 +41,8 @@ func TestScriptln(t *testing.T) {
 		logger.Scriptln(func() []interface{} {
 			return []interface{}{"erika", "yano"}
 		})
-		assert.Empty(t, w.String())
+		if w.Len() != 0 {
+			t.Errorf("Scriptln must not write the result to w")
+		}
 	})
 }

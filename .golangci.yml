@@ -1,0 +1,14 @@
+linters-settings:
+  gofmt:
+    simplify: false
+
+linters:
+  enable-all: true
+  disable:
+    - gochecknoinits
+    - gochecknoglobals
+    - interfacer
+    - lll
+    - scopelint
+    - maligned
+    - gocyclo

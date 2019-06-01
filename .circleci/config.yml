@@ -86,7 +86,7 @@ jobs:
 
       - run:
           name: update GitHub Releases and update Homebrew formula
-          command: make brew-update
+          command: make release
 
 workflows:
   version: 2

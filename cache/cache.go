@@ -1,14 +1,16 @@
+// Package cache provides a cache mechanism for the app.
 package cache
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 
-	"github.com/BurntSushi/toml"
-	"github.com/hashicorp/go-version"
 	"github.com/ktr0731/evans/meta"
-	updater "github.com/ktr0731/go-updater"
-	xdgbasedir "github.com/zchee/go-xdgbasedir"
+	"github.com/ktr0731/go-updater"
+	"github.com/pelletier/go-toml"
+	"github.com/pkg/errors"
+	"github.com/zchee/go-xdgbasedir"
 )
 
 const defaultFileName = "cache.toml"
@@ -18,22 +20,31 @@ type MeansType updater.MeansType
 const MeansTypeUndefined MeansType = ""
 
 type UpdateInfo struct {
-	UpdateAvailable bool   `default:"false" toml:"updateAvailable"`
-	LatestVersion   string `default:"" toml:"latestVersion"`
+	LatestVersion string    `default:"" toml:"latestVersion"`
+	InstalledBy   MeansType `default:"" toml:"installedBy"`
+}
+
+func (i UpdateInfo) UpdateAvailable() bool {
+	return i.LatestVersion != ""
 }
 
 // Cache represents cached items.
 type Cache struct {
 	Version        string     `toml:"version"`
 	UpdateInfo     UpdateInfo `toml:"updateInfo"`
-	InstalledBy    MeansType  `default:"" toml:"installedBy"`
 	CommandHistory []string   `default:"" toml:"commandHistory"`
+
+	// SaveFunc is for testing. It will be ignored if it is nil.
+	SaveFunc func() error `toml:"-"`
 }
 
-// Save writes the receiver to the cache file.
-// It returns an *os.PathError if it can't create a new cache file.
+// Save writes the receiver to the cache file. It returns an *os.PathError if it can't create a new cache file.
 // Also it returns an error if it failed to encode *Cache with TOML format.
 func (c *Cache) Save() error {
+	if c.SaveFunc != nil {
+		return c.SaveFunc()
+	}
+
 	p := resolvePath()
 
 	f, err := os.Create(p)
@@ -41,91 +52,51 @@ func (c *Cache) Save() error {
 		return err
 	}
 	defer f.Close()
-	cachedCache = c
-	return toml.NewEncoder(f).Encode(c)
+	return toml.NewEncoder(f).Encode(*c)
 }
 
-// cachedCache holds a loaded cache instantiated by Get.
-// If cachedCache isn't nil, Get returns it straightforwardly.
-var cachedCache *Cache
+var decodeTOML = func(r io.Reader, i interface{}) error {
+	return toml.NewDecoder(r).Decode(i)
+}
 
-// Get returns loaded cache contents. To reduce duplicatd function calls,
-// Get caches the result of Get. See cachedCache comments for more implementation details.
-func Get() *Cache {
-	if cachedCache != nil {
-		return cachedCache
-	}
-
+// Get returns loaded cache contents.
+func Get() (*Cache, error) {
 	p := resolvePath()
 
 	if _, err := os.Stat(p); os.IsNotExist(err) {
 		if err := initCacheFile(p); err != nil {
-			panic(err)
+			return nil, errors.Wrap(err, "failed to create a new cache file")
 		}
 	} else if err != nil {
-		panic(err)
+		return nil, errors.Wrapf(err, "failed to check the existency of cache file '%s'", p)
 	}
 
 	f, err := os.Open(p)
 	if err != nil {
-		panic(err)
+		return nil, errors.Wrap(err, "failed to open the cache file")
 	}
 	defer f.Close()
 
 	var c Cache
-	if _, err := toml.DecodeReader(f, &c); err != nil {
-		panic(err)
+	if err := decodeTOML(f, &c); err != nil {
+		return nil, errors.Wrap(err, "failed to decode loaded cache content")
 	}
 
-	// If c.Version is empty or not equal to the latest version,
-	// it is regarded as an old version.
-	// In such case, we discard the loaded cache.
+	// If c.Version is empty or not equal to the latest version, it is regarded as an old version.
+	// In such case, we clear the loaded cache.
 	if c.Version == "" || c.Version != meta.Version.String() {
 		if err := initCacheFile(p); err != nil {
-			panic(err)
+			return nil, errors.Wrap(err, "failed to clear the cache file")
 		}
 		if _, err := f.Seek(0, 0); err != nil {
-			panic(err)
+			return nil, errors.Wrap(err, "failed to move to the first")
 		}
-		if _, err := toml.DecodeReader(f, &c); err != nil {
-			panic(err)
+		if err := decodeTOML(f, &c); err != nil {
+			return nil, errors.Wrap(err, "failed to decode cache content")
 		}
 	}
 
-	cachedCache = &c
-
-	return &c
-}
-
-// ClearUpdateInfo clears c.UpdateInfo.
-// ClearUpdateInfo also saves cleared cache to the file.
-func (c *Cache) ClearUpdateInfo() error {
-	c.UpdateInfo = UpdateInfo{
-		UpdateAvailable: false,
-		LatestVersion:   "",
-	}
-	return c.Save()
-}
-
-// SetUpdateInfo sets an updatable flag to true and
-// the latest version info to passed version.
-func (c *Cache) SetUpdateInfo(latest *version.Version) *Cache {
-	c.UpdateInfo = UpdateInfo{
-		UpdateAvailable: true,
-		LatestVersion:   latest.String(),
-	}
-	return c
-}
-
-// SetInstalledBy sets means how Evans was installed.
-func (c *Cache) SetInstalledBy(mt MeansType) *Cache {
-	c.InstalledBy = mt
-	return c
-}
-
-func (c *Cache) SetCommandHistory(h []string) *Cache {
-	c.CommandHistory = h
-	return c
+	return &c, nil
 }
 
 func resolvePath() string {

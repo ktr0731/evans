@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package api;
+
+service Example {
+  rpc Unary (SimpleRequest) returns (SimpleResponse) {}
+  rpc UnaryMessage (UnaryMessageRequest) returns (SimpleResponse) {}
+  rpc UnaryRepeated (UnaryRepeatedRequest) returns (SimpleResponse) {}
+  rpc UnaryRepeatedMessage (UnaryRepeatedMessageRequest) returns (SimpleResponse) {}
+  rpc UnaryRepeatedEnum (UnaryRepeatedEnumRequest) returns (SimpleResponse) {}
+  rpc UnarySelf (UnarySelfRequest) returns (SimpleResponse) {}
+  rpc UnaryMap (UnaryMapRequest) returns (SimpleResponse) {}
+  rpc UnaryMapMessage (UnaryMapMessageRequest) returns (SimpleResponse) {}
+  rpc UnaryOneof (UnaryOneofRequest) returns (SimpleResponse) {}
+  rpc UnaryEnum (UnaryEnumRequest) returns (SimpleResponse) {}
+  rpc UnaryBytes (UnaryBytesRequest) returns (SimpleResponse) {}
+  rpc UnaryHeader (UnaryHeaderRequest) returns (SimpleResponse) {}
+
+  rpc ClientStreaming (stream SimpleRequest) returns (SimpleResponse) {}
+  rpc ServerStreaming (SimpleRequest) returns (stream SimpleResponse) {}
+  rpc BidiStreaming(stream SimpleRequest) returns (stream SimpleResponse) {}
+}
+
+message SimpleRequest {
+  string name = 1;
+}
+
+message SimpleResponse {
+  string message = 1;
+}
+
+message Name {
+  string first_name = 1;
+  string last_name = 2;
+}
+
+message UnaryMessageRequest {
+  Name name = 1;
+}
+
+message UnaryRepeatedRequest {
+  repeated string name = 1;
+}
+
+message UnaryRepeatedMessageRequest {
+  repeated Name name = 1;
+}
+
+message UnaryRepeatedEnumRequest {
+  repeated Gender genders = 1;
+}
+
+message UnarySelfRequest {
+  Person you = 1;
+}
+
+message Person {
+  Name name = 1;
+  string nickname = 2;
+  repeated Person friends = 3;
+}
+
+message UnaryMapRequest {
+  map<string, string> kvs = 1;
+}
+
+message UnaryMapMessageRequest {
+  map<string, Name> kvs = 1;
+}
+
+message UnaryOneofRequest {
+  oneof name {
+    Name msg = 1;
+    string plain = 2;
+  }
+}
+
+enum Gender {
+  Male = 0;
+  Female = 1;
+}
+
+message UnaryEnumRequest {
+  Gender gender = 1;
+}
+
+message UnaryBytesRequest {
+  bytes data = 1;
+}
+
+message UnaryHeaderRequest {}

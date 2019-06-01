@@ -29,8 +29,4 @@ comment:
 
 ignore:
   - main
-  - tests/mock
-  - tests/helper/server
-  - testentity
-  - helper
-  - di
+  - e2e/e2egen

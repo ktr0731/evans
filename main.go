@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/ktr0731/evans/adapter/app"
-	"github.com/ktr0731/evans/adapter/cui"
+	"github.com/ktr0731/evans/app"
+	"github.com/ktr0731/evans/cui"
 )
 
 func main() {

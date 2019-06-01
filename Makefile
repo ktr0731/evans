@@ -29,60 +29,43 @@ dept:
 tools: dept
 	@dept -v build
 
-.PHONY: generate
-generate:
-ifneq ($(shell git diff entity),)
-	moq -pkg mockentity -out tests/mock/entity/mock.go entity Field Message Service RPC ClientStream ServerStream BidiStream GRPCClient
-endif
-
-ifneq ($(shell git diff entity/env),)
-	moq -pkg mockenv -out tests/mock/entity/mockenv/mock.go entity/env Environment
-endif
-
-ifneq ($(shell git diff usecase/port),)
-	moq -pkg mockport -out tests/mock/usecase/mockport/mock.go usecase/port InputPort Showable Inputter OutputPort DynamicBuilder
-endif
-
 .PHONY: build
 build: deps
 	go build
 
+.PHONY: build-dev
+build-dev: deps
+	go build -tags dev
+
 .PHONY: test
-test: format unit-test e2e-test
+test: format gotest
 
 .PHONY: format
 format:
 	go mod tidy
 
-.PHONY: unit-test
-unit-test: lint
+.PHONY: gotest
+gotest: lint
 	go test -race ./...
-
-.PHONY: e2e-test
-e2e-test: lint
-	go test -tags e2e -race ./tests/...
 
 .PHONY: lint
 lint:
-	golangci-lint run --disable-all \
-		--build-tags e2e \
-		-e 'should have name of the form ErrFoo' -E 'deadcode,govet,golint' \
-		./...
+	golangci-lint run ./...
 
 .PHONY: coverage
 coverage:
-	go test -coverpkg ./... -covermode=atomic -tags e2e -coverprofile=coverage.txt -race ./...
+	go test -coverpkg ./... -covermode=atomic -coverprofile=coverage.txt -race ./...
 
 .PHONY: coverage-circleci
 coverage-circleci:
-	go test -p 1 -coverpkg ./... -covermode=atomic -tags e2e -coverprofile=coverage.txt ./...
+	go test -p 1 -coverpkg ./... -covermode=atomic -coverprofile=coverage.txt ./...
 
 .PHONY: coverage-web
 coverage-web: coverage
 	go tool cover -html=coverage.txt
 
 .PHONY: brew-update
-brew-update:
+release:
 	bash .circleci/scripts/release.bash $(VERSION)
 
 .PHONY: depgraph
