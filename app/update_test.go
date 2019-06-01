@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"reflect"
 	"testing"
 	"time"
 
@@ -14,10 +13,10 @@ import (
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/meta"
+	"github.com/ktr0731/evans/prompt"
 	"github.com/ktr0731/go-updater"
 	"github.com/ktr0731/go-updater/github"
 	"github.com/pkg/errors"
-	"gopkg.in/AlecAivazis/survey.v1"
 )
 
 type dummyMeans struct {
@@ -210,11 +209,6 @@ func Test_processUpdate(t *testing.T) {
 	}()
 	syscallExec = func(argv0 string, argv []string, envv []string) (err error) { return nil }
 
-	oldSurveyAskOne := surveyAskOne
-	defer func() {
-		surveyAskOne = oldSurveyAskOne
-	}()
-
 	oldVersion := meta.Version
 	meta.Version = version.Must(version.NewSemver("0.1.0"))
 	defer func() {
@@ -226,9 +220,10 @@ func Test_processUpdate(t *testing.T) {
 
 		cfgMeta config.Meta
 
-		surveyAskOneResult bool
+		selectResult    bool
+		selectResultErr error
 	}{
-		"askOne prompt returns yes": {
+		"prompt returns yes": {
 			cache: &cache.Cache{
 				SaveFunc: func() error { return nil },
 				UpdateInfo: cache.UpdateInfo{
@@ -240,9 +235,9 @@ func Test_processUpdate(t *testing.T) {
 			cfgMeta: config.Meta{
 				UpdateLevel: "patch",
 			},
-			surveyAskOneResult: true,
+			selectResult: true,
 		},
-		"askOne prompt returns false": {
+		"prompt returns false": {
 			cache: &cache.Cache{
 				UpdateInfo: cache.UpdateInfo{
 					InstalledBy:   cache.MeansType(github.MeansTypeGitHubRelease),
@@ -253,7 +248,21 @@ func Test_processUpdate(t *testing.T) {
 			cfgMeta: config.Meta{
 				UpdateLevel: "patch",
 			},
-			surveyAskOneResult: false,
+			selectResult: false,
+		},
+		"abort if prompt returns an error": {
+			cache: &cache.Cache{
+				UpdateInfo: cache.UpdateInfo{
+					InstalledBy:   cache.MeansType(github.MeansTypeGitHubRelease),
+					LatestVersion: "0.2.0",
+				},
+				Version: "0.1.0",
+			},
+			cfgMeta: config.Meta{
+				UpdateLevel: "patch",
+			},
+			selectResult:    false,
+			selectResultErr: errors.New("an error"),
 		},
 		"do nothing if cached version <= the current version": {
 			cache: &cache.Cache{
@@ -267,7 +276,7 @@ func Test_processUpdate(t *testing.T) {
 			cfgMeta: config.Meta{
 				UpdateLevel: "patch",
 			},
-			surveyAskOneResult: false,
+			selectResult: false,
 		},
 		"AutoUpdate enabled": {
 			cache: &cache.Cache{
@@ -282,7 +291,7 @@ func Test_processUpdate(t *testing.T) {
 				AutoUpdate:  true,
 				UpdateLevel: "patch",
 			},
-			surveyAskOneResult: false,
+			selectResult: false,
 		},
 	}
 	for name, c := range cases {
@@ -297,14 +306,16 @@ func Test_processUpdate(t *testing.T) {
 				}),
 			}
 
-			surveyAskOne = func(_ survey.Prompt, res interface{}, _ survey.Validator, _ ...survey.AskOpt) error {
-				rv := reflect.Indirect(reflect.ValueOf(res))
-				rv.SetBool(c.surveyAskOneResult)
-				return nil
+			var result string
+			if c.selectResult {
+				result = "yes"
+			} else {
+				result = "no"
 			}
+			p := &promptMock{result: result, err: c.selectResultErr}
 
 			var buf bytes.Buffer
-			if err := processUpdate(context.Background(), &config.Config{Meta: &c.cfgMeta}, &buf, c.cache); err != nil {
+			if err := processUpdate(context.Background(), &config.Config{Meta: &c.cfgMeta}, &buf, c.cache, p); err != nil {
 				t.Errorf("must not return an error, but got '%s'", err)
 			}
 		})
@@ -348,4 +359,14 @@ func Test_newUpdater(t *testing.T) {
 		}()
 		newUpdater(&config.Config{Meta: &config.Meta{UpdateLevel: "foo"}}, nil, nil)
 	})
+}
+
+type promptMock struct {
+	prompt.Prompt
+	result string
+	err    error
+}
+
+func (p *promptMock) Select(_ string, options []string) (string, error) {
+	return p.result, p.err
 }

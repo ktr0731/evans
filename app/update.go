@@ -15,10 +15,10 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/meta"
+	"github.com/ktr0731/evans/prompt"
 	"github.com/ktr0731/go-updater"
 	"github.com/pkg/errors"
 	"github.com/tj/go-spin"
-	"gopkg.in/AlecAivazis/survey.v1"
 )
 
 // checkUpdate checks whether an update exists. Update checking is instructed by following steps:
@@ -74,15 +74,12 @@ func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache) error 
 	return nil
 }
 
-var (
-	syscallExec  = syscall.Exec
-	surveyAskOne = survey.AskOne
-)
+var syscallExec = syscall.Exec
 
 // processUpdate checks new changes and updates Evans in accordance with user's selection.
 // If config.Meta.AutoUpdate enabled, processUpdate is called asynchronously.
 // Other than, processUpdate is called synchronously.
-func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer, c *cache.Cache) error {
+func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer, c *cache.Cache, prompt prompt.Prompt) error {
 	if !c.UpdateInfo.UpdateAvailable() {
 		return nil
 	}
@@ -123,13 +120,9 @@ func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer, c *cach
 
 	printUpdateInfo(w, c.UpdateInfo.LatestVersion)
 
-	var yes bool
-	if err := surveyAskOne(&survey.Confirm{
-		Message: "update?",
-	}, &yes, nil); err != nil {
-		return errors.Wrap(err, "failed to get survey answer")
-	}
-	if !yes {
+	selected, err := prompt.Select("update?", []string{"yes", "no"})
+	if err != nil || selected == "no" {
+		// Abort updating.
 		return nil
 	}
 

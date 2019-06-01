@@ -3,7 +3,6 @@ module github.com/ktr0731/evans
 go 1.12
 
 require (
-	github.com/Netflix/go-expect v0.0.0-20180928190340-9d1f4485533b // indirect
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/c-bata/go-prompt v0.2.3
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
@@ -12,12 +11,9 @@ require (
 	github.com/google/go-cmp v0.3.0
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/go-version v1.2.0
-	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/jhump/protoreflect v1.1.0
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/k0kubun/pp v2.3.0+incompatible
-	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/kr/pty v1.1.3 // indirect
 	github.com/ktr0731/go-multierror v0.0.0-20171204182908-b7773ae21874
 	github.com/ktr0731/go-shellstring v0.1.0
 	github.com/ktr0731/go-updater v0.1.5
@@ -29,7 +25,6 @@ require (
 	github.com/mattn/go-pipeline v0.0.0-20190323144519-32d779b32768 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mattn/go-tty v0.0.0-20181127064339-e4f871175a2f // indirect
-	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/nicksnyder/go-i18n v1.10.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.1
@@ -51,9 +46,9 @@ require (
 	golang.org/x/sys v0.0.0-20190429190828-d89cdac9e872 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/tools v0.0.0-20190501045030-23463209683d
+	google.golang.org/appengine v1.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20190425155659-357c62f0e4bb // indirect
 	google.golang.org/grpc v1.20.1
-	gopkg.in/AlecAivazis/survey.v1 v1.6.3
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20180810215634-df19058c872c // indirect
 )
 

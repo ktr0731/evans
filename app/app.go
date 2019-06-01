@@ -12,6 +12,7 @@ import (
 	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/mode"
+	"github.com/ktr0731/evans/prompt"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
@@ -113,9 +114,9 @@ func (a *App) run(args []string) error {
 
 		if a.cfg.Config.Meta.AutoUpdate {
 			eg.Go(func() error {
-				return processUpdate(ctx, a.cfg.Config, a.cui.Writer(), cache)
+				return processUpdate(ctx, a.cfg.Config, a.cui.Writer(), cache, prompt.New())
 			})
-		} else if err := processUpdate(ctx, a.cfg.Config, a.cui.Writer(), cache); err != nil {
+		} else if err := processUpdate(ctx, a.cfg.Config, a.cui.Writer(), cache, prompt.New()); err != nil {
 			return errors.Wrap(err, "failed to update Evans")
 		}
 
