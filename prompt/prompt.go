@@ -58,15 +58,20 @@ type Prompt interface {
 	// SetCompleter set a completer for prompt completion.
 	SetCompleter(c Completer)
 
-	// SetCommandHistory set a command history. The order of history is asc.
-	SetCommandHistory(history []string)
+	// GetCommandHistory gets a command history. The order of history is asc.
+	GetCommandHistory() []string
 }
 
 // New instantiates a new Prompt implementation. New will be replaced when e2egen command is executed.
 // Initially, Prompt doesn't have a prefix, so you have to call SetPrefix for displaying it.
 var New = newPrompt
 
-func newPrompt() Prompt {
+func newPrompt(opts ...Option) Prompt {
+	var opt opt
+	for _, o := range opts {
+		o(&opt)
+	}
+
 	p := &prompt{
 		prefixColor: ColorInitial,
 		InputFunc:   goprompt.Input,
@@ -75,7 +80,9 @@ func newPrompt() Prompt {
 			_, res, err := s.Run()
 			return res, err
 		},
+		commandHistory: opt.commandHistory,
 	}
+
 	p.options = []goprompt.Option{
 		goprompt.OptionLivePrefix(p.livePrefix),
 
@@ -138,6 +145,7 @@ func (p *prompt) Input() (in string, err error) {
 	if in == "" && !p.entered {
 		return "", io.EOF
 	}
+	p.commandHistory = append(p.commandHistory, in)
 	return in, nil
 }
 
@@ -169,8 +177,8 @@ func (p *prompt) SetCompleter(c Completer) {
 	p.completer = c
 }
 
-func (p *prompt) SetCommandHistory(h []string) {
-	p.commandHistory = h
+func (p *prompt) GetCommandHistory() []string {
+	return p.commandHistory
 }
 
 func (p *prompt) livePrefix() (string, bool) {

@@ -54,7 +54,7 @@ func main() {
 	defer f.Close()
 
 	p := &recorderPrompt{Prompt: prompt.New()}
-	prompt.New = func() prompt.Prompt {
+	prompt.New = func(...prompt.Option) prompt.Prompt {
 		return p
 	}
 	code := app.New(nil).Run(args)

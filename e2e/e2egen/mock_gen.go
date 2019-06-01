@@ -4,15 +4,14 @@
 package main
 
 import (
-	"sync"
-
 	"github.com/ktr0731/evans/prompt"
+	"sync"
 )
 
 var (
+	lockPromptMockGetCommandHistory sync.RWMutex
 	lockPromptMockInput             sync.RWMutex
 	lockPromptMockSelect            sync.RWMutex
-	lockPromptMockSetCommandHistory sync.RWMutex
 	lockPromptMockSetCompleter      sync.RWMutex
 	lockPromptMockSetPrefix         sync.RWMutex
 	lockPromptMockSetPrefixColor    sync.RWMutex
@@ -28,14 +27,14 @@ var _ prompt.Prompt = &PromptMock{}
 //
 //         // make and configure a mocked Prompt
 //         mockedPrompt := &PromptMock{
+//             GetCommandHistoryFunc: func() []string {
+// 	               panic("mock out the GetCommandHistory method")
+//             },
 //             InputFunc: func() (string, error) {
 // 	               panic("mock out the Input method")
 //             },
 //             SelectFunc: func(message string, options []string) (string, error) {
 // 	               panic("mock out the Select method")
-//             },
-//             SetCommandHistoryFunc: func(history []string)  {
-// 	               panic("mock out the SetCommandHistory method")
 //             },
 //             SetCompleterFunc: func(c prompt.Completer)  {
 // 	               panic("mock out the SetCompleter method")
@@ -53,14 +52,14 @@ var _ prompt.Prompt = &PromptMock{}
 //
 //     }
 type PromptMock struct {
+	// GetCommandHistoryFunc mocks the GetCommandHistory method.
+	GetCommandHistoryFunc func() []string
+
 	// InputFunc mocks the Input method.
 	InputFunc func() (string, error)
 
 	// SelectFunc mocks the Select method.
 	SelectFunc func(message string, options []string) (string, error)
-
-	// SetCommandHistoryFunc mocks the SetCommandHistory method.
-	SetCommandHistoryFunc func(history []string)
 
 	// SetCompleterFunc mocks the SetCompleter method.
 	SetCompleterFunc func(c prompt.Completer)
@@ -73,6 +72,9 @@ type PromptMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// GetCommandHistory holds details about calls to the GetCommandHistory method.
+		GetCommandHistory []struct {
+		}
 		// Input holds details about calls to the Input method.
 		Input []struct {
 		}
@@ -82,11 +84,6 @@ type PromptMock struct {
 			Message string
 			// Options is the options argument value.
 			Options []string
-		}
-		// SetCommandHistory holds details about calls to the SetCommandHistory method.
-		SetCommandHistory []struct {
-			// History is the history argument value.
-			History []string
 		}
 		// SetCompleter holds details about calls to the SetCompleter method.
 		SetCompleter []struct {
@@ -104,6 +101,32 @@ type PromptMock struct {
 			Color prompt.Color
 		}
 	}
+}
+
+// GetCommandHistory calls GetCommandHistoryFunc.
+func (mock *PromptMock) GetCommandHistory() []string {
+	if mock.GetCommandHistoryFunc == nil {
+		panic("PromptMock.GetCommandHistoryFunc: method is nil but Prompt.GetCommandHistory was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockPromptMockGetCommandHistory.Lock()
+	mock.calls.GetCommandHistory = append(mock.calls.GetCommandHistory, callInfo)
+	lockPromptMockGetCommandHistory.Unlock()
+	return mock.GetCommandHistoryFunc()
+}
+
+// GetCommandHistoryCalls gets all the calls that were made to GetCommandHistory.
+// Check the length with:
+//     len(mockedPrompt.GetCommandHistoryCalls())
+func (mock *PromptMock) GetCommandHistoryCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockPromptMockGetCommandHistory.RLock()
+	calls = mock.calls.GetCommandHistory
+	lockPromptMockGetCommandHistory.RUnlock()
+	return calls
 }
 
 // Input calls InputFunc.
@@ -164,37 +187,6 @@ func (mock *PromptMock) SelectCalls() []struct {
 	lockPromptMockSelect.RLock()
 	calls = mock.calls.Select
 	lockPromptMockSelect.RUnlock()
-	return calls
-}
-
-// SetCommandHistory calls SetCommandHistoryFunc.
-func (mock *PromptMock) SetCommandHistory(history []string) {
-	if mock.SetCommandHistoryFunc == nil {
-		panic("PromptMock.SetCommandHistoryFunc: method is nil but Prompt.SetCommandHistory was just called")
-	}
-	callInfo := struct {
-		History []string
-	}{
-		History: history,
-	}
-	lockPromptMockSetCommandHistory.Lock()
-	mock.calls.SetCommandHistory = append(mock.calls.SetCommandHistory, callInfo)
-	lockPromptMockSetCommandHistory.Unlock()
-	mock.SetCommandHistoryFunc(history)
-}
-
-// SetCommandHistoryCalls gets all the calls that were made to SetCommandHistory.
-// Check the length with:
-//     len(mockedPrompt.SetCommandHistoryCalls())
-func (mock *PromptMock) SetCommandHistoryCalls() []struct {
-	History []string
-} {
-	var calls []struct {
-		History []string
-	}
-	lockPromptMockSetCommandHistory.RLock()
-	calls = mock.calls.SetCommandHistory
-	lockPromptMockSetCommandHistory.RUnlock()
 	return calls
 }
 

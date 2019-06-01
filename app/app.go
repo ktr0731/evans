@@ -120,7 +120,7 @@ func (a *App) run(args []string) error {
 			return errors.Wrap(err, "failed to update Evans")
 		}
 
-		if err := mode.RunAsREPLMode(a.cfg.Config, a.cui); err != nil {
+		if err := mode.RunAsREPLMode(a.cfg.Config, a.cui, cache); err != nil {
 			return errors.Wrap(err, "failed to run REPL mode")
 		}
 

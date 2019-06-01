@@ -264,7 +264,7 @@ func TestE2E_REPL(t *testing.T) {
 				Prompt: oldNewPrompt(),
 				input:  append(c.input, "exit"),
 			}
-			prompt.New = func() prompt.Prompt {
+			prompt.New = func(...prompt.Option) prompt.Prompt {
 				return stubPrompt
 			}
 
