@@ -20,12 +20,13 @@ require (
 	github.com/kr/pty v1.1.3 // indirect
 	github.com/ktr0731/go-multierror v0.0.0-20171204182908-b7773ae21874
 	github.com/ktr0731/go-shellstring v0.1.0
-	github.com/ktr0731/go-updater v0.1.4
+	github.com/ktr0731/go-updater v0.1.5
 	github.com/ktr0731/grpc-test v0.1.2
 	github.com/ktr0731/grpc-web-go-client v0.2.2
 	github.com/manifoldco/promptui v0.3.2
 	github.com/mattn/go-colorable v0.1.1
 	github.com/mattn/go-isatty v0.0.7
+	github.com/mattn/go-pipeline v0.0.0-20190323144519-32d779b32768 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mattn/go-tty v0.0.0-20181127064339-e4f871175a2f // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
@@ -50,7 +51,6 @@ require (
 	golang.org/x/sys v0.0.0-20190429190828-d89cdac9e872 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/tools v0.0.0-20190501045030-23463209683d
-	google.golang.org/appengine v1.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20190425155659-357c62f0e4bb // indirect
 	google.golang.org/grpc v1.20.1
 	gopkg.in/AlecAivazis/survey.v1 v1.6.3

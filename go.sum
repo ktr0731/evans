@@ -96,8 +96,8 @@ github.com/ktr0731/go-multierror v0.0.0-20171204182908-b7773ae21874 h1:eVBpZQfZS
 github.com/ktr0731/go-multierror v0.0.0-20171204182908-b7773ae21874/go.mod h1:ZWayuE/hCzOD96CJizvcYnqrbmTC7RAG332yNtlKj6w=
 github.com/ktr0731/go-shellstring v0.1.0 h1:h9l3S060peKAcNOFrEZihYF8ds8rRcPcRxTKvq5Lhfw=
 github.com/ktr0731/go-shellstring v0.1.0/go.mod h1:nkNCnJ36MGqbzvcl9CECP9kZZhO916UbkCkYsjDAOkE=
-github.com/ktr0731/go-updater v0.1.4 h1:uhtZq4GiPc6mhwnG3MOowAlA+2QFS9ZdzYNNupNiTno=
-github.com/ktr0731/go-updater v0.1.4/go.mod h1:dsdOg7a9sj6ttcOU5ZxPCtKdm9WeB1hwcX/7oKgz9/0=
+github.com/ktr0731/go-updater v0.1.5 h1:AiaQxJoI0OTGqvsJYdIITCOaEzQQOqU2MHKUwttVShY=
+github.com/ktr0731/go-updater v0.1.5/go.mod h1:dsdOg7a9sj6ttcOU5ZxPCtKdm9WeB1hwcX/7oKgz9/0=
 github.com/ktr0731/grpc-test v0.1.0/go.mod h1:deptvEeND4faWsF2MGTanL6/2SaX8lgdmF3yEXWge5U=
 github.com/ktr0731/grpc-test v0.1.2 h1:un24ZbBmPKmiy7/bnMrCZIDx/xoWBgCj6HkL6XYSOx4=
 github.com/ktr0731/grpc-test v0.1.2/go.mod h1:q2esmVTqZyuLG38ykTM2fZXgKfTZSUY8TFnFoLYyZHk=
@@ -121,6 +121,8 @@ github.com/mattn/go-isatty v0.0.7 h1:UvyT9uN+3r7yLEYSlJsbQGdsaB/a0DlgWP3pql6iwOc
 github.com/mattn/go-isatty v0.0.7/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hdxcsrc5s=
 github.com/mattn/go-pipeline v0.0.0-20170920030317-cfb87a531e2b h1:tllLy4xWlUKqXcHijy3zere2s/7y0EJXjbyGeNYrpe8=
 github.com/mattn/go-pipeline v0.0.0-20170920030317-cfb87a531e2b/go.mod h1:THCMZVX5asLpinN+6hFlR1xKFcFsaDpAtUltGqZauBM=
+github.com/mattn/go-pipeline v0.0.0-20190323144519-32d779b32768 h1:uZ41sUUU0/vDwBwMVz7O1jtcSyLFn/AeUdMr9MKcDsc=
+github.com/mattn/go-pipeline v0.0.0-20190323144519-32d779b32768/go.mod h1:THCMZVX5asLpinN+6hFlR1xKFcFsaDpAtUltGqZauBM=
 github.com/mattn/go-runewidth v0.0.4 h1:2BvfKmzob6Bmd4YsL0zygOqfdFnK7GR4QL06Do4/p7Y=
 github.com/mattn/go-runewidth v0.0.4/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
 github.com/mattn/go-tty v0.0.0-20181127064339-e4f871175a2f h1:4P7Ul+TAnk92vTeVkXs6VLjmf1EhrYtDRa03PCYY6VM=
