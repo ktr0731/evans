@@ -116,7 +116,7 @@ func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer, c *cach
 		return err
 	}
 
-	// If auto update is disabled, isplay update info
+	// If auto update is disabled, display update info
 
 	printUpdateInfo(w, c.UpdateInfo.LatestVersion)
 
