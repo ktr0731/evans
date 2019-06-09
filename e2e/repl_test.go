@@ -244,6 +244,25 @@ func TestE2E_REPL(t *testing.T) {
 			input:      []interface{}{"quit"},
 			skipGolden: true,
 		},
+
+		// special keys.
+
+		"ctrl-c skips the rest of fields if there are no message type fields": {
+			args:  "testdata/test.proto",
+			input: []interface{}{"call Unary", prompt.ErrAbort},
+		},
+		"ctrl-c skips the rest of the current message": {
+			args:  "testdata/test.proto",
+			input: []interface{}{"call UnaryMessage", "mumei", prompt.ErrAbort},
+		},
+		"ctrl-c skips the rest of the current message and exits the repeated field": {
+			args:  "testdata/test.proto",
+			input: []interface{}{"call UnaryRepeatedMessage", "kanade", "hisaishi", "kumiko", prompt.ErrAbort},
+		},
+		"ctrl-c is also enabled in streaming RPCs": {
+			args:  "testdata/test.proto",
+			input: []interface{}{"call BidiStreaming", "kanade", "ririka", prompt.ErrAbort, io.EOF},
+		},
 	}
 	oldNewPrompt := prompt.New
 	defer func() {
