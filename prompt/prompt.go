@@ -49,7 +49,9 @@ func (c *Color) Next() {
 }
 
 type Prompt interface {
-	// Input reads keyboard input. If ctrl+d is entered, Input returns io.EOF.
+	// Input reads keyboard input.
+	// If ctrl+d is entered, Input returns io.EOF.
+	// If ctrl+c is entered, Input returns ErrAbort.
 	Input() (string, error)
 	Select(message string, options []string) (selected string, _ error)
 
