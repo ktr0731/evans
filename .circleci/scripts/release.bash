@@ -29,6 +29,4 @@ git tag "v$VERSION" "$VERSION" # tagging another one which has "v" prefix for Go
 git push origin "$VERSION"
 git push origin "v$VERSION"
 
-git stash # ignore updated go.mod
-
 goreleaser

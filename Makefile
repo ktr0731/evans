@@ -19,6 +19,7 @@ endif
 deps: dep
 	@go mod download
 	@go mod verify
+	@go mod tidy
 
 .PHONY: dept
 dept:
