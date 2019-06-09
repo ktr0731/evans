@@ -91,10 +91,6 @@ func TestE2E_REPL(t *testing.T) {
 			args:  "testdata/test.proto",
 			input: []interface{}{"call UnaryRepeated", "miyuki", "kaguya", "chika", "yu", io.EOF},
 		},
-		"call UnaryRepeated which ends with two empty input": {
-			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryRepeated", "miyuki", "kaguya", "", ""},
-		},
 		"call UnarySelf": {
 			args:  "testdata/test.proto",
 			input: []interface{}{"call UnarySelf", "dig down", "ohana", "matsumae", "ohana", "dig down", "nako", "oshimizu", "nakochi", "finish", "dig down", "minko", "tsurugi", "minchi", "finish", "finish"},
@@ -261,6 +257,7 @@ func TestE2E_REPL(t *testing.T) {
 			defer stopServer()
 
 			stubPrompt := &stubPrompt{
+				t:      t,
 				Prompt: oldNewPrompt(),
 				input:  append(c.input, "exit"),
 			}
@@ -301,6 +298,7 @@ func TestE2E_REPL(t *testing.T) {
 }
 
 type stubPrompt struct {
+	t *testing.T
 	prompt.Prompt
 
 	input []interface{}
@@ -308,7 +306,7 @@ type stubPrompt struct {
 
 func (p *stubPrompt) Input() (string, error) {
 	if len(p.input) == 0 {
-		panic("p.input is empty, but testing is continued yet. Are you forgot to use io.EOF for finishing inputting?")
+		p.t.Fatal("p.input is empty, but testing is continued yet. Are you forgot to use io.EOF for finishing inputting?")
 	}
 	s := p.input[0]
 	p.input = p.input[1:]

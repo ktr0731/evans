@@ -46,6 +46,9 @@ func (f *InteractiveFiller) Fill(v interface{}) error {
 	if err == io.EOF {
 		return io.EOF
 	}
+	if errors.Cause(err) == prompt.ErrAbort {
+		return nil
+	}
 	if err != nil {
 		return err
 	}
@@ -163,7 +166,7 @@ func (f *InteractiveFiller) inputField(dmsg *dynamic.Message, field *desc.FieldD
 		msg := dynamic.NewMessage(field.GetMessageType())
 		err := f.inputMessage(msg)
 		// If io.EOF is returned, msg isn't nil (see inputMessage comments).
-		if err != nil {
+		if err != nil && errors.Cause(err) != prompt.ErrAbort {
 			return err
 		}
 		if err == io.EOF {
@@ -178,6 +181,10 @@ func (f *InteractiveFiller) inputField(dmsg *dynamic.Message, field *desc.FieldD
 			if err := dmsg.TrySetField(field, msg); err != nil {
 				return errors.Wrap(err, "failed to set an inputted message to a field")
 			}
+		}
+
+		if partOfRepeatedField && errors.Cause(err) == prompt.ErrAbort {
+			return prompt.ErrAbort
 		}
 
 		// Discard appended ancestors after calling above inputMessage.
@@ -366,8 +373,6 @@ type promptInputterState struct {
 
 	ancestor []string
 	color    prompt.Color
-	// hasDirectCycledParent is true if the direct parent to the current field is a cycled message.
-	hasDirectCycledParent bool
 	// The field has parent fields and one or more fields is/are repeated.
 	hasAncestorAndHasRepeatedField bool
 }

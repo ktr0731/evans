@@ -15,6 +15,7 @@ require (
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/k0kubun/pp v2.3.0+incompatible
 	github.com/ktr0731/go-multierror v0.0.0-20171204182908-b7773ae21874
+	github.com/ktr0731/go-prompt v0.2.1
 	github.com/ktr0731/go-shellstring v0.1.0
 	github.com/ktr0731/go-updater v0.1.5
 	github.com/ktr0731/grpc-test v0.1.2
@@ -55,3 +56,5 @@ require (
 replace github.com/golang/lint => github.com/golang/lint v0.0.0-20190227174305-8f45f776aaf1
 
 replace github.com/ktr0731/grpc-web-go-client => github.com/ktr0731/grpc-web-go-client v0.2.5-0.20190505140201-c24452752d52
+
+replace github.com/ktr0731/go-prompt => ../go-prompt
