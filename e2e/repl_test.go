@@ -91,10 +91,6 @@ func TestE2E_REPL(t *testing.T) {
 			args:  "testdata/test.proto",
 			input: []interface{}{"call UnaryRepeated", "miyuki", "kaguya", "chika", "yu", io.EOF},
 		},
-		"call UnaryRepeated which ends with two empty input": {
-			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryRepeated", "miyuki", "kaguya", "", ""},
-		},
 		"call UnarySelf": {
 			args:  "testdata/test.proto",
 			input: []interface{}{"call UnarySelf", "dig down", "ohana", "matsumae", "ohana", "dig down", "nako", "oshimizu", "nakochi", "finish", "dig down", "minko", "tsurugi", "minchi", "finish", "finish"},
@@ -248,6 +244,25 @@ func TestE2E_REPL(t *testing.T) {
 			input:      []interface{}{"quit"},
 			skipGolden: true,
 		},
+
+		// special keys.
+
+		"ctrl-c skips the rest of fields if there are no message type fields": {
+			args:  "testdata/test.proto",
+			input: []interface{}{"call Unary", prompt.ErrAbort},
+		},
+		"ctrl-c skips the rest of the current message": {
+			args:  "testdata/test.proto",
+			input: []interface{}{"call UnaryMessage", "mumei", prompt.ErrAbort},
+		},
+		"ctrl-c skips the rest of the current message and exits the repeated field": {
+			args:  "testdata/test.proto",
+			input: []interface{}{"call UnaryRepeatedMessage", "kanade", "hisaishi", "kumiko", prompt.ErrAbort},
+		},
+		"ctrl-c is also enabled in streaming RPCs": {
+			args:  "testdata/test.proto",
+			input: []interface{}{"call BidiStreaming", "kanade", "ririka", prompt.ErrAbort, io.EOF},
+		},
 	}
 	oldNewPrompt := prompt.New
 	defer func() {
@@ -261,10 +276,11 @@ func TestE2E_REPL(t *testing.T) {
 			defer stopServer()
 
 			stubPrompt := &stubPrompt{
+				t:      t,
 				Prompt: oldNewPrompt(),
 				input:  append(c.input, "exit"),
 			}
-			prompt.New = func() prompt.Prompt {
+			prompt.New = func(...prompt.Option) prompt.Prompt {
 				return stubPrompt
 			}
 
@@ -301,6 +317,7 @@ func TestE2E_REPL(t *testing.T) {
 }
 
 type stubPrompt struct {
+	t *testing.T
 	prompt.Prompt
 
 	input []interface{}
@@ -308,7 +325,7 @@ type stubPrompt struct {
 
 func (p *stubPrompt) Input() (string, error) {
 	if len(p.input) == 0 {
-		panic("p.input is empty, but testing is continued yet. Are you forgot to use io.EOF for finishing inputting?")
+		p.t.Fatal("p.input is empty, but testing is continued yet. Are you forgot to use io.EOF for finishing inputting?")
 	}
 	s := p.input[0]
 	p.input = p.input[1:]

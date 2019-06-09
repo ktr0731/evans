@@ -27,11 +27,11 @@ type App struct {
 	cfg *mergedConfig
 }
 
-// New instantiates a new App instance. If cui is nil, the default UI will be used.
+// New instantiates a new App instance. ui must not be a nil.
 // Note that cui is also used for the REPL UI if the mode is REPL mode.
-func New(cui cui.UI) *App {
+func New(ui cui.UI) *App {
 	return &App{
-		cui: cui,
+		cui: ui,
 	}
 }
 
@@ -120,7 +120,7 @@ func (a *App) run(args []string) error {
 			return errors.Wrap(err, "failed to update Evans")
 		}
 
-		if err := mode.RunAsREPLMode(a.cfg.Config, a.cui); err != nil {
+		if err := mode.RunAsREPLMode(a.cfg.Config, a.cui, cache); err != nil {
 			return errors.Wrap(err, "failed to run REPL mode")
 		}
 

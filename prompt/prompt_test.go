@@ -4,32 +4,35 @@ import (
 	"io"
 	"testing"
 
-	goprompt "github.com/c-bata/go-prompt"
+	goprompt "github.com/ktr0731/go-prompt"
 	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
 )
 
 func TestPrompt_Input(t *testing.T) {
 	cases := map[string]struct {
-		InputFunc func(prefix string, completer goprompt.Completer, opts ...goprompt.Option) string
+		InputFunc func(prefix string, completer goprompt.Completer, opts ...goprompt.Option) (string, error)
 
 		expected    string
 		expectedErr error
 	}{
 		"normal": {
-			InputFunc: func(prefix string, completer goprompt.Completer, opts ...goprompt.Option) string {
-				return "an input"
+			InputFunc: func(prefix string, completer goprompt.Completer, opts ...goprompt.Option) (string, error) {
+				return "an input", nil
 			},
 			expected: "an input",
 		},
-		"returns io.EOF by entering a key that regarded as CTRL+d": {
-			InputFunc: func(prefix string, completer goprompt.Completer, opts ...goprompt.Option) string {
-				// Return empty input without changing p.entered to true.
-				// That means empty input is returned by other than enter key.
-				// In go-prompt, it means CTRL+d is entered.
-				return ""
+		"returns io.EOF as it is if InputFunc returns io.EOF": {
+			InputFunc: func(prefix string, completer goprompt.Completer, opts ...goprompt.Option) (string, error) {
+				return "", io.EOF
 			},
 			expectedErr: io.EOF,
+		},
+		"returns ErrAbort as it is if InputFunc returns goprompt.ErrAbort": {
+			InputFunc: func(prefix string, completer goprompt.Completer, opts ...goprompt.Option) (string, error) {
+				return "", goprompt.ErrAbort
+			},
+			expectedErr: ErrAbort,
 		},
 	}
 

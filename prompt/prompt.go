@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 
-	goprompt "github.com/c-bata/go-prompt"
 	"github.com/chzyer/readline"
+	goprompt "github.com/ktr0731/go-prompt"
 	"github.com/manifoldco/promptui"
 	"github.com/pkg/errors"
 )
@@ -36,6 +36,10 @@ var (
 	ColorBlue    = Color(goprompt.Blue)
 )
 
+var (
+	ErrAbort = errors.New("abort")
+)
+
 // Color represents a valid color for a prompt prefix.
 type Color goprompt.Color
 
@@ -45,7 +49,9 @@ func (c *Color) Next() {
 }
 
 type Prompt interface {
-	// Input reads keyboard input. If ctrl+d is entered, Input returns io.EOF.
+	// Input reads keyboard input.
+	// If ctrl+d is entered, Input returns io.EOF.
+	// If ctrl+c is entered, Input returns ErrAbort.
 	Input() (string, error)
 	Select(message string, options []string) (selected string, _ error)
 
@@ -58,33 +64,33 @@ type Prompt interface {
 	// SetCompleter set a completer for prompt completion.
 	SetCompleter(c Completer)
 
-	// SetCommandHistory set a command history. The order of history is asc.
-	SetCommandHistory(history []string)
+	// GetCommandHistory gets a command history. The order of history is asc.
+	GetCommandHistory() []string
 }
 
 // New instantiates a new Prompt implementation. New will be replaced when e2egen command is executed.
 // Initially, Prompt doesn't have a prefix, so you have to call SetPrefix for displaying it.
 var New = newPrompt
 
-func newPrompt() Prompt {
+func newPrompt(opts ...Option) Prompt {
+	var opt opt
+	for _, o := range opts {
+		o(&opt)
+	}
+
 	p := &prompt{
-		prefixColor: ColorInitial,
 		InputFunc:   goprompt.Input,
+		prefixColor: ColorInitial,
 		SelectFunc: func(message string, options []string) (string, error) {
 			s := promptui.Select{Label: message, Items: options}
 			_, res, err := s.Run()
 			return res, err
 		},
+		commandHistory: opt.commandHistory,
 	}
+
 	p.options = []goprompt.Option{
 		goprompt.OptionLivePrefix(p.livePrefix),
-
-		goprompt.OptionAddKeyBind(goprompt.KeyBind{
-			Key: goprompt.Enter,
-			Fn: func(_ *goprompt.Buffer) {
-				p.entered = true
-			},
-		}),
 
 		goprompt.OptionSuggestionBGColor(goprompt.LightGray),
 		goprompt.OptionSuggestionTextColor(goprompt.Black),
@@ -108,36 +114,22 @@ type prompt struct {
 	commandHistory []string
 	options        []goprompt.Option
 
-	// entered will be changed by prompt.Enter key bind of c-bata/go-prompt.
-	// c-bata/go-prompt doesn't return EOF (ctrl+d), only returns empty string when ctrl+d is entered.
-	// So Evans cannot determine whether empty input is EOF or just entered.
-	// Therefore, Evans uses a tricky method to detect EOF.
-	//
-	// 1. Register a key bind for enter key by OptionAddKeyBind.
-	// 2. The key bind changes entered variable when the enter key is entered.
-	// 3. Input checks entered field's state.
-	//    If the input is empty string and entered field is false, it means EOF.
-	// 4. Input returns io.EOF as an error.
-	//
-	entered bool
-
 	// Treat prompt functions as fields for testing.
-	InputFunc  func(prefix string, completer goprompt.Completer, opts ...goprompt.Option) string
+	InputFunc  func(prefix string, completer goprompt.Completer, opts ...goprompt.Option) (string, error)
 	SelectFunc func(message string, options []string) (string, error)
 }
 
 func (p *prompt) Input() (in string, err error) {
-	defer func() {
-		p.entered = false
-	}()
-
-	in = p.InputFunc(
+	in, err = p.InputFunc(
 		p.prefix,
 		toGoPromptCompleter(p.completer),
 		append(p.options, goprompt.OptionPrefixTextColor(goprompt.Color(p.prefixColor)))...)
-	if in == "" && !p.entered {
-		return "", io.EOF
+	if err == goprompt.ErrAbort {
+		return "", ErrAbort
+	} else if err != nil {
+		return "", err
 	}
+	p.commandHistory = append(p.commandHistory, in)
 	return in, nil
 }
 
@@ -169,8 +161,8 @@ func (p *prompt) SetCompleter(c Completer) {
 	p.completer = c
 }
 
-func (p *prompt) SetCommandHistory(h []string) {
-	p.commandHistory = h
+func (p *prompt) GetCommandHistory() []string {
+	return p.commandHistory
 }
 
 func (p *prompt) livePrefix() (string, bool) {

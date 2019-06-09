@@ -55,7 +55,6 @@ func New(cfg *config.Config, p prompt.Prompt, ui cui.UI, pkgName, svcName string
 	}
 
 	p.SetCompleter(&completer{cmds: cmds})
-	p.SetCommandHistory([]string{"foo", "bar"})
 
 	var result error
 	if pkgName != "" {
@@ -85,7 +84,6 @@ func New(cfg *config.Config, p prompt.Prompt, ui cui.UI, pkgName, svcName string
 
 // Run starts the read-eval-print-loop.
 func (r *REPL) Run(ctx context.Context) error {
-	defer r.cleanup(ctx)
 	if !r.cfg.Silent {
 		r.printSplash(r.cfg.SplashTextPath)
 		defer r.ui.Info("Good Bye :)")
@@ -119,9 +117,6 @@ func (r *REPL) Run(ctx context.Context) error {
 
 		r.ui.Output("") // Break line.
 	}
-}
-
-func (r *REPL) cleanup(ctx context.Context) {
 }
 
 func (r *REPL) runCommand(cmdName string, args []string) error {

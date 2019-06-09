@@ -37,7 +37,7 @@ So, you can format it by any commands like `jq`. Also, if you want to use the sa
 - [Installation](#installation)
    - [From GitHub Releases](#from-github-releases)
    - [macOS](#macos)
-   - [[Deprecated] go get](#deprecated-go-get)
+   - [[Not-recommended] go get](#not-recommended-go-get)
 - [Usage (REPL)](#usage-repl)
    - [Basic usage](#basic-usage)
    - [Repeated fields](#repeated-fields)
@@ -46,6 +46,7 @@ So, you can format it by any commands like `jq`. Also, if you want to use the sa
    - [Client streaming RPC](#client-streaming-rpc)
    - [Server streaming RPC](#server-streaming-rpc)
    - [Bidirectional streaming RPC](#bidirectional-streaming-rpc)
+   - [Skip the rest of fields](#skip-the-rest-of-fields)
 - [Usage (CLI)](#usage-cli)
    - [Basic usage](#basic-usage-1)
    - [Repeated fields](#repeated-fields-1)
@@ -76,7 +77,7 @@ $ brew tap ktr0731/evans
 $ brew install evans
 ```
 
-### **[Deprecated]** go get
+### **[Not-recommended]** go get
 Go v1.12 (with mod-aware mode) or later required.  
 `go get` installation is not supported officially.
 ``` sh
@@ -312,6 +313,53 @@ name (TYPE_STRING) => bar
 }
 
 name (TYPE_STRING) =>
+```
+
+### Skip the rest of fields
+Evans recognizes <kbd>CTRL-C</kbd> as a special key that skips the rest of fields in the current message type.
+For example, we assume that we are inputting `Request` described in the following message:
+
+``` proto
+message FullName {
+  string first_name = 1;
+  string last_name = 2;
+}
+
+message Request {
+  string nickname = 1;
+  FullName full_name = 2;
+}
+```
+
+If we enter <kbd>CTRL-C</kbd> at the following moment, `full_name` field will be skipped.
+
+```
+nickname (TYPE_STRING) =>
+```
+
+The actual request value is just like this.
+
+``` json
+{}
+```
+
+If we enter <kbd>CTRL-C</kbd> at the following moment, `last_name` field will be skipped.
+
+```
+nickname (TYPE_STRING) => myamori
+full_name::first_name (TYPE_STRING) => aoi
+full_name::last_name (TYPE_STRING) =>
+```
+
+The actual request value is just like this.
+
+``` json
+{
+  "nickname": "myamori",
+  "fullName": {
+    "firstName": "aoi"
+  }
+}
 ```
 
 ## Usage (CLI)

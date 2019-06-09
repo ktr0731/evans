@@ -25,9 +25,10 @@ import (
 	"strconv"
 	"strings"
 
-	goprompt "github.com/c-bata/go-prompt"
 	"github.com/ktr0731/evans/app"
+	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/prompt"
+	goprompt "github.com/ktr0731/go-prompt"
 	"github.com/pkg/errors"
 	"golang.org/x/tools/go/ast/astutil"
 )
@@ -54,16 +55,16 @@ func main() {
 	defer f.Close()
 
 	p := &recorderPrompt{Prompt: prompt.New()}
-	prompt.New = func() prompt.Prompt {
+	prompt.New = func(...prompt.Option) prompt.Prompt {
 		return p
 	}
-	code := app.New(nil).Run(args)
+	code := app.New(cui.New()).Run(args)
 
 	if code != 0 {
 		os.Exit(code)
 	}
 
-	testCaseName := goprompt.Input("testcase name: ", func(goprompt.Document) []goprompt.Suggest { return nil })
+	testCaseName, _ := goprompt.Input("testcase name: ", func(goprompt.Document) []goprompt.Suggest { return nil })
 	if testCaseName == "" {
 		fmt.Println("abort")
 		if _, err := f.Write(src); err != nil {
