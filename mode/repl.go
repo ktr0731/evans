@@ -12,22 +12,19 @@ import (
 	"github.com/ktr0731/evans/prompt"
 	"github.com/ktr0731/evans/repl"
 	"github.com/ktr0731/evans/usecase"
-	"github.com/ktr0731/go-multierror"
 	"github.com/pkg/errors"
 )
 
 func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
-	var result error
 	gRPCClient, err := newGRPCClient(cfg)
 	if err != nil {
-		result = multierror.Append(result, err)
-	} else {
-		defer gRPCClient.Close(context.Background())
+		return errors.Wrap(err, "failed to instantiate a new gRPC client")
 	}
+	defer gRPCClient.Close(context.Background())
 
 	spec, err := newSpec(cfg, gRPCClient)
 	if err != nil {
-		result = multierror.Append(result, err)
+		return errors.Wrap(err, "failed to instantiate a new spec")
 	}
 
 	usecase.Inject(
@@ -36,10 +33,6 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 		gRPCClient,
 		json.NewPresenter(),
 	)
-
-	if result != nil {
-		return result
-	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
