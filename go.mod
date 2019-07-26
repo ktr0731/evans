@@ -4,7 +4,6 @@ go 1.12
 
 require (
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
-	github.com/c-bata/go-prompt v0.2.3
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.7.0
 	github.com/golang/protobuf v1.3.1
