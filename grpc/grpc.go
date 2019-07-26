@@ -116,7 +116,7 @@ func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert
 			}
 			cp := x509.NewCertPool()
 			if !cp.AppendCertsFromPEM(b) {
-				return nil, errors.Wrap(err, "failed to append the client certificate")
+				return nil, errors.New("failed to append the client certificate")
 			}
 			tlsCfg.RootCAs = cp
 		}
