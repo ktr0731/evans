@@ -56,8 +56,10 @@ So, you can format it by any commands like `jq`. Also, if you want to use the sa
    - [Server streaming RPC](#server-streaming-rpc-1)
    - [Bidirectional streaming RPC](#bidirectional-streaming-rpc-1)
 - [Other features](#other-features)
-   - [gRPC Web](#grpc-web)
+   - [gRPC-Web](#grpc-web)
 - [Supported IDL (interface definition language)](#supported-idl-interface-definition-language)
+- [Supported Codec](#supported-codec)
+- [Supported Compressor](#supported-compressor)
 - [See Also](#see-also)
 
 
@@ -475,15 +477,21 @@ $ echo '{ "name": "foo" } { "name": "bar" }' | evans -r --service Example --call
 ```
 
 ## Other features
-### gRPC Web
-Evans also support gRPC Web protocol.  
-Tested gRPC Web implementations are:
+### gRPC-Web
+Evans also support gRPC-Web protocol.  
+Tested gRPC-Web implementations are:
 - [improbable-eng/grpc-web](https://github.com/improbable-eng/grpc-web)
 
-At the moment TLS is not supported for gRPC Web.
+At the moment TLS is not supported for gRPC-Web.
 
 ## Supported IDL (interface definition language)
 - [Protocol Buffers 3](https://developers.google.com/protocol-buffers/)  
+
+## Supported Codec
+- [Protocol Buffers 3](https://developers.google.com/protocol-buffers/)  
+
+## Supported Compressor
+- [GZIP](https://godoc.org/google.golang.org/grpc/encoding/gzip)  
 
 ## See Also
 Evans (DJ YOSHITAKA)  
