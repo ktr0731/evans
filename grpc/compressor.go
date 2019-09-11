@@ -1,3 +1,3 @@
 package grpc
 
-import _ "google.golang.org/grpc/encoding/gzip"
+import _ "google.golang.org/grpc/encoding/gzip" // GZIP
