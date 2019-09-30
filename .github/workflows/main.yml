@@ -4,11 +4,11 @@ jobs:
   test:
     name: Build on ${{ matrix.os }} with Go ${{ matrix.go }}
     runs-on: ${{ matrix.os }}
-    steps:
+    strategy:
       matrix:
         os: [ubuntu-18.04, windows-2019, macOS-10.14]
         go: ['1.13']
-
+    steps:
     - name: Set up Go ${{ matrix.go }}
       uses: actions/setup-go@v1
       with:
@@ -20,7 +20,7 @@ jobs:
 
     - name: Get dependencies
       run: make deps
-      
+
     - name: Get tool dependencies
       run: make tools
 
