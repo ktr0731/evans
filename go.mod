@@ -7,7 +7,6 @@ require (
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
 	github.com/c-bata/go-prompt v0.2.3
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
 	github.com/fatih/color v1.7.0
 	github.com/golang/lint v0.0.0-20190930215403-16217165b5de // indirect
 	github.com/golang/protobuf v1.3.2
@@ -34,7 +33,8 @@ require (
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mattn/go-tty v0.0.0-20190424173100-523744f04859 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/nicksnyder/go-i18n v2.0.2+incompatible // indirect
+	github.com/nicksnyder/go-i18n v2.0.1+incompatible // indirect
+	github.com/nicksnyder/go-i18n/v2 v2.0.2 // indirect
 	github.com/olekukonko/tablewriter v0.0.1
 	github.com/pelletier/go-toml v1.4.0
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
@@ -47,14 +47,12 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0
 	github.com/tj/go-spin v1.1.0
-	github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8 // indirect
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
 	golang.org/x/lint v0.0.0-20190930215403-16217165b5de // indirect
 	golang.org/x/net v0.0.0-20190930134127-c5a3c61f89f3 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20190927073244-c990c680b611 // indirect
-	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/tools v0.0.0-20190930201159-7c411dea38b0
 	google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c // indirect
 	google.golang.org/grpc v1.24.0
@@ -62,6 +60,8 @@ require (
 	gopkg.in/yaml.v2 v2.2.3 // indirect
 )
 
-replace github.com/golang/lint => github.com/golang/lint v0.0.0-20190227174305-8f45f776aaf1
+replace github.com/golang/lint => golang.org/x/lint v0.0.0-20190930215403-16217165b5de
 
 replace github.com/ktr0731/grpc-web-go-client => github.com/ktr0731/grpc-web-go-client v0.2.5-0.20190505140201-c24452752d52
+
+replace github.com/nicksnyder/go-i18n => github.com/nicksnyder/go-i18n/v2 v2.0.2-0.20190606144950-25e77afbf581
