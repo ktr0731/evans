@@ -1,4 +1,4 @@
-stack: Go 1.12
+stack: Go 1.13
 clone_folder: c:\gopath\src\github.com\ktr0731\evans
 cache:
   - vendor -> go.mod
