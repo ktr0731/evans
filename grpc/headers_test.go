@@ -30,7 +30,6 @@ func TestHeaders_Add(t *testing.T) {
 					t.Errorf("Add must not return an error, but got '%s'", err)
 				}
 			}
-
 		})
 	}
 }

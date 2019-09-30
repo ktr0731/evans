@@ -3,7 +3,7 @@ module tools
 require (
 	github.com/Songmu/retry v0.1.0 // indirect
 	github.com/golang/protobuf:/protoc-gen-go v1.2.0
-	github.com/golangci/golangci-lint:/cmd/golangci-lint v1.14.0
+	github.com/golangci/golangci-lint:/cmd/golangci-lint v1.19.1
 	github.com/google/go-github v17.0.0+incompatible // indirect
 	github.com/goreleaser/goreleaser v0.108.0
 	github.com/ktr0731/bump v0.1.0

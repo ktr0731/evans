@@ -12,3 +12,5 @@ linters:
     - scopelint
     - maligned
     - gocyclo
+    - funlen
+    - godox

@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -25,8 +26,14 @@ var (
 )
 
 func init() {
+	testing.Init()
+	flag.Parse()
 	if *update {
 		os.RemoveAll(filepath.Join("testdata", "fixtures"))
+		err := os.Mkdir(filepath.Join("testdata", "fixtures"), 0744)
+		if err != nil {
+			panic(fmt.Sprintf("failed to create fixtures dir: %s", err))
+		}
 	}
 }
 
@@ -44,7 +51,7 @@ func setupEnv(t *testing.T) (string, string, func()) {
 
 	dir, err := ioutil.TempDir("", "")
 	if err != nil {
-		t.Fatalf("failed to create a temp dir to setup testing enviroment: %s", err)
+		t.Fatalf("failed to create a temp dir to setup testing environment: %s", err)
 	}
 
 	mustChdir(t, dir)

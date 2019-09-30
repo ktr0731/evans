@@ -1,7 +1,9 @@
 package usecase
 
-import "github.com/ktr0731/evans/grpc"
-import "github.com/pkg/errors"
+import (
+	"github.com/ktr0731/evans/grpc"
+	"github.com/pkg/errors"
+)
 
 // ListRPCs lists all RPC belong to the selected service.
 // If svcName is empty, the currently selected service will be used.

@@ -17,7 +17,7 @@
   coloredoutput = true
   historysize = 100
   inputpromptformat = "{ancestor}{name} ({type}) => "
-  promptformat = "{package}.{sevice}@{addr}:{port}"
+  promptformat = "{package}.{service}@{addr}:{port}"
   silent = false
   splashtextpath = ""
 
