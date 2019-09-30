@@ -147,7 +147,7 @@ func newDefaultViper() *viper.Viper {
 	v.SetDefault("meta.autoUpdate", false)
 	v.SetDefault("meta.updateLevel", "patch")
 
-	v.SetDefault("repl.promptFormat", "{package}.{sevice}@{addr}:{port}")
+	v.SetDefault("repl.promptFormat", "{package}.{service}@{addr}:{port}")
 	v.SetDefault("repl.inputPromptFormat", "{ancestor}{name} ({type}) => ")
 	v.SetDefault("repl.coloredOutput", true)
 	v.SetDefault("repl.silent", false)

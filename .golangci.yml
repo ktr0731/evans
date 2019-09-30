@@ -13,3 +13,4 @@ linters:
     - maligned
     - gocyclo
     - funlen
+    - godox

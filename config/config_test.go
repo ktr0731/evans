@@ -46,7 +46,7 @@ func setupEnv(t *testing.T) (string, string, func()) {
 
 	dir, err := ioutil.TempDir("", "")
 	if err != nil {
-		t.Fatalf("failed to create a temp dir to setup testing enviroment: %s", err)
+		t.Fatalf("failed to create a temp dir to setup testing environment: %s", err)
 	}
 
 	mustChdir(t, dir)
