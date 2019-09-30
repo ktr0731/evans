@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -29,6 +30,10 @@ func init() {
 	flag.Parse()
 	if *update {
 		os.RemoveAll(filepath.Join("testdata", "fixtures"))
+		err := os.Mkdir(filepath.Join("testdata", "fixtures"), 0744)
+		if err != nil {
+			panic(fmt.Sprintf("failed to create fixtures dir: %s", err))
+		}
 	}
 }
 
