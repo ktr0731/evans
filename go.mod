@@ -9,7 +9,7 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
 	github.com/fatih/color v1.7.0
-	github.com/golang/lint v0.0.0-20190909230951-414d861bb4ac // indirect
+	github.com/golang/lint v0.0.0-20190930215403-16217165b5de // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/google/go-cmp v0.3.0
 	github.com/gordonklaus/ineffassign v0.0.0-20190601041439-ed7b1b5ee0f8 // indirect
