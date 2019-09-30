@@ -12,3 +12,4 @@ linters:
     - scopelint
     - maligned
     - gocyclo
+    - funlen

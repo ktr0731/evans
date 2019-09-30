@@ -25,6 +25,8 @@ var (
 )
 
 func init() {
+	testing.Init()
+	flag.Parse()
 	if *update {
 		os.RemoveAll(filepath.Join("testdata", "fixtures"))
 	}
