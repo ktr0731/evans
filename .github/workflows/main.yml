@@ -19,13 +19,11 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Get dependencies
-      run: make deps
-
-    - name: Get tool dependencies
-      run: make tools
+      run: |
+        go mod tidy
 
     - name: Build
-      run: make build
+      run: go build
 
     - name: Test
-      run: make test
+      run: go test -v -race ./...
