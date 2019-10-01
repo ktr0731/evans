@@ -344,9 +344,8 @@ func (p *stubPrompt) Select(string, []string) (string, error) {
 	return p.Input()
 }
 
-func compareWithGolden(t *testing.T, actual string) {
-	name := t.Name()
-	r := strings.NewReplacer(
+var (
+	goldenPathReplacer = strings.NewReplacer(
 		"/", "-",
 		" ", "_",
 		"=", "-",
@@ -354,8 +353,15 @@ func compareWithGolden(t *testing.T, actual string) {
 		`"`, "",
 		",", "",
 	)
+	goldenReplacer = strings.NewReplacer(
+		"\r", "", // For Windows.
+	)
+)
+
+func compareWithGolden(t *testing.T, actual string) {
+	name := t.Name()
 	normalizeFilename := func(name string) string {
-		fname := r.Replace(strings.ToLower(name)) + ".golden"
+		fname := goldenPathReplacer.Replace(strings.ToLower(name)) + ".golden"
 		return filepath.Join("testdata", "fixtures", fname)
 	}
 
@@ -373,7 +379,7 @@ func compareWithGolden(t *testing.T, actual string) {
 	if err != nil {
 		t.Fatalf("failed to load a golden file: %s", err)
 	}
-	expected := string(b)
+	expected := goldenReplacer.Replace(string(b))
 
 	if diff := cmp.Diff(expected, actual); diff != "" {
 		t.Errorf("wrong result: \n%s", diff)

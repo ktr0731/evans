@@ -1,12 +1,12 @@
 SHELL := /bin/bash
-VERSION := $(shell _tools/bump show meta/meta.go)
 
 export PATH := $(PWD)/_tools:$(PATH)
 export GO111MODULE := on
 
 .PHONY: version
 version:
-	@echo "evans: $(VERSION)"
+	@echo "evans: $(shell _tools/bump show meta/meta.go)"
+
 
 .PHONY: dep
 dep:
@@ -67,7 +67,7 @@ coverage-web: coverage
 
 .PHONY: brew-update
 release:
-	bash .circleci/scripts/release.bash $(VERSION)
+	bash .circleci/scripts/release.bash $(shell _tools/bump show meta/meta.go)
 
 .PHONY: depgraph
 depgraph:
