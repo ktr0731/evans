@@ -3,7 +3,7 @@
 --- 
 
 [![CircleCI](https://circleci.com/gh/ktr0731/evans/tree/master.svg?style=svg)](https://circleci.com/gh/ktr0731/evans/tree/master)
-[![AppVeyor](https://ci.appveyor.com/api/projects/status/32r7s2skrgm9ubva?svg=true)](https://ci.appveyor.com/api/projects/status/32r7s2skrgm9ubva?svg=true)
+[![GitHub Actions](https://github.com/ktr0731/evans/workflows/main/badge.svg)](https://github.com/ktr0731/evans/actions)
 [![codecov](https://codecov.io/gh/ktr0731/evans/branch/master/graph/badge.svg)](https://codecov.io/gh/ktr0731/evans)
 [![GoDoc](https://godoc.org/github.com/ktr0731/evans?status.svg)](https://godoc.org/github.com/ktr0731/evans)  
 
