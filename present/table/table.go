@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Presenter is a presenter that formats v with table layout.
 type Presenter struct{}
 
 func indirect(rv reflect.Value) reflect.Value {
@@ -27,6 +28,8 @@ func indirectType(rt reflect.Type) reflect.Type {
 	return indirectType(rt.Elem())
 }
 
+// Format formats v with table layout. v should be a struct type that has a slice field. Format extract the slice field
+// and display them. See test cases for example.
 // TODO: remove indent.
 func (p *Presenter) Format(v interface{}, indent string) (string, error) {
 	rv := indirect(reflect.ValueOf(v))
@@ -35,18 +38,37 @@ func (p *Presenter) Format(v interface{}, indent string) (string, error) {
 		return "", errors.New("v should be a struct type")
 	}
 
-	keys := processStructKeys(rt)
-	vals := processStructValues(rv)
+	slice, ok := findSlice(rv)
+	if !ok {
+		return "", errors.New("the struct should have a slice field")
+	}
+
+	keys := processStructKeys(slice.Type().Elem())
+	rows := make([][]string, slice.Len())
+	for i := 0; i < slice.Len(); i++ {
+		rows[i] = processStructValues(slice.Index(i))
+	}
 
 	var w bytes.Buffer
 	table := tablewriter.NewWriter(&w)
 	table.SetHeader(keys)
-	table.AppendBulk(vals)
+	table.AppendBulk(rows)
 	table.Render()
 	return w.String(), nil
 }
 
+func findSlice(rv reflect.Value) (_ reflect.Value, ok bool) {
+	for i := 0; i < rv.NumField(); i++ {
+		sf := rv.Field(i)
+		if sf.Kind() == reflect.Slice {
+			return sf, true
+		}
+	}
+	return rv, false
+}
+
 func processStructKeys(rt reflect.Type) []string {
+	rt = indirectType(rt)
 	keys := make([]string, 0, rt.NumField())
 	for i := 0; i < rt.NumField(); i++ {
 		sf := rt.Field(i)
@@ -62,31 +84,14 @@ func processStructKeys(rt reflect.Type) []string {
 	return keys
 }
 
-func processStructValues(rv reflect.Value) [][]string {
-	maxLen := 1
+func processStructValues(rv reflect.Value) []string {
+	rv = indirect(rv)
+	row := make([]string, rv.NumField())
 	for i := 0; i < rv.NumField(); i++ {
 		f := rv.Field(i)
-		if f.Kind() == reflect.Slice && f.Len() > maxLen {
-			maxLen = f.Len()
-		}
+		row[i] = fmt.Sprint(f.Interface())
 	}
-
-	var vals [][]string
-	for i := 0; i < maxLen; i++ {
-		row := make([]string, rv.NumField())
-		for j := 0; j < rv.NumField(); j++ {
-			f := rv.Field(j)
-			if f.Kind() == reflect.Slice {
-				if f.Len() > i {
-					row[j] = fmt.Sprint(f.Index(i).Interface())
-				}
-			} else {
-				row[j] = fmt.Sprint(f.Interface())
-			}
-		}
-		vals = append(vals, row)
-	}
-	return vals
+	return row
 }
 
 func NewPresenter() *Presenter {
