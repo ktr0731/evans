@@ -30,43 +30,13 @@ func indirectType(rt reflect.Type) reflect.Type {
 // TODO: remove indent.
 func (p *Presenter) Format(v interface{}, indent string) (string, error) {
 	rv := indirect(reflect.ValueOf(v))
-
-	var (
-		keys []string
-		vals [][]string
-		err  error
-	)
 	rt := rv.Type()
-	switch rt.Kind() {
-	case reflect.Slice:
-		it := indirectType(rt.Elem())
-		if it.Kind() != reflect.Struct {
-			return "", errors.New("v should be a slice of a struct type")
-		}
-		keys, err = processStructKeys(it)
-		if err != nil {
-			return "", errors.Wrap(err, "failed to get struct keys of the passed slice")
-		}
-		for i := 0; i < rv.Len(); i++ {
-			rows, err := processStructValues(indirect(rv.Index(i)))
-			if err != nil {
-				return "", errors.Wrap(err, "failed to get struct values")
-			}
-			vals = append(vals, rows)
-		}
-	case reflect.Struct:
-		keys, err = processStructKeys(rt)
-		if err != nil {
-			return "", errors.Wrap(err, "failed to get struct keys")
-		}
-		rows, err := processStructValues(rv)
-		if err != nil {
-			return "", errors.Wrap(err, "failed to get struct values")
-		}
-		vals = append(vals, rows)
-	default:
-		return "", errors.New("v should be a struct or a slice of a struct")
+	if rt.Kind() != reflect.Struct {
+		return "", errors.New("v should be a struct type")
 	}
+
+	keys := processStructKeys(rt)
+	vals := processStructValues(rv)
 
 	var w bytes.Buffer
 	table := tablewriter.NewWriter(&w)
@@ -76,10 +46,7 @@ func (p *Presenter) Format(v interface{}, indent string) (string, error) {
 	return w.String(), nil
 }
 
-func processStructKeys(rt reflect.Type) ([]string, error) {
-	if rt.Kind() != reflect.Struct {
-		return nil, errors.New("v should be a struct type")
-	}
+func processStructKeys(rt reflect.Type) []string {
 	keys := make([]string, 0, rt.NumField())
 	for i := 0; i < rt.NumField(); i++ {
 		sf := rt.Field(i)
@@ -92,20 +59,34 @@ func processStructKeys(rt reflect.Type) ([]string, error) {
 		}
 		keys = append(keys, key)
 	}
-	return keys, nil
+	return keys
 }
 
-func processStructValues(rv reflect.Value) ([]string, error) {
-	rt := rv.Type()
-	if rt.Kind() != reflect.Struct {
-		return nil, errors.New("v should be a struct type")
-	}
-	var vals []string
-	for i := 0; i < rt.NumField(); i++ {
+func processStructValues(rv reflect.Value) [][]string {
+	maxLen := 1
+	for i := 0; i < rv.NumField(); i++ {
 		f := rv.Field(i)
-		vals = append(vals, fmt.Sprint(f.Interface()))
+		if f.Kind() == reflect.Slice && f.Len() > maxLen {
+			maxLen = f.Len()
+		}
 	}
-	return vals, nil
+
+	var vals [][]string
+	for i := 0; i < maxLen; i++ {
+		row := make([]string, rv.NumField())
+		for j := 0; j < rv.NumField(); j++ {
+			f := rv.Field(j)
+			if f.Kind() == reflect.Slice {
+				if f.Len() > i {
+					row[j] = fmt.Sprint(f.Index(i).Interface())
+				}
+			} else {
+				row[j] = fmt.Sprint(f.Interface())
+			}
+		}
+		vals = append(vals, row)
+	}
+	return vals
 }
 
 func NewPresenter() *Presenter {
