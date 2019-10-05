@@ -15,10 +15,11 @@ var (
 )
 
 type dependencyManager struct {
-	spec       idl.Spec
-	filler     fill.Filler
-	gRPCClient grpc.Client
-	presenter  present.Presenter
+	spec              idl.Spec
+	filler            fill.Filler
+	gRPCClient        grpc.Client
+	responsePresenter present.Presenter
+	resourcePresenter present.Presenter
 
 	state state
 }
@@ -34,22 +35,25 @@ func Inject(
 	spec idl.Spec,
 	filler fill.Filler,
 	gRPCClient grpc.Client,
-	presenter present.Presenter,
+	responsePresenter present.Presenter,
+	resourcePresenter present.Presenter,
 ) {
-	dm.Inject(spec, filler, gRPCClient, presenter)
+	dm.Inject(spec, filler, gRPCClient, responsePresenter, resourcePresenter)
 }
 
 func (m *dependencyManager) Inject(
 	spec idl.Spec,
 	filler fill.Filler,
 	gRPCClient grpc.Client,
-	presenter present.Presenter,
+	responsePresenter present.Presenter,
+	resourcePresenter present.Presenter,
 ) {
 	dm = &dependencyManager{
-		spec:       spec,
-		filler:     filler,
-		gRPCClient: gRPCClient,
-		presenter:  presenter,
+		spec:              spec,
+		filler:            filler,
+		gRPCClient:        gRPCClient,
+		responsePresenter: responsePresenter,
+		resourcePresenter: resourcePresenter,
 
 		state: defaultState,
 	}
@@ -57,5 +61,5 @@ func (m *dependencyManager) Inject(
 
 // Clear clears all dependencies and states. Usually, it is used for unit testing.
 func Clear() {
-	dm.Inject(nil, nil, nil, nil)
+	dm.Inject(nil, nil, nil, nil, nil)
 }

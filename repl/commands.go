@@ -110,11 +110,17 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 	var rows [][]string
 	switch strings.ToLower(target) {
 	case "p", "package", "packages":
-		pkgs := usecase.ListPackages()
-		table.SetHeader([]string{"package"})
-		for _, pkg := range pkgs {
-			rows = append(rows, []string{pkg})
+		// pkgs := usecase.ListPackages()
+		// table.SetHeader([]string{"package"})
+		// for _, pkg := range pkgs {
+		// 	rows = append(rows, []string{pkg})
+		// }
+		out, err := usecase.FormatPackages()
+		if err != nil {
+			return errors.Wrap(err, "failed to format packages")
 		}
+		io.WriteString(w, out)
+		return nil
 	case "s", "svc", "service", "services":
 		svcs, err := usecase.ListServices()
 		if err != nil {

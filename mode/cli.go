@@ -61,6 +61,7 @@ func RunAsCLIMode(cfg *config.Config, call, file string, ui cui.UI) error {
 		fill.NewSilentFiller(in),
 		gRPCClient,
 		json.NewPresenter(),
+		json.NewPresenter(),
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
