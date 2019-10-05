@@ -1,6 +1,10 @@
 package usecase
 
-import "github.com/pkg/errors"
+import (
+	"sort"
+
+	"github.com/pkg/errors"
+)
 
 // FormatPackages formats all package names.
 func FormatPackages() (string, error) {
@@ -17,6 +21,9 @@ func (m *dependencyManager) FormatPackages() (string, error) {
 	for _, pkgName := range pkgs {
 		v.Packages = append(v.Packages, pkg{pkgName})
 	}
+	sort.Slice(v.Packages, func(i, j int) bool {
+		return v.Packages[i].Package < v.Packages[j].Package
+	})
 	out, err := m.resourcePresenter.Format(v, "  ")
 	if err != nil {
 		return "", errors.Wrap(err, "failed to format package names by presenter")

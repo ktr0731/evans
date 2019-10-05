@@ -2,14 +2,11 @@ package repl
 
 import (
 	"context"
-	"fmt"
 	"io"
-	"sort"
 	"strings"
 
 	"github.com/ktr0731/evans/idl"
 	"github.com/ktr0731/evans/usecase"
-	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 )
 
@@ -105,93 +102,31 @@ func (c *showCommand) Validate(args []string) error {
 func (c *showCommand) Run(w io.Writer, args []string) error {
 	target := args[0]
 
-	table := tablewriter.NewWriter(w)
+	var f func() (string, error)
 
-	var rows [][]string
 	switch strings.ToLower(target) {
 	case "p", "package", "packages":
-		// pkgs := usecase.ListPackages()
-		// table.SetHeader([]string{"package"})
-		// for _, pkg := range pkgs {
-		// 	rows = append(rows, []string{pkg})
-		// }
-		out, err := usecase.FormatPackages()
-		if err != nil {
-			return errors.Wrap(err, "failed to format packages")
-		}
-		io.WriteString(w, out)
-		return nil
+		f = usecase.FormatPackages
 	case "s", "svc", "service", "services":
-		svcs, err := usecase.ListServices()
-		if err != nil {
-			return errors.Wrap(err, "failed to list services belong to the package")
-		}
-		table.SetHeader([]string{"service", "rpc", "request type", "response type"})
-		for _, svc := range svcs {
-			rpcs, err := usecase.ListRPCs(svc)
-			if err != nil {
-				panic(fmt.Sprintf("ListRPCs must not return an error, but got '%s'", err))
-			}
-			for _, rpc := range rpcs {
-				rows = append(rows, []string{svc, rpc.Name, rpc.RequestType.Name, rpc.ResponseType.Name})
-			}
-		}
+		f = usecase.FormatServices
 	case "m", "msg", "message", "messages":
-		svcs, err := usecase.ListServices()
-		if err != nil {
-			return errors.Wrap(err, "failed to list services belong to the package")
-		}
-		table.SetHeader([]string{"message"})
-		encountered := make(map[string]interface{})
-		for _, svc := range svcs {
-			rpcs, err := usecase.ListRPCs(svc)
-			if err != nil {
-				panic(fmt.Sprintf("ListRPCs must not return an error, but got '%s'", err))
-			}
-			for _, rpc := range rpcs {
-				if _, found := encountered[rpc.RequestType.Name]; !found {
-					rows = append(rows, []string{rpc.RequestType.Name})
-					encountered[rpc.RequestType.Name] = nil
-				}
-				if _, found := encountered[rpc.ResponseType.Name]; !found {
-					rows = append(rows, []string{rpc.ResponseType.Name})
-					encountered[rpc.ResponseType.Name] = nil
-				}
-			}
-		}
+		f = usecase.FormatMessages
 	case "a", "r", "rpc", "api":
-		svcs, err := usecase.ListServices()
-		if err != nil {
-			return errors.Wrap(err, "failed to list services belong to the package")
-		}
-		table.SetHeader([]string{"RPC", "request type", "response type"})
-		for _, svc := range svcs {
-			rpcs, err := usecase.ListRPCs(svc)
-			if err != nil {
-				panic(fmt.Sprintf("ListRPCs must not return an error, but got '%s'", err))
-			}
-			for _, rpc := range rpcs {
-				rows = append(rows, []string{rpc.Name, rpc.RequestType.Name, rpc.ResponseType.Name})
-			}
-		}
+		f = usecase.FormatRPCs
 	case "h", "header", "headers":
-		headers := usecase.ListHeaders()
-		table.SetHeader([]string{"key", "val"})
-		for k, v := range headers {
-			for _, vv := range v {
-				rows = append(rows, []string{k, vv})
-			}
-		}
+		f = usecase.FormatHeaders
 	default:
 		return errors.Errorf("unknown target '%s'", target)
 	}
 
-	sort.Slice(rows, func(i, j int) bool {
-		return rows[i][0] < rows[j][0]
-	})
+	out, err := f()
+	if err != nil {
+		return errors.Wrap(err, "failed to format")
+	}
+	if _, err := io.WriteString(w, out); err != nil {
+		return errors.Wrap(err, "failed to write formatted output to w")
+	}
 
-	table.AppendBulk(rows)
-	table.Render()
 	return nil
 }
 
