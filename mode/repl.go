@@ -9,6 +9,7 @@ import (
 	"github.com/ktr0731/evans/fill/proto"
 	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/present/json"
+	"github.com/ktr0731/evans/present/table"
 	"github.com/ktr0731/evans/prompt"
 	"github.com/ktr0731/evans/repl"
 	"github.com/ktr0731/evans/usecase"
@@ -32,6 +33,7 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 		proto.NewInteractiveFiller(prompt.New(), cfg.REPL.InputPromptFormat),
 		gRPCClient,
 		json.NewPresenter(),
+		table.NewPresenter(),
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())

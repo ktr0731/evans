@@ -130,7 +130,7 @@ func TestREPL_makePrefix(t *testing.T) {
 			},
 		}
 		t.Run(name, func(t *testing.T) {
-			usecase.Inject(dummySpec, nil, nil, nil)
+			usecase.Inject(dummySpec, nil, nil, nil, nil)
 
 			r, err := New(dummyCfg, prompt.New(), nil, c.pkgName, c.svcName)
 			if c.hasErr {

@@ -27,7 +27,7 @@ func TestCompleter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadFiles must not return an error, but got '%s'", err)
 	}
-	usecase.Inject(spec, nil, nil, nil)
+	usecase.Inject(spec, nil, nil, nil, nil)
 	err = usecase.UsePackage("api")
 	if err != nil {
 		t.Fatalf("UsePackage must not return an error, but got '%s'", err)
