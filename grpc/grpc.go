@@ -227,11 +227,11 @@ func (c *client) NewClientStream(ctx context.Context, streamDesc *gogrpc.StreamD
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert fqrn to endpoint")
 	}
+	wakeUpClientConn(c.conn)
 	cs, err := c.conn.NewStream(ctx, streamDesc, endpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to instantiate gRPC stream")
 	}
-	wakeUpClientConn(c.conn)
 	return &clientStream{cs}, nil
 }
 
