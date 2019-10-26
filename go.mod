@@ -14,7 +14,7 @@ require (
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/go-version v1.2.0
-	github.com/jhump/protoreflect v1.5.0
+	github.com/jhump/protoreflect v1.5.1-0.20191024213132-10815c273d3f
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/ktr0731/go-multierror v0.0.0-20171204182908-b7773ae21874
