@@ -18,7 +18,10 @@ builds:
   ldflags:
     - '-extldflags "-static" -X github.com/ktr0731/evans/vendor/github.com/ktr0731/go-updater/github.isGitHubReleasedBinary=true'
 archives:
-- name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+-
+  name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+  files:
+    - none* # Include only the binary to work auto updating correctly.
 checksum:
   name_template: 'checksums.txt'
 snapshot:
