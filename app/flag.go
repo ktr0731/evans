@@ -5,12 +5,9 @@ import (
 	"encoding/csv"
 	"fmt"
 	"strings"
-	"text/tabwriter"
 
-	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/go-multierror"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 )
 
 var usageFormat = `
@@ -79,83 +76,6 @@ func (f *flags) validate() error {
 		}
 	}
 	return result
-}
-
-func (a *App) parseFlags(args []string) (*flags, error) {
-	f := pflag.NewFlagSet("main", pflag.ContinueOnError)
-	f.SortFlags = false
-	f.SetOutput(a.cui.Writer())
-
-	var flags flags
-
-	f.BoolVar(&flags.mode.repl, "repl", false, "launch Evans as REPL mode")
-	f.BoolVar(&flags.mode.cli, "cli", false, "start as CLI mode")
-
-	f.StringVar(&flags.cli.call, "call", "", "call specified RPC by CLI mode")
-	f.StringVarP(&flags.cli.file, "file", "f", "", "a script file that will be executed by (used only CLI mode)")
-
-	f.BoolVarP(&flags.repl.silent, "silent", "s", false, "hide redundant output")
-
-	f.StringVar(&flags.common.pkg, "package", "", "default package")
-	f.StringVar(&flags.common.service, "service", "", "default service")
-	f.StringSliceVar(&flags.common.path, "path", nil, "proto file paths")
-	f.StringVar(&flags.common.host, "host", "", "gRPC server host")
-	f.StringVarP(&flags.common.port, "port", "p", "50051", "gRPC server port")
-	f.Var(
-		newStringToStringValue(nil, &flags.common.header),
-		"header", "default headers that set to each requests (example: foo=bar)")
-	f.BoolVar(&flags.common.web, "web", false, "use gRPC-Web protocol")
-	f.BoolVarP(&flags.common.reflection, "reflection", "r", false, "use gRPC reflection")
-	f.BoolVarP(&flags.common.tls, "tls", "t", false, "use a secure TLS connection")
-	f.StringVar(&flags.common.cacert, "cacert", "", "the CA certificate file for verifying the server")
-	f.StringVar(
-		&flags.common.cert,
-		"cert", "", "the certificate file for mutual TLS auth. it must be provided with --certkey.")
-	f.StringVar(
-		&flags.common.certKey,
-		"certkey", "", "the private key file for mutual TLS auth. it must be provided with --cert.")
-	f.StringVar(
-		&flags.common.serverName,
-		"servername", "", "override the server name used to verify the hostname (ignored if --tls is disabled)")
-
-	f.BoolVarP(&flags.meta.edit, "edit", "e", false, "edit the project config file by using $EDITOR")
-	f.BoolVar(&flags.meta.editGlobal, "edit-global", false, "edit the global config file by using $EDITOR")
-	f.BoolVar(&flags.meta.verbose, "verbose", false, "verbose output")
-	f.BoolVarP(&flags.meta.version, "version", "v", false, "display version and exit")
-	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
-
-	f.Usage = func() {
-		a.printVersion()
-		var buf bytes.Buffer
-		w := tabwriter.NewWriter(&buf, 0, 8, 8, ' ', tabwriter.TabIndent)
-		f.VisitAll(func(f *pflag.Flag) {
-			cmd := "--" + f.Name
-			if f.Shorthand != "" {
-				cmd += ", -" + f.Shorthand
-			}
-			name, _ := pflag.UnquoteUsage(f)
-			if name != "" {
-				cmd += " " + name
-			}
-			usage := f.Usage
-			if f.DefValue != "" {
-				usage += fmt.Sprintf(` (default "%s")`, f.DefValue)
-			}
-			fmt.Fprintf(w, "        %s\t%s\n", cmd, usage)
-		})
-		w.Flush()
-		fmt.Fprintf(a.cui.Writer(), usageFormat, meta.AppName, buf.String())
-	}
-
-	// ignore error because flag set mode is ExitOnError
-	err := f.Parse(args)
-	if err != nil {
-		return nil, err
-	}
-
-	a.flagSet = f
-
-	return &flags, nil
 }
 
 // -- stringToString Value

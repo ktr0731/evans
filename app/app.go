@@ -2,49 +2,45 @@
 package app
 
 import (
-	"context"
 	"fmt"
-	"os"
+	"io"
 
-	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
-	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/meta"
-	"github.com/ktr0731/evans/mode"
-	"github.com/ktr0731/evans/prompt"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"golang.org/x/sync/errgroup"
 )
 
 // App is the root component for running the application.
 type App struct {
 	cui cui.UI
-
-	flagSet *pflag.FlagSet
-
-	cfg *mergedConfig
+	cmd *cobra.Command
 }
 
 // New instantiates a new App instance. ui must not be a nil.
 // Note that cui is also used for the REPL UI if the mode is REPL mode.
 func New(ui cui.UI) *App {
+	var flags flags
+	cmd := newCommand(&flags, ui)
 	return &App{
 		cui: ui,
+		cmd: cmd,
 	}
 }
 
 // Run starts the application. The return value means the exit code.
 func (a *App) Run(args []string) int {
-	err := a.run(args)
+	a.cmd.SetArgs(args)
+	err := a.cmd.Execute()
 	if err == nil {
 		return 0
 	}
 
 	switch err := err.(type) {
 	case *config.ValidationError:
-		a.printUsage()
+		printUsage(a.cmd)
 		a.cui.Error(fmt.Sprintf("evans: %s", err.Err))
 	default:
 		a.cui.Error(fmt.Sprintf("evans: %s", err))
@@ -52,99 +48,13 @@ func (a *App) Run(args []string) int {
 	return 1
 }
 
-func (a *App) run(args []string) error {
-	flags, err := a.parseFlags(args)
-	if err != nil {
-		return err
-	}
-	if err := flags.validate(); err != nil {
-		return errors.Wrap(err, "invalid flag condition")
-	}
-
-	if flags.meta.verbose {
-		logger.SetOutput(os.Stderr)
-	}
-
-	switch {
-	case flags.meta.edit:
-		if err := config.Edit(); err != nil {
-			return errors.Wrap(err, "failed to edit the project local config file")
-		}
-		return nil
-	case flags.meta.editGlobal:
-		if err := config.EditGlobal(); err != nil {
-			return errors.Wrap(err, "failed to edit the global config file")
-		}
-		return nil
-	case flags.meta.version:
-		a.printVersion()
-		return nil
-	case flags.meta.help:
-		a.printUsage()
-		return nil
-	}
-
-	cfg, err := mergeConfig(a.flagSet, flags)
-	if err != nil {
-		if err, ok := err.(*config.ValidationError); ok {
-			return err
-		}
-		return errors.Wrap(err, "failed to merge command line flags and config files")
-	}
-	a.cfg = cfg
-
-	if cfg.REPL.ColoredOutput {
-		a.cui = cui.NewColored(a.cui)
-	}
-
-	isCLIMode := (cfg.cli || mode.IsCLIMode(cfg.file))
-	if cfg.repl || !isCLIMode {
-		cache, err := cache.Get()
-		if err != nil {
-			return errors.Wrap(err, "failed to get the cache content")
-		}
-
-		baseCtx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		eg, ctx := errgroup.WithContext(baseCtx)
-		// Run update checker asynchronously.
-		eg.Go(func() error {
-			return checkUpdate(ctx, a.cfg.Config, cache)
-		})
-
-		if a.cfg.Config.Meta.AutoUpdate {
-			eg.Go(func() error {
-				return processUpdate(ctx, a.cfg.Config, a.cui.Writer(), cache, prompt.New())
-			})
-		} else if err := processUpdate(ctx, a.cfg.Config, a.cui.Writer(), cache, prompt.New()); err != nil {
-			return errors.Wrap(err, "failed to update Evans")
-		}
-
-		if err := mode.RunAsREPLMode(a.cfg.Config, a.cui, cache); err != nil {
-			return errors.Wrap(err, "failed to run REPL mode")
-		}
-
-		// Always call cancel func because it is hope to abort update checking if REPL mode is finished
-		// before update checking. If update checking is finished before REPL mode, cancel do nothing.
-		cancel()
-		if err := eg.Wait(); err != nil {
-			return errors.Wrap(err, "failed to check application update")
-		}
-	} else if err := mode.RunAsCLIMode(a.cfg.Config, a.cfg.call, a.cfg.file, a.cui); err != nil {
-		return errors.Wrap(err, "failed to run CLI mode")
-	}
-
-	return nil
-}
-
 // printUsage shows the command usage text to cui.Writer and exit. Do not call it before calling parseFlags.
-func (a *App) printUsage() {
-	a.flagSet.Usage()
+func printUsage(cmd *cobra.Command) {
+	_ = cmd.Help() // Help never return errors.
 }
 
-// printVersion shows the version of the command and exit.
-func (a *App) printVersion() {
-	a.cui.Output(fmt.Sprintf("%s %s", meta.AppName, meta.Version.String()))
+func printVersion(w io.Writer) {
+	fmt.Fprintf(w, "%s %s\n", meta.AppName, meta.Version.String())
 }
 
 // mergedConfig represents the conclusive config. Common config items are stored to *config.Config.
@@ -163,12 +73,12 @@ type mergedConfig struct {
 	repl bool
 }
 
-func mergeConfig(fs *pflag.FlagSet, flags *flags) (*mergedConfig, error) {
+func mergeConfig(fs *pflag.FlagSet, flags *flags, args []string) (*mergedConfig, error) {
 	cfg, err := config.Get(fs)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get config")
 	}
-	protos := fs.Args()
+	protos := args
 	cfg.Default.ProtoFile = append(cfg.Default.ProtoFile, protos...)
 
 	if err := cfg.Validate(); err != nil {
