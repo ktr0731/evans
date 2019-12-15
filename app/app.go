@@ -31,6 +31,11 @@ func New(ui cui.UI) *App {
 
 // Run starts the application. The return value means the exit code.
 func (a *App) Run(args []string) int {
+	// Currently, Evans is migrating to new-style command-line interface.
+	// So, there are both of old-style and new-style command-line interfaces in this version.
+	// At first, Evans uses old-style for backward-compatibility, but if it fails, Evans fallbacks to new-style.
+	// See https://github.com/ktr0731/evans/issues/190 for more details.
+
 	a.cmd.SetArgs(args)
 	for _, r := range args {
 		if r == "-h" || r == "--help" {
@@ -44,16 +49,17 @@ func (a *App) Run(args []string) int {
 		return 0
 	}
 
+	// Fallback to new-style interface.
+	a.cmd.registerNewCommands()
+	if err := a.cmd.Execute(); err == nil {
+		return 0
+	}
+
 	switch err := err.(type) {
 	case *config.ValidationError:
 		printUsage(a.cmd)
 		a.cui.Error(fmt.Sprintf("evans: %s", err.Err))
 	default:
-		// Fallback to new-style interface.
-		a.cmd.registerNewCommands()
-		if err := a.cmd.Execute(); err == nil {
-			return 0
-		}
 		a.cui.Error(fmt.Sprintf("evans: %s", err))
 	}
 	return 1
