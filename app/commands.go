@@ -21,9 +21,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func newCommand(flags *flags, ui cui.UI) *cobra.Command {
+func newOldCommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
-		Short: "root command",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := flags.validate(); err != nil {
 				return errors.Wrap(err, "invalid flag condition")
@@ -110,6 +109,8 @@ func newCommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
 		cmd.PersistentFlags().Usage()
 	})
+	// TODO: Register sub-commands when old style command is failed.
+	// cmd.AddCommand(newCLICommand(flags, ui))
 	return cmd
 }
 
@@ -152,6 +153,131 @@ func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	f.BoolVar(&flags.meta.verbose, "verbose", false, "verbose output")
 	f.BoolVarP(&flags.meta.version, "version", "v", false, "display version and exit")
 	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
+
+	f.Usage = func() {
+		out := w
+		printVersion(out)
+		var buf bytes.Buffer
+		w := tabwriter.NewWriter(&buf, 0, 8, 8, ' ', tabwriter.TabIndent)
+		f.VisitAll(func(f *pflag.Flag) {
+			cmd := "--" + f.Name
+			if f.Shorthand != "" {
+				cmd += ", -" + f.Shorthand
+			}
+			name, _ := pflag.UnquoteUsage(f)
+			if name != "" {
+				cmd += " " + name
+			}
+			usage := f.Usage
+			if f.DefValue != "" {
+				usage += fmt.Sprintf(` (default "%s")`, f.DefValue)
+			}
+			fmt.Fprintf(w, "        %s\t%s\n", cmd, usage)
+		})
+		w.Flush()
+		fmt.Fprintf(out, usageFormat, meta.AppName, buf.String())
+	}
+}
+
+func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "cli",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Println("CLI MODE!")
+			// if err := flags.validate(); err != nil {
+			// 	return errors.Wrap(err, "invalid flag condition")
+			// }
+			//
+			// if flags.meta.verbose {
+			// 	logger.SetOutput(os.Stderr)
+			// }
+			//
+			// switch {
+			// case flags.meta.edit:
+			// 	if err := config.Edit(); err != nil {
+			// 		return errors.Wrap(err, "failed to edit the project local config file")
+			// 	}
+			// 	return nil
+			// case flags.meta.editGlobal:
+			// 	if err := config.EditGlobal(); err != nil {
+			// 		return errors.Wrap(err, "failed to edit the global config file")
+			// 	}
+			// 	return nil
+			// case flags.meta.version:
+			// 	printVersion(ui.Writer())
+			// 	return nil
+			// case flags.meta.help:
+			// 	printUsage(cmd)
+			// 	return nil
+			// }
+			//
+			// cfg, err := mergeConfig(cmd.PersistentFlags(), flags, args)
+			// if err != nil {
+			// 	if err, ok := err.(*config.ValidationError); ok {
+			// 		return err
+			// 	}
+			// 	return errors.Wrap(err, "failed to merge command line flags and config files")
+			// }
+			//
+			// if cfg.REPL.ColoredOutput {
+			// 	ui = cui.NewColored(ui)
+			// }
+			//
+			// isCLIMode := (cfg.cli || mode.IsCLIMode(cfg.file))
+			// if cfg.repl || !isCLIMode {
+			// 	cache, err := cache.Get()
+			// 	if err != nil {
+			// 		return errors.Wrap(err, "failed to get the cache content")
+			// 	}
+			//
+			// 	baseCtx, cancel := context.WithCancel(context.Background())
+			// 	defer cancel()
+			// 	eg, ctx := errgroup.WithContext(baseCtx)
+			// 	// Run update checker asynchronously.
+			// 	eg.Go(func() error {
+			// 		return checkUpdate(ctx, cfg.Config, cache)
+			// 	})
+			//
+			// 	if cfg.Config.Meta.AutoUpdate {
+			// 		eg.Go(func() error {
+			// 			return processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New())
+			// 		})
+			// 	} else if err := processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New()); err != nil {
+			// 		return errors.Wrap(err, "failed to update Evans")
+			// 	}
+			//
+			// 	if err := mode.RunAsREPLMode(cfg.Config, ui, cache); err != nil {
+			// 		return errors.Wrap(err, "failed to run REPL mode")
+			// 	}
+			//
+			// 	// Always call cancel func because it is hope to abort update checking if REPL mode is finished
+			// 	// before update checking. If update checking is finished before REPL mode, cancel do nothing.
+			// 	cancel()
+			// 	if err := eg.Wait(); err != nil {
+			// 		return errors.Wrap(err, "failed to check application update")
+			// 	}
+			// } else if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui); err != nil {
+			// 	return errors.Wrap(err, "failed to run CLI mode")
+			// }
+
+			return nil
+		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
+	}
+	bindCLIFlags(cmd.PersistentFlags(), flags, ui.Writer())
+	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		cmd.PersistentFlags().Usage()
+	})
+	return cmd
+}
+
+func bindCLIFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
+	f.SortFlags = false
+	f.SetOutput(w)
+
+	f.StringVar(&flags.cli.call, "call", "", "call specified RPC by CLI mode")
+	f.StringVarP(&flags.cli.file, "file", "f", "", "a script file that will be executed by (used only CLI mode)")
 
 	f.Usage = func() {
 		out := w

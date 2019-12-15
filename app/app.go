@@ -23,7 +23,7 @@ type App struct {
 // Note that cui is also used for the REPL UI if the mode is REPL mode.
 func New(ui cui.UI) *App {
 	var flags flags
-	cmd := newCommand(&flags, ui)
+	cmd := newOldCommand(&flags, ui)
 	return &App{
 		cui: ui,
 		cmd: cmd,
