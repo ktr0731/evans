@@ -164,12 +164,20 @@ func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	f.BoolVarP(&flags.meta.version, "version", "v", false, "display version and exit")
 	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
 
+	// Flags used by old-style only.
+	for _, name := range []string{"repl", "cli", "call", "file"} {
+		f.MarkHidden(name)
+	}
+
 	f.Usage = func() {
 		out := w
 		printVersion(out)
 		var buf bytes.Buffer
 		w := tabwriter.NewWriter(&buf, 0, 8, 8, ' ', tabwriter.TabIndent)
 		f.VisitAll(func(f *pflag.Flag) {
+			if f.Hidden {
+				return
+			}
 			cmd := "--" + f.Name
 			if f.Shorthand != "" {
 				cmd += ", -" + f.Shorthand
@@ -193,7 +201,6 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "cli",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("CLI MODE!")
 			// if err := flags.validate(); err != nil {
 			// 	return errors.Wrap(err, "invalid flag condition")
 			// }

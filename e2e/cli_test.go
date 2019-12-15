@@ -357,10 +357,6 @@ Positional arguments:
         PROTO                          .proto files
 
 Options:
-        --repl                           launch Evans as REPL mode (default "false")
-        --cli                            start as CLI mode (default "false")
-        --call string                    call specified RPC by CLI mode
-        --file, -f string                a script file that will be executed by (used only CLI mode)
         --silent, -s                     hide redundant output (default "false")
         --package string                 default package
         --service string                 default service
