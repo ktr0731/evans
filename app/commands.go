@@ -21,7 +21,19 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func newOldCommand(flags *flags, ui cui.UI) *cobra.Command {
+type command struct {
+	*cobra.Command
+
+	flags *flags
+	ui    cui.UI
+}
+
+// registerNewCommands registers sub-commands for new-style interface.
+func (c *command) registerNewCommands() {
+	c.AddCommand(newCLICommand(c.flags, c.ui))
+}
+
+func newOldCommand(flags *flags, ui cui.UI) *command {
 	cmd := &cobra.Command{
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := flags.validate(); err != nil {
@@ -109,9 +121,7 @@ func newOldCommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
 		cmd.PersistentFlags().Usage()
 	})
-	// TODO: Register sub-commands when old style command is failed.
-	// cmd.AddCommand(newCLICommand(flags, ui))
-	return cmd
+	return &command{cmd, flags, ui}
 }
 
 func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {

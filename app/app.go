@@ -9,14 +9,13 @@ import (
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/meta"
 	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
 // App is the root component for running the application.
 type App struct {
 	cui cui.UI
-	cmd *cobra.Command
+	cmd *command
 }
 
 // New instantiates a new App instance. ui must not be a nil.
@@ -33,6 +32,13 @@ func New(ui cui.UI) *App {
 // Run starts the application. The return value means the exit code.
 func (a *App) Run(args []string) int {
 	a.cmd.SetArgs(args)
+	for _, r := range args {
+		if r == "-h" || r == "--help" {
+			// Hack.
+			// If the help flags is passed, call registerNewCommands for display sub-command helps.
+			a.cmd.registerNewCommands()
+		}
+	}
 	err := a.cmd.Execute()
 	if err == nil {
 		return 0
@@ -43,13 +49,18 @@ func (a *App) Run(args []string) int {
 		printUsage(a.cmd)
 		a.cui.Error(fmt.Sprintf("evans: %s", err.Err))
 	default:
+		// Fallback to new-style interface.
+		a.cmd.registerNewCommands()
+		if err := a.cmd.Execute(); err == nil {
+			return 0
+		}
 		a.cui.Error(fmt.Sprintf("evans: %s", err))
 	}
 	return 1
 }
 
 // printUsage shows the command usage text to cui.Writer and exit. Do not call it before calling parseFlags.
-func printUsage(cmd *cobra.Command) {
+func printUsage(cmd interface{ Help() error }) {
 	_ = cmd.Help() // Help never return errors.
 }
 
