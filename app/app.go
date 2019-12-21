@@ -33,13 +33,15 @@ func New(ui cui.UI) *App {
 func (a *App) Run(args []string) int {
 	// Currently, Evans is migrating to new-style command-line interface.
 	// So, there are both of old-style and new-style command-line interfaces in this version.
-	// At first, Evans uses old-style for backward-compatibility, but if it fails, Evans fallbacks to new-style.
-	// See https://github.com/ktr0731/evans/issues/190 for more details.
 
 	a.cmd.SetArgs(args)
 	for _, r := range args {
-		if r == "-h" || r == "--help" {
-			// Hack.
+		// Hack.
+		switch r {
+		case "cli", "repl": // Sub commands for new-style interface.
+			// If an arg named "cli" or "repl" is passed, it is regarded as a sub-command of new-style.
+			a.cmd.registerNewCommands()
+		case "-h", "--help":
 			// If the help flags is passed, call registerNewCommands for display sub-command helps.
 			a.cmd.registerNewCommands()
 		}
@@ -49,19 +51,7 @@ func (a *App) Run(args []string) int {
 		return 0
 	}
 
-	// Fallback to new-style interface.
-	a.cmd.registerNewCommands()
-	if err := a.cmd.Execute(); err == nil {
-		return 0
-	}
-
-	switch err := err.(type) {
-	case *config.ValidationError:
-		printUsage(a.cmd)
-		a.cui.Error(fmt.Sprintf("evans: %s", err.Err))
-	default:
-		a.cui.Error(fmt.Sprintf("evans: %s", err))
-	}
+	a.cui.Error(fmt.Sprintf("evans: %s", err))
 	return 1
 }
 
@@ -95,8 +85,7 @@ func mergeConfig(fs *pflag.FlagSet, flags *flags, args []string) (*mergedConfig,
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get config")
 	}
-	protos := args
-	cfg.Default.ProtoFile = append(cfg.Default.ProtoFile, protos...)
+	cfg.Default.ProtoFile = append(cfg.Default.ProtoFile, args...)
 
 	if err := cfg.Validate(); err != nil {
 		return nil, err

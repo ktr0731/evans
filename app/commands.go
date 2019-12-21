@@ -5,13 +5,11 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"text/tabwriter"
 
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
-	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/mode"
 	"github.com/ktr0731/evans/prompt"
@@ -33,17 +31,47 @@ func (c *command) registerNewCommands() {
 	c.AddCommand(newCLICommand(c.flags, c.ui))
 }
 
+// runFunc is a common entrypoint for Run func.
+func runFunc(
+	flags *flags,
+	f func(*cobra.Command, *mergedConfig) error,
+) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		if err := flags.validate(); err != nil {
+			return errors.Wrap(err, "invalid flag condition")
+		}
+
+		if flags.meta.help {
+			printUsage(cmd)
+			return nil
+		}
+
+		// Pass Flags instead of LocalFlags because the config is merged with common and local flags.
+		cfg, err := mergeConfig(cmd.Flags(), flags, args)
+		if err != nil {
+			if err, ok := err.(*config.ValidationError); ok {
+				printUsage(cmd)
+				return err
+			}
+			return errors.Wrap(err, "failed to merge command line flags and config files")
+		}
+
+		// The entrypoint for the command.
+		err = f(cmd, cfg)
+		if err == nil {
+			return nil
+		}
+		switch err.(type) {
+		case *config.ValidationError:
+			printUsage(cmd)
+		}
+		return err
+	}
+}
+
 func newOldCommand(flags *flags, ui cui.UI) *command {
 	cmd := &cobra.Command{
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := flags.validate(); err != nil {
-				return errors.Wrap(err, "invalid flag condition")
-			}
-
-			if flags.meta.verbose {
-				logger.SetOutput(os.Stderr)
-			}
-
+		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
 			switch {
 			case flags.meta.edit:
 				if err := config.Edit(); err != nil {
@@ -61,14 +89,6 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 			case flags.meta.help:
 				printUsage(cmd)
 				return nil
-			}
-
-			cfg, err := mergeConfig(cmd.PersistentFlags(), flags, args)
-			if err != nil {
-				if err, ok := err.(*config.ValidationError); ok {
-					return err
-				}
-				return errors.Wrap(err, "failed to merge command line flags and config files")
 			}
 
 			if cfg.REPL.ColoredOutput {
@@ -113,7 +133,7 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 			}
 
 			return nil
-		},
+		}),
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
@@ -166,7 +186,9 @@ func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 
 	// Flags used by old-style only.
 	for _, name := range []string{"repl", "cli", "call", "file"} {
-		f.MarkHidden(name)
+		if err := f.MarkHidden(name); err != nil {
+			panic(fmt.Sprintf("failed to mark %s as hidden: %s", name, err))
+		}
 	}
 
 	f.Usage = func() {
@@ -200,91 +222,18 @@ func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "cli",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			// if err := flags.validate(); err != nil {
-			// 	return errors.Wrap(err, "invalid flag condition")
-			// }
-			//
-			// if flags.meta.verbose {
-			// 	logger.SetOutput(os.Stderr)
-			// }
-			//
-			// switch {
-			// case flags.meta.edit:
-			// 	if err := config.Edit(); err != nil {
-			// 		return errors.Wrap(err, "failed to edit the project local config file")
-			// 	}
-			// 	return nil
-			// case flags.meta.editGlobal:
-			// 	if err := config.EditGlobal(); err != nil {
-			// 		return errors.Wrap(err, "failed to edit the global config file")
-			// 	}
-			// 	return nil
-			// case flags.meta.version:
-			// 	printVersion(ui.Writer())
-			// 	return nil
-			// case flags.meta.help:
-			// 	printUsage(cmd)
-			// 	return nil
-			// }
-			//
-			// cfg, err := mergeConfig(cmd.PersistentFlags(), flags, args)
-			// if err != nil {
-			// 	if err, ok := err.(*config.ValidationError); ok {
-			// 		return err
-			// 	}
-			// 	return errors.Wrap(err, "failed to merge command line flags and config files")
-			// }
-			//
-			// if cfg.REPL.ColoredOutput {
-			// 	ui = cui.NewColored(ui)
-			// }
-			//
-			// isCLIMode := (cfg.cli || mode.IsCLIMode(cfg.file))
-			// if cfg.repl || !isCLIMode {
-			// 	cache, err := cache.Get()
-			// 	if err != nil {
-			// 		return errors.Wrap(err, "failed to get the cache content")
-			// 	}
-			//
-			// 	baseCtx, cancel := context.WithCancel(context.Background())
-			// 	defer cancel()
-			// 	eg, ctx := errgroup.WithContext(baseCtx)
-			// 	// Run update checker asynchronously.
-			// 	eg.Go(func() error {
-			// 		return checkUpdate(ctx, cfg.Config, cache)
-			// 	})
-			//
-			// 	if cfg.Config.Meta.AutoUpdate {
-			// 		eg.Go(func() error {
-			// 			return processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New())
-			// 		})
-			// 	} else if err := processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New()); err != nil {
-			// 		return errors.Wrap(err, "failed to update Evans")
-			// 	}
-			//
-			// 	if err := mode.RunAsREPLMode(cfg.Config, ui, cache); err != nil {
-			// 		return errors.Wrap(err, "failed to run REPL mode")
-			// 	}
-			//
-			// 	// Always call cancel func because it is hope to abort update checking if REPL mode is finished
-			// 	// before update checking. If update checking is finished before REPL mode, cancel do nothing.
-			// 	cancel()
-			// 	if err := eg.Wait(); err != nil {
-			// 		return errors.Wrap(err, "failed to check application update")
-			// 	}
-			// } else if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui); err != nil {
-			// 	return errors.Wrap(err, "failed to run CLI mode")
-			// }
-
+		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig) error {
+			if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui); err != nil {
+				return errors.Wrap(err, "failed to run CLI mode")
+			}
 			return nil
-		},
+		}),
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-	bindCLIFlags(cmd.PersistentFlags(), flags, ui.Writer())
+	bindCLIFlags(cmd.LocalFlags(), flags, ui.Writer())
 	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
-		cmd.PersistentFlags().Usage()
+		cmd.LocalFlags().Usage()
 	})
 	return cmd
 }
