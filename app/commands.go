@@ -28,7 +28,10 @@ type command struct {
 
 // registerNewCommands registers sub-commands for new-style interface.
 func (c *command) registerNewCommands() {
-	c.AddCommand(newCLICommand(c.flags, c.ui))
+	c.AddCommand(
+		newCLICommand(c.flags, c.ui),
+		newREPLCommand(c.flags, c.ui),
+	)
 }
 
 // runFunc is a common entrypoint for Run func.
@@ -238,12 +241,88 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 	return cmd
 }
 
+func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "repl",
+		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig) error {
+			cache, err := cache.Get()
+			if err != nil {
+				return errors.Wrap(err, "failed to get the cache content")
+			}
+
+			baseCtx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			eg, ctx := errgroup.WithContext(baseCtx)
+			// Run update checker asynchronously.
+			eg.Go(func() error {
+				return checkUpdate(ctx, cfg.Config, cache)
+			})
+
+			if cfg.Config.Meta.AutoUpdate {
+				eg.Go(func() error {
+					return processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New())
+				})
+			} else if err := processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New()); err != nil {
+				return errors.Wrap(err, "failed to update Evans")
+			}
+
+			if err := mode.RunAsREPLMode(cfg.Config, ui, cache); err != nil {
+				return errors.Wrap(err, "failed to run REPL mode")
+			}
+
+			// Always call cancel func because it is hope to abort update checking if REPL mode is finished
+			// before update checking. If update checking is finished before REPL mode, cancel do nothing.
+			cancel()
+			if err := eg.Wait(); err != nil {
+				return errors.Wrap(err, "failed to check application update")
+			}
+			return nil
+		}),
+		SilenceErrors: true,
+		SilenceUsage:  true,
+	}
+	bindREPLFlags(cmd.LocalFlags(), flags, ui.Writer())
+	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		cmd.LocalFlags().Usage()
+	})
+	return cmd
+}
+
 func bindCLIFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	f.SortFlags = false
 	f.SetOutput(w)
 
 	f.StringVar(&flags.cli.call, "call", "", "call specified RPC by CLI mode")
 	f.StringVarP(&flags.cli.file, "file", "f", "", "a script file that will be executed by (used only CLI mode)")
+
+	f.Usage = func() {
+		out := w
+		printVersion(out)
+		var buf bytes.Buffer
+		w := tabwriter.NewWriter(&buf, 0, 8, 8, ' ', tabwriter.TabIndent)
+		f.VisitAll(func(f *pflag.Flag) {
+			cmd := "--" + f.Name
+			if f.Shorthand != "" {
+				cmd += ", -" + f.Shorthand
+			}
+			name, _ := pflag.UnquoteUsage(f)
+			if name != "" {
+				cmd += " " + name
+			}
+			usage := f.Usage
+			if f.DefValue != "" {
+				usage += fmt.Sprintf(` (default "%s")`, f.DefValue)
+			}
+			fmt.Fprintf(w, "        %s\t%s\n", cmd, usage)
+		})
+		w.Flush()
+		fmt.Fprintf(out, usageFormat, meta.AppName, buf.String())
+	}
+}
+
+func bindREPLFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
+	f.SortFlags = false
+	f.SetOutput(w)
 
 	f.Usage = func() {
 		out := w
