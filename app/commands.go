@@ -148,8 +148,7 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 }
 
 func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
-	f.SortFlags = false
-	f.SetOutput(w)
+	initFlagSet(f, w)
 
 	f.BoolVar(&flags.mode.repl, "repl", false, "launch Evans as REPL mode")
 	f.BoolVar(&flags.mode.cli, "cli", false, "start as CLI mode")
@@ -192,33 +191,6 @@ func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 		if err := f.MarkHidden(name); err != nil {
 			panic(fmt.Sprintf("failed to mark %s as hidden: %s", name, err))
 		}
-	}
-
-	f.Usage = func() {
-		out := w
-		printVersion(out)
-		var buf bytes.Buffer
-		w := tabwriter.NewWriter(&buf, 0, 8, 8, ' ', tabwriter.TabIndent)
-		f.VisitAll(func(f *pflag.Flag) {
-			if f.Hidden {
-				return
-			}
-			cmd := "--" + f.Name
-			if f.Shorthand != "" {
-				cmd += ", -" + f.Shorthand
-			}
-			name, _ := pflag.UnquoteUsage(f)
-			if name != "" {
-				cmd += " " + name
-			}
-			usage := f.Usage
-			if f.DefValue != "" {
-				usage += fmt.Sprintf(` (default "%s")`, f.DefValue)
-			}
-			fmt.Fprintf(w, "        %s\t%s\n", cmd, usage)
-		})
-		w.Flush()
-		fmt.Fprintf(out, usageFormat, meta.AppName, buf.String())
 	}
 }
 
@@ -289,47 +261,31 @@ func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 }
 
 func bindCLIFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
-	f.SortFlags = false
-	f.SetOutput(w)
-
+	initFlagSet(f, w)
 	f.StringVar(&flags.cli.call, "call", "", "call specified RPC by CLI mode")
 	f.StringVarP(&flags.cli.file, "file", "f", "", "a script file that will be executed by (used only CLI mode)")
-
-	f.Usage = func() {
-		out := w
-		printVersion(out)
-		var buf bytes.Buffer
-		w := tabwriter.NewWriter(&buf, 0, 8, 8, ' ', tabwriter.TabIndent)
-		f.VisitAll(func(f *pflag.Flag) {
-			cmd := "--" + f.Name
-			if f.Shorthand != "" {
-				cmd += ", -" + f.Shorthand
-			}
-			name, _ := pflag.UnquoteUsage(f)
-			if name != "" {
-				cmd += " " + name
-			}
-			usage := f.Usage
-			if f.DefValue != "" {
-				usage += fmt.Sprintf(` (default "%s")`, f.DefValue)
-			}
-			fmt.Fprintf(w, "        %s\t%s\n", cmd, usage)
-		})
-		w.Flush()
-		fmt.Fprintf(out, usageFormat, meta.AppName, buf.String())
-	}
 }
 
 func bindREPLFlags(f *pflag.FlagSet, w io.Writer) {
+	initFlagSet(f, w)
+}
+
+func initFlagSet(f *pflag.FlagSet, w io.Writer) {
 	f.SortFlags = false
 	f.SetOutput(w)
+	f.Usage = usageFunc(w, f)
+}
 
-	f.Usage = func() {
-		out := w
+// usage is the generator for usage output.
+func usageFunc(out io.Writer, f *pflag.FlagSet) func() {
+	return func() {
 		printVersion(out)
 		var buf bytes.Buffer
 		w := tabwriter.NewWriter(&buf, 0, 8, 8, ' ', tabwriter.TabIndent)
 		f.VisitAll(func(f *pflag.Flag) {
+			if f.Hidden {
+				return
+			}
 			cmd := "--" + f.Name
 			if f.Shorthand != "" {
 				cmd += ", -" + f.Shorthand
