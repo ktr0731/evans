@@ -44,11 +44,6 @@ func runFunc(
 			return errors.Wrap(err, "invalid flag condition")
 		}
 
-		if flags.meta.help {
-			printUsage(cmd)
-			return nil
-		}
-
 		switch {
 		case flags.meta.edit:
 			if err := config.Edit(); err != nil {
@@ -63,9 +58,8 @@ func runFunc(
 		case flags.meta.version:
 			printVersion(cmd.OutOrStdout())
 			return nil
-		case flags.meta.help:
-			printUsage(cmd)
-			return nil
+
+			// Help is processed by cobra.
 		}
 
 		// Pass Flags instead of LocalFlags because the config is merged with common and local flags.
