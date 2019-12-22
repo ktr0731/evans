@@ -1,0 +1,20 @@
++----------------------+-----------------------------+----------------+
+|         RPC          |        REQUEST TYPE         | RESPONSE TYPE  |
++----------------------+-----------------------------+----------------+
+| BidiStreaming        | SimpleRequest               | SimpleResponse |
+| ClientStreaming      | SimpleRequest               | SimpleResponse |
+| ServerStreaming      | SimpleRequest               | SimpleResponse |
+| Unary                | SimpleRequest               | SimpleResponse |
+| UnaryBytes           | UnaryBytesRequest           | SimpleResponse |
+| UnaryEnum            | UnaryEnumRequest            | SimpleResponse |
+| UnaryHeader          | UnaryHeaderRequest          | SimpleResponse |
+| UnaryMap             | UnaryMapRequest             | SimpleResponse |
+| UnaryMapMessage      | UnaryMapMessageRequest      | SimpleResponse |
+| UnaryMessage         | UnaryMessageRequest         | SimpleResponse |
+| UnaryOneof           | UnaryOneofRequest           | SimpleResponse |
+| UnaryRepeated        | UnaryRepeatedRequest        | SimpleResponse |
+| UnaryRepeatedEnum    | UnaryRepeatedEnumRequest    | SimpleResponse |
+| UnaryRepeatedMessage | UnaryRepeatedMessageRequest | SimpleResponse |
+| UnarySelf            | UnarySelfRequest            | SimpleResponse |
++----------------------+-----------------------------+----------------+
+

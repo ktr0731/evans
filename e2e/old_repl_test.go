@@ -2,23 +2,44 @@ package e2e_test
 
 import (
 	"bytes"
+	"flag"
+	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/fatih/color"
+	"github.com/google/go-cmp/cmp"
 	"github.com/ktr0731/evans/app"
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/prompt"
 )
 
-func TestE2E_REPL(t *testing.T) {
-	commonFlags := []string{"--silent"}
+var (
+	update = flag.Bool("update", false, "update goldens")
+)
+
+func init() {
+	testing.Init()
+	flag.Parse()
+	if *update {
+		os.RemoveAll(filepath.Join("testdata", "fixtures"))
+		if err := os.MkdirAll(filepath.Join("testdata", "fixtures"), 0755); err != nil {
+			panic(fmt.Sprintf("failed to create fixture dirs: %s", err))
+		}
+	}
+}
+
+func TestE2E_OldREPL(t *testing.T) {
+	// In testing, Go modifies stdin, so we specify --repl explicitly.
+	commonFlags := []string{"--silent", "--repl"}
 
 	cases := map[string]struct {
 		input []interface{}
 
-		// Common flags all sub-commands can have.
-		commonFlags string
 		// Space separated arguments text.
 		args string
 
@@ -51,9 +72,8 @@ func TestE2E_REPL(t *testing.T) {
 			input: []interface{}{"service Example", "call Unary", "kaguya"},
 		},
 		"call Unary by specifying --service": {
-			commonFlags: "--service Example",
-			args:        "testdata/test.proto",
-			input:       []interface{}{"call Unary", "kaguya"},
+			args:  "--service Example testdata/test.proto",
+			input: []interface{}{"call Unary", "kaguya"},
 		},
 		"call ClientStreaming": {
 			args: "testdata/test.proto",
@@ -102,22 +122,19 @@ func TestE2E_REPL(t *testing.T) {
 		// call (gRPC-Web)
 
 		"call client streaming RPC against to gRPC-Web server": {
-			commonFlags: "--web",
-			args:        "testdata/test.proto",
-			web:         true,
-			input:       []interface{}{"call ClientStreaming", "oumae", "kousaka", "kawashima", "kato", io.EOF},
+			args:  "--web testdata/test.proto",
+			web:   true,
+			input: []interface{}{"call ClientStreaming", "oumae", "kousaka", "kawashima", "kato", io.EOF},
 		},
 		"call server streaming RPC against to gRPC-Web server": {
-			commonFlags: "--web",
-			args:        "testdata/test.proto",
-			web:         true,
-			input:       []interface{}{"call ServerStreaming", "violet"},
+			args:  "--web testdata/test.proto",
+			web:   true,
+			input: []interface{}{"call ServerStreaming", "violet"},
 		},
 		"call bidi streaming RPC against to gRPC-Web server": {
-			commonFlags: "--web",
-			args:        "testdata/test.proto",
-			web:         true,
-			input:       []interface{}{"call BidiStreaming", "oumae", "kousaka", "kawashima", "kato", io.EOF},
+			args:  "--web testdata/test.proto",
+			web:   true,
+			input: []interface{}{"call BidiStreaming", "oumae", "kousaka", "kawashima", "kato", io.EOF},
 		},
 
 		// show command.
@@ -271,10 +288,6 @@ func TestE2E_REPL(t *testing.T) {
 
 			args := commonFlags
 			args = append([]string{"--port", port}, args...)
-			if c.commonFlags != "" {
-				args = append(args, strings.Split(c.commonFlags, " ")...)
-			}
-			args = append(args, "repl") // Sub-command name.
 			if c.args != "" {
 				args = append(args, strings.Split(c.args, " ")...)
 			}
@@ -297,10 +310,82 @@ func TestE2E_REPL(t *testing.T) {
 					t.Errorf("expected REPL wrote some error to ew, but empty output")
 				}
 			} else {
-				if ew.String() != "" {
-					t.Errorf("expected REPL didn't write errors to ew, but got '%s'", ew.String())
+				eout := ew.String()
+				// Trim "deprecated" message.
+				eout = strings.Replace(eout, color.YellowString("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")+"\n", "", -1)
+				if eout != "" {
+					t.Errorf("expected REPL didn't write errors to ew, but got '%s'", eout)
 				}
 			}
 		})
+	}
+}
+
+type stubPrompt struct {
+	t *testing.T
+	prompt.Prompt
+
+	input []interface{}
+}
+
+func (p *stubPrompt) Input() (string, error) {
+	if len(p.input) == 0 {
+		p.t.Fatal("p.input is empty, but testing is continued yet. Are you forgot to use io.EOF for finishing inputting?")
+	}
+	s := p.input[0]
+	p.input = p.input[1:]
+	switch e := s.(type) {
+	case string:
+		return e, nil
+	case error:
+		return "", e
+	default:
+		panic(fmt.Sprintf("expected string or error, but got '%T'", e))
+	}
+}
+
+func (p *stubPrompt) Select(string, []string) (string, error) {
+	return p.Input()
+}
+
+var (
+	goldenPathReplacer = strings.NewReplacer(
+		"/", "-",
+		" ", "_",
+		"=", "-",
+		"'", "",
+		`"`, "",
+		",", "",
+	)
+	goldenReplacer = strings.NewReplacer(
+		"\r", "", // For Windows.
+	)
+)
+
+func compareWithGolden(t *testing.T, actual string) {
+	name := t.Name()
+	normalizeFilename := func(name string) string {
+		fname := goldenPathReplacer.Replace(strings.ToLower(name)) + ".golden"
+		return filepath.Join("testdata", "fixtures", fname)
+	}
+
+	fname := normalizeFilename(name)
+
+	if *update {
+		if err := ioutil.WriteFile(fname, []byte(actual), 0644); err != nil {
+			t.Fatalf("failed to update the golden file: %s", err)
+		}
+		return
+	}
+
+	// Load the golden file.
+	b, err := ioutil.ReadFile(fname)
+	if err != nil {
+		t.Fatalf("failed to load a golden file: %s", err)
+	}
+	expected := goldenReplacer.Replace(string(b))
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("wrong result: \n%s", diff)
 	}
 }
