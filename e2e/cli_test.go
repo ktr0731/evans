@@ -52,12 +52,12 @@ func TestE2E_CLI(t *testing.T) {
 		// unflatten to true.
 		unflatten bool
 	}{
-		"print usage text to the ErrWriter": {
+		"print usage text to the Writer": {
 			args:        "--help",
 			expectedOut: expectedUsageOut,
 			unflatten:   true,
 		},
-		"print version text to the ErrWriter": {
+		"print version text to the Writer": {
 			args:        "--version",
 			expectedOut: fmt.Sprintf("evans %s\n", meta.Version),
 			unflatten:   true,

@@ -49,6 +49,25 @@ func runFunc(
 			return nil
 		}
 
+		switch {
+		case flags.meta.edit:
+			if err := config.Edit(); err != nil {
+				return errors.Wrap(err, "failed to edit the project local config file")
+			}
+			return nil
+		case flags.meta.editGlobal:
+			if err := config.EditGlobal(); err != nil {
+				return errors.Wrap(err, "failed to edit the global config file")
+			}
+			return nil
+		case flags.meta.version:
+			printVersion(cmd.OutOrStdout())
+			return nil
+		case flags.meta.help:
+			printUsage(cmd)
+			return nil
+		}
+
 		// Pass Flags instead of LocalFlags because the config is merged with common and local flags.
 		cfg, err := mergeConfig(cmd.Flags(), flags, args)
 		if err != nil {
@@ -64,8 +83,7 @@ func runFunc(
 		if err == nil {
 			return nil
 		}
-		switch err.(type) {
-		case *config.ValidationError:
+		if _, ok := err.(*config.ValidationError); ok {
 			printUsage(cmd)
 		}
 		return err
@@ -75,25 +93,6 @@ func runFunc(
 func newOldCommand(flags *flags, ui cui.UI) *command {
 	cmd := &cobra.Command{
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
-			switch {
-			case flags.meta.edit:
-				if err := config.Edit(); err != nil {
-					return errors.Wrap(err, "failed to edit the project local config file")
-				}
-				return nil
-			case flags.meta.editGlobal:
-				if err := config.EditGlobal(); err != nil {
-					return errors.Wrap(err, "failed to edit the global config file")
-				}
-				return nil
-			case flags.meta.version:
-				printVersion(ui.Writer())
-				return nil
-			case flags.meta.help:
-				printUsage(cmd)
-				return nil
-			}
-
 			if cfg.REPL.ColoredOutput {
 				ui = cui.NewColored(ui)
 			}
@@ -144,6 +143,7 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
 		cmd.PersistentFlags().Usage()
 	})
+	cmd.SetOut(ui.Writer())
 	return &command{cmd, flags, ui}
 }
 
@@ -281,7 +281,7 @@ func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-	bindREPLFlags(cmd.LocalFlags(), flags, ui.Writer())
+	bindREPLFlags(cmd.LocalFlags(), ui.Writer())
 	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
 		cmd.LocalFlags().Usage()
 	})
@@ -320,7 +320,7 @@ func bindCLIFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	}
 }
 
-func bindREPLFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
+func bindREPLFlags(f *pflag.FlagSet, w io.Writer) {
 	f.SortFlags = false
 	f.SetOutput(w)
 
