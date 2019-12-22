@@ -32,7 +32,7 @@ func init() {
 	}
 }
 
-func TestE2E_REPL(t *testing.T) {
+func TestE2E_OldREPL(t *testing.T) {
 	// In testing, Go modifies stdin, so we specify --repl explicitly.
 	commonFlags := []string{"--silent", "--repl"}
 

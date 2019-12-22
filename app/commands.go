@@ -253,7 +253,7 @@ func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-	bindREPLFlags(cmd.LocalFlags(), ui.Writer())
+	bindREPLFlags(cmd.LocalFlags(), flags, ui.Writer())
 	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
 		cmd.LocalFlags().Usage()
 	})
@@ -264,10 +264,12 @@ func bindCLIFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	initFlagSet(f, w)
 	f.StringVar(&flags.cli.call, "call", "", "call specified RPC by CLI mode")
 	f.StringVarP(&flags.cli.file, "file", "f", "", "a script file that will be executed by (used only CLI mode)")
+	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
 }
 
-func bindREPLFlags(f *pflag.FlagSet, w io.Writer) {
+func bindREPLFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	initFlagSet(f, w)
+	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
 }
 
 func initFlagSet(f *pflag.FlagSet, w io.Writer) {
