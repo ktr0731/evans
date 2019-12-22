@@ -91,6 +91,8 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 				ui = cui.NewColored(ui)
 			}
 
+			defer ui.Warn("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")
+
 			isCLIMode := (cfg.cli || mode.IsCLIMode(cfg.file))
 			if cfg.repl || !isCLIMode {
 				cache, err := cache.Get()
@@ -136,6 +138,20 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 	bindFlags(cmd.PersistentFlags(), flags, ui.Writer())
 	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
 		cmd.PersistentFlags().Usage()
+		// If Evans is launched as old-style, hidden sub-command help.
+		if len(cmd.Commands()) > 0 {
+			fmt.Fprintf(ui.Writer(), "Available Commands:\n")
+			w := tabwriter.NewWriter(ui.Writer(), 0, 8, 8, ' ', tabwriter.TabIndent)
+			for _, c := range cmd.Commands() {
+				// Ignore help command.
+				if c.Name() == "help" {
+					continue
+				}
+				fmt.Fprintf(w, "        %s\t%s\n", c.Name(), c.Short)
+			}
+			w.Flush()
+			fmt.Fprintf(ui.Writer(), "\n")
+		}
 	})
 	cmd.SetOut(ui.Writer())
 	return &command{cmd, flags, ui}
@@ -190,7 +206,8 @@ func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 
 func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "cli",
+		Use:   "cli",
+		Short: "CLI mode",
 		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig) error {
 			if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
@@ -209,7 +226,8 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 
 func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "repl",
+		Use:   "repl",
+		Short: "REPL mode",
 		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig) error {
 			cache, err := cache.Get()
 			if err != nil {

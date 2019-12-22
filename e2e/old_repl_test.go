@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fatih/color"
 	"github.com/google/go-cmp/cmp"
 	"github.com/ktr0731/evans/app"
 	"github.com/ktr0731/evans/cui"
@@ -309,8 +310,11 @@ func TestE2E_OldREPL(t *testing.T) {
 					t.Errorf("expected REPL wrote some error to ew, but empty output")
 				}
 			} else {
-				if ew.String() != "" {
-					t.Errorf("expected REPL didn't write errors to ew, but got '%s'", ew.String())
+				eout := ew.String()
+				// Trim "deprecated" message.
+				eout = strings.Replace(eout, color.YellowString("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")+"\n", "", -1)
+				if eout != "" {
+					t.Errorf("expected REPL didn't write errors to ew, but got '%s'", eout)
 				}
 			}
 		})

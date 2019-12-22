@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fatih/color"
 	"github.com/google/go-cmp/cmp"
 	"github.com/ktr0731/evans/app"
 	"github.com/ktr0731/evans/cui"
@@ -341,8 +342,11 @@ func TestE2E_OldCLI(t *testing.T) {
 				if c.expectedOut != "" && actual != c.expectedOut {
 					t.Errorf("unexpected output:\n%s", cmp.Diff(c.expectedOut, actual))
 				}
-				if eoutBuf.String() != "" {
-					t.Errorf("expected code is 0, but got an error message: '%s'", eoutBuf.String())
+				eout := eoutBuf.String()
+				// Trim "deprecated" message.
+				eout = strings.Replace(eout, color.YellowString("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")+"\n", "", -1)
+				if eout != "" {
+					t.Errorf("expected code is 0, but got an error message: '%s'", eout)
 				}
 			}
 		})
@@ -376,5 +380,9 @@ Options:
         --verbose                        verbose output (default "false")
         --version, -v                    display version and exit (default "false")
         --help, -h                       display help text and exit (default "false")
+
+Available Commands:
+        cli         CLI mode
+        repl        REPL mode
 
 `, meta.Version)
