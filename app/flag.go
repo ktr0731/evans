@@ -111,7 +111,7 @@ func (s *stringToStringSliceValue) Set(val string) error {
 
 	out := make(map[string][]string, len(ss))
 	for _, pair := range ss {
-		kv := strings.Split(pair, "=")
+		kv := strings.SplitN(pair, "=", 2)
 		if len(kv) != 2 {
 			return fmt.Errorf("%s must be formatted as key=value", pair)
 		}
