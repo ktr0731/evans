@@ -10,8 +10,12 @@ func Test_stringToStringSliceValue(t *testing.T) {
 		expected string
 		hasErr   bool
 	}{
-		{"touma=kazusa,touma=youko", `["touma=kazusa,youko"]`, false},
-		{"sawamura='spencer=eriri'", `[sawamura='spencer=eriri']`, false},
+		{in: "touma=kazusa,touma=youko", expected: `["touma=kazusa,youko"]`, hasErr: false},
+		{in: "sawamura='spencer=eriri'", expected: `[sawamura='spencer=eriri']`, hasErr: false},
+		{in: "sawamura=spencer=eriri", expected: `[sawamura=spencer=eriri]`, hasErr: false},
+		{in: "megumi=kato", expected: `[megumi=kato]`, hasErr: false},
+		{in: "yuki=asuna,alice", expected: `["yuki=asuna,alice"]`, hasErr: false},
+		{in: "alice", hasErr: true},
 	}
 	for _, c := range cases {
 		c := c
@@ -20,7 +24,13 @@ func Test_stringToStringSliceValue(t *testing.T) {
 			v := newStringToStringValue(map[string][]string{
 				"ogiso": []string{"setsuna"},
 			}, &m)
-			if err := v.Set(c.in); err != nil {
+			err := v.Set(c.in)
+			if c.hasErr {
+				if err == nil {
+					t.Fatalf("Set must return an error, but got nil")
+				}
+				return
+			} else if err != nil {
 				t.Fatalf("Set must not return an error, but got '%s'", err)
 			}
 			actual := v.String()
