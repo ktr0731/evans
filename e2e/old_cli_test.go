@@ -110,10 +110,6 @@ func TestE2E_OldCLI(t *testing.T) {
 			args:         "--header foo --package api --service Example --call Unary --file testdata/unary_call.in testdata/test.proto",
 			expectedCode: 1,
 		},
-		"cannot launch CLI mode because --header has an invalid form": {
-			args:         "--header foo=bar=baz --package api --service Example --call Unary --file testdata/unary_call.in testdata/test.proto",
-			expectedCode: 1,
-		},
 		"call unary RPC with an input file by CLI mode": {
 			args:        "--package api --service Example --call Unary --file testdata/unary_call.in testdata/test.proto",
 			expectedOut: `{ "message": "hello, oumae" }`,
@@ -162,13 +158,15 @@ func TestE2E_OldCLI(t *testing.T) {
 			},
 		},
 		"call unary RPC with an input file and custom headers by CLI mode": {
-			args: "--header ogiso=setsuna --header touma=kazusa,youko --package api --service Example --call UnaryHeader --file testdata/unary_header.in testdata/test.proto",
+			args: "--header ogiso=setsuna --header touma=kazusa,youko --header sound=of=destiny --package api --service Example --call UnaryHeader --file testdata/unary_header.in testdata/test.proto",
 			assertTest: func(t *testing.T, output string) {
 				expectedStrings := []string{
 					"key = ogiso",
 					"val = setsuna",
 					"key = touma",
 					"val = kazusa, youko",
+					"key = sound",
+					"val = of=destiny",
 				}
 				for _, s := range expectedStrings {
 					if !strings.Contains(output, s) {
