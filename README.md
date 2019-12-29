@@ -9,23 +9,23 @@
 
 ## Motivation
 Evans has been created to use easier than other existing gRPC clients.  
-If you want to keep your product quality, you must use CI with gRPC testing, should not do use manually testing.  
+If you want to keep your product quality, you must use CI with gRPC testing, should not do use manual testing.  
 Evans will complete your other use cases just like:  
 
 - Manually gRPC API inspection
 - To automate some tasks by scripting
 
-Above use cases is corresponding to Evans's two modes, REPL mode, and CLI mode.  
+The above use cases are corresponding to Evans's two modes, REPL mode, and CLI mode.  
 
 ## REPL mode
 ![Evans](./evans1.gif)  
 REPL mode is the solution for first use case.  
-You can use it without thinking like package name, service name, RPC name, command usage, and so on because REPL mode has powerful completion!  
+You can use it without thinking like the package name, service name, RPC name, command usage, and so on because REPL mode has powerful completion!  
 
 ## CLI mode
 ![Evans](./evans2.gif)  
 
-CLI mode is stateless mode just like [grpc-ecosystem/polyglot](https://github.com/grpc-ecosystem/polyglot).  
+CLI mode is a stateless mode just like [grpc-ecosystem/polyglot](https://github.com/grpc-ecosystem/polyglot).  
 It sends one request per one command as its name suggests.  
 So it is based on UNIX philosophy.  
 
@@ -64,7 +64,7 @@ So, you can format it by any commands like `jq`. Also, if you want to use the sa
 
 
 ## Installation
-Highly recommended methods are GitHub Releases or Homebrew because these can be software update automatically by the built-in feature in Evans.  
+Highly recommended methods are GitHub Releases or Homebrew because these can be updated automatically by the built-in feature in Evans.  
 
 ### From GitHub Releases
 Please see [GitHub Releases](https://github.com/ktr0731/evans/releases).  
@@ -80,7 +80,7 @@ $ brew install evans
 ```
 
 ### **[Not-recommended]** go get
-Go v1.12 (with mod-aware mode) or later required.  
+Go v1.13 (with mod-aware mode) or later is required.  
 `go get` installation is not supported officially.
 ``` sh
 $ go get github.com/ktr0731/evans
@@ -96,17 +96,17 @@ The proto file which read in the demonstration and its implementation are availa
 Enter to REPL.
 ``` sh
 $ cd grpc-test
-$ evans api/api.proto
+$ evans repl api/api.proto
 ```
 
 If your server is enabling [gRPC reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md), you can launch Evans with only `-r` (`--reflection`) option.
 ``` sh
-$ evans -r
+$ evans -r repl
 ```
 
 Also if the server requires secure TLS connections, you can launch Evans with the `-t` (`--tls`) option.
 ``` sh
-$ evans --tls --host example.com -r
+$ evans --tls --host example.com -r repl
 ```
 
 To show package names of proto files REPL read:  
@@ -317,8 +317,8 @@ name (TYPE_STRING) => bar
 name (TYPE_STRING) =>
 ```
 
-### Skip the rest of fields
-Evans recognizes <kbd>CTRL-C</kbd> as a special key that skips the rest of fields in the current message type.
+### Skip the rest of the fields
+Evans recognizes <kbd>CTRL-C</kbd> as a special key that skips the rest of the fields in the current message type.
 For example, we assume that we are inputting `Request` described in the following message:
 
 ``` proto
@@ -377,7 +377,7 @@ $ cat request.json
   "name": "ktr"
 }
 
-$ evans --service Example --call Unary --file request.json
+$ evans --service Example cli --call Unary --file request.json
 {
   "message": "hello, ktr"
 }
@@ -385,7 +385,7 @@ $ evans --service Example --call Unary --file request.json
 
 Use `stdin`.
 ``` sh
-$ echo '{ "name": "ktr" }' | evans --service Example --call Unary
+$ echo '{ "name": "ktr" }' | evans --service Example cli --call Unary
 {
   "message": "hello, ktr"
 }
@@ -404,7 +404,7 @@ Then, the command will be more clear.
 
 ### Repeated fields
 ``` sh
-$ echo '{ "name": ["foo", "bar"] }' | evans -r --service Example --call UnaryRepeated
+$ echo '{ "name": ["foo", "bar"] }' | evans -r --service Example cli --call UnaryRepeated
 {
   "message": "hello, foo, bar"
 }
@@ -412,7 +412,7 @@ $ echo '{ "name": ["foo", "bar"] }' | evans -r --service Example --call UnaryRep
 
 ### Enum fields
 ``` sh
-$ echo '{ "gender": 0 }' | evans -r --service Example --call UnaryEnum
+$ echo '{ "gender": 0 }' | evans -r --service Example cli --call UnaryEnum
 {
   "message": "M"
 }
@@ -425,12 +425,12 @@ This constraint is come from Go's standard package [encoding/json](https://golan
 $ echo 'Foo' | base64
 Rm9vCg==
 
-$ echo '{"data": "Rm9vCg=="}' | evans -r --service Example --call UnaryBytes
+$ echo '{"data": "Rm9vCg=="}' | evans -r --service Example cli --call UnaryBytes
 ```
 
 ### Client streaming RPC
 ``` sh
-$ echo '{ "name": "ktr" } { "name": "ktr" }' | evans -r --service Example --call ClientStreaming
+$ echo '{ "name": "ktr" } { "name": "ktr" }' | evans -r --service Example cli --call ClientStreaming
 {
   "message": "ktr, you greet 2 times."
 }
@@ -438,7 +438,7 @@ $ echo '{ "name": "ktr" } { "name": "ktr" }' | evans -r --service Example --call
 
 ### Server streaming RPC
 ``` sh
-$ echo '{ "name": "ktr" }' | evans -r --service Example --call ServerStreaming
+$ echo '{ "name": "ktr" }' | evans -r --service Example cli --call ServerStreaming
 {
   "message": "hello ktr, I greet 0 times."
 }
@@ -454,7 +454,7 @@ $ echo '{ "name": "ktr" }' | evans -r --service Example --call ServerStreaming
 
 ### Bidirectional streaming RPC
 ``` sh
-$ echo '{ "name": "foo" } { "name": "bar" }' | evans -r --service Example --call BidiStreaming
+$ echo '{ "name": "foo" } { "name": "bar" }' | evans -r --service Example cli --call BidiStreaming
 {
   "message": "hello foo, I greet 0 times."
 }
