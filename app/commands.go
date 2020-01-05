@@ -5,11 +5,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"text/tabwriter"
 
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
+	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/mode"
 	"github.com/ktr0731/evans/prompt"
@@ -42,6 +44,10 @@ func runFunc(
 	return func(cmd *cobra.Command, args []string) error {
 		if err := flags.validate(); err != nil {
 			return errors.Wrap(err, "invalid flag condition")
+		}
+
+		if flags.meta.verbose {
+			logger.SetOutput(os.Stderr)
 		}
 
 		switch {
