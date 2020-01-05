@@ -353,17 +353,14 @@ func TestE2E_OldCLI(t *testing.T) {
 
 var expectedUsageOut = fmt.Sprintf(`evans %s
 
-Usage: evans [--help] [--version] [options ...] [PROTO [PROTO ...]]
-
-Positional arguments:
-        PROTO                          .proto files
+Usage: evans [global options ...] <command>
 
 Options:
         --silent, -s                     hide redundant output (default "false")
         --package string                 default package
         --service string                 default service
-        --path strings                   proto file paths (default "[]")
-        --proto strings                  proto file names (default "[]")
+        --path strings                   comma-separated proto file paths (default "[]")
+        --proto strings                  comma-separated proto file names (default "[]")
         --host string                    gRPC server host
         --port, -p string                gRPC server port (default "50051")
         --header slice of strings        default headers that set to each requests (example: foo=bar) (default "[]")

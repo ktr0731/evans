@@ -400,14 +400,14 @@ func TestE2E_CLI(t *testing.T) {
 
 var expectedCLIUsageOut = fmt.Sprintf(`evans %s
 
-Usage: evans [--help] [--version] [options ...] [PROTO [PROTO ...]]
-
-Positional arguments:
-        PROTO                          .proto files
+Usage: evans [global options ...] cli
 
 Options:
         --call string            call specified RPC by CLI mode
         --file, -f string        a script file that will be executed by (used only CLI mode)
         --help, -h               display help text and exit (default "false")
+
+Available Commands:
+        call        call a RPC
 
 `, meta.Version)

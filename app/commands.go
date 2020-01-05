@@ -133,7 +133,7 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 				if err := eg.Wait(); err != nil {
 					return errors.Wrap(err, "failed to check application update")
 				}
-			} else if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui); err != nil {
+			} else if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui, "call"); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
 			}
 
@@ -142,6 +142,7 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
+	cmd.Flags().SortFlags = false
 	bindFlags(cmd.PersistentFlags(), flags, ui.Writer())
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	cmd.SetOut(ui.Writer())
@@ -201,7 +202,7 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 		Use:   "cli",
 		Short: "CLI mode",
 		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig, _ []string) error {
-			if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui); err != nil {
+			if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui, "call"); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
 			}
 			return nil
@@ -281,7 +282,10 @@ func initFlagSet(f *pflag.FlagSet, w io.Writer) {
 }
 
 func printOptions(w io.Writer, f *pflag.FlagSet) {
-	io.WriteString(w, "Options:\n")
+	_, err := io.WriteString(w, "Options:\n")
+	if err != nil {
+		logger.Printf("failed to write string: %s", err)
+	}
 	tw := tabwriter.NewWriter(w, 0, 8, 8, ' ', tabwriter.TabIndent)
 	f.VisitAll(func(f *pflag.Flag) {
 		if f.Hidden {
