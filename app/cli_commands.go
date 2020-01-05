@@ -12,7 +12,8 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 		Use:     "call [options ...] <method>",
 		Aliases: []string{"c"},
 		Short:   "call a RPC",
-		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig, args []string) error {
+		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
+			args := cmd.Flags().Args()
 			if len(args) == 0 {
 				return errors.New("method is required")
 			}

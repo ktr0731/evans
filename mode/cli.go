@@ -26,11 +26,11 @@ func RunAsCLIMode(cfg *config.Config, endpoint, file string, ui cui.UI, cmd stri
 		invoker func(context.Context) error
 	)
 
-	// Check precondition for each command and initializes specific dependencies.
+	// Initializes command-specific dependencies.
 	switch cmd {
 	case "call":
 		if endpoint == "" {
-			return errors.New("flag --call must not be empty")
+			return errors.New("method is required")
 		}
 		in := DefaultCLIReader
 		if file != "" {

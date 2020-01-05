@@ -39,9 +39,9 @@ func (c *command) registerNewCommands() {
 // runFunc is a common entrypoint for Run func.
 func runFunc(
 	flags *flags,
-	f func(cmd *cobra.Command, cfg *mergedConfig, args []string) error,
+	f func(cmd *cobra.Command, cfg *mergedConfig) error,
 ) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, _ []string) error {
 		if err := flags.validate(); err != nil {
 			return errors.Wrap(err, "invalid flag condition")
 		}
@@ -69,7 +69,7 @@ func runFunc(
 		}
 
 		// Pass Flags instead of LocalFlags because the config is merged with common and local flags.
-		cfg, err := mergeConfig(cmd.Flags(), flags, args)
+		cfg, err := mergeConfig(cmd.Flags(), flags)
 		if err != nil {
 			if err, ok := err.(*config.ValidationError); ok {
 				printUsage(cmd)
@@ -79,7 +79,7 @@ func runFunc(
 		}
 
 		// The entrypoint for the command.
-		err = f(cmd, cfg, args)
+		err = f(cmd, cfg)
 		if err == nil {
 			return nil
 		}
@@ -93,7 +93,7 @@ func runFunc(
 func newOldCommand(flags *flags, ui cui.UI) *command {
 	cmd := &cobra.Command{
 		Use: "evans [global options ...] <command>",
-		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig, _ []string) error {
+		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
 			if cfg.REPL.ColoredOutput {
 				ui = cui.NewColored(ui)
 			}
@@ -201,7 +201,7 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cli",
 		Short: "CLI mode",
-		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig, _ []string) error {
+		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig) error {
 			if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui, "call"); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
 			}
@@ -224,7 +224,7 @@ func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "repl [options ...]",
 		Short: "REPL mode",
-		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig, _ []string) error {
+		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig) error {
 			cache, err := cache.Get()
 			if err != nil {
 				return errors.Wrap(err, "failed to get the cache content")
