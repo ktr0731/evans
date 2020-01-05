@@ -210,7 +210,9 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-	bindCLIFlags(cmd.LocalFlags(), flags, ui.Writer())
+	f := cmd.LocalFlags()
+	initFlagSet(f, ui.Writer())
+	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	cmd.AddCommand(
 		newCLICallCommand(flags, ui),
