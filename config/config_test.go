@@ -163,14 +163,14 @@ func TestMain(m *testing.M) {
 
 func TestLoad(t *testing.T) {
 	checkValues := func(t *testing.T, c *Config) {
-		if len(c.Default.ProtoFile) == 1 {
+		if len(c.Default.ProtoFile) >= 1 {
 			if len(c.Default.ProtoFile[0]) == 0 {
-				t.Fatalf("Default.ProtoFile must not empty")
+				t.Fatalf("Default.ProtoFile must not be empty")
 			}
 		}
-		if len(c.Default.ProtoPath) == 1 {
+		if len(c.Default.ProtoPath) >= 1 {
 			if len(c.Default.ProtoPath[0]) == 0 {
-				t.Fatalf("Default.ProtoPath must not empty")
+				t.Fatalf("Default.ProtoPath must not be empty")
 			}
 		}
 	}
@@ -287,6 +287,21 @@ func TestLoad(t *testing.T) {
 		fs.String("port", "", "")
 		// --port flag changes port number to '8080'.
 		_ = fs.Parse([]string{"--port", "8080"})
+
+		cfg := mustGet(t, fs)
+
+		checkValues(t, cfg)
+
+		return cfg
+	})
+
+	assertWithGolden(t, "apply some proto files and paths", func(t *testing.T) *Config {
+		_, _, cleanup := setupEnv(t)
+		defer cleanup()
+
+		fs := pflag.NewFlagSet("test", pflag.ExitOnError)
+		fs.StringSlice("path", []string{"foo", "bar"}, "")
+		fs.StringSlice("proto", []string{"hoge", "fuga"}, "")
 
 		cfg := mustGet(t, fs)
 
