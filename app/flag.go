@@ -40,6 +40,7 @@ type flags struct {
 		pkg        string
 		service    string
 		path       []string
+		proto      []string
 		host       string
 		port       string
 		header     map[string][]string

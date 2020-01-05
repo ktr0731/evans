@@ -5,11 +5,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"text/tabwriter"
 
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
+	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/mode"
 	"github.com/ktr0731/evans/prompt"
@@ -42,6 +44,10 @@ func runFunc(
 	return func(cmd *cobra.Command, args []string) error {
 		if err := flags.validate(); err != nil {
 			return errors.Wrap(err, "invalid flag condition")
+		}
+
+		if flags.meta.verbose {
+			logger.SetOutput(os.Stderr)
 		}
 
 		switch {
@@ -171,6 +177,7 @@ func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	f.StringVar(&flags.common.pkg, "package", "", "default package")
 	f.StringVar(&flags.common.service, "service", "", "default service")
 	f.StringSliceVar(&flags.common.path, "path", nil, "proto file paths")
+	f.StringSliceVar(&flags.common.proto, "proto", nil, "proto file names")
 	f.StringVar(&flags.common.host, "host", "", "gRPC server host")
 	f.StringVarP(&flags.common.port, "port", "p", "50051", "gRPC server port")
 	f.Var(
