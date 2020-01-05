@@ -401,14 +401,21 @@ func initConfig(fs *pflag.FlagSet) (cfg *Config, err error) {
 }
 
 func setupConfig(c *Config) {
-	// To show protofile and protopath field, set slice which has empty string
+	// To show protofile and protopath field in a config file, set slice which has empty string
 	// if these are nil. (please see default values.)
 	// Conversely, trim the empty string element when config loading.
-	if (c.Default.ProtoFile == nil) || (len(c.Default.ProtoFile) == 1 && c.Default.ProtoFile[0] == "") {
+	if c.Default.ProtoFile == nil {
 		c.Default.ProtoFile = []string{}
 	}
-	if (c.Default.ProtoPath == nil) || (len(c.Default.ProtoPath) == 1 && c.Default.ProtoPath[0] == "") {
+	if len(c.Default.ProtoFile) >= 1 && c.Default.ProtoFile[0] == "" {
+		c.Default.ProtoFile = c.Default.ProtoFile[1:]
+	}
+
+	if c.Default.ProtoPath == nil {
 		c.Default.ProtoPath = []string{}
+	}
+	if len(c.Default.ProtoPath) >= 1 && c.Default.ProtoPath[0] == "" {
+		c.Default.ProtoPath = c.Default.ProtoPath[1:]
 	}
 }
 
