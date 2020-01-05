@@ -80,11 +80,12 @@ type mergedConfig struct {
 	repl bool
 }
 
-func mergeConfig(fs *pflag.FlagSet, flags *flags) (*mergedConfig, error) {
+func mergeConfig(fs *pflag.FlagSet, flags *flags, protos []string) (*mergedConfig, error) {
 	cfg, err := config.Get(fs)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get config")
 	}
+	cfg.Default.ProtoFile = append(cfg.Default.ProtoFile, protos...)
 
 	if err := cfg.Validate(); err != nil {
 		return nil, err

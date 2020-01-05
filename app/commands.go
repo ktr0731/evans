@@ -41,7 +41,7 @@ func runFunc(
 	flags *flags,
 	f func(cmd *cobra.Command, cfg *mergedConfig) error,
 ) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, _ []string) error {
+	return func(cmd *cobra.Command, args []string) error {
 		if err := flags.validate(); err != nil {
 			return errors.Wrap(err, "invalid flag condition")
 		}
@@ -69,7 +69,11 @@ func runFunc(
 		}
 
 		// Pass Flags instead of LocalFlags because the config is merged with common and local flags.
-		cfg, err := mergeConfig(cmd.Flags(), flags)
+		var protos []string
+		if cmd.Parent() == nil {
+			protos = args
+		}
+		cfg, err := mergeConfig(cmd.Flags(), flags, protos)
 		if err != nil {
 			if err, ok := err.(*config.ValidationError); ok {
 				printUsage(cmd)
