@@ -177,6 +177,7 @@ func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	f.StringVar(&flags.common.pkg, "package", "", "default package")
 	f.StringVar(&flags.common.service, "service", "", "default service")
 	f.StringSliceVar(&flags.common.path, "path", nil, "proto file paths")
+	f.StringSliceVar(&flags.common.proto, "proto", nil, "proto file names")
 	f.StringVar(&flags.common.host, "host", "", "gRPC server host")
 	f.StringVarP(&flags.common.port, "port", "p", "50051", "gRPC server port")
 	f.Var(

@@ -176,6 +176,7 @@ func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
 	// kv defines the mapping from a viper config name to a flag name.
 	kv := map[string]string{
 		"default.protoPath":   "path",
+		"default.protoFile":   "proto",
 		"default.package":     "package",
 		"default.service":     "service",
 		"server.host":         "host",
