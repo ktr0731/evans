@@ -363,6 +363,7 @@ Options:
         --package string                 default package
         --service string                 default service
         --path strings                   proto file paths (default "[]")
+        --proto strings                  proto file names (default "[]")
         --host string                    gRPC server host
         --port, -p string                gRPC server port (default "50051")
         --header slice of strings        default headers that set to each requests (example: foo=bar) (default "[]")
