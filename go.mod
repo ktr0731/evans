@@ -7,9 +7,9 @@ require (
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
 	github.com/c-bata/go-prompt v0.2.3
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-	github.com/fatih/color v1.7.0
+	github.com/fatih/color v1.9.0
 	github.com/golang/protobuf v1.3.2
-	github.com/google/go-cmp v0.3.0
+	github.com/google/go-cmp v0.4.0
 	github.com/gordonklaus/ineffassign v0.0.0-20190601041439-ed7b1b5ee0f8 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
@@ -34,17 +34,17 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/nicksnyder/go-i18n v2.0.1+incompatible // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.0.2 // indirect
-	github.com/olekukonko/tablewriter v0.0.1
+	github.com/olekukonko/tablewriter v0.0.4
 	github.com/pelletier/go-toml v1.4.0
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.9.1
 	github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 // indirect
 	github.com/rakyll/statik v0.1.6
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.4.0
+	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.4.0
 	github.com/tj/go-spin v1.1.0
 	github.com/zchee/go-xdgbasedir v1.0.3
