@@ -68,11 +68,12 @@ func runFunc(
 			// Help is processed by cobra.
 		}
 
-		// Pass Flags instead of LocalFlags because the config is merged with common and local flags.
+		// For backward-compatibility.
 		var protos []string
 		if cmd.Parent() == nil {
 			protos = args
 		}
+		// Pass Flags instead of LocalFlags because the config is merged with common and local flags.
 		cfg, err := mergeConfig(cmd.Flags(), flags, protos)
 		if err != nil {
 			if err, ok := err.(*config.ValidationError); ok {
