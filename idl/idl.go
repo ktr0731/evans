@@ -23,6 +23,11 @@ var (
 	ErrUnknownRPCName     = errors.New("unknown RPC name")
 )
 
+// EmptyPackage indicates it is an empty package (there is no package specifier).
+// Package specifier only allows letters and '_', so using ' is name safe.
+// See https://developers.google.com/protocol-buffers/docs/reference/proto3-spec#package
+const EmptyPackage = "''"
+
 // Spec represents the interface specification from loaded IDL files.
 type Spec interface {
 	// PackageNames returns all package names. The returned slice is ordered by ascending order.
