@@ -7,7 +7,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
 	github.com/c-bata/go-prompt v0.2.3
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-	github.com/fatih/color v1.7.0
+	github.com/fatih/color v1.9.0
 	github.com/golang/protobuf v1.3.2
 	github.com/google/go-cmp v0.3.0
 	github.com/gordonklaus/ineffassign v0.0.0-20190601041439-ed7b1b5ee0f8 // indirect
