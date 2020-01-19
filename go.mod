@@ -62,5 +62,3 @@ require (
 replace github.com/ktr0731/grpc-web-go-client => github.com/ktr0731/grpc-web-go-client v0.2.5-0.20190505140201-c24452752d52
 
 replace github.com/nicksnyder/go-i18n => github.com/nicksnyder/go-i18n/v2 v2.0.2-0.20190606144950-25e77afbf581
-
-replace github.com/ktr0731/go-shellstring => ../go-shellstring
