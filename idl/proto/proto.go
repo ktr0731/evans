@@ -29,14 +29,16 @@ func (s *spec) PackageNames() []string {
 }
 
 func (s *spec) ServiceNames(pkgName string) ([]string, error) {
-	if pkgName == "" {
-		return nil, idl.ErrPackageUnselected
-	}
-
 	descs, ok := s.svcDescs[pkgName]
 	if !ok {
+		// If the service belongs to pkgName is not found and pkgName is empty,
+		// it is regarded as package is unselected.
+		if pkgName == "" {
+			return nil, idl.ErrPackageUnselected
+		}
 		return nil, idl.ErrUnknownPackageName
 	}
+
 	svcNames := make([]string, len(descs))
 	for i, d := range descs {
 		svcNames[i] = d.GetName()
@@ -55,7 +57,10 @@ func (s *spec) RPCs(pkgName, svcName string) ([]*grpc.RPC, error) {
 		return nil, idl.ErrServiceUnselected
 	}
 
-	fqsn := fmt.Sprintf("%s.%s", pkgName, svcName)
+	fqsn, err := idl.FullyQualifiedServiceName(pkgName, svcName)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get fully-qualified service name")
+	}
 	rpcDescs, ok := s.rpcDescs[fqsn]
 	if !ok {
 		return nil, idl.ErrUnknownServiceName
@@ -83,7 +88,10 @@ func (s *spec) RPC(pkgName, svcName, rpcName string) (*grpc.RPC, error) {
 		return nil, idl.ErrServiceUnselected
 	}
 
-	fqsn := fmt.Sprintf("%s.%s", pkgName, svcName)
+	fqsn, err := idl.FullyQualifiedServiceName(pkgName, svcName)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get fully-qualified service name")
+	}
 	rpcDescs, ok := s.rpcDescs[fqsn]
 	if !ok {
 		return nil, idl.ErrUnknownServiceName
@@ -121,14 +129,19 @@ func (s *spec) RPC(pkgName, svcName, rpcName string) (*grpc.RPC, error) {
 // TypeDescriptor returns the descriptor of a type.
 // The actual type of the returned interface{} is *desc.MessageDescriptor.
 func (s *spec) TypeDescriptor(pkgName, msgName string) (interface{}, error) {
+	fqmn, err := idl.FullyQualifiedMessageName(pkgName, msgName)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get fully-qualified message name")
+	}
+	if m, ok := s.msgDescs[fqmn]; ok {
+		return m, nil
+	}
+	// If the message belongs to pkgName is not found and pkgName is empty,
+	// it is regarded as package is unselected.
 	if pkgName == "" {
 		return nil, idl.ErrPackageUnselected
 	}
-	fqtn := pkgName + "." + msgName
-	if m, ok := s.msgDescs[fqtn]; ok {
-		return m, nil
-	}
-	return nil, errors.Errorf("no such type '%s'", fqtn)
+	return nil, errors.Errorf("no such type '%s'", fqmn)
 }
 
 // LoadFiles receives proto file names and import paths like protoc's options.
@@ -147,7 +160,7 @@ func LoadFiles(importPaths []string, fnames []string) (idl.Spec, error) {
 		fileDescs = append(fileDescs, d.GetDependencies()...)
 	}
 
-	return newSpec(fileDescs)
+	return newSpec(fileDescs), nil
 }
 
 // LoadByReflection receives a gRPC reflection client, then tries to instantiate a new idl.Spec by using gRPC reflection.
@@ -156,18 +169,18 @@ func LoadByReflection(client grpcreflection.Client) (idl.Spec, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to list packages by gRPC reflection")
 	}
-	return newSpec(fileDescs)
+	return newSpec(fileDescs), nil
 }
 
-func newSpec(fds []*desc.FileDescriptor) (idl.Spec, error) {
+func newSpec(fds []*desc.FileDescriptor) idl.Spec {
 	encounteredPackages := make(map[string]interface{})
 	var pkgNames []string
 	svcDescs := make(map[string][]*desc.ServiceDescriptor)
 	rpcDescs := make(map[string][]*desc.MethodDescriptor)
 	msgDescs := make(map[string]*desc.MessageDescriptor)
 	for _, f := range fds {
-		svcDescs[f.GetPackage()] = append(svcDescs[f.GetPackage()], f.GetServices()...)
 		pkg := f.GetPackage()
+		svcDescs[pkg] = append(svcDescs[pkg], f.GetServices()...)
 		if _, encountered := encounteredPackages[pkg]; !encountered {
 			pkgNames = append(pkgNames, pkg)
 			encounteredPackages[pkg] = nil
@@ -191,5 +204,5 @@ func newSpec(fds []*desc.FileDescriptor) (idl.Spec, error) {
 		svcDescs: svcDescs,
 		rpcDescs: rpcDescs,
 		msgDescs: msgDescs,
-	}, nil
+	}
 }

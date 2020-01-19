@@ -282,7 +282,8 @@ func (c *client) NewBidiStream(ctx context.Context, streamDesc *gogrpc.StreamDes
 //	pkg_name.svc_name.rpc_name -> /pkg_name.svc_name/rpc_name
 func fqrnToEndpoint(fqrn string) (string, error) {
 	sp := strings.Split(fqrn, ".")
-	if len(sp) < 3 {
+	// FQRN should contain at least service and rpc name.
+	if len(sp) < 2 {
 		return "", errors.New("invalid FQRN format")
 	}
 

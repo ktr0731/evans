@@ -1,132 +1,64 @@
 package proto_test
 
 import (
+	"errors"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/ktr0731/evans/idl"
+	"github.com/jhump/protoreflect/desc"
+	"github.com/ktr0731/evans/grpc/grpcreflection"
 	"github.com/ktr0731/evans/idl/proto"
 )
 
 func TestLoadFiles(t *testing.T) {
-	_, err := proto.LoadFiles([]string{"testdata"}, []string{"invalid.proto"})
-	if err == nil {
-		t.Errorf("LoadFiles must return an error, but got nil")
+	cases := map[string]struct {
+		fnames []string
+		hasErr bool
+	}{
+		"normal":        {fnames: []string{"message.proto", "api.proto", "other_package.proto"}},
+		"invalid proto": {fnames: []string{"invalid.proto"}, hasErr: true},
 	}
 
-	spec, err := proto.LoadFiles([]string{"testdata"}, []string{"message.proto", "api.proto", "other_package.proto"})
-	if err != nil {
-		t.Fatalf("LoadFiles must not return an error, but got '%s'", err)
+	for name, c := range cases {
+		c := c
+		t.Run(name, func(t *testing.T) {
+			_, err := proto.LoadFiles([]string{"testdata"}, c.fnames)
+			if c.hasErr {
+				if err == nil {
+					t.Errorf("LoadFiles must return an error, but got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("LoadFiles must not return an error, but got '%s'", err)
+			}
+		})
 	}
+}
 
-	t.Run("PackageNames", func(t *testing.T) {
-		expectedPackageNames := []string{"api", "api2"}
-		if diff := cmp.Diff(expectedPackageNames, spec.PackageNames()); diff != "" {
-			t.Errorf("PackageNames returned unexpected package names:\n%s", diff)
-		}
-	})
+type reflectionClient struct {
+	grpcreflection.Client
+	descs []*desc.FileDescriptor
+	err   error
+}
 
-	t.Run("ServiceNames", func(t *testing.T) {
-		_, err = spec.ServiceNames("")
-		if err != idl.ErrPackageUnselected {
-			t.Errorf("ServiceNames must return ErrPackageUnselected if pkgName is empty, but got '%s'", err)
-		}
-		_, err = spec.ServiceNames("foo")
-		if err != idl.ErrUnknownPackageName {
-			t.Errorf("ServiceNames must return ErrUnknownPackageName, but got '%s'", err)
-		}
+func (c *reflectionClient) ListPackages() ([]*desc.FileDescriptor, error) {
+	return c.descs, c.err
+}
 
-		actualServiceNames, err := spec.ServiceNames("api")
+func TestLoadByReflection(t *testing.T) {
+	t.Run("normal", func(t *testing.T) {
+		refCli := &reflectionClient{}
+		_, err := proto.LoadByReflection(refCli)
 		if err != nil {
-			t.Fatalf("api package must have a service, but couldn't get it: '%s'", err)
-		}
-		expectedServiceNames := []string{"Example"}
-		if diff := cmp.Diff(expectedServiceNames, actualServiceNames); diff != "" {
-			t.Errorf("ServiceNames returned unexpected service names:\n%s", diff)
+			t.Errorf("must not return an error, but got '%s'", err)
 		}
 	})
 
-	t.Run("RPCs", func(t *testing.T) {
-		_, err = spec.RPCs("", "")
-		if err != idl.ErrPackageUnselected {
-			t.Errorf("RPCs must return ErrPackageUnselected if pkgName is empty, but got '%s'", err)
-		}
-		_, err = spec.RPCs("api", "")
-		if err != idl.ErrServiceUnselected {
-			t.Errorf("RPCs must return ErrServiceUnselected if svcName is empty, but got '%s'", err)
-		}
-		_, err = spec.RPCs("foo", "")
-		if err != idl.ErrUnknownPackageName {
-			t.Errorf("RPCs must return ErrUnknownPackageName, but got '%s'", err)
-		}
-		_, err = spec.RPCs("api", "Foo")
-		if err != idl.ErrUnknownServiceName {
-			t.Errorf("RPCs must return ErrUnknownServiceName, but got '%s'", err)
-		}
-
-		rpcs, err := spec.RPCs("api", "Example")
-		if err != nil {
-			t.Fatalf("Example service of api package must have an RPC, but couldn't get it: '%s'", err)
-		}
-		actualRPCNames := make([]string, len(rpcs))
-		for i, rpc := range rpcs {
-			actualRPCNames[i] = rpc.Name
-		}
-		expectedRPCNames := []string{"RPC"}
-		if diff := cmp.Diff(expectedRPCNames, actualRPCNames); diff != "" {
-			t.Errorf("RPCs returned unexpected RPC names:\n%s", diff)
-		}
-	})
-
-	t.Run("RPC", func(t *testing.T) {
-		_, err = spec.RPC("", "", "")
-		if err != idl.ErrPackageUnselected {
-			t.Errorf("RPC must return ErrPackageUnselected if pkgName is empty, but got '%s'", err)
-		}
-		_, err = spec.RPC("api", "", "")
-		if err != idl.ErrServiceUnselected {
-			t.Errorf("RPC must return ErrServiceUnselected if svcName is empty, but got '%s'", err)
-		}
-		_, err = spec.RPC("foo", "", "")
-		if err != idl.ErrUnknownPackageName {
-			t.Errorf("RPC must return ErrUnknownPackageName, but got '%s'", err)
-		}
-		_, err = spec.RPC("api", "Foo", "")
-		if err != idl.ErrUnknownServiceName {
-			t.Errorf("RPC must return ErrUnknownServiceName, but got '%s'", err)
-		}
-		_, err = spec.RPC("api", "Example", "")
-		if err != idl.ErrUnknownRPCName {
-			t.Errorf("RPC must return ErrUnknownRPCName if rpcName is empty, but got '%s'", err)
-		}
-
-		actualRPC, err := spec.RPC("api", "Example", "RPC")
-		if err != nil {
-			t.Fatalf("Example service of api package must have an RPC named 'RPC', but couldn't get it: '%s'", err)
-		}
-
-		const expectedFQRN = "api.Example.RPC"
-		if actualFQRN := actualRPC.FullyQualifiedName; actualFQRN != expectedFQRN {
-			t.Errorf("expected FullyQualifiedName is '%s', but got '%s'", expectedFQRN, actualFQRN)
-		}
-	})
-
-	t.Run("TypeDescriptor", func(t *testing.T) {
-		_, err = spec.TypeDescriptor("", "Example")
-		if err != idl.ErrPackageUnselected {
-			t.Errorf("TypeDescriptor must return ErrPackageUnselected if pkgName is empty, but got '%s'", err)
-		}
-		_, err := spec.TypeDescriptor("api", "Foo")
+	t.Run("reflection client returns an error", func(t *testing.T) {
+		refCli := &reflectionClient{err: errors.New("an err")}
+		_, err := proto.LoadByReflection(refCli)
 		if err == nil {
-			t.Fatalf("TypeDescriptor must return an error because api.Foo is an undefined type, but got nil")
-		}
-		actual, err := spec.TypeDescriptor("api", "Request")
-		if err != nil {
-			t.Fatalf("TypeDescriptor must return the descriptor of api.Request, but got an error: '%s'", err)
-		}
-
-		if actual == nil {
-			t.Errorf("actual must not be nil")
+			t.Errorf("must return an error, but got nil")
 		}
 	})
 }
