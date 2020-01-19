@@ -27,10 +27,9 @@ func TestLoadFiles(t *testing.T) {
 					t.Errorf("LoadFiles must return an error, but got nil")
 				}
 				return
-			} else {
-				if err != nil {
-					t.Errorf("LoadFiles must not return an error, but got '%s'", err)
-				}
+			}
+			if err != nil {
+				t.Errorf("LoadFiles must not return an error, but got '%s'", err)
 			}
 		})
 	}
