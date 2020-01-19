@@ -155,7 +155,7 @@ func LoadFiles(importPaths []string, fnames []string) (idl.Spec, error) {
 		fileDescs = append(fileDescs, d.GetDependencies()...)
 	}
 
-	return newSpec(fileDescs)
+	return newSpec(fileDescs), nil
 }
 
 // LoadByReflection receives a gRPC reflection client, then tries to instantiate a new idl.Spec by using gRPC reflection.
@@ -164,10 +164,10 @@ func LoadByReflection(client grpcreflection.Client) (idl.Spec, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to list packages by gRPC reflection")
 	}
-	return newSpec(fileDescs)
+	return newSpec(fileDescs), nil
 }
 
-func newSpec(fds []*desc.FileDescriptor) (idl.Spec, error) {
+func newSpec(fds []*desc.FileDescriptor) idl.Spec {
 	encounteredPackages := make(map[string]interface{})
 	var pkgNames []string
 	svcDescs := make(map[string][]*desc.ServiceDescriptor)
@@ -199,5 +199,5 @@ func newSpec(fds []*desc.FileDescriptor) (idl.Spec, error) {
 		svcDescs: svcDescs,
 		rpcDescs: rpcDescs,
 		msgDescs: msgDescs,
-	}, nil
+	}
 }
