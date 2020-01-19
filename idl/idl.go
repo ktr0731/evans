@@ -32,7 +32,7 @@ type Spec interface {
 	// ServiceNames returns all service names belongs to the passed package name pkgName.
 	// ServiceNames may return these errors:
 	//
-	//   - ErrPackageUnselected: pkgName is empty.
+	//   - ErrPackageUnselected: pkgName is empty and there are no IDL files that don't have a package name.
 	//   - ErrUnknownPackageName: pkgName is not contained to PackageNames().
 	//
 	ServiceNames(pkgName string) ([]string, error)
@@ -40,7 +40,7 @@ type Spec interface {
 	// RPCs returns all RPC names belongs to the passed service name svcName.
 	// RPCs may return these errors:
 	//
-	//   - ErrPackageUnselected: pkgName is empty.
+	//   - ErrPackageUnselected: pkgName is empty and there are no IDL files that don't have a package name.
 	//   - ErrServiceUnselected: svcName is empty.
 	//   - ErrUnknownPackageName: pkgName is not contained to PackageNames().
 	//   - ErrUnknownServiceName: svcName is not contained to ServiceNames().
@@ -50,7 +50,7 @@ type Spec interface {
 	// RPC returns the RPC that is specified by pkgName, svcName and rpcName.
 	// RPC may return these errors:
 	//
-	//   - ErrPackageUnselected: pkgName is empty.
+	//   - ErrPackageUnselected: pkgName is empty and there are no IDL files that don't have a package name.
 	//   - ErrServiceUnselected: svcName is empty.
 	//   - ErrUnknownPackageName: pkgName is not contained to PackageNames().
 	//   - ErrUnknownServiceName: svcName is not contained to ServiceNames().
@@ -62,7 +62,7 @@ type Spec interface {
 	// The returned descriptor depends to an codec such that Protocol Buffers.
 	// TypeDescriptor may returns these errors:
 	//
-	//   - ErrPackageUnselected: pkgName is empty.
+	//   - ErrPackageUnselected: pkgName is empty and there are no IDL files that don't have a package name.
 	//
 	TypeDescriptor(pkgName, msgName string) (interface{}, error)
 }
