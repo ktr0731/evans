@@ -19,8 +19,6 @@ github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/bgentry/speakeasy v0.1.0 h1:ByYyxL9InA1OWqxJqqp2A5pYHUrCiAL6K3J+LKSsQkY=
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
-github.com/c-bata/go-prompt v0.2.3 h1:jjCS+QhG/sULBhAaBdjb2PlMRVaKXQgn+4yzaauvs2s=
-github.com/c-bata/go-prompt v0.2.3/go.mod h1:VzqtzE2ksDBcdln8G7mk2RX9QyGjH+OVqOCSiVIqS34=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/chzyer/logex v1.1.10 h1:Swpa1K6QvQznwJRcfTfQJmTE72DqScAa40E+fbHEXEE=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
@@ -129,8 +127,6 @@ github.com/ktr0731/go-multierror v0.0.0-20171204182908-b7773ae21874 h1:eVBpZQfZS
 github.com/ktr0731/go-multierror v0.0.0-20171204182908-b7773ae21874/go.mod h1:ZWayuE/hCzOD96CJizvcYnqrbmTC7RAG332yNtlKj6w=
 github.com/ktr0731/go-prompt v0.2.2-0.20190609072126-7894cc3f2925 h1:nV9LIfb0tEvCAFjH8knSY5+1/OB7Vtxz0+VAR2BWcno=
 github.com/ktr0731/go-prompt v0.2.2-0.20190609072126-7894cc3f2925/go.mod h1:wmOS5scuWlKkbJFD0l2d/Uc6M8h01Zw4y1lPpzYerhc=
-github.com/ktr0731/go-shellstring v0.1.0 h1:h9l3S060peKAcNOFrEZihYF8ds8rRcPcRxTKvq5Lhfw=
-github.com/ktr0731/go-shellstring v0.1.0/go.mod h1:nkNCnJ36MGqbzvcl9CECP9kZZhO916UbkCkYsjDAOkE=
 github.com/ktr0731/go-updater v0.1.5 h1:AiaQxJoI0OTGqvsJYdIITCOaEzQQOqU2MHKUwttVShY=
 github.com/ktr0731/go-updater v0.1.5/go.mod h1:dsdOg7a9sj6ttcOU5ZxPCtKdm9WeB1hwcX/7oKgz9/0=
 github.com/ktr0731/grpc-test v0.1.0/go.mod h1:deptvEeND4faWsF2MGTanL6/2SaX8lgdmF3yEXWge5U=

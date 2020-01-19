@@ -5,7 +5,6 @@ go 1.12
 require (
 	github.com/alecthomas/gometalinter v3.0.0+incompatible // indirect
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
-	github.com/c-bata/go-prompt v0.2.3
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.7.0
 	github.com/golang/protobuf v1.3.2
@@ -63,3 +62,5 @@ require (
 replace github.com/ktr0731/grpc-web-go-client => github.com/ktr0731/grpc-web-go-client v0.2.5-0.20190505140201-c24452752d52
 
 replace github.com/nicksnyder/go-i18n => github.com/nicksnyder/go-i18n/v2 v2.0.2-0.20190606144950-25e77afbf581
+
+replace github.com/ktr0731/go-shellstring => ../go-shellstring
