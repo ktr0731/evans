@@ -29,14 +29,16 @@ func (s *spec) PackageNames() []string {
 }
 
 func (s *spec) ServiceNames(pkgName string) ([]string, error) {
-	if pkgName == "" {
-		return nil, idl.ErrPackageUnselected
-	}
-
 	descs, ok := s.svcDescs[pkgName]
 	if !ok {
+		// If the service belongs to pkgName is not found and pkgName is empty,
+		// it is regarded as package is unselected.
+		if pkgName == "" {
+			return nil, idl.ErrPackageUnselected
+		}
 		return nil, idl.ErrUnknownPackageName
 	}
+
 	svcNames := make([]string, len(descs))
 	for i, d := range descs {
 		svcNames[i] = d.GetName()
@@ -55,7 +57,10 @@ func (s *spec) RPCs(pkgName, svcName string) ([]*grpc.RPC, error) {
 		return nil, idl.ErrServiceUnselected
 	}
 
-	fqsn := fmt.Sprintf("%s.%s", pkgName, svcName)
+	fqsn, err := idl.FullyQualifiedServiceName(pkgName, svcName)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get fully-qualified service name")
+	}
 	rpcDescs, ok := s.rpcDescs[fqsn]
 	if !ok {
 		return nil, idl.ErrUnknownServiceName
@@ -83,7 +88,10 @@ func (s *spec) RPC(pkgName, svcName, rpcName string) (*grpc.RPC, error) {
 		return nil, idl.ErrServiceUnselected
 	}
 
-	fqsn := fmt.Sprintf("%s.%s", pkgName, svcName)
+	fqsn, err := idl.FullyQualifiedServiceName(pkgName, svcName)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get fully-qualified service name")
+	}
 	rpcDescs, ok := s.rpcDescs[fqsn]
 	if !ok {
 		return nil, idl.ErrUnknownServiceName
@@ -166,8 +174,8 @@ func newSpec(fds []*desc.FileDescriptor) (idl.Spec, error) {
 	rpcDescs := make(map[string][]*desc.MethodDescriptor)
 	msgDescs := make(map[string]*desc.MessageDescriptor)
 	for _, f := range fds {
-		svcDescs[f.GetPackage()] = append(svcDescs[f.GetPackage()], f.GetServices()...)
 		pkg := f.GetPackage()
+		svcDescs[pkg] = append(svcDescs[pkg], f.GetServices()...)
 		if _, encountered := encounteredPackages[pkg]; !encountered {
 			pkgNames = append(pkgNames, pkg)
 			encounteredPackages[pkg] = nil

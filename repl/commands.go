@@ -47,7 +47,8 @@ func (c *packageCommand) Validate(args []string) error {
 }
 
 func (c *packageCommand) Run(_ io.Writer, args []string) error {
-	err := usecase.UsePackage(args[0])
+	pkgName := args[0]
+	err := usecase.UsePackage(pkgName)
 	if errors.Cause(err) == idl.ErrUnknownPackageName {
 		return errors.Errorf("unknown package name '%s'", args[0])
 	}
@@ -77,7 +78,7 @@ func (c *serviceCommand) Run(_ io.Writer, args []string) error {
 	case idl.ErrPackageUnselected:
 		return errors.New("package unselected. please execute 'package' command at the first")
 	case idl.ErrUnknownServiceName:
-		return errors.Errorf("unknown package name '%s'", args[0])
+		return errors.Errorf("unknown service name '%s'", args[0])
 	}
 	return err
 }

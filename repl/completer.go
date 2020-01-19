@@ -47,7 +47,11 @@ func (c *completer) Complete(d prompt.Document) (s []*prompt.Suggest) {
 		}
 		pkgs := usecase.ListPackages()
 		for _, pkg := range pkgs {
-			s = append(s, prompt.NewSuggestion(pkg, ""))
+			if pkg == "" {
+				s = append(s, prompt.NewSuggestion(`''`, "default for package name unspecified protos"))
+			} else {
+				s = append(s, prompt.NewSuggestion(pkg, ""))
+			}
 		}
 
 	case "service":

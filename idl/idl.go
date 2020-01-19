@@ -10,6 +10,7 @@ package idl
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/ktr0731/evans/grpc"
 )
@@ -22,11 +23,6 @@ var (
 	ErrUnknownServiceName = errors.New("unknown service name")
 	ErrUnknownRPCName     = errors.New("unknown RPC name")
 )
-
-// EmptyPackage indicates it is an empty package (there is no package specifier).
-// Package specifier only allows letters and '_', so using ' is name safe.
-// See https://developers.google.com/protocol-buffers/docs/reference/proto3-spec#package
-const EmptyPackage = "''"
 
 // Spec represents the interface specification from loaded IDL files.
 type Spec interface {
@@ -69,4 +65,16 @@ type Spec interface {
 	//   - ErrPackageUnselected: pkgName is empty.
 	//
 	TypeDescriptor(pkgName, msgName string) (interface{}, error)
+}
+
+// FullyQualifiedServiceName returns the fully qualified name joined with '.'.
+// pkgName is an optional value, but svcName is not.
+func FullyQualifiedServiceName(pkgName, svcName string) (string, error) {
+	if svcName == "" {
+		return "", ErrServiceUnselected
+	}
+	if pkgName == "" {
+		return svcName, nil
+	}
+	return strings.Join([]string{pkgName, svcName}, "."), nil
 }
