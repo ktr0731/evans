@@ -78,3 +78,15 @@ func FullyQualifiedServiceName(pkgName, svcName string) (string, error) {
 	}
 	return strings.Join([]string{pkgName, svcName}, "."), nil
 }
+
+// FullyQualifiedMessageName returns the fully qualified name joined with '.'.
+// pkgName is an optional value, but msgName is not.
+func FullyQualifiedMessageName(pkgName, msgName string) (string, error) {
+	if msgName == "" {
+		return "", errors.New("msgName should not be empty")
+	}
+	if pkgName == "" {
+		return msgName, nil
+	}
+	return strings.Join([]string{pkgName, msgName}, "."), nil
+}

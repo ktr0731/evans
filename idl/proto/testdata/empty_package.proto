@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-import "message.proto";
-
 service Example {
   rpc RPC(Request) returns (Response) {}
 }
