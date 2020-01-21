@@ -26,7 +26,7 @@ require (
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mattn/go-colorable v0.1.4
-	github.com/mattn/go-isatty v0.0.9
+	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-pipeline v0.0.0-20190323144519-32d779b32768 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mattn/go-tty v0.0.0-20190424173100-523744f04859 // indirect
