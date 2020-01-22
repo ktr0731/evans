@@ -36,7 +36,7 @@ type REPL struct {
 var commands = map[string]commander{
 	"call":    &callCommand{},
 	"service": &serviceCommand{},
-	"header":  &headerCommand{},
+	"header":  newHeaderCommand(),
 	"package": &packageCommand{},
 	"show":    &showCommand{},
 	"exit":    &exitCommand{},
