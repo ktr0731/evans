@@ -178,12 +178,14 @@ func TestE2E_REPL(t *testing.T) {
 		},
 
 		// header command.
-
+		"header help": {
+			args:  "testdata/test.proto",
+			input: []interface{}{"header -h"},
+		},
 		"add a header": {
 			args:  "testdata/test.proto",
 			input: []interface{}{"header mizore=yoroizuka", "show header"},
 		},
-
 		"add two headers": {
 			args:  "testdata/test.proto",
 			input: []interface{}{"header mizore=yoroizuka nozomi=kasaki", "show header"},
