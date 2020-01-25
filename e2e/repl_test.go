@@ -186,6 +186,10 @@ func TestE2E_REPL(t *testing.T) {
 			args:  "testdata/test.proto",
 			input: []interface{}{"header mizore=yoroizuka", "show header"},
 		},
+		"add a header with --raw flag": {
+			args:  "testdata/test.proto",
+			input: []interface{}{"header -r touma=youko,kazusa", "show header"},
+		},
 		"add two headers": {
 			args:  "testdata/test.proto",
 			input: []interface{}{"header mizore=yoroizuka nozomi=kasaki", "show header"},

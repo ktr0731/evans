@@ -50,7 +50,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		"header": cmdTestCase{
-			cmd: newHeaderCommand(),
+			cmd: &headerCommand{},
 			testCases: []testCase{
 				{args: []string{"kumiko"}},
 				{args: []string{}, hasErr: true},

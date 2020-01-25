@@ -165,12 +165,9 @@ type headerCommand struct {
 	raw bool
 }
 
-func newHeaderCommand() *headerCommand {
-	cmd := &headerCommand{
-		fs: pflag.NewFlagSet("header", pflag.ContinueOnError),
-	}
-	cmd.fs.BoolVarP(&cmd.raw, "raw", "r", false, "treat the value as a raw string")
-	return cmd
+func (c *headerCommand) init() {
+	c.fs = pflag.NewFlagSet("header", pflag.ContinueOnError)
+	c.fs.BoolVarP(&c.raw, "raw", "r", false, "treat the value as a raw string")
 }
 
 func (c *headerCommand) Synopsis() string {
@@ -178,6 +175,7 @@ func (c *headerCommand) Synopsis() string {
 }
 
 func (c *headerCommand) Help() string {
+	c.init()
 	var buf bytes.Buffer
 	c.fs.SetOutput(&buf)
 	c.fs.PrintDefaults()
@@ -188,11 +186,13 @@ Options:
 }
 
 func (c *headerCommand) Validate(args []string) error {
-	if len(args) < 1 {
-		return errArgumentRequired
-	}
+	c.init()
 	if err := c.fs.Parse(args); err != nil {
 		return errors.Wrap(err, "failed to parse args")
+	}
+	args = c.fs.Args()
+	if len(args) < 1 {
+		return errArgumentRequired
 	}
 	return nil
 }
