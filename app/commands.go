@@ -70,7 +70,7 @@ func runFunc(
 
 		// For backward-compatibility.
 		var protos []string
-		if cmd.Parent() == nil {
+		if isRootCommand := cmd.Parent() == nil; isRootCommand {
 			protos = args
 		}
 		// Pass Flags instead of LocalFlags because the config is merged with common and local flags.
