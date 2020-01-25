@@ -1,0 +1,5 @@
+usage: header [options ...] <key>=<value>[, <key>=<value>...]
+
+Options:
+  -r, --raw   treat the value as a raw string
+
