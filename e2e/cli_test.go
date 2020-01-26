@@ -144,6 +144,12 @@ func TestE2E_CLI(t *testing.T) {
 			args:        "--file testdata/unary_call.in Unary",
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
+		"call unary RPC with --call flag (backward-compatibility)": {
+			commonFlags: "--package api --service Example --proto testdata/test.proto",
+			cmd:         "",
+			args:        "--file testdata/unary_call.in --call Unary",
+			expectedOut: `{ "message": "hello, oumae" }`,
+		},
 		"call unary RPC without package name because the size of packages is 1": {
 			commonFlags: "--service Example --proto testdata/test.proto",
 			cmd:         "call",

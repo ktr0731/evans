@@ -138,7 +138,7 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 				if err := eg.Wait(); err != nil {
 					return errors.Wrap(err, "failed to check application update")
 				}
-			} else if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui, "call"); err != nil {
+			} else if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
 			}
 
@@ -206,8 +206,18 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cli",
 		Short: "CLI mode",
-		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig) error {
-			if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui, "call"); err != nil {
+		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
+			// For backward-compatibility.
+			// If the method is specified by passing --call option, use it.
+			call := cfg.call
+			if call == "" {
+				args := cmd.Flags().Args()
+				if len(args) == 0 {
+					return errors.New("method is required")
+				}
+				call = args[0]
+			}
+			if err := mode.RunAsCLIMode(cfg.Config, call, cfg.file, ui); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
 			}
 			return nil
