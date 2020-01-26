@@ -210,6 +210,7 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	cmd.AddCommand(
 		newCLICallCommand(flags, ui),
+		newCLIListCommand(flags, ui),
 	)
 	return cmd
 }

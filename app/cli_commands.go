@@ -35,3 +35,30 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	return cmd
 }
+
+func newCLIListCommand(flags *flags, ui cui.UI) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "list [options ...]",
+		Aliases: []string{"ls", "l", "show", "s"},
+		Short:   "list packages, services, methods or messages",
+		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
+			var dsn string
+			args := cmd.Flags().Args()
+			if len(args) > 0 {
+				dsn = args[0]
+			}
+			invoker := mode.NewListCLIInvoker(ui, dsn)
+			if err := mode.RunAsCLIMode(cfg.Config, invoker); err != nil {
+				return errors.Wrap(err, "failed to run CLI mode")
+			}
+			return nil
+		}),
+		SilenceErrors: true,
+		SilenceUsage:  true,
+	}
+
+	bindCLIFlags(cmd.LocalFlags(), flags, ui.Writer())
+
+	cmd.SetHelpFunc(usageFunc(ui.Writer()))
+	return cmd
+}

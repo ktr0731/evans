@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ktr0731/evans/config"
@@ -23,6 +24,7 @@ var DefaultCLIReader io.Reader = os.Stdin
 type CLIInvoker func(context.Context) error
 
 // NewCallCLIInvoker returns an CLIInvoker implementation for calling RPCs.
+// If filePath is empty, the invoker tries to read input from stdin.
 func NewCallCLIInvoker(ui cui.UI, rpcName, filePath string, headers config.Header) (CLIInvoker, error) {
 	if rpcName == "" {
 		return nil, errors.New("method is required")
@@ -53,6 +55,67 @@ func NewCallCLIInvoker(ui cui.UI, rpcName, filePath string, headers config.Heade
 		}
 		return nil
 	}, nil
+}
+
+func NewListCLIInvoker(ui cui.UI, fqn string) CLIInvoker {
+	return func(context.Context) error {
+		pkgs := make(map[string]struct{})
+		for _, p := range usecase.ListPackages() {
+			pkgs[p] = struct{}{}
+		}
+		singlePkg := len(pkgs) == 1
+		sp := strings.Split(fqn, ".")
+
+		out, err := func() (string, error) {
+			switch {
+			case len(sp) == 1 && sp[0] == "": // Unspecified.
+				pkg, err := usecase.FormatPackages()
+				if err != nil {
+					return "", errors.Wrap(err, "failed to list packages")
+				}
+				return pkg, nil
+			case len(sp) == 1 && singlePkg: // Package name or service name.
+				if _, ok := pkgs[sp[0]]; ok {
+					svc, err := usecase.FormatServices()
+					if err != nil {
+						return "", errors.Wrap(err, "failed to format services")
+					}
+					return svc, nil
+				}
+
+				// Check service name.
+				svcs, err := usecase.ListServices()
+				if err != nil {
+					return "", errors.Wrap(err, "failed to list services")
+				}
+				for _, s := range svcs {
+					if sp[0] == s {
+						rpcs, err := usecase.FormatRPCs()
+						if err != nil {
+							return "", errors.Wrap(err, "failed to format methods")
+						}
+						return rpcs, nil
+					}
+				}
+
+				// Check message name.
+				panic("TODO")
+
+			case len(sp) == 1: // Package name.
+				svc, err := usecase.FormatServices()
+				if err != nil {
+					return "", errors.Wrap(err, "failed to list services")
+				}
+				return svc, nil
+			}
+			return "", errors.Errorf("unknown fully-qualified name '%s'", fqn)
+		}()
+		if err != nil {
+			return err
+		}
+		ui.Output(out)
+		return nil
+	}
 }
 
 // RunAsCLIMode starts Evans as CLI mode.
@@ -88,8 +151,10 @@ func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 	)
 
 	// If the spec has only one package, mark it as the default package.
-	if cfg.Default.Package == "" && len(spec.PackageNames()) == 1 {
-		cfg.Default.Package = spec.PackageNames()[0]
+	if cfg.Default.Package == "" {
+		if len(spec.PackageNames()) == 1 {
+			cfg.Default.Package = spec.PackageNames()[0]
+		}
 	}
 	if err := usecase.UsePackage(cfg.Default.Package); err != nil {
 		return errors.Wrapf(err, "failed to set '%s' as the default package", cfg.Default.Package)
