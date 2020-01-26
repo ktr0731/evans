@@ -19,8 +19,10 @@ import (
 // DefaultCLIReader is the reader that is read for inputting request values. It is exported for E2E testing.
 var DefaultCLIReader io.Reader = os.Stdin
 
+// CLIInvoker represents an invokable function for CLI mode.
 type CLIInvoker func(context.Context) error
 
+// NewCallCLIInvoker returns an CLIInvoker implementation for calling RPCs.
 func NewCallCLIInvoker(ui cui.UI, rpcName, filePath string, headers config.Header) (CLIInvoker, error) {
 	if rpcName == "" {
 		return nil, errors.New("method is required")
