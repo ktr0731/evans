@@ -367,7 +367,7 @@ The actual request value is just like this.
 ## Usage (CLI)
 ### Basic usage
 You can input requests from `stdin` or files.  
-Unlike REPL mode, you need to specify `--package`, `--service` and `--call` options.  
+Unlike REPL mode, you need to specify `--package`, `--service` and the method you want to call.
 If gRPC server enables gRPC reflection, `--package` is unnecessary. (instead, `-r` requires)  
 
 Use `--file` (`-f`) to specify a file.
@@ -377,7 +377,7 @@ $ cat request.json
   "name": "ktr"
 }
 
-$ evans --service Example cli --call Unary --file request.json
+$ evans --service Example cli call --file request.json Unary
 {
   "message": "hello, ktr"
 }
@@ -385,7 +385,7 @@ $ evans --service Example cli --call Unary --file request.json
 
 Use `stdin`.
 ``` sh
-$ echo '{ "name": "ktr" }' | evans --service Example cli --call Unary
+$ echo '{ "name": "ktr" }' | evans --service Example cli call Unary
 {
   "message": "hello, ktr"
 }
@@ -404,7 +404,7 @@ Then, the command will be more clear.
 
 ### Repeated fields
 ``` sh
-$ echo '{ "name": ["foo", "bar"] }' | evans -r --service Example cli --call UnaryRepeated
+$ echo '{ "name": ["foo", "bar"] }' | evans -r --service Example cli call UnaryRepeated
 {
   "message": "hello, foo, bar"
 }
@@ -412,7 +412,7 @@ $ echo '{ "name": ["foo", "bar"] }' | evans -r --service Example cli --call Unar
 
 ### Enum fields
 ``` sh
-$ echo '{ "gender": 0 }' | evans -r --service Example cli --call UnaryEnum
+$ echo '{ "gender": 0 }' | evans -r --service Example cli call UnaryEnum
 {
   "message": "M"
 }
@@ -425,12 +425,12 @@ This constraint is come from Go's standard package [encoding/json](https://golan
 $ echo 'Foo' | base64
 Rm9vCg==
 
-$ echo '{"data": "Rm9vCg=="}' | evans -r --service Example cli --call UnaryBytes
+$ echo '{"data": "Rm9vCg=="}' | evans -r --service Example cli call UnaryBytes
 ```
 
 ### Client streaming RPC
 ``` sh
-$ echo '{ "name": "ktr" } { "name": "ktr" }' | evans -r --service Example cli --call ClientStreaming
+$ echo '{ "name": "ktr" } { "name": "ktr" }' | evans -r --service Example cli call ClientStreaming
 {
   "message": "ktr, you greet 2 times."
 }
@@ -438,7 +438,7 @@ $ echo '{ "name": "ktr" } { "name": "ktr" }' | evans -r --service Example cli --
 
 ### Server streaming RPC
 ``` sh
-$ echo '{ "name": "ktr" }' | evans -r --service Example cli --call ServerStreaming
+$ echo '{ "name": "ktr" }' | evans -r --service Example cli call ServerStreaming
 {
   "message": "hello ktr, I greet 0 times."
 }
@@ -454,7 +454,7 @@ $ echo '{ "name": "ktr" }' | evans -r --service Example cli --call ServerStreami
 
 ### Bidirectional streaming RPC
 ``` sh
-$ echo '{ "name": "foo" } { "name": "bar" }' | evans -r --service Example cli --call BidiStreaming
+$ echo '{ "name": "foo" } { "name": "bar" }' | evans -r --service Example cli call BidiStreaming
 {
   "message": "hello foo, I greet 0 times."
 }
