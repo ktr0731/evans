@@ -107,38 +107,13 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 
 			isCLIMode := (cfg.cli || mode.IsCLIMode(cfg.file))
 			if cfg.repl || !isCLIMode {
-				cache, err := cache.Get()
-				if err != nil {
-					return errors.Wrap(err, "failed to get the cache content")
-				}
-
-				baseCtx, cancel := context.WithCancel(context.Background())
-				defer cancel()
-				eg, ctx := errgroup.WithContext(baseCtx)
-				// Run update checker asynchronously.
-				eg.Go(func() error {
-					return checkUpdate(ctx, cfg.Config, cache)
-				})
-
-				if cfg.Config.Meta.AutoUpdate {
-					eg.Go(func() error {
-						return processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New())
-					})
-				} else if err := processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New()); err != nil {
-					return errors.Wrap(err, "failed to update Evans")
-				}
-
-				if err := mode.RunAsREPLMode(cfg.Config, ui, cache); err != nil {
-					return errors.Wrap(err, "failed to run REPL mode")
-				}
-
-				// Always call cancel func because it is hope to abort update checking if REPL mode is finished
-				// before update checking. If update checking is finished before REPL mode, cancel do nothing.
-				cancel()
-				if err := eg.Wait(); err != nil {
-					return errors.Wrap(err, "failed to check application update")
-				}
-			} else if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui); err != nil {
+				return runREPLCommand(cfg, ui)
+			}
+			invoker, err := mode.NewCallCLIInvoker(ui, cfg.call, cfg.file, cfg.Config.Request.Header)
+			if err != nil {
+				return err
+			}
+			if err := mode.RunAsCLIMode(cfg.Config, invoker); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
 			}
 
@@ -217,7 +192,11 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 				}
 				call = args[0]
 			}
-			if err := mode.RunAsCLIMode(cfg.Config, call, cfg.file, ui); err != nil {
+			invoker, err := mode.NewCallCLIInvoker(ui, call, cfg.file, cfg.Config.Request.Header)
+			if err != nil {
+				return err
+			}
+			if err := mode.RunAsCLIMode(cfg.Config, invoker); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
 			}
 			return nil
@@ -240,38 +219,7 @@ func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 		Use:   "repl [options ...]",
 		Short: "REPL mode",
 		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig) error {
-			cache, err := cache.Get()
-			if err != nil {
-				return errors.Wrap(err, "failed to get the cache content")
-			}
-
-			baseCtx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			eg, ctx := errgroup.WithContext(baseCtx)
-			// Run update checker asynchronously.
-			eg.Go(func() error {
-				return checkUpdate(ctx, cfg.Config, cache)
-			})
-
-			if cfg.Config.Meta.AutoUpdate {
-				eg.Go(func() error {
-					return processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New())
-				})
-			} else if err := processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New()); err != nil {
-				return errors.Wrap(err, "failed to update Evans")
-			}
-
-			if err := mode.RunAsREPLMode(cfg.Config, ui, cache); err != nil {
-				return errors.Wrap(err, "failed to run REPL mode")
-			}
-
-			// Always call cancel func because it is hope to abort update checking if REPL mode is finished
-			// before update checking. If update checking is finished before REPL mode, cancel do nothing.
-			cancel()
-			if err := eg.Wait(); err != nil {
-				return errors.Wrap(err, "failed to check application update")
-			}
-			return nil
+			return runREPLCommand(cfg, ui)
 		}),
 		SilenceErrors: true,
 		SilenceUsage:  true,
@@ -279,6 +227,41 @@ func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 	bindREPLFlags(cmd.LocalFlags(), flags, ui.Writer())
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	return cmd
+}
+
+func runREPLCommand(cfg *mergedConfig, ui cui.UI) error {
+	cache, err := cache.Get()
+	if err != nil {
+		return errors.Wrap(err, "failed to get the cache content")
+	}
+
+	baseCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	eg, ctx := errgroup.WithContext(baseCtx)
+	// Run update checker asynchronously.
+	eg.Go(func() error {
+		return checkUpdate(ctx, cfg.Config, cache)
+	})
+
+	if cfg.Config.Meta.AutoUpdate {
+		eg.Go(func() error {
+			return processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New())
+		})
+	} else if err := processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New()); err != nil {
+		return errors.Wrap(err, "failed to update Evans")
+	}
+
+	if err := mode.RunAsREPLMode(cfg.Config, ui, cache); err != nil {
+		return errors.Wrap(err, "failed to run REPL mode")
+	}
+
+	// Always call cancel func because it is hope to abort update checking if REPL mode is finished
+	// before update checking. If update checking is finished before REPL mode, cancel do nothing.
+	cancel()
+	if err := eg.Wait(); err != nil {
+		return errors.Wrap(err, "failed to check application update")
+	}
+	return nil
 }
 
 func bindCLIFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {

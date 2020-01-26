@@ -19,39 +19,42 @@ import (
 // DefaultCLIReader is the reader that is read for inputting request values. It is exported for E2E testing.
 var DefaultCLIReader io.Reader = os.Stdin
 
-// RunAsCLIMode starts Evans as CLI mode.
-func RunAsCLIMode(cfg *config.Config, endpoint, file string, ui cui.UI) error {
-	if endpoint == "" {
-		return errors.New("method is required")
-	}
-	in := DefaultCLIReader
-	if file != "" {
-		f, err := os.Open(file)
-		if err != nil {
-			return errors.Wrap(err, "failed to open the script file")
-		}
-		defer f.Close()
-		in = f
-	}
-	filler := fill.NewSilentFiller(in)
-	// TODO: parse package and service from call.
+type CLIInvoker func(context.Context) error
 
-	invoker := func(ctx context.Context) error {
-		for k, v := range cfg.Request.Header {
+func NewCallCLIInvoker(ui cui.UI, rpcName, filePath string, headers config.Header) (CLIInvoker, error) {
+	if rpcName == "" {
+		return nil, errors.New("method is required")
+	}
+	// TODO: parse package and service from call.
+	return func(ctx context.Context) error {
+		in := DefaultCLIReader
+		if filePath != "" {
+			f, err := os.Open(filePath)
+			if err != nil {
+				return errors.Wrap(err, "failed to open the script file")
+			}
+			defer f.Close()
+			in = f
+		}
+		filler := fill.NewSilentFiller(in)
+		usecase.InjectPartially(usecase.Dependencies{Filler: filler})
+
+		for k, v := range headers {
 			for _, vv := range v {
 				usecase.AddHeader(k, vv)
 			}
 		}
 
-		err := usecase.CallRPC(ctx, ui.Writer(), endpoint)
+		err := usecase.CallRPC(ctx, ui.Writer(), rpcName)
 		if err != nil {
-			return errors.Wrapf(err, "failed to call RPC '%s'", endpoint)
+			return errors.Wrapf(err, "failed to call RPC '%s'", rpcName)
 		}
 		return nil
-	}
+	}, nil
+}
 
-	// Common dependencies.
-
+// RunAsCLIMode starts Evans as CLI mode.
+func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 	var injectResult error
 	gRPCClient, err := newGRPCClient(cfg)
 	if err != nil {
@@ -76,7 +79,6 @@ func RunAsCLIMode(cfg *config.Config, endpoint, file string, ui cui.UI) error {
 	usecase.InjectPartially(
 		usecase.Dependencies{
 			Spec:              spec,
-			Filler:            filler,
 			GRPCClient:        gRPCClient,
 			ResponsePresenter: json.NewPresenter(),
 			ResourcePresenter: json.NewPresenter(),

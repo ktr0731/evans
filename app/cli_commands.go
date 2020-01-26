@@ -17,7 +17,11 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 			if len(args) == 0 {
 				return errors.New("method is required")
 			}
-			if err := mode.RunAsCLIMode(cfg.Config, args[0], cfg.file, ui); err != nil {
+			invoker, err := mode.NewCallCLIInvoker(ui, args[0], cfg.file, cfg.Config.Request.Header)
+			if err != nil {
+				return err
+			}
+			if err := mode.RunAsCLIMode(cfg.Config, invoker); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
 			}
 			return nil
