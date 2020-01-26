@@ -45,7 +45,7 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 		cfg.Default.Package = spec.PackageNames()[0]
 	}
 
-	if cfg.Default.Service == "" {
+	if cfg.Default.Service == "" && len(spec.PackageNames()) == 1 {
 		svcNames, err := spec.ServiceNames(cfg.Default.Package)
 		if err == nil && len(svcNames) == 1 {
 			cfg.Default.Service = svcNames[0]
