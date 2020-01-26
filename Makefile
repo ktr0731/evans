@@ -71,4 +71,4 @@ release:
 
 .PHONY: depgraph
 depgraph:
-	godepgraph -s -novendor . | dot -Tpng -o dep.png
+	GO111MODULE=off godepgraph -s -novendor . | dot -Tpng -o dep.png

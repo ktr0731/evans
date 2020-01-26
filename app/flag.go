@@ -10,15 +10,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-var usageFormat = `
-Usage: %s [--help] [--version] [options ...] [PROTO [PROTO ...]]
+var (
+	usageFormat = `
+Usage: %s
 
-Positional arguments:
-        PROTO                          .proto files
-
-Options:
 %s
 `
+)
 
 // flags defines available command line flags.
 type flags struct {

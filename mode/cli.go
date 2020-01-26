@@ -20,11 +20,10 @@ import (
 var DefaultCLIReader io.Reader = os.Stdin
 
 // RunAsCLIMode starts Evans as CLI mode.
-func RunAsCLIMode(cfg *config.Config, call, file string, ui cui.UI) error {
-	if call == "" {
-		return errors.New("flag --call must not be empty")
+func RunAsCLIMode(cfg *config.Config, endpoint, file string, ui cui.UI) error {
+	if endpoint == "" {
+		return errors.New("method is required")
 	}
-
 	in := DefaultCLIReader
 	if file != "" {
 		f, err := os.Open(file)
@@ -34,6 +33,24 @@ func RunAsCLIMode(cfg *config.Config, call, file string, ui cui.UI) error {
 		defer f.Close()
 		in = f
 	}
+	filler := fill.NewSilentFiller(in)
+	// TODO: parse package and service from call.
+
+	invoker := func(ctx context.Context) error {
+		for k, v := range cfg.Request.Header {
+			for _, vv := range v {
+				usecase.AddHeader(k, vv)
+			}
+		}
+
+		err := usecase.CallRPC(ctx, ui.Writer(), endpoint)
+		if err != nil {
+			return errors.Wrapf(err, "failed to call RPC '%s'", endpoint)
+		}
+		return nil
+	}
+
+	// Common dependencies.
 
 	var injectResult error
 	gRPCClient, err := newGRPCClient(cfg)
@@ -58,16 +75,13 @@ func RunAsCLIMode(cfg *config.Config, call, file string, ui cui.UI) error {
 
 	usecase.Inject(
 		spec,
-		fill.NewSilentFiller(in),
+		filler,
 		gRPCClient,
 		json.NewPresenter(),
 		json.NewPresenter(),
 	)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// TODO: signal handling
+	// If the spec has only one package, mark it as the default package.
 	if cfg.Default.Package == "" && len(spec.PackageNames()) == 1 {
 		cfg.Default.Package = spec.PackageNames()[0]
 	}
@@ -75,6 +89,7 @@ func RunAsCLIMode(cfg *config.Config, call, file string, ui cui.UI) error {
 		return errors.Wrapf(err, "failed to set '%s' as the default package", cfg.Default.Package)
 	}
 
+	// If the spec has only one service, mark it as the default service.
 	if cfg.Default.Service == "" {
 		svcNames, err := spec.ServiceNames(cfg.Default.Package)
 		if err != nil {
@@ -84,23 +99,13 @@ func RunAsCLIMode(cfg *config.Config, call, file string, ui cui.UI) error {
 			cfg.Default.Service = svcNames[0]
 		}
 	}
-
 	if err := usecase.UseService(cfg.Default.Service); err != nil {
-		return errors.Wrapf(err, "failed to est '%s' as the default service", cfg.Default.Service)
+		return errors.Wrapf(err, "failed to set '%s' as the default service", cfg.Default.Service)
 	}
 
-	for k, v := range cfg.Request.Header {
-		for _, vv := range v {
-			usecase.AddHeader(k, vv)
-		}
-	}
-
-	err = usecase.CallRPC(ctx, ui.Writer(), call)
-	if err != nil {
-		return errors.Wrapf(err, "failed to call RPC '%s'", call)
-	}
-
-	return nil
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	return invoker(ctx)
 }
 
 // IsCLIMode returns whether Evans is launched as CLI mode or not.

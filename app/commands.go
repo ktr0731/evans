@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/logger"
-	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/mode"
 	"github.com/ktr0731/evans/prompt"
 	"github.com/pkg/errors"
@@ -39,7 +39,7 @@ func (c *command) registerNewCommands() {
 // runFunc is a common entrypoint for Run func.
 func runFunc(
 	flags *flags,
-	f func(*cobra.Command, *mergedConfig) error,
+	f func(cmd *cobra.Command, cfg *mergedConfig) error,
 ) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if err := flags.validate(); err != nil {
@@ -68,8 +68,13 @@ func runFunc(
 			// Help is processed by cobra.
 		}
 
+		// For backward-compatibility.
+		var protos []string
+		if isRootCommand := cmd.Parent() == nil; isRootCommand {
+			protos = args
+		}
 		// Pass Flags instead of LocalFlags because the config is merged with common and local flags.
-		cfg, err := mergeConfig(cmd.Flags(), flags, args)
+		cfg, err := mergeConfig(cmd.Flags(), flags, protos)
 		if err != nil {
 			if err, ok := err.(*config.ValidationError); ok {
 				printUsage(cmd)
@@ -92,6 +97,7 @@ func runFunc(
 
 func newOldCommand(flags *flags, ui cui.UI) *command {
 	cmd := &cobra.Command{
+		Use: "evans [global options ...] <command>",
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
 			if cfg.REPL.ColoredOutput {
 				ui = cui.NewColored(ui)
@@ -141,24 +147,9 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
+	cmd.Flags().SortFlags = false
 	bindFlags(cmd.PersistentFlags(), flags, ui.Writer())
-	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
-		cmd.PersistentFlags().Usage()
-		// If Evans is launched as old-style, hidden sub-command help.
-		if len(cmd.Commands()) > 0 {
-			fmt.Fprintf(ui.Writer(), "Available Commands:\n")
-			w := tabwriter.NewWriter(ui.Writer(), 0, 8, 8, ' ', tabwriter.TabIndent)
-			for _, c := range cmd.Commands() {
-				// Ignore help command.
-				if c.Name() == "help" {
-					continue
-				}
-				fmt.Fprintf(w, "        %s\t%s\n", c.Name(), c.Short)
-			}
-			w.Flush()
-			fmt.Fprintf(ui.Writer(), "\n")
-		}
-	})
+	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	cmd.SetOut(ui.Writer())
 	return &command{cmd, flags, ui}
 }
@@ -176,8 +167,8 @@ func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 
 	f.StringVar(&flags.common.pkg, "package", "", "default package")
 	f.StringVar(&flags.common.service, "service", "", "default service")
-	f.StringSliceVar(&flags.common.path, "path", nil, "proto file paths")
-	f.StringSliceVar(&flags.common.proto, "proto", nil, "proto file names")
+	f.StringSliceVar(&flags.common.path, "path", nil, "comma-separated proto file paths")
+	f.StringSliceVar(&flags.common.proto, "proto", nil, "comma-separated proto file names")
 	f.StringVar(&flags.common.host, "host", "", "gRPC server host")
 	f.StringVarP(&flags.common.port, "port", "p", "50051", "gRPC server port")
 	f.Var(
@@ -215,8 +206,18 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cli",
 		Short: "CLI mode",
-		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig) error {
-			if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui); err != nil {
+		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
+			// For backward-compatibility.
+			// If the method is specified by passing --call option, use it.
+			call := cfg.call
+			if call == "" {
+				args := cmd.Flags().Args()
+				if len(args) == 0 {
+					return errors.New("method is required")
+				}
+				call = args[0]
+			}
+			if err := mode.RunAsCLIMode(cfg.Config, call, cfg.file, ui); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
 			}
 			return nil
@@ -224,16 +225,19 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-	bindCLIFlags(cmd.LocalFlags(), flags, ui.Writer())
-	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
-		cmd.LocalFlags().Usage()
-	})
+	f := cmd.LocalFlags()
+	initFlagSet(f, ui.Writer())
+	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
+	cmd.SetHelpFunc(usageFunc(ui.Writer()))
+	cmd.AddCommand(
+		newCLICallCommand(flags, ui),
+	)
 	return cmd
 }
 
 func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "repl",
+		Use:   "repl [options ...]",
 		Short: "REPL mode",
 		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig) error {
 			cache, err := cache.Get()
@@ -273,15 +277,12 @@ func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceUsage:  true,
 	}
 	bindREPLFlags(cmd.LocalFlags(), flags, ui.Writer())
-	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
-		cmd.LocalFlags().Usage()
-	})
+	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	return cmd
 }
 
 func bindCLIFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	initFlagSet(f, w)
-	f.StringVar(&flags.cli.call, "call", "", "call specified RPC by CLI mode")
 	f.StringVarP(&flags.cli.file, "file", "f", "", "a script file that will be executed by (used only CLI mode)")
 	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
 }
@@ -294,34 +295,66 @@ func bindREPLFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 func initFlagSet(f *pflag.FlagSet, w io.Writer) {
 	f.SortFlags = false
 	f.SetOutput(w)
-	f.Usage = usageFunc(w, f)
+}
+
+func printOptions(w io.Writer, f *pflag.FlagSet) {
+	_, err := io.WriteString(w, "Options:\n")
+	if err != nil {
+		logger.Printf("failed to write string: %s", err)
+	}
+	tw := tabwriter.NewWriter(w, 0, 8, 8, ' ', tabwriter.TabIndent)
+	f.VisitAll(func(f *pflag.Flag) {
+		if f.Hidden {
+			return
+		}
+		cmd := "--" + f.Name
+		if f.Shorthand != "" {
+			cmd += ", -" + f.Shorthand
+		}
+		name, _ := pflag.UnquoteUsage(f)
+		if name != "" {
+			cmd += " " + name
+		}
+		usage := f.Usage
+		if f.DefValue != "" {
+			usage += fmt.Sprintf(` (default "%s")`, f.DefValue)
+		}
+		fmt.Fprintf(tw, "        %s\t%s\n", cmd, usage)
+	})
+	tw.Flush()
 }
 
 // usage is the generator for usage output.
-func usageFunc(out io.Writer, f *pflag.FlagSet) func() {
-	return func() {
+func usageFunc(out io.Writer) func(*cobra.Command, []string) {
+	return func(cmd *cobra.Command, _ []string) {
+		rcmd := cmd
+		shortUsages := []string{rcmd.Use}
+		for {
+			rcmd = rcmd.Parent()
+			if rcmd == nil {
+				break
+			}
+			u := strings.TrimSuffix(rcmd.Use, " <command>")
+			shortUsages = append([]string{u}, shortUsages...)
+		}
+
 		printVersion(out)
 		var buf bytes.Buffer
-		w := tabwriter.NewWriter(&buf, 0, 8, 8, ' ', tabwriter.TabIndent)
-		f.VisitAll(func(f *pflag.Flag) {
-			if f.Hidden {
-				return
+		printOptions(&buf, cmd.LocalFlags())
+		fmt.Fprintf(out, usageFormat, strings.Join(shortUsages, " "), buf.String())
+
+		if len(cmd.Commands()) > 0 {
+			fmt.Fprintf(out, "Available Commands:\n")
+			w := tabwriter.NewWriter(out, 0, 8, 8, ' ', tabwriter.TabIndent)
+			for _, c := range cmd.Commands() {
+				// Ignore help command.
+				if c.Name() == "help" {
+					continue
+				}
+				fmt.Fprintf(w, "        %s\t%s\n", c.Name(), c.Short)
 			}
-			cmd := "--" + f.Name
-			if f.Shorthand != "" {
-				cmd += ", -" + f.Shorthand
-			}
-			name, _ := pflag.UnquoteUsage(f)
-			if name != "" {
-				cmd += " " + name
-			}
-			usage := f.Usage
-			if f.DefValue != "" {
-				usage += fmt.Sprintf(` (default "%s")`, f.DefValue)
-			}
-			fmt.Fprintf(w, "        %s\t%s\n", cmd, usage)
-		})
-		w.Flush()
-		fmt.Fprintf(out, usageFormat, meta.AppName, buf.String())
+			w.Flush()
+			fmt.Fprintf(out, "\n")
+		}
 	}
 }
