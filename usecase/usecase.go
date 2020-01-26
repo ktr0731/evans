@@ -55,6 +55,29 @@ func (m *dependencyManager) Inject(d Dependencies) {
 	}
 }
 
+// InjectPartially is almost same as the Inject, but injects only non-nil dependencies.
+func InjectPartially(deps Dependencies) {
+	dm.InjectPartially(deps)
+}
+
+func (m *dependencyManager) InjectPartially(d Dependencies) {
+	if d.Spec != nil {
+		m.spec = d.Spec
+	}
+	if d.Filler != nil {
+		m.filler = d.Filler
+	}
+	if d.GRPCClient != nil {
+		m.gRPCClient = d.GRPCClient
+	}
+	if d.ResponsePresenter != nil {
+		m.responsePresenter = d.ResponsePresenter
+	}
+	if d.ResourcePresenter != nil {
+		m.resourcePresenter = d.ResourcePresenter
+	}
+}
+
 // Clear clears all dependencies and states. Usually, it is used for unit testing.
 func Clear() {
 	dm.Inject(Dependencies{})

@@ -73,7 +73,7 @@ func RunAsCLIMode(cfg *config.Config, endpoint, file string, ui cui.UI) error {
 		return injectResult
 	}
 
-	usecase.Inject(
+	usecase.InjectPartially(
 		usecase.Dependencies{
 			Spec:              spec,
 			Filler:            filler,
