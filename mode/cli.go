@@ -74,11 +74,13 @@ func RunAsCLIMode(cfg *config.Config, endpoint, file string, ui cui.UI) error {
 	}
 
 	usecase.Inject(
-		spec,
-		filler,
-		gRPCClient,
-		json.NewPresenter(),
-		json.NewPresenter(),
+		usecase.Dependencies{
+			Spec:              spec,
+			Filler:            filler,
+			GRPCClient:        gRPCClient,
+			ResponsePresenter: json.NewPresenter(),
+			ResourcePresenter: json.NewPresenter(),
+		},
 	)
 
 	// If the spec has only one package, mark it as the default package.
