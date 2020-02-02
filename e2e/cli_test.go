@@ -88,7 +88,7 @@ func TestE2E_CLI(t *testing.T) {
 			expectedCode: 1,
 		},
 
-		// CLI mode
+		// call command
 
 		"cannot launch CLI mode because proto files didn't be passed": {
 			commonFlags:  "--package api --service Example",
@@ -226,7 +226,7 @@ func TestE2E_CLI(t *testing.T) {
 			},
 		},
 
-		// CLI mode with reflection
+		// call command with reflection
 
 		"cannot launch CLI mode with reflection because method is missing": {
 			commonFlags:  "--reflection --package api --service Example --proto testdata/test.proto",
@@ -250,7 +250,7 @@ func TestE2E_CLI(t *testing.T) {
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 
-		// CLI mode with TLS
+		// call command with TLS
 
 		"cannot launch CLI mode with TLS because the server didn't enable TLS": {
 			commonFlags:  "--tls --service Example --proto testdata/test.proto",
@@ -332,7 +332,7 @@ func TestE2E_CLI(t *testing.T) {
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 
-		// CLI mode with gRPC-Web
+		// call command with gRPC-Web
 
 		"cannot send a request to gRPC-Web server because the server didn't enable gRPC-Web": {
 			commonFlags:  "--web --package api --service Example --proto testdata/test.proto",
@@ -388,6 +388,26 @@ func TestE2E_CLI(t *testing.T) {
 					}
 				}
 			},
+		},
+
+		// list command
+		"list packages without args": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "list",
+			args:        "",
+			expectedOut: `api.Example`,
+		},
+		"list packages with name format": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "list",
+			args:        "-o name",
+			expectedOut: `api.Example`,
+		},
+		"list packages with JSON format": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "list",
+			args:        "-o json",
+			expectedOut: `{ "services": [ { "service": "api.Example" } ] }`,
 		},
 	}
 	for name, c := range cases {

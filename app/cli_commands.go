@@ -41,7 +41,7 @@ func newCLIListCommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list [options ...]",
 		Aliases: []string{"ls", "show"},
-		Short:   "list packages, services, methods or messages",
+		Short:   "list services, methods or messages",
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
 			var dsn string
 			args := cmd.Flags().Args()
@@ -60,7 +60,6 @@ func newCLIListCommand(flags *flags, ui cui.UI) *cobra.Command {
 
 	f := cmd.Flags()
 	initFlagSet(f, ui.Writer())
-	// TODO: fix it.
 	f.StringVarP(&out, "output", "o", "name", `output format. one of "json" or "name".`)
 
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
