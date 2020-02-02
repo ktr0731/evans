@@ -17,7 +17,7 @@ func indirect(rv reflect.Value) reflect.Value {
 	return indirect(reflect.Indirect(rv))
 }
 
-func findSlice(rv reflect.Value) (_ reflect.Value, ok bool) {
+func findSlice(rv reflect.Value) (reflect.Value, bool) {
 	for i := 0; i < rv.NumField(); i++ {
 		sf := rv.Field(i)
 		if sf.Kind() == reflect.Slice {
