@@ -453,6 +453,7 @@ Options:
         --help, -h        display help text and exit (default "false")
 
 Available Commands:
-        call        call a RPC
+        call, c               call a RPC
+        list, ls, show        list packages, services, methods or messages
 
 `, meta.Version)

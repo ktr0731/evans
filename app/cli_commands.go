@@ -30,16 +30,17 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceUsage:  true,
 	}
 
-	bindCLIFlags(cmd.LocalFlags(), flags, ui.Writer())
+	bindCLICallFlags(cmd.Flags(), flags, ui.Writer())
 
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	return cmd
 }
 
 func newCLIListCommand(flags *flags, ui cui.UI) *cobra.Command {
+	var out string
 	cmd := &cobra.Command{
 		Use:     "list [options ...]",
-		Aliases: []string{"ls", "l", "show", "s"},
+		Aliases: []string{"ls", "show"},
 		Short:   "list packages, services, methods or messages",
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
 			var dsn string
@@ -47,7 +48,7 @@ func newCLIListCommand(flags *flags, ui cui.UI) *cobra.Command {
 			if len(args) > 0 {
 				dsn = args[0]
 			}
-			invoker := mode.NewListCLIInvoker(ui, dsn)
+			invoker := mode.NewListCLIInvoker(ui, dsn, out)
 			if err := mode.RunAsCLIMode(cfg.Config, invoker); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
 			}
@@ -57,7 +58,10 @@ func newCLIListCommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceUsage:  true,
 	}
 
-	bindCLIFlags(cmd.LocalFlags(), flags, ui.Writer())
+	f := cmd.Flags()
+	initFlagSet(f, ui.Writer())
+	// TODO: fix it.
+	f.StringVarP(&out, "output", "o", "name", `output format. one of "json" or "name".`)
 
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	return cmd

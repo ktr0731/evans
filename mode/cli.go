@@ -10,7 +10,9 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/fill"
+	"github.com/ktr0731/evans/present"
 	"github.com/ktr0731/evans/present/json"
+	"github.com/ktr0731/evans/present/name"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/go-multierror"
 	"github.com/mattn/go-isatty"
@@ -57,8 +59,19 @@ func NewCallCLIInvoker(ui cui.UI, rpcName, filePath string, headers config.Heade
 	}, nil
 }
 
-func NewListCLIInvoker(ui cui.UI, fqn string) CLIInvoker {
+func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 	return func(context.Context) error {
+		var presenter present.Presenter
+		switch format {
+		case "name":
+			presenter = name.NewPresenter()
+		case "json":
+			presenter = json.NewPresenter()
+		default:
+			presenter = name.NewPresenter()
+		}
+		usecase.InjectPartially(usecase.Dependencies{ResourcePresenter: presenter})
+
 		pkgs := make(map[string]struct{})
 		for _, p := range usecase.ListPackages() {
 			pkgs[p] = struct{}{}
