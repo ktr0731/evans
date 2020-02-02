@@ -37,7 +37,9 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 }
 
 func newCLIListCommand(flags *flags, ui cui.UI) *cobra.Command {
-	var out string
+	var (
+		out string
+	)
 	cmd := &cobra.Command{
 		Use:     "list [options ...]",
 		Aliases: []string{"ls", "show"},
@@ -60,7 +62,7 @@ func newCLIListCommand(flags *flags, ui cui.UI) *cobra.Command {
 
 	f := cmd.Flags()
 	initFlagSet(f, ui.Writer())
-	f.StringVarP(&out, "output", "o", "name", `output format. one of "json" or "name".`)
+	f.StringVarP(&out, "output", "o", "full", `output format. one of "json", "name" or "full".`)
 
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	return cmd

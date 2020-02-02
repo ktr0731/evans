@@ -81,7 +81,7 @@ func FullyQualifiedServiceName(pkgName, svcName string) (string, error) {
 	return strings.Join([]string{pkgName, svcName}, "."), nil
 }
 
-// FullyQualifiedRPCName returns the fully qualified RPC joined with '.' and '/'.
+// FullyQualifiedRPCName returns the fully qualified RPC joined with '.'.
 // pkgName is an optional value, but others are not.
 func FullyQualifiedRPCName(pkgName, svcName, rpcName string) (string, error) {
 	s, err := FullyQualifiedServiceName(pkgName, svcName)

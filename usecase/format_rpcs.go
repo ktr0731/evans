@@ -24,8 +24,8 @@ func (m *dependencyManager) FormatRPCs(p *FormatRPCsParams) (string, error) {
 
 	type rpc struct {
 		RPC          string `json:"rpc"`
-		RequestType  string `json:"request type" table:"request type"`
-		ResponseType string `json:"response type" table:"response type"`
+		RequestType  string `json:"request_type" table:"request type"`
+		ResponseType string `json:"response_type" table:"response type"`
 	}
 	var v struct {
 		RPCs []rpc `json:"rpcs"`
