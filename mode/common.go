@@ -48,13 +48,16 @@ func newGRPCClient(cfg *config.Config) (grpc.Client, error) {
 }
 
 func gRPCReflectionPackageFilteredPackages(pkgs []string) []string {
+	p := make([]string, len(pkgs))
+	copy(p, pkgs)
+
 	n := grpcreflection.ServiceName
-	for i := range pkgs {
-		if strings.HasPrefix(n, pkgs[i]) {
-			return append(pkgs[:i], pkgs[i+1:]...)
+	for i := range p {
+		if strings.HasPrefix(n, p[i]) {
+			return append(p[:i], p[i+1:]...)
 		}
 	}
-	return pkgs
+	return p
 }
 
 func setDefault(cfg *config.Config, spec idl.Spec) error {
@@ -86,5 +89,6 @@ func setDefault(cfg *config.Config, spec idl.Spec) error {
 			return errors.Wrapf(err, "failed to set '%s' as the default service", cfg.Default.Service)
 		}
 	}
+
 	return nil
 }
