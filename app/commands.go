@@ -204,9 +204,8 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-	f := cmd.LocalFlags()
+	f := cmd.Flags()
 	initFlagSet(f, ui.Writer())
-	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	cmd.AddCommand(
 		newCLICallCommand(flags, ui),
@@ -225,7 +224,7 @@ func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-	bindREPLFlags(cmd.LocalFlags(), flags, ui.Writer())
+	bindREPLFlags(cmd.Flags(), flags, ui.Writer())
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	return cmd
 }
@@ -265,7 +264,7 @@ func runREPLCommand(cfg *mergedConfig, ui cui.UI) error {
 	return nil
 }
 
-func bindCLIFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
+func bindCLICallFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	initFlagSet(f, w)
 	f.StringVarP(&flags.cli.file, "file", "f", "", "a script file that will be executed by (used only CLI mode)")
 	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
@@ -287,9 +286,13 @@ func printOptions(w io.Writer, f *pflag.FlagSet) {
 		logger.Printf("failed to write string: %s", err)
 	}
 	tw := tabwriter.NewWriter(w, 0, 8, 8, ' ', tabwriter.TabIndent)
+	var hasHelp bool
 	f.VisitAll(func(f *pflag.Flag) {
 		if f.Hidden {
 			return
+		}
+		if f.Name == "help" {
+			hasHelp = true
 		}
 		cmd := "--" + f.Name
 		if f.Shorthand != "" {
@@ -305,6 +308,12 @@ func printOptions(w io.Writer, f *pflag.FlagSet) {
 		}
 		fmt.Fprintf(tw, "        %s\t%s\n", cmd, usage)
 	})
+	// Always show --help text.
+	if !hasHelp {
+		cmd := "--help, -h"
+		usage := `display help text and exit (default "false")`
+		fmt.Fprintf(tw, "        %s\t%s\n", cmd, usage)
+	}
 	tw.Flush()
 }
 
@@ -335,7 +344,8 @@ func usageFunc(out io.Writer) func(*cobra.Command, []string) {
 				if c.Name() == "help" {
 					continue
 				}
-				fmt.Fprintf(w, "        %s\t%s\n", c.Name(), c.Short)
+				cmdAndAliases := append([]string{c.Name()}, c.Aliases...)
+				fmt.Fprintf(w, "        %s\t%s\n", strings.Join(cmdAndAliases, ", "), c.Short)
 			}
 			w.Flush()
 			fmt.Fprintf(out, "\n")
