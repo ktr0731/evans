@@ -61,12 +61,17 @@ func NewCallCLIInvoker(ui cui.UI, rpcName, filePath string, headers config.Heade
 }
 
 func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
+	const (
+		fname = "name"
+		ffull = "full"
+		fjson = "json"
+	)
 	return func(context.Context) error {
 		var presenter present.Presenter
 		switch format {
-		case "name", "full":
+		case fname, ffull:
 			presenter = name.NewPresenter()
-		case "json":
+		case fjson:
 			presenter = json.NewPresenter()
 		default:
 			presenter = name.NewPresenter()
@@ -88,7 +93,7 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 						return "", errors.Wrapf(err, "failed to use package '%s'", pkg)
 					}
 					svc, err := usecase.FormatServices(
-						&usecase.FormatServicesParams{FullyQualifiedName: format != "name"},
+						&usecase.FormatServicesParams{FullyQualifiedName: format != fname},
 					)
 					if err != nil {
 						return "", errors.Wrap(err, "failed to list services")
@@ -105,7 +110,7 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 					return "", errors.Wrapf(err, "failed to use service '%s'", svc)
 				}
 
-				rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: format != "name"})
+				rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: format != fname})
 				if err != nil {
 					return "", errors.Wrap(err, "failed to format RPCs")
 				}
@@ -126,7 +131,7 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 					return "", errors.Wrapf(err, "failed to use service '%s'", svc)
 				}
 
-				rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: format != "name"})
+				rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: format != fname})
 				if err != nil {
 					return "", errors.Wrap(err, "failed to format RPCs")
 				}
