@@ -422,6 +422,12 @@ func TestE2E_CLI(t *testing.T) {
 			args:        "-o name api.Example",
 			expectedOut: `BidiStreaming ClientStreaming ServerStreaming Unary UnaryBytes UnaryEnum UnaryHeader UnaryMap UnaryMapMessage UnaryMessage UnaryOneof UnaryRepeated UnaryRepeatedEnum UnaryRepeatedMessage UnarySelf`,
 		},
+		"list services with full and two protos": {
+			commonFlags: "--proto testdata/test.proto,testdata/empty_package.proto",
+			cmd:         "list",
+			args:        "-o full api.Example",
+			expectedOut: `api.Example.BidiStreaming api.Example.ClientStreaming api.Example.ServerStreaming api.Example.Unary api.Example.UnaryBytes api.Example.UnaryEnum api.Example.UnaryHeader api.Example.UnaryMap api.Example.UnaryMapMessage api.Example.UnaryMessage api.Example.UnaryOneof api.Example.UnaryRepeated api.Example.UnaryRepeatedEnum api.Example.UnaryRepeatedMessage api.Example.UnarySelf`,
+		},
 		"list services with JSON format": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "list",
