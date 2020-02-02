@@ -22,6 +22,8 @@ var (
 	ErrUnknownPackageName = errors.New("unknown package name")
 	ErrUnknownServiceName = errors.New("unknown service name")
 	ErrUnknownRPCName     = errors.New("unknown RPC name")
+
+	ErrInvalidRPCName = errors.New("invalid RPC name")
 )
 
 // Spec represents the interface specification from loaded IDL files.
@@ -77,6 +79,19 @@ func FullyQualifiedServiceName(pkgName, svcName string) (string, error) {
 		return svcName, nil
 	}
 	return strings.Join([]string{pkgName, svcName}, "."), nil
+}
+
+// FullyQualifiedRPCName returns the fully qualified RPC joined with '.' and '/'.
+// pkgName is an optional value, but others are not.
+func FullyQualifiedRPCName(pkgName, svcName, rpcName string) (string, error) {
+	s, err := FullyQualifiedServiceName(pkgName, svcName)
+	if err != nil {
+		return "", err
+	}
+	if rpcName == "" {
+		return "", ErrInvalidRPCName
+	}
+	return strings.Join([]string{s, rpcName}, "."), nil
 }
 
 // FullyQualifiedMessageName returns the fully qualified name joined with '.'.

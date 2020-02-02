@@ -10,6 +10,7 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/fill"
+	"github.com/ktr0731/evans/idl"
 	"github.com/ktr0731/evans/present"
 	"github.com/ktr0731/evans/present/json"
 	"github.com/ktr0731/evans/present/name"
@@ -76,7 +77,6 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 		for _, p := range usecase.ListPackages() {
 			pkgs[p] = struct{}{}
 		}
-		// singlePkg := len(pkgs) == 1
 		sp := strings.Split(fqn, ".")
 
 		out, err := func() (string, error) {
@@ -96,39 +96,41 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 					svcs = append(svcs, svc)
 				}
 				return strings.Join(svcs, "\n"), nil
-			// case len(sp) == 1 && singlePkg: // Package name or service name.
-			// 	if _, ok := pkgs[sp[0]]; ok {
-			// 		svc, err := usecase.FormatServices()
-			// 		if err != nil {
-			// 			return "", errors.Wrap(err, "failed to format services")
-			// 		}
-			// 		return svc, nil
-			// 	}
-			//
-			// 	// Check service name.
-			// 	svcs, err := usecase.ListServices(false)
-			// 	if err != nil {
-			// 		return "", errors.Wrap(err, "failed to list services")
-			// 	}
-			// 	for _, s := range svcs {
-			// 		if sp[0] == s {
-			// 			rpcs, err := usecase.FormatRPCs()
-			// 			if err != nil {
-			// 				return "", errors.Wrap(err, "failed to format methods")
-			// 			}
-			// 			return rpcs, nil
-			// 		}
-			// 	}
-			//
-			// 	// Check message name.
-			// 	panic("TODO")
-			//
-			case len(sp) == 1: // Package name.
-				svc, err := usecase.FormatServices(nil)
-				if err != nil {
-					return "", errors.Wrap(err, "failed to list services")
+
+			case len(sp) == 1 && isNoPackageService(sp[0]): // No package service name.
+				svc := sp[0]
+				if err := usecase.UseService(svc); errors.Cause(err) == idl.ErrUnknownServiceName {
+					return "", errors.Errorf("service name '%s' is not found", svc)
+				} else if err != nil {
+					return "", errors.Wrapf(err, "failed to use service '%s'", svc)
 				}
-				return svc, nil
+
+				rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: true})
+				if err != nil {
+					return "", errors.Wrap(err, "failed to format RPCs")
+				}
+				return rpcs, nil
+
+			case len(sp) >= 2: // Package name and service name.
+				pkg, svc := strings.Join(sp[:len(sp)-1], "."), sp[len(sp)-1]
+
+				if err := usecase.UsePackage(pkg); errors.Cause(err) == idl.ErrUnknownPackageName {
+					return "", errors.Errorf("package name '%s' is not found", pkg)
+				} else if err != nil {
+					return "", errors.Wrapf(err, "failed to use package '%s'", svc)
+				}
+
+				if err := usecase.UseService(svc); errors.Cause(err) == idl.ErrUnknownServiceName {
+					return "", errors.Errorf("service name '%s' is not found", svc)
+				} else if err != nil {
+					return "", errors.Wrapf(err, "failed to use service '%s'", svc)
+				}
+
+				rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: true})
+				if err != nil {
+					return "", errors.Wrap(err, "failed to format RPCs")
+				}
+				return rpcs, nil
 			}
 			return "", errors.Errorf("unknown fully-qualified name '%s'", fqn)
 		}()
@@ -184,4 +186,18 @@ func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 // IsCLIMode returns whether Evans is launched as CLI mode or not.
 func IsCLIMode(file string) bool {
 	return file != "" || (!isatty.IsTerminal(os.Stdin.Fd()) && !isatty.IsCygwinTerminal(os.Stdin.Fd()))
+}
+
+func isNoPackageService(n string) bool {
+	// It is not need to set package because it has no package.
+	svcs, err := usecase.ListServices()
+	if err != nil {
+		return false
+	}
+	for _, svc := range svcs {
+		if svc == n {
+			return true
+		}
+	}
+	return false
 }
