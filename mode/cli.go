@@ -76,46 +76,55 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 		for _, p := range usecase.ListPackages() {
 			pkgs[p] = struct{}{}
 		}
-		singlePkg := len(pkgs) == 1
+		// singlePkg := len(pkgs) == 1
 		sp := strings.Split(fqn, ".")
 
 		out, err := func() (string, error) {
 			switch {
 			case len(sp) == 1 && sp[0] == "": // Unspecified.
-				pkg, err := usecase.FormatPackages()
-				if err != nil {
-					return "", errors.Wrap(err, "failed to list packages")
-				}
-				return pkg, nil
-			case len(sp) == 1 && singlePkg: // Package name or service name.
-				if _, ok := pkgs[sp[0]]; ok {
-					svc, err := usecase.FormatServices()
+				var svcs []string
+				for _, pkg := range usecase.ListPackages() {
+					if err := usecase.UsePackage(pkg); err != nil {
+						return "", errors.Wrapf(err, "failed to use package '%s'", pkg)
+					}
+					svc, err := usecase.FormatServices(
+						&usecase.FormatServicesParams{FullyQualifiedName: true},
+					)
 					if err != nil {
-						return "", errors.Wrap(err, "failed to format services")
+						return "", errors.Wrap(err, "failed to list services")
 					}
-					return svc, nil
+					svcs = append(svcs, svc)
 				}
-
-				// Check service name.
-				svcs, err := usecase.ListServices()
-				if err != nil {
-					return "", errors.Wrap(err, "failed to list services")
-				}
-				for _, s := range svcs {
-					if sp[0] == s {
-						rpcs, err := usecase.FormatRPCs()
-						if err != nil {
-							return "", errors.Wrap(err, "failed to format methods")
-						}
-						return rpcs, nil
-					}
-				}
-
-				// Check message name.
-				panic("TODO")
-
+				return strings.Join(svcs, "\n"), nil
+			// case len(sp) == 1 && singlePkg: // Package name or service name.
+			// 	if _, ok := pkgs[sp[0]]; ok {
+			// 		svc, err := usecase.FormatServices()
+			// 		if err != nil {
+			// 			return "", errors.Wrap(err, "failed to format services")
+			// 		}
+			// 		return svc, nil
+			// 	}
+			//
+			// 	// Check service name.
+			// 	svcs, err := usecase.ListServices(false)
+			// 	if err != nil {
+			// 		return "", errors.Wrap(err, "failed to list services")
+			// 	}
+			// 	for _, s := range svcs {
+			// 		if sp[0] == s {
+			// 			rpcs, err := usecase.FormatRPCs()
+			// 			if err != nil {
+			// 				return "", errors.Wrap(err, "failed to format methods")
+			// 			}
+			// 			return rpcs, nil
+			// 		}
+			// 	}
+			//
+			// 	// Check message name.
+			// 	panic("TODO")
+			//
 			case len(sp) == 1: // Package name.
-				svc, err := usecase.FormatServices()
+				svc, err := usecase.FormatServices(nil)
 				if err != nil {
 					return "", errors.Wrap(err, "failed to list services")
 				}
@@ -163,28 +172,8 @@ func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 		},
 	)
 
-	// If the spec has only one package, mark it as the default package.
-	if cfg.Default.Package == "" {
-		if len(spec.PackageNames()) == 1 {
-			cfg.Default.Package = spec.PackageNames()[0]
-		}
-	}
-	if err := usecase.UsePackage(cfg.Default.Package); err != nil {
-		return errors.Wrapf(err, "failed to set '%s' as the default package", cfg.Default.Package)
-	}
-
-	// If the spec has only one service, mark it as the default service.
-	if cfg.Default.Service == "" {
-		svcNames, err := spec.ServiceNames(cfg.Default.Package)
-		if err != nil {
-			return errors.Wrapf(err, "failed to list services belong to package '%s'", cfg.Default.Package)
-		}
-		if len(svcNames) == 1 {
-			cfg.Default.Service = svcNames[0]
-		}
-	}
-	if err := usecase.UseService(cfg.Default.Service); err != nil {
-		return errors.Wrapf(err, "failed to set '%s' as the default service", cfg.Default.Service)
+	if err := setDefault(cfg, spec); err != nil {
+		return err
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

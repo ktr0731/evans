@@ -474,6 +474,6 @@ Options:
 
 Available Commands:
         call, c               call a RPC
-        list, ls, show        list packages, services, methods or messages
+        list, ls, show        list services, methods or messages
 
 `, meta.Version)
