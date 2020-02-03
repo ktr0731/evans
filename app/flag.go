@@ -10,14 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	usageFormat = `
-Usage: %s
-
-%s
-`
-)
-
 // flags defines available command line flags.
 type flags struct {
 	mode struct {

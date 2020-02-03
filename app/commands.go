@@ -312,7 +312,7 @@ func printOptions(w io.Writer, f *pflag.FlagSet) {
 	if !hasHelp {
 		cmd := "--help, -h"
 		usage := `display help text and exit (default "false")`
-		fmt.Fprintf(tw, "        %s\t%s\n", cmd, usage)
+		fmt.Fprintf(tw, "        %s\t%s", cmd, usage)
 	}
 	tw.Flush()
 }
@@ -332,9 +332,21 @@ func usageFunc(out io.Writer) func(*cobra.Command, []string) {
 		}
 
 		printVersion(out)
+		fmt.Fprint(out, "\n")
 		var buf bytes.Buffer
 		printOptions(&buf, cmd.LocalFlags())
-		fmt.Fprintf(out, usageFormat, strings.Join(shortUsages, " "), buf.String())
+		fmt.Fprintf(out, "Usage: %s\n\n", strings.Join(shortUsages, " "))
+		if cmd.Long != "" {
+			fmt.Fprint(out, cmd.Long)
+			fmt.Fprint(out, "\n\n")
+		}
+		if cmd.Example != "" {
+			fmt.Fprint(out, "Examples:\n")
+			fmt.Fprint(out, cmd.Example)
+			fmt.Fprint(out, "\n\n")
+		}
+		fmt.Fprint(out, buf.String())
+		fmt.Fprint(out, "\n\n")
 
 		if len(cmd.Commands()) > 0 {
 			fmt.Fprintf(out, "Available Commands:\n")

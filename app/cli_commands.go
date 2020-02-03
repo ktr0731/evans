@@ -1,6 +1,8 @@
 package app
 
 import (
+	"strings"
+
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/mode"
 	"github.com/pkg/errors"
@@ -12,6 +14,7 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 		Use:     "call [options ...] <method>",
 		Aliases: []string{"c"},
 		Short:   "call a RPC",
+		Long:    `call invokes a RPC based on the passed method name.`,
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
 			args := cmd.Flags().Args()
 			if len(args) == 0 {
@@ -41,9 +44,17 @@ func newCLIListCommand(flags *flags, ui cui.UI) *cobra.Command {
 		out string
 	)
 	cmd := &cobra.Command{
-		Use:     "list [options ...]",
+		Use:     "list [options ...] [fully-qualified service name]",
 		Aliases: []string{"ls", "show"},
 		Short:   "list services, methods or messages",
+		Long: `list provides listing feature against to gRPC services or RPCs belong to a service.
+If a fully-qualified service name (in the form of <package name>.<service name>),
+list lists RPC names belong to the service. If not, list lists all services.`,
+		Example: strings.Join([]string{
+			"        $ evans -r cli list             # list all services",
+			"        $ evans -r cli list -o json     # list all services with JSON format",
+			`        $ evans -r cli list api.Service # list all RPCs belong to service "api.Service"`,
+		}, "\n"),
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
 			var dsn string
 			args := cmd.Flags().Args()
