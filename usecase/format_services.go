@@ -13,7 +13,7 @@ type FormatServicesParams struct {
 	FullyQualifiedName bool
 }
 
-// FormatServices formats all package names.
+// FormatServices formats all service names the spec loaded.
 func FormatServices(p *FormatServicesParams) (string, error) {
 	return dm.FormatServices(p)
 }

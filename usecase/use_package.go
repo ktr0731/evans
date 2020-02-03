@@ -15,7 +15,7 @@ func UsePackage(pkgName string) error {
 	return dm.UsePackage(pkgName)
 }
 func (m *dependencyManager) UsePackage(pkgName string) error {
-	_, err := m.listServices(pkgName)
+	_, err := m.listServicesOld(pkgName)
 	if err == idl.ErrPackageUnselected {
 		return errors.Errorf("invalid package name '%s'", pkgName)
 	}

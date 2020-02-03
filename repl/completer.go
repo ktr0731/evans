@@ -58,7 +58,7 @@ func (c *completer) Complete(d prompt.Document) (s []*prompt.Suggest) {
 		if len(args) != 2 {
 			return nil
 		}
-		svcs, err := usecase.ListServices()
+		svcs, err := usecase.ListServicesOld()
 		if err != nil {
 			return nil
 		}
@@ -82,7 +82,7 @@ func (c *completer) Complete(d prompt.Document) (s []*prompt.Suggest) {
 		if len(args) != 2 {
 			return nil
 		}
-		svcs, err := usecase.ListServices()
+		svcs, err := usecase.ListServicesOld()
 		if err != nil {
 			return nil
 		}
