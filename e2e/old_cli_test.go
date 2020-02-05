@@ -32,6 +32,9 @@ func TestE2E_OldCLI(t *testing.T) {
 		// The server uses gRPC-Web protocol.
 		web bool
 
+		// Register a service that has no package.
+		registerEmptyPackageService bool
+
 		// beforeTest set up a testcase specific environment.
 		// If beforeTest is nil, it is ignored.
 		// beforeTest may return a function named afterTest that cleans up
@@ -303,7 +306,7 @@ func TestE2E_OldCLI(t *testing.T) {
 	for name, c := range cases {
 		c := c
 		t.Run(name, func(t *testing.T) {
-			stopServer, port := startServer(t, c.tls, c.reflection, c.web)
+			stopServer, port := startServer(t, c.tls, c.reflection, c.web, c.registerEmptyPackageService)
 			defer stopServer()
 
 			outBuf, eoutBuf := new(bytes.Buffer), new(bytes.Buffer)

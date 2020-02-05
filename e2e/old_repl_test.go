@@ -52,6 +52,9 @@ func TestE2E_OldREPL(t *testing.T) {
 		// The server uses gRPC-Web protocol.
 		web bool
 
+		// Register a service that has no package.
+		registerEmptyPackageService bool
+
 		// The exit code we expected.
 		expectedCode int
 
@@ -281,7 +284,7 @@ func TestE2E_OldREPL(t *testing.T) {
 	for name, c := range cases {
 		c := c
 		t.Run(name, func(t *testing.T) {
-			stopServer, port := startServer(t, c.tls, c.reflection, c.web)
+			stopServer, port := startServer(t, c.tls, c.reflection, c.web, c.registerEmptyPackageService)
 			defer stopServer()
 
 			stubPrompt := &stubPrompt{
