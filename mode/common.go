@@ -60,12 +60,12 @@ func gRPCReflectionPackageFilteredPackages(pkgNames []string) []string {
 	return pkgs
 }
 
-func setDefault(cfg *config.Config, spec idl.Spec) error {
+func setDefault(cfg *config.Config) error {
 	// If the spec has only one package, mark it as the default package.
 	if cfg.Default.Package == "" {
-		pkgs := gRPCReflectionPackageFilteredPackages(spec.PackageNames())
+		pkgs := gRPCReflectionPackageFilteredPackages(usecase.ListPackages())
 		if len(pkgs) == 1 {
-			cfg.Default.Package = spec.PackageNames()[0]
+			cfg.Default.Package = pkgs[0]
 		}
 	}
 	if cfg.Default.Package != "" {

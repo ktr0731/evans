@@ -27,10 +27,6 @@ var (
 
 // Spec represents the interface specification from loaded IDL files.
 type Spec interface {
-	// PackageNames returns all package names. The returned slice is ordered by ascending order.
-	// Deprecated: PackageNames is dropped in the nearly future.
-	PackageNames() []string
-
 	// ServiceNames returns all service names the spec loaded.
 	// Service names are fully-qualified (the form of <package>.<service> in Protocol Buffers3).
 	// The returned slice is ordered by ascending order.

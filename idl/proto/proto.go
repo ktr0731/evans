@@ -25,10 +25,6 @@ type spec struct {
 	msgDescs map[string]*desc.MessageDescriptor
 }
 
-func (s *spec) PackageNames() []string {
-	return s.pkgNames
-}
-
 func (s *spec) ServiceNames() []string {
 	svcNames := make([]string, len(s.svcDescs))
 	for i, d := range s.svcDescs {

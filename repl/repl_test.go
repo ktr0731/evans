@@ -116,11 +116,8 @@ func TestREPL_makePrefix(t *testing.T) {
 			Server: &config.Server{Host: "127.0.0.1", Port: "50051"},
 		}
 		dummySpec := &SpecMock{
-			PackageNamesFunc: func() []string {
-				return []string{"api"}
-			},
 			ServiceNamesFunc: func() []string {
-				return nil
+				return []string{"api.Example"}
 			},
 			RPCsFunc: func(svcName string) ([]*grpc.RPC, error) {
 				return nil, c.RPCsErr

@@ -69,7 +69,7 @@ func RunAsCLIMode(cfg *config.Config, endpoint, file string, ui cui.UI) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := setDefault(cfg, spec); err != nil {
+	if err := setDefault(cfg); err != nil {
 		return err
 	}
 
