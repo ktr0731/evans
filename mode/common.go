@@ -51,9 +51,9 @@ func gRPCReflectionPackageFilteredPackages(pkgNames []string) []string {
 	pkgs := make([]string, len(pkgNames))
 	copy(pkgs, pkgNames)
 
-	n := grpcreflection.ServiceName
+	n := grpcreflection.ServiceName[:strings.LastIndex(grpcreflection.ServiceName, ".")]
 	for i := range pkgs {
-		if strings.HasPrefix(n, pkgs[i]) {
+		if n == pkgs[i] {
 			return append(pkgs[:i], pkgs[i+1:]...)
 		}
 	}
