@@ -16,8 +16,10 @@ import (
 )
 
 var (
+	ErrPackageUnselected = errors.New("package unselected")
 	ErrServiceUnselected = errors.New("service unselected")
 
+	ErrUnknownPackageName = errors.New("unknown package name")
 	ErrUnknownServiceName = errors.New("unknown service name")
 	ErrUnknownRPCName     = errors.New("unknown RPC name")
 	ErrUnknownMessageName = errors.New("unknown message name")
@@ -25,10 +27,14 @@ var (
 
 // Spec represents the interface specification from loaded IDL files.
 type Spec interface {
+	// PackageNames returns all package names. The returned slice is ordered by ascending order.
+	// Deprecated: PackageNames is dropped in the nearly future.
+	PackageNames() []string
+
 	// ServiceNames returns all service names the spec loaded.
 	// Service names are fully-qualified (the form of <package>.<service> in Protocol Buffers3).
 	// The returned slice is ordered by ascending order.
-	ServiceNames() ([]string, error)
+	ServiceNames() []string
 
 	// RPCs returns all RPC names belongs to the passed fully-qualified service name svcName.
 	// RPCs may return these errors:

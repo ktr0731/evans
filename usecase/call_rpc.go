@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/ktr0731/evans/idl/proto"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 	gogrpc "google.golang.org/grpc"
@@ -17,7 +18,8 @@ func CallRPC(ctx context.Context, w io.Writer, rpcName string) error {
 	return dm.CallRPC(ctx, w, rpcName)
 }
 func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName string) error {
-	rpc, err := m.spec.RPC(m.state.selectedPackage, m.state.selectedService, rpcName)
+	fqsn := proto.FullyQualifiedServiceName(m.state.selectedPackage, m.state.selectedService)
+	rpc, err := m.spec.RPC(fqsn, rpcName)
 	if err != nil {
 		return errors.Wrap(err, "failed to get the RPC descriptor")
 	}

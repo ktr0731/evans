@@ -11,10 +11,7 @@ func FormatRPCs() (string, error) {
 	return dm.FormatRPCs()
 }
 func (m *dependencyManager) FormatRPCs() (string, error) {
-	svcs, err := m.ListServices()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to list services belong to the package")
-	}
+	svcs := m.ListServices()
 	type rpc struct {
 		RPC          string `json:"rpc"`
 		RequestType  string `json:"request type" table:"request type"`

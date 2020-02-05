@@ -47,7 +47,10 @@ func newGRPCClient(cfg *config.Config) (grpc.Client, error) {
 	return client, nil
 }
 
-func gRPCReflectionPackageFilteredPackages(pkgs []string) []string {
+func gRPCReflectionPackageFilteredPackages(pkgNames []string) []string {
+	pkgs := make([]string, len(pkgNames))
+	copy(pkgs, pkgNames)
+
 	n := grpcreflection.ServiceName
 	for i := range pkgs {
 		if strings.HasPrefix(n, pkgs[i]) {
@@ -73,10 +76,7 @@ func setDefault(cfg *config.Config, spec idl.Spec) error {
 
 	// If the spec has only one service, mark it as the default service.
 	if cfg.Default.Package != "" && cfg.Default.Service == "" {
-		svcNames, err := spec.ServiceNames(cfg.Default.Package)
-		if err != nil {
-			return errors.Wrapf(err, "failed to list services belong to package '%s'", cfg.Default.Package)
-		}
+		svcNames := usecase.ListServices()
 		if len(svcNames) == 1 {
 			cfg.Default.Service = svcNames[0]
 		}

@@ -41,10 +41,7 @@ func TestSpec(t *testing.T) {
 				spec := c.newNormalSpec(t)
 
 				t.Run("ServiceNames", func(t *testing.T) {
-					actualServiceNames, err := spec.ServiceNames()
-					if err != nil {
-						t.Fatalf("must have a service, but couldn't get it: '%s'", err)
-					}
+					actualServiceNames := spec.ServiceNames()
 					expectedServiceNames := []string{"api.Example"}
 					if diff := cmp.Diff(expectedServiceNames, actualServiceNames); diff != "" {
 						t.Errorf("ServiceNames returned unexpected service names:\n%s", diff)
@@ -120,10 +117,7 @@ func TestSpec(t *testing.T) {
 				spec := c.newEmptyPackageSpec(t)
 
 				t.Run("ServiceNames", func(t *testing.T) {
-					actualServiceNames, err := spec.ServiceNames()
-					if err != nil {
-						t.Fatalf("ServiceNames must not return error because package is unspecified, but got '%s'", err)
-					}
+					actualServiceNames := spec.ServiceNames()
 					expectedServiceNames := []string{"Example"}
 					if diff := cmp.Diff(expectedServiceNames, actualServiceNames); diff != "" {
 						t.Errorf("ServiceNames returned unexpected service names:\n%s", diff)

@@ -87,10 +87,9 @@ func TestREPL_printSplash(t *testing.T) {
 
 func TestREPL_makePrefix(t *testing.T) {
 	cases := map[string]struct {
-		pkgName         string
-		svcName         string
-		ServiceNamesErr error
-		RPCsErr         error
+		pkgName string
+		svcName string
+		RPCsErr error
 
 		hasErr   bool
 		expected string
@@ -101,11 +100,6 @@ func TestREPL_makePrefix(t *testing.T) {
 			pkgName:  "api",
 			svcName:  "Example",
 			expected: "api.Example@127.0.0.1:50051> ",
-		},
-		"New returns an error (ServiceNames returns it)": {
-			pkgName:         "api",
-			ServiceNamesErr: errors.New("an error"),
-			hasErr:          true,
 		},
 		"New returns an error (RPCs returns it)": {
 			pkgName: "api",
@@ -122,10 +116,13 @@ func TestREPL_makePrefix(t *testing.T) {
 			Server: &config.Server{Host: "127.0.0.1", Port: "50051"},
 		}
 		dummySpec := &SpecMock{
-			ServiceNamesFunc: func(pkgName string) ([]string, error) {
-				return nil, c.ServiceNamesErr
+			PackageNamesFunc: func() []string {
+				return []string{"api"}
 			},
-			RPCsFunc: func(pkgName string, svcName string) ([]*grpc.RPC, error) {
+			ServiceNamesFunc: func() []string {
+				return nil
+			},
+			RPCsFunc: func(svcName string) ([]*grpc.RPC, error) {
 				return nil, c.RPCsErr
 			},
 		}

@@ -26,7 +26,7 @@ type dependencyManager struct {
 
 // state has the domain state modified by each usecase logic. The default value is used as the initial value.
 type state struct {
-	selectedPackage string
+	selectedPackage string // TODO: remove in v1.0.0.
 	selectedService string
 }
 

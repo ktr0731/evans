@@ -3,6 +3,8 @@ package proto
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/protoparse"
@@ -14,6 +16,7 @@ import (
 )
 
 type spec struct {
+	pkgNames []string
 	// Loaded service descriptors.
 	svcDescs []*desc.ServiceDescriptor
 	// key: fully qualified service name, val: method descriptors belong to the service.
@@ -22,12 +25,16 @@ type spec struct {
 	msgDescs map[string]*desc.MessageDescriptor
 }
 
-func (s *spec) ServiceNames() ([]string, error) {
+func (s *spec) PackageNames() []string {
+	return s.pkgNames
+}
+
+func (s *spec) ServiceNames() []string {
 	svcNames := make([]string, len(s.svcDescs))
 	for i, d := range s.svcDescs {
 		svcNames[i] = d.GetFullyQualifiedName()
 	}
-	return svcNames, nil
+	return svcNames
 }
 
 func (s *spec) RPCs(svcName string) ([]*grpc.RPC, error) {
@@ -129,12 +136,18 @@ func LoadByReflection(client grpcreflection.Client) (idl.Spec, error) {
 
 func newSpec(fds []*desc.FileDescriptor) idl.Spec {
 	var (
+		encounteredPkgs = make(map[string]interface{})
 		encounteredSvcs = make(map[string]interface{})
+		pkgNames        []string
 		svcDescs        []*desc.ServiceDescriptor
 		rpcDescs        = make(map[string][]*desc.MethodDescriptor)
 		msgDescs        = make(map[string]*desc.MessageDescriptor)
 	)
 	for _, f := range fds {
+		if _, encountered := encounteredPkgs[f.GetPackage()]; !encountered {
+			pkgNames = append(pkgNames, f.GetPackage())
+			encounteredPkgs[f.GetPackage()] = nil
+		}
 		for _, svc := range f.GetServices() {
 			fqsn := svc.GetFullyQualifiedName()
 			if _, encountered := encounteredSvcs[fqsn]; !encountered {
@@ -149,9 +162,36 @@ func newSpec(fds []*desc.FileDescriptor) idl.Spec {
 		}
 	}
 
+	sort.Slice(pkgNames, func(i, j int) bool {
+		return pkgNames[i] < pkgNames[j]
+	})
+
 	return &spec{
+		pkgNames: pkgNames,
 		svcDescs: svcDescs,
 		rpcDescs: rpcDescs,
 		msgDescs: msgDescs,
 	}
+}
+
+// FullyQualifiedServiceName returns the fully-qualified service name.
+func FullyQualifiedServiceName(pkg, svc string) string {
+	var s []string
+	if pkg != "" {
+		s = []string{pkg, svc}
+	} else {
+		s = []string{svc}
+	}
+	return strings.Join(s, ".")
+}
+
+// FullyQualifiedMessageName returns the fully-qualified message name.
+func FullyQualifiedMessageName(pkg, msg string) string {
+	var s []string
+	if pkg != "" {
+		s = []string{pkg, msg}
+	} else {
+		s = []string{msg}
+	}
+	return strings.Join(s, ".")
 }
