@@ -74,6 +74,11 @@ func TestE2E_OldREPL(t *testing.T) {
 			args:  "testdata/test.proto",
 			input: []interface{}{"service Example", "call Unary", "kaguya"},
 		},
+		"call Unary by selecting only service (empty package)": {
+			args:                        "testdata/empty_package.proto",
+			registerEmptyPackageService: true,
+			input:                       []interface{}{"service EmptyPackageService", "call Unary", "kaguya"},
+		},
 		"call Unary by specifying --service": {
 			args:  "--service Example testdata/test.proto",
 			input: []interface{}{"call Unary", "kaguya"},
