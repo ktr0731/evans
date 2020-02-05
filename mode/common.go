@@ -66,25 +66,35 @@ func setDefault(cfg *config.Config) error {
 		pkgs := gRPCReflectionPackageFilteredPackages(usecase.ListPackages())
 		if len(pkgs) == 1 {
 			cfg.Default.Package = pkgs[0]
-		}
-	}
-	if cfg.Default.Package != "" {
-		if err := usecase.UsePackage(cfg.Default.Package); err != nil {
-			return errors.Wrapf(err, "failed to set '%s' as the default package", cfg.Default.Package)
+		} else {
+			hasEmptyPackage := func() bool {
+				for _, pkg := range pkgs {
+					if pkg == "" {
+						return true
+					}
+				}
+				return false
+			}
+			if !hasEmptyPackage() {
+				return nil
+			}
 		}
 	}
 
-	// If the spec has only one service, mark it as the default service.
-	if cfg.Default.Package != "" && cfg.Default.Service == "" {
-		svcNames := usecase.ListServices()
-		if len(svcNames) == 1 {
-			cfg.Default.Service = svcNames[0]
-		}
+	if err := usecase.UsePackage(cfg.Default.Package); err != nil {
+		return errors.Wrapf(err, "failed to set '%s' as the default package", cfg.Default.Package)
 	}
-	if cfg.Default.Service != "" {
-		if err := usecase.UseService(cfg.Default.Service); err != nil {
-			return errors.Wrapf(err, "failed to set '%s' as the default service", cfg.Default.Service)
+
+	// If the spec has only one service, mark it as the default service.
+	if cfg.Default.Service == "" {
+		svcNames := usecase.ListServices()
+		if len(svcNames) != 1 {
+			return nil
 		}
+		cfg.Default.Service = svcNames[0]
+	}
+	if err := usecase.UseService(cfg.Default.Service); err != nil {
+		return errors.Wrapf(err, "failed to set '%s' as the default service", cfg.Default.Service)
 	}
 	return nil
 }

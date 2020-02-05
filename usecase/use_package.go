@@ -15,6 +15,7 @@ func (m *dependencyManager) UsePackage(pkgName string) error {
 	for _, pkg := range ListPackages() {
 		if pkg == pkgName {
 			m.state.selectedPackage = pkgName
+			m.state.selectedService = ""
 			return nil
 		}
 	}
