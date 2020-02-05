@@ -39,17 +39,8 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// TODO: remove duplication
-	// TODO: signal handling
-	if cfg.Default.Package == "" && len(usecase.ListPackages()) == 1 {
-		cfg.Default.Package = usecase.PackageNames()[0]
-	}
-
-	if cfg.Default.Service == "" && len(usecase.ListPackages()) == 1 {
-		svcNames, err := usecase.ListServices(cfg.Default.Package)
-		if err == nil && len(svcNames) == 1 {
-			cfg.Default.Service = svcNames[0]
-		}
+	if err := setDefault(cfg, spec); err != nil {
+		return err
 	}
 
 	for k, v := range cfg.Request.Header {
