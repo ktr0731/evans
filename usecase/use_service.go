@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"strings"
+
 	"github.com/ktr0731/evans/idl"
 	"github.com/pkg/errors"
 )
@@ -16,18 +18,29 @@ func UseService(svcName string) error {
 	return dm.UseService(svcName)
 }
 func (m *dependencyManager) UseService(svcName string) error {
-	for _, pkg := range ListPackages() {
-		if pkg == m.state.selectedPackage {
-			_, err := m.listRPCs(m.state.selectedPackage, svcName)
-			if err == idl.ErrServiceUnselected {
-				return errors.Errorf("invalid service name '%s'", svcName)
+	if svcName == "" {
+		return errors.Errorf("invalid service name '%s'", svcName)
+	}
+	var hasPackage bool
+	for _, fqsn := range m.spec.ServiceNames() {
+		i := strings.LastIndex(fqsn, ".")
+		var pkg, svc string
+		if i == -1 {
+			svc = fqsn
+		} else {
+			pkg, svc = fqsn[:i], fqsn[i+1:]
+		}
+		if m.state.selectedPackage == pkg {
+			hasPackage = true
+			if svcName == svc {
+				m.state.selectedService = svcName
+				return nil
 			}
-			if err != nil {
-				return errors.Wrapf(err, "cannot use service '%s'", svcName)
-			}
-			m.state.selectedService = svcName
-			return nil
 		}
 	}
+	if hasPackage {
+		return idl.ErrUnknownServiceName
+	}
+	// In the case of empty package.
 	return idl.ErrPackageUnselected
 }
