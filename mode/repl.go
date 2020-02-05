@@ -41,12 +41,12 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 
 	// TODO: remove duplication
 	// TODO: signal handling
-	if cfg.Default.Package == "" && len(spec.PackageNames()) == 1 {
-		cfg.Default.Package = spec.PackageNames()[0]
+	if cfg.Default.Package == "" && len(usecase.ListPackages()) == 1 {
+		cfg.Default.Package = usecase.PackageNames()[0]
 	}
 
-	if cfg.Default.Service == "" && len(spec.PackageNames()) == 1 {
-		svcNames, err := spec.ServiceNames(cfg.Default.Package)
+	if cfg.Default.Service == "" && len(usecase.ListPackages()) == 1 {
+		svcNames, err := usecase.ListServices(cfg.Default.Package)
 		if err == nil && len(svcNames) == 1 {
 			cfg.Default.Service = svcNames[0]
 		}
