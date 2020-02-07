@@ -15,7 +15,6 @@ import (
 	"github.com/ktr0731/evans/grpc"
 	"github.com/ktr0731/evans/prompt"
 	"github.com/ktr0731/evans/usecase"
-	"github.com/pkg/errors"
 )
 
 func TestREPL_helpText(t *testing.T) {
@@ -100,12 +99,6 @@ func TestREPL_makePrefix(t *testing.T) {
 			pkgName:  "api",
 			svcName:  "Example",
 			expected: "api.Example@127.0.0.1:50051> ",
-		},
-		"New returns an error (RPCs returns it)": {
-			pkgName: "api",
-			svcName: "Example",
-			RPCsErr: errors.New("an error"),
-			hasErr:  true,
 		},
 	}
 
