@@ -16,7 +16,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const reflectionServiceName = "grpc.reflection.v1alpha.ServerReflection"
+// ServiceName represents the gRPC reflection service name.
+const ServiceName = "grpc.reflection.v1alpha.ServerReflection"
 
 var ErrTLSHandshakeFailed = errors.New("TLS handshake failed")
 
@@ -65,9 +66,6 @@ func (c *client) ListPackages() ([]*desc.FileDescriptor, error) {
 
 	fds := make([]*desc.FileDescriptor, 0, len(ssvcs))
 	for _, s := range ssvcs {
-		if s == reflectionServiceName {
-			continue
-		}
 		svc, err := c.client.ResolveService(s)
 		if err != nil {
 			return nil, err

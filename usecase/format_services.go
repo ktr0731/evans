@@ -11,10 +11,7 @@ func FormatServices() (string, error) {
 	return dm.FormatServices()
 }
 func (m *dependencyManager) FormatServices() (string, error) {
-	svcs, err := m.ListServices()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to list services")
-	}
+	svcs := m.ListServices()
 	type service struct {
 		Service      string `json:"service"`
 		RPC          string `json:"rpc"`

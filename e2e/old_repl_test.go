@@ -52,6 +52,9 @@ func TestE2E_OldREPL(t *testing.T) {
 		// The server uses gRPC-Web protocol.
 		web bool
 
+		// Register a service that has no package.
+		registerEmptyPackageService bool
+
 		// The exit code we expected.
 		expectedCode int
 
@@ -70,6 +73,11 @@ func TestE2E_OldREPL(t *testing.T) {
 		"call Unary by selecting only service": {
 			args:  "testdata/test.proto",
 			input: []interface{}{"service Example", "call Unary", "kaguya"},
+		},
+		"call Unary by selecting only service (empty package)": {
+			args:                        "testdata/empty_package.proto",
+			registerEmptyPackageService: true,
+			input:                       []interface{}{"service EmptyPackageService", "call Unary", "kaguya"},
 		},
 		"call Unary by specifying --service": {
 			args:  "--service Example testdata/test.proto",
@@ -281,7 +289,7 @@ func TestE2E_OldREPL(t *testing.T) {
 	for name, c := range cases {
 		c := c
 		t.Run(name, func(t *testing.T) {
-			stopServer, port := startServer(t, c.tls, c.reflection, c.web)
+			stopServer, port := startServer(t, c.tls, c.reflection, c.web, c.registerEmptyPackageService)
 			defer stopServer()
 
 			stubPrompt := &stubPrompt{

@@ -1,6 +1,9 @@
 package usecase
 
-import "github.com/pkg/errors"
+import (
+	"github.com/ktr0731/evans/idl/proto"
+	"github.com/pkg/errors"
+)
 
 // GetTypeDescriptor gets the descriptor of a type which belongs to the currently selected package.
 func GetTypeDescriptor(typeName string) (interface{}, error) {
@@ -11,7 +14,8 @@ func (m *dependencyManager) GetTypeDescriptor(typeName string) (interface{}, err
 	if pkgName == "" {
 		pkgName = "''"
 	}
-	d, err := m.spec.TypeDescriptor(pkgName, typeName)
+	fqmn := proto.FullyQualifiedMessageName(pkgName, typeName)
+	d, err := m.spec.TypeDescriptor(fqmn)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get the type descriptor of '%s'", typeName)
 	}

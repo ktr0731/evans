@@ -15,7 +15,6 @@ import (
 	"github.com/ktr0731/evans/grpc"
 	"github.com/ktr0731/evans/prompt"
 	"github.com/ktr0731/evans/usecase"
-	"github.com/pkg/errors"
 )
 
 func TestREPL_helpText(t *testing.T) {
@@ -87,10 +86,9 @@ func TestREPL_printSplash(t *testing.T) {
 
 func TestREPL_makePrefix(t *testing.T) {
 	cases := map[string]struct {
-		pkgName         string
-		svcName         string
-		ServiceNamesErr error
-		RPCsErr         error
+		pkgName string
+		svcName string
+		RPCsErr error
 
 		hasErr   bool
 		expected string
@@ -102,17 +100,6 @@ func TestREPL_makePrefix(t *testing.T) {
 			svcName:  "Example",
 			expected: "api.Example@127.0.0.1:50051> ",
 		},
-		"New returns an error (ServiceNames returns it)": {
-			pkgName:         "api",
-			ServiceNamesErr: errors.New("an error"),
-			hasErr:          true,
-		},
-		"New returns an error (RPCs returns it)": {
-			pkgName: "api",
-			svcName: "Example",
-			RPCsErr: errors.New("an error"),
-			hasErr:  true,
-		},
 	}
 
 	for name, c := range cases {
@@ -122,10 +109,10 @@ func TestREPL_makePrefix(t *testing.T) {
 			Server: &config.Server{Host: "127.0.0.1", Port: "50051"},
 		}
 		dummySpec := &SpecMock{
-			ServiceNamesFunc: func(pkgName string) ([]string, error) {
-				return nil, c.ServiceNamesErr
+			ServiceNamesFunc: func() []string {
+				return []string{"api.Example"}
 			},
-			RPCsFunc: func(pkgName string, svcName string) ([]*grpc.RPC, error) {
+			RPCsFunc: func(svcName string) ([]*grpc.RPC, error) {
 				return nil, c.RPCsErr
 			},
 		}

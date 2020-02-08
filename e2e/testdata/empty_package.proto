@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+service EmptyPackageService {
+  rpc Unary (SimpleRequest) returns (SimpleResponse) {}
+}
+
+message SimpleRequest {
+  string name = 1;
+}
+
+message SimpleResponse {
+  string message = 1;
+}

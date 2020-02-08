@@ -36,20 +36,6 @@ func RunAsCLIMode(cfg *config.Config, endpoint, file string, ui cui.UI) error {
 	filler := fill.NewSilentFiller(in)
 	// TODO: parse package and service from call.
 
-	invoker := func(ctx context.Context) error {
-		for k, v := range cfg.Request.Header {
-			for _, vv := range v {
-				usecase.AddHeader(k, vv)
-			}
-		}
-
-		err := usecase.CallRPC(ctx, ui.Writer(), endpoint)
-		if err != nil {
-			return errors.Wrapf(err, "failed to call RPC '%s'", endpoint)
-		}
-		return nil
-	}
-
 	// Common dependencies.
 
 	var injectResult error
@@ -80,31 +66,27 @@ func RunAsCLIMode(cfg *config.Config, endpoint, file string, ui cui.UI) error {
 		json.NewPresenter(),
 		json.NewPresenter(),
 	)
-
-	// If the spec has only one package, mark it as the default package.
-	if cfg.Default.Package == "" && len(spec.PackageNames()) == 1 {
-		cfg.Default.Package = spec.PackageNames()[0]
-	}
-	if err := usecase.UsePackage(cfg.Default.Package); err != nil {
-		return errors.Wrapf(err, "failed to set '%s' as the default package", cfg.Default.Package)
-	}
-
-	// If the spec has only one service, mark it as the default service.
-	if cfg.Default.Service == "" {
-		svcNames, err := spec.ServiceNames(cfg.Default.Package)
-		if err != nil {
-			return errors.Wrapf(err, "failed to list services belong to package '%s'", cfg.Default.Package)
-		}
-		if len(svcNames) == 1 {
-			cfg.Default.Service = svcNames[0]
-		}
-	}
-	if err := usecase.UseService(cfg.Default.Service); err != nil {
-		return errors.Wrapf(err, "failed to set '%s' as the default service", cfg.Default.Service)
-	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	if err := setDefault(cfg); err != nil {
+		return err
+	}
+
+	invoker := func(ctx context.Context) error {
+		for k, v := range cfg.Request.Header {
+			for _, vv := range v {
+				usecase.AddHeader(k, vv)
+			}
+		}
+
+		err := usecase.CallRPC(ctx, ui.Writer(), endpoint)
+		if err != nil {
+			return errors.Wrapf(err, "failed to call RPC '%s'", endpoint)
+		}
+		return nil
+	}
+
 	return invoker(ctx)
 }
 

@@ -11,10 +11,7 @@ func FormatMessages() (string, error) {
 	return dm.FormatMessages()
 }
 func (m *dependencyManager) FormatMessages() (string, error) {
-	svcs, err := m.ListServices()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to list services belong to the package")
-	}
+	svcs := m.ListServices()
 	type message struct {
 		Message string `json:"message"`
 	}

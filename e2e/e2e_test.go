@@ -52,10 +52,10 @@ func TestMain(m *testing.M) {
 	cleanup2 := setEnv("XDG_CACHE_HOME", cacheDir)
 	defer cleanup2()
 
-	goleak.VerifyTestMain(m)
+	goleak.VerifyTestMain(m, goleak.IgnoreTopFunction("github.com/desertbit/timer.timerRoutine"))
 }
 
-func startServer(t *testing.T, useTLS, useReflection, useWeb bool) (func(), string) {
+func startServer(t *testing.T, useTLS, useReflection, useWeb, registerEmptyPackageService bool) (func(), string) {
 	t.Helper()
 
 	port, err := freeport.GetFreePort()
@@ -73,6 +73,9 @@ func startServer(t *testing.T, useTLS, useReflection, useWeb bool) (func(), stri
 	}
 	if useWeb {
 		opts = append(opts, server.WithProtocol(server.ProtocolImprobableGRPCWeb))
+	}
+	if registerEmptyPackageService {
+		opts = append(opts, server.WithEmptyPackageService())
 	}
 
 	srv := server.New(opts...)
