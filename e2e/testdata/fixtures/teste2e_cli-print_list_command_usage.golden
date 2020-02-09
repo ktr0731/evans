@@ -1,0 +1,17 @@
+evans 0.8.5
+
+Usage: evans [global options ...] cli list [options ...] [fully-qualified service/method name]
+
+list provides listing feature against to gRPC services or methods belong to a service.
+If a fully-qualified service name (in the form of <package name>.<service name>),
+list lists method names belong to the service. If not, list lists all services.
+
+Examples:
+        $ evans -r cli list             # list all services
+        $ evans -r cli list -o json     # list all services with JSON format
+        $ evans -r cli list api.Service # list all methods belong to service "api.Service"
+
+Options:
+        --output, -o string        output format. one of "json" or "name". (default "name")
+        --help, -h                 display help text and exit (default "false")
+

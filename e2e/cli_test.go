@@ -50,6 +50,8 @@ func TestE2E_CLI(t *testing.T) {
 
 		// The output we expected. It is ignored if expectedCode isn't 0.
 		expectedOut string
+		// assertWithGolden asserts the output with the golden file.
+		assertWithGolden bool
 
 		// The exit code we expected.
 		expectedCode int
@@ -60,14 +62,14 @@ func TestE2E_CLI(t *testing.T) {
 		unflatten bool
 	}{
 		"print usage text to the Writer (common flag)": {
-			commonFlags: "--help",
-			expectedOut: expectedCLIUsageOut,
-			unflatten:   true,
+			commonFlags:      "--help",
+			assertWithGolden: true,
+			unflatten:        true,
 		},
 		"print usage text to the Writer": {
-			args:        "--help",
-			expectedOut: expectedCLIUsageOut,
-			unflatten:   true,
+			args:             "--help",
+			assertWithGolden: true,
+			unflatten:        true,
 		},
 		"print version text to the Writer (common flag)": {
 			commonFlags: "--version",
@@ -94,6 +96,12 @@ func TestE2E_CLI(t *testing.T) {
 
 		// call command
 
+		"print call command usage": {
+			commonFlags:      "",
+			cmd:              "call",
+			args:             "-h",
+			assertWithGolden: true,
+		},
 		"cannot launch CLI mode because proto files didn't be passed": {
 			commonFlags:  "--package api --service Example",
 			cmd:          "call",
@@ -395,6 +403,12 @@ func TestE2E_CLI(t *testing.T) {
 		},
 
 		// list command
+		"print list command usage": {
+			commonFlags:      "",
+			cmd:              "list",
+			args:             "-h",
+			assertWithGolden: true,
+		},
 		"list services without args": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "list",
@@ -511,6 +525,9 @@ func TestE2E_CLI(t *testing.T) {
 				if c.expectedOut != "" && actual != c.expectedOut {
 					t.Errorf("unexpected output:\n%s", cmp.Diff(c.expectedOut, actual))
 				}
+				if c.assertWithGolden {
+					compareWithGolden(t, outBuf.String())
+				}
 				if eoutBuf.String() != "" {
 					t.Errorf("expected code is 0, but got an error message: '%s'", eoutBuf.String())
 				}
@@ -518,16 +535,3 @@ func TestE2E_CLI(t *testing.T) {
 		})
 	}
 }
-
-var expectedCLIUsageOut = fmt.Sprintf(`evans %s
-
-Usage: evans [global options ...] cli
-
-Options:
-        --help, -h        display help text and exit (default "false")
-
-Available Commands:
-        call, c               call a RPC
-        list, ls, show        list services, methods or messages
-
-`, meta.Version)

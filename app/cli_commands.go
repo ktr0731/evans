@@ -44,16 +44,16 @@ func newCLIListCommand(flags *flags, ui cui.UI) *cobra.Command {
 		out string
 	)
 	cmd := &cobra.Command{
-		Use:     "list [options ...] [fully-qualified service name]",
+		Use:     "list [options ...] [fully-qualified service/method name]",
 		Aliases: []string{"ls", "show"},
-		Short:   "list services, methods or messages",
-		Long: `list provides listing feature against to gRPC services or RPCs belong to a service.
+		Short:   "list services or methods",
+		Long: `list provides listing feature against to gRPC services or methods belong to a service.
 If a fully-qualified service name (in the form of <package name>.<service name>),
-list lists RPC names belong to the service. If not, list lists all services.`,
+list lists method names belong to the service. If not, list lists all services.`,
 		Example: strings.Join([]string{
 			"        $ evans -r cli list             # list all services",
 			"        $ evans -r cli list -o json     # list all services with JSON format",
-			`        $ evans -r cli list api.Service # list all RPCs belong to service "api.Service"`,
+			`        $ evans -r cli list api.Service # list all methods belong to service "api.Service"`,
 		}, "\n"),
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
 			var dsn string
