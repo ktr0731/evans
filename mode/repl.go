@@ -41,7 +41,7 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := setDefault(cfg, spec); err != nil {
+	if err := setDefault(cfg); err != nil {
 		return err
 	}
 

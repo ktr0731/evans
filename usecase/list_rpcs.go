@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"github.com/ktr0731/evans/grpc"
+	"github.com/ktr0731/evans/idl/proto"
 	"github.com/pkg/errors"
 )
 
@@ -19,7 +20,8 @@ func (m *dependencyManager) ListRPCs(svcName string) ([]*grpc.RPC, error) {
 }
 
 func (m *dependencyManager) listRPCs(pkgName, svcName string) ([]*grpc.RPC, error) {
-	rpcs, err := m.spec.RPCs(pkgName, svcName)
+	fqsn := proto.FullyQualifiedServiceName(pkgName, svcName)
+	rpcs, err := m.spec.RPCs(fqsn)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to list RPCs")
 	}

@@ -98,12 +98,16 @@ func runFunc(
 func newOldCommand(flags *flags, ui cui.UI) *command {
 	cmd := &cobra.Command{
 		Use: "evans [global options ...] <command>",
-		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
+		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) (err error) {
 			if cfg.REPL.ColoredOutput {
 				ui = cui.NewColored(ui)
 			}
 
-			defer ui.Warn("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")
+			defer func() {
+				if err == nil {
+					ui.Warn("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")
+				}
+			}()
 
 			isCLIMode := (cfg.cli || mode.IsCLIMode(cfg.file))
 			if cfg.repl || !isCLIMode {
@@ -312,7 +316,7 @@ func printOptions(w io.Writer, f *pflag.FlagSet) {
 	if !hasHelp {
 		cmd := "--help, -h"
 		usage := `display help text and exit (default "false")`
-		fmt.Fprintf(tw, "        %s\t%s", cmd, usage)
+		fmt.Fprintf(tw, "        %s\t%s\n", cmd, usage)
 	}
 	tw.Flush()
 }
@@ -346,7 +350,7 @@ func usageFunc(out io.Writer) func(*cobra.Command, []string) {
 			fmt.Fprint(out, "\n\n")
 		}
 		fmt.Fprint(out, buf.String())
-		fmt.Fprint(out, "\n\n")
+		fmt.Fprint(out, "\n")
 
 		if len(cmd.Commands()) > 0 {
 			fmt.Fprintf(out, "Available Commands:\n")

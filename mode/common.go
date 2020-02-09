@@ -47,48 +47,59 @@ func newGRPCClient(cfg *config.Config) (grpc.Client, error) {
 	return client, nil
 }
 
-func gRPCReflectionPackageFilteredPackages(pkgs []string) []string {
-	p := make([]string, len(pkgs))
-	copy(p, pkgs)
+func gRPCReflectionPackageFilteredPackages(pkgNames []string) []string {
+	pkgs := make([]string, len(pkgNames))
+	copy(pkgs, pkgNames)
 
-	n := grpcreflection.ServiceName
-	for i := range p {
-		if strings.HasPrefix(n, p[i]) {
-			return append(p[:i], p[i+1:]...)
+	n := grpcreflection.ServiceName[:strings.LastIndex(grpcreflection.ServiceName, ".")]
+	for i := range pkgs {
+		if n == pkgs[i] {
+			return append(pkgs[:i], pkgs[i+1:]...)
 		}
 	}
-	return p
+	return pkgs
 }
 
-func setDefault(cfg *config.Config, spec idl.Spec) error {
+func setDefault(cfg *config.Config) error {
 	// If the spec has only one package, mark it as the default package.
 	if cfg.Default.Package == "" {
-		pkgs := gRPCReflectionPackageFilteredPackages(spec.PackageNames())
+		pkgs := gRPCReflectionPackageFilteredPackages(usecase.ListPackages())
 		if len(pkgs) == 1 {
-			cfg.Default.Package = spec.PackageNames()[0]
+			cfg.Default.Package = pkgs[0]
+		} else {
+			hasEmptyPackage := func() bool {
+				for _, pkg := range pkgs {
+					if pkg == "" {
+						return true
+					}
+				}
+				return false
+			}
+			if !hasEmptyPackage() {
+				return nil
+			}
 		}
 	}
-	if cfg.Default.Package != "" {
-		if err := usecase.UsePackage(cfg.Default.Package); err != nil {
-			return errors.Wrapf(err, "failed to set '%s' as the default package", cfg.Default.Package)
-		}
+
+	if err := usecase.UsePackage(cfg.Default.Package); err != nil {
+		return errors.Wrapf(err, "failed to set '%s' as the default package", cfg.Default.Package)
 	}
 
 	// If the spec has only one service, mark it as the default service.
-	if cfg.Default.Package != "" && cfg.Default.Service == "" {
-		svcNames, err := spec.ServiceNames(cfg.Default.Package)
-		if err != nil {
-			return errors.Wrapf(err, "failed to list services belong to package '%s'", cfg.Default.Package)
+	if cfg.Default.Service == "" {
+		svcNames := usecase.ListServicesOld()
+		if len(svcNames) != 1 {
+			return nil
 		}
-		if len(svcNames) == 1 {
-			cfg.Default.Service = svcNames[0]
-		}
-	}
-	if cfg.Default.Service != "" {
-		if err := usecase.UseService(cfg.Default.Service); err != nil {
-			return errors.Wrapf(err, "failed to set '%s' as the default service", cfg.Default.Service)
-		}
-	}
 
+		cfg.Default.Service = svcNames[0]
+		i := strings.LastIndex(cfg.Default.Service, ".")
+		if i != -1 {
+			cfg.Default.Service = cfg.Default.Service[i+1:]
+		}
+	}
+	if err := usecase.UseService(cfg.Default.Service); err != nil {
+		return errors.Wrapf(err, "failed to set '%s' as the default service", cfg.Default.Service)
+	}
 	return nil
 }

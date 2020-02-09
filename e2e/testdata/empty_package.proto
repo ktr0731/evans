@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-service Example {
+service EmptyPackageService {
   rpc Unary (SimpleRequest) returns (SimpleResponse) {}
 }
 

@@ -63,13 +63,12 @@ func NewCallCLIInvoker(ui cui.UI, rpcName, filePath string, headers config.Heade
 func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 	const (
 		fname = "name"
-		ffull = "full"
 		fjson = "json"
 	)
 	return func(context.Context) error {
 		var presenter present.Presenter
 		switch format {
-		case fname, ffull:
+		case fname:
 			presenter = name.NewPresenter()
 		case fjson:
 			presenter = json.NewPresenter()
@@ -87,20 +86,11 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 		out, err := func() (string, error) {
 			switch {
 			case len(sp) == 1 && sp[0] == "": // Unspecified.
-				var svcs []string
-				for _, pkg := range usecase.ListPackages() {
-					if err := usecase.UsePackage(pkg); err != nil {
-						return "", errors.Wrapf(err, "failed to use package '%s'", pkg)
-					}
-					svc, err := usecase.FormatServices(
-						&usecase.FormatServicesParams{FullyQualifiedName: format != fname},
-					)
-					if err != nil {
-						return "", errors.Wrap(err, "failed to list services")
-					}
-					svcs = append(svcs, svc)
+				svc, err := usecase.FormatServices()
+				if err != nil {
+					return "", errors.Wrap(err, "failed to list services")
 				}
-				return strings.Join(svcs, "\n"), nil
+				return svc, nil
 
 			case len(sp) == 1 && isNoPackageService(sp[0]): // No package service name.
 				svc := sp[0]
@@ -110,7 +100,7 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 					return "", errors.Wrapf(err, "failed to use service '%s'", svc)
 				}
 
-				rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: format != fname})
+				rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: true})
 				if err != nil {
 					return "", errors.Wrap(err, "failed to format RPCs")
 				}
@@ -131,7 +121,7 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 					return "", errors.Wrapf(err, "failed to use service '%s'", svc)
 				}
 
-				rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: format != fname})
+				rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: true})
 				if err != nil {
 					return "", errors.Wrap(err, "failed to format RPCs")
 				}
@@ -178,13 +168,13 @@ func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 			ResourcePresenter: json.NewPresenter(),
 		},
 	)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	if err := setDefault(cfg, spec); err != nil {
+	if err := setDefault(cfg); err != nil {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	return invoker(ctx)
 }
 
@@ -195,10 +185,7 @@ func IsCLIMode(file string) bool {
 
 func isNoPackageService(n string) bool {
 	// It is not need to set package because it has no package.
-	svcs, err := usecase.ListServices()
-	if err != nil {
-		return false
-	}
+	svcs := usecase.ListServices()
 	for _, svc := range svcs {
 		if svc == n {
 			return true

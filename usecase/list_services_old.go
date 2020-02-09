@@ -2,25 +2,29 @@ package usecase
 
 import (
 	"github.com/ktr0731/evans/grpc/grpcreflection"
-	"github.com/pkg/errors"
+	"github.com/ktr0731/evans/idl/proto"
 )
 
-func ListServicesOld() ([]string, error) {
+// ListServicesOld returns the services belong to the selected package.
+// The returned service names are NOT fully-qualified.
+func ListServicesOld() []string {
 	return dm.ListServicesOld()
 }
-func (m *dependencyManager) ListServicesOld() ([]string, error) {
+func (m *dependencyManager) ListServicesOld() []string {
 	return m.listServicesOld(m.state.selectedPackage)
 }
 
-func (m *dependencyManager) listServicesOld(pkgName string) ([]string, error) {
-	svcNames, err := m.spec.ServiceNames(pkgName)
-	if err != nil {
-		return nil, errors.Wrap(err, "invalid package name")
-	}
+func (m *dependencyManager) listServicesOld(pkgName string) []string {
+	var svcs []string
+	svcNames := m.spec.ServiceNames()
 	for i := range svcNames {
 		if svcNames[i] == grpcreflection.ServiceName {
-			return append(svcNames[:i], svcNames[i+1:]...), nil
+			continue
+		}
+		pkg, svc := proto.ParseFullyQualifiedServiceName(svcNames[i])
+		if pkg == pkgName {
+			svcs = append(svcs, svc)
 		}
 	}
-	return svcNames, nil
+	return svcs
 }

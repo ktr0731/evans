@@ -35,6 +35,9 @@ func TestE2E_CLI(t *testing.T) {
 		// The server uses gRPC-Web protocol.
 		web bool
 
+		// Register a service that has no package.
+		registerEmptyPackageService bool
+
 		// beforeTest set up a testcase specific environment.
 		// If beforeTest is nil, it is ignored.
 		// beforeTest may return a function named afterTest that cleans up
@@ -392,53 +395,47 @@ func TestE2E_CLI(t *testing.T) {
 		},
 
 		// list command
-		"list packages without args": {
+		"list services without args": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "list",
 			args:        "",
 			expectedOut: `api.Example`,
 		},
-		"list packages without args and two protos": {
+		"list services without args and two protos": {
 			commonFlags: "--proto testdata/test.proto,testdata/empty_package.proto",
 			cmd:         "list",
 			args:        "",
-			expectedOut: `Example api.Example`,
+			expectedOut: `EmptyPackageService api.Example`,
 		},
-		"list packages with name format": {
+		"list services with name format": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "list",
 			args:        "-o name",
-			expectedOut: `Example`,
+			expectedOut: `api.Example`,
 		},
-		"list packages with JSON format": {
+		"list services with JSON format": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "list",
 			args:        "-o json",
 			expectedOut: `{ "services": [ { "service": "api.Example" } ] }`,
 		},
-		"list services with name format": {
+		"list RPCs with name format": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "list",
 			args:        "-o name api.Example",
-			expectedOut: `BidiStreaming ClientStreaming ServerStreaming Unary UnaryBytes UnaryEnum UnaryHeader UnaryMap UnaryMapMessage UnaryMessage UnaryOneof UnaryRepeated UnaryRepeatedEnum UnaryRepeatedMessage UnarySelf`,
-		},
-		"list services with full and two protos": {
-			commonFlags: "--proto testdata/test.proto,testdata/empty_package.proto",
-			cmd:         "list",
-			args:        "-o full api.Example",
 			expectedOut: `api.Example.BidiStreaming api.Example.ClientStreaming api.Example.ServerStreaming api.Example.Unary api.Example.UnaryBytes api.Example.UnaryEnum api.Example.UnaryHeader api.Example.UnaryMap api.Example.UnaryMapMessage api.Example.UnaryMessage api.Example.UnaryOneof api.Example.UnaryRepeated api.Example.UnaryRepeatedEnum api.Example.UnaryRepeatedMessage api.Example.UnarySelf`,
 		},
-		"list services with JSON format": {
+		"list RPCs with JSON format": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "list",
 			args:        "-o json api.Example",
 			expectedOut: `{ "rpcs": [ { "rpc": "api.Example.BidiStreaming", "request_type": "SimpleRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.ClientStreaming", "request_type": "SimpleRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.ServerStreaming", "request_type": "SimpleRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.Unary", "request_type": "SimpleRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryBytes", "request_type": "UnaryBytesRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryEnum", "request_type": "UnaryEnumRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryHeader", "request_type": "UnaryHeaderRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryMap", "request_type": "UnaryMapRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryMapMessage", "request_type": "UnaryMapMessageRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryMessage", "request_type": "UnaryMessageRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryOneof", "request_type": "UnaryOneofRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryRepeated", "request_type": "UnaryRepeatedRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryRepeatedEnum", "request_type": "UnaryRepeatedEnumRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryRepeatedMessage", "request_type": "UnaryRepeatedMessageRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnarySelf", "request_type": "UnarySelfRequest", "response_type": "SimpleResponse" } ] }`,
 		},
-		"list services that have empty name": {
+		"list RPCs that have empty name": {
 			commonFlags: "--proto testdata/empty_package.proto",
 			cmd:         "list",
-			args:        "Example",
-			expectedOut: `Example.Unary`,
+			args:        "EmptyPackageService",
+			expectedOut: `EmptyPackageService.Unary`,
 		},
 		"cannot list because of invalid package name": {
 			commonFlags:  "--proto testdata/test.proto",
@@ -458,7 +455,7 @@ func TestE2E_CLI(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			defer usecase.Clear()
 
-			stopServer, port := startServer(t, c.tls, c.reflection, c.web)
+			stopServer, port := startServer(t, c.tls, c.reflection, c.web, c.registerEmptyPackageService)
 			defer stopServer()
 
 			outBuf, eoutBuf := new(bytes.Buffer), new(bytes.Buffer)

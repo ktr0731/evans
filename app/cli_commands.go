@@ -73,7 +73,7 @@ list lists RPC names belong to the service. If not, list lists all services.`,
 
 	f := cmd.Flags()
 	initFlagSet(f, ui.Writer())
-	f.StringVarP(&out, "output", "o", "full", `output format. one of "json", "name" or "full".`)
+	f.StringVarP(&out, "output", "o", "name", `output format. one of "json" or "name".`)
 
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	return cmd

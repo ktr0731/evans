@@ -4,6 +4,7 @@ package proto
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/protoparse"
@@ -16,59 +17,35 @@ import (
 
 type spec struct {
 	pkgNames []string
-	// key: package name, val: service descriptors belong to the package.
-	svcDescs map[string][]*desc.ServiceDescriptor
+	// Loaded service descriptors.
+	svcDescs []*desc.ServiceDescriptor
 	// key: fully qualified service name, val: method descriptors belong to the service.
 	rpcDescs map[string][]*desc.MethodDescriptor
 	// key: fully qualified message name, val: the message descriptor.
 	msgDescs map[string]*desc.MessageDescriptor
 }
 
-func (s *spec) PackageNames() []string {
-	return s.pkgNames
+func (s *spec) ServiceNames() []string {
+	svcNames := make([]string, len(s.svcDescs))
+	for i, d := range s.svcDescs {
+		svcNames[i] = d.GetFullyQualifiedName()
+	}
+	return svcNames
 }
 
-func (s *spec) ServiceNames(pkgName string) ([]string, error) {
-	descs, ok := s.svcDescs[pkgName]
-	if !ok {
-		// If the service belongs to pkgName is not found and pkgName is empty,
-		// it is regarded as package is unselected.
-		if pkgName == "" {
-			return nil, idl.ErrPackageUnselected
-		}
-		return nil, idl.ErrUnknownPackageName
-	}
-
-	svcNames := make([]string, len(descs))
-	for i, d := range descs {
-		svcNames[i] = d.GetName()
-	}
-	return svcNames, nil
-}
-
-func (s *spec) RPCs(pkgName, svcName string) ([]*grpc.RPC, error) {
-	// Check whether pkgName is a valid package or not.
-	_, err := s.ServiceNames(pkgName)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *spec) RPCs(svcName string) ([]*grpc.RPC, error) {
 	if svcName == "" {
 		return nil, idl.ErrServiceUnselected
 	}
 
-	fqsn, err := idl.FullyQualifiedServiceName(pkgName, svcName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get fully-qualified service name")
-	}
-	rpcDescs, ok := s.rpcDescs[fqsn]
+	rpcDescs, ok := s.rpcDescs[svcName]
 	if !ok {
 		return nil, idl.ErrUnknownServiceName
 	}
 
 	rpcs := make([]*grpc.RPC, len(rpcDescs))
 	for i, d := range rpcDescs {
-		rpc, err := s.RPC(pkgName, svcName, d.GetName())
+		rpc, err := s.RPC(svcName, d.GetName())
 		if err != nil {
 			panic(fmt.Sprintf("RPC must not return an error, but got '%s'", err))
 		}
@@ -77,22 +54,12 @@ func (s *spec) RPCs(pkgName, svcName string) ([]*grpc.RPC, error) {
 	return rpcs, nil
 }
 
-func (s *spec) RPC(pkgName, svcName, rpcName string) (*grpc.RPC, error) {
-	// Check whether pkgName is a valid package or not.
-	_, err := s.ServiceNames(pkgName)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *spec) RPC(svcName, rpcName string) (*grpc.RPC, error) {
 	if svcName == "" {
 		return nil, idl.ErrServiceUnselected
 	}
 
-	fqsn, err := idl.FullyQualifiedServiceName(pkgName, svcName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get fully-qualified service name")
-	}
-	rpcDescs, ok := s.rpcDescs[fqsn]
+	rpcDescs, ok := s.rpcDescs[svcName]
 	if !ok {
 		return nil, idl.ErrUnknownServiceName
 	}
@@ -126,22 +93,13 @@ func (s *spec) RPC(pkgName, svcName, rpcName string) (*grpc.RPC, error) {
 	return nil, idl.ErrUnknownRPCName
 }
 
-// TypeDescriptor returns the descriptor of a type.
+// TypeDescriptor returns the descriptor of a message.
 // The actual type of the returned interface{} is *desc.MessageDescriptor.
-func (s *spec) TypeDescriptor(pkgName, msgName string) (interface{}, error) {
-	fqmn, err := idl.FullyQualifiedMessageName(pkgName, msgName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get fully-qualified message name")
-	}
-	if m, ok := s.msgDescs[fqmn]; ok {
+func (s *spec) TypeDescriptor(msgName string) (interface{}, error) {
+	if m, ok := s.msgDescs[msgName]; ok {
 		return m, nil
 	}
-	// If the message belongs to pkgName is not found and pkgName is empty,
-	// it is regarded as package is unselected.
-	if pkgName == "" {
-		return nil, idl.ErrPackageUnselected
-	}
-	return nil, errors.Errorf("no such type '%s'", fqmn)
+	return nil, idl.ErrUnknownMessageName
 }
 
 // LoadFiles receives proto file names and import paths like protoc's options.
@@ -173,21 +131,26 @@ func LoadByReflection(client grpcreflection.Client) (idl.Spec, error) {
 }
 
 func newSpec(fds []*desc.FileDescriptor) idl.Spec {
-	encounteredPackages := make(map[string]interface{})
-	var pkgNames []string
-	svcDescs := make(map[string][]*desc.ServiceDescriptor)
-	rpcDescs := make(map[string][]*desc.MethodDescriptor)
-	msgDescs := make(map[string]*desc.MessageDescriptor)
+	var (
+		encounteredPkgs = make(map[string]interface{})
+		encounteredSvcs = make(map[string]interface{})
+		pkgNames        []string
+		svcDescs        []*desc.ServiceDescriptor
+		rpcDescs        = make(map[string][]*desc.MethodDescriptor)
+		msgDescs        = make(map[string]*desc.MessageDescriptor)
+	)
 	for _, f := range fds {
-		pkg := f.GetPackage()
-		svcDescs[pkg] = append(svcDescs[pkg], f.GetServices()...)
-		if _, encountered := encounteredPackages[pkg]; !encountered {
-			pkgNames = append(pkgNames, pkg)
-			encounteredPackages[pkg] = nil
+		if _, encountered := encounteredPkgs[f.GetPackage()]; !encountered {
+			pkgNames = append(pkgNames, f.GetPackage())
+			encounteredPkgs[f.GetPackage()] = nil
 		}
-
-		for _, s := range f.GetServices() {
-			rpcDescs[s.GetFullyQualifiedName()] = append(rpcDescs[s.GetFullyQualifiedName()], s.GetMethods()...)
+		for _, svc := range f.GetServices() {
+			fqsn := svc.GetFullyQualifiedName()
+			if _, encountered := encounteredSvcs[fqsn]; !encountered {
+				svcDescs = append(svcDescs, svc)
+				encounteredSvcs[fqsn] = nil
+			}
+			rpcDescs[fqsn] = append(rpcDescs[fqsn], svc.GetMethods()...)
 		}
 
 		for _, m := range f.GetMessageTypes() {
@@ -205,4 +168,35 @@ func newSpec(fds []*desc.FileDescriptor) idl.Spec {
 		rpcDescs: rpcDescs,
 		msgDescs: msgDescs,
 	}
+}
+
+// FullyQualifiedServiceName returns the fully-qualified service name.
+func FullyQualifiedServiceName(pkg, svc string) string {
+	var s []string
+	if pkg != "" {
+		s = []string{pkg, svc}
+	} else {
+		s = []string{svc}
+	}
+	return strings.Join(s, ".")
+}
+
+// FullyQualifiedMessageName returns the fully-qualified message name.
+func FullyQualifiedMessageName(pkg, msg string) string {
+	var s []string
+	if pkg != "" {
+		s = []string{pkg, msg}
+	} else {
+		s = []string{msg}
+	}
+	return strings.Join(s, ".")
+}
+
+// ParseFullyQualifiedServiceName returns the package and service name from a fully-qualified service name.
+func ParseFullyQualifiedServiceName(fqsn string) (string, string) {
+	i := strings.LastIndex(fqsn, ".")
+	if i == -1 {
+		return "", fqsn
+	}
+	return fqsn[:i], fqsn[i+1:]
 }

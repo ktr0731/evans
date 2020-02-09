@@ -12,10 +12,7 @@ func FormatServicesOld() (string, error) {
 	return dm.FormatServicesOld()
 }
 func (m *dependencyManager) FormatServicesOld() (string, error) {
-	svcs, err := m.ListServices()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to list services")
-	}
+	svcs := m.ListServicesOld()
 	type service struct {
 		Service      string `json:"service"`
 		RPC          string `json:"rpc"`
@@ -25,14 +22,14 @@ func (m *dependencyManager) FormatServicesOld() (string, error) {
 	var v struct {
 		Services []service `json:"services"`
 	}
-	for _, svcName := range svcs {
-		rpcs, err := m.ListRPCs(svcName)
+	for _, svc := range svcs {
+		rpcs, err := m.ListRPCs(svc)
 		if err != nil {
-			return "", errors.Wrapf(err, "failed to list RPCs associated with '%s'", svcName)
+			return "", errors.Wrapf(err, "failed to list RPCs associated with '%s'", svc)
 		}
 		for _, rpc := range rpcs {
 			v.Services = append(v.Services, service{
-				svcName,
+				svc,
 				rpc.Name,
 				rpc.RequestType.Name,
 				rpc.ResponseType.Name,

@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/ktr0731/evans/idl"
+	"github.com/ktr0731/evans/idl/proto"
 	"github.com/pkg/errors"
 )
 
@@ -38,7 +39,8 @@ func (m *dependencyManager) FormatRPCs(p *FormatRPCsParams) (string, error) {
 	for _, r := range rpcs {
 		rpcName := r.Name
 		if p.FullyQualifiedName {
-			rpcName, err = idl.FullyQualifiedRPCName(m.state.selectedPackage, svcName, rpcName)
+			fqsn := proto.FullyQualifiedServiceName(m.state.selectedPackage, svcName)
+			rpcName, err = idl.FullyQualifiedRPCName(fqsn, rpcName)
 			if err != nil {
 				return "", errors.Wrap(err, "failed to get fully-qualified service name")
 			}

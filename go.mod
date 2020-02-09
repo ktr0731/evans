@@ -4,20 +4,23 @@ go 1.12
 
 require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
+	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/fatih/color v1.9.0
-	github.com/golang/protobuf v1.3.2
+	github.com/golang/protobuf v1.3.3
 	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/go-version v1.2.0
+	github.com/improbable-eng/grpc-web v0.12.0 // indirect
 	github.com/jhump/protoreflect v1.5.1-0.20191024213132-10815c273d3f
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/k0kubun/pp v3.0.1+incompatible
+	github.com/ktr0731/dept v0.1.3 // indirect
 	github.com/ktr0731/go-multierror v0.0.0-20171204182908-b7773ae21874
 	github.com/ktr0731/go-prompt v0.2.2-0.20190609072126-7894cc3f2925
 	github.com/ktr0731/go-shellstring v0.1.1
 	github.com/ktr0731/go-updater v0.1.5
-	github.com/ktr0731/grpc-test v0.1.2
+	github.com/ktr0731/grpc-test v0.1.3
 	github.com/ktr0731/grpc-web-go-client v0.2.4
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
@@ -32,6 +35,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 // indirect
 	github.com/rakyll/statik v0.1.6
+	github.com/rs/cors v1.7.0 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -41,12 +45,12 @@ require (
 	github.com/tj/go-spin v1.1.0
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
-	golang.org/x/net v0.0.0-20190930134127-c5a3c61f89f3 // indirect
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
 	golang.org/x/tools v0.0.0-20190930201159-7c411dea38b0
-	google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c // indirect
-	google.golang.org/grpc v1.26.0
+	google.golang.org/genproto v0.0.0-20200204235621-fb4a7afc5178 // indirect
+	google.golang.org/grpc v1.27.1
 )
 
 replace github.com/ktr0731/grpc-web-go-client => github.com/ktr0731/grpc-web-go-client v0.2.5-0.20190505140201-c24452752d52
