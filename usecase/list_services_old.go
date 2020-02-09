@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"github.com/ktr0731/evans/grpc/grpcreflection"
 	"github.com/ktr0731/evans/idl/proto"
 )
 
@@ -18,9 +17,6 @@ func (m *dependencyManager) listServicesOld(pkgName string) []string {
 	var svcs []string
 	svcNames := m.spec.ServiceNames()
 	for i := range svcNames {
-		if svcNames[i] == grpcreflection.ServiceName {
-			continue
-		}
 		pkg, svc := proto.ParseFullyQualifiedServiceName(svcNames[i])
 		if pkg == pkgName {
 			svcs = append(svcs, svc)
