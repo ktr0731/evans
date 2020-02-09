@@ -438,7 +438,7 @@ func TestE2E_CLI(t *testing.T) {
 			expectedOut: `EmptyPackageService.Unary`,
 		},
 		"list a method with name format": {
-			commonFlags: "--proto testdata/test.proto",
+			commonFlags: "--proto testdata/test.proto,testdata/empty_package.proto",
 			cmd:         "list",
 			args:        "-o name api.Example.Unary",
 			expectedOut: `api.Example.Unary`,

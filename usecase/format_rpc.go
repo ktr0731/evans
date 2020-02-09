@@ -30,8 +30,8 @@ func (m *dependencyManager) FormatRPC(fqrn string, p *FormatRPCParams) (string, 
 	if err != nil {
 		return "", err
 	}
-	_, svc := proto.ParseFullyQualifiedServiceName(fqsn)
-	rpcs, err := m.ListRPCs(svc)
+	pkg, svc := proto.ParseFullyQualifiedServiceName(fqsn)
+	rpcs, err := m.listRPCs(pkg, svc)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to list RPC associated with '%s'", fqsn)
 	}
@@ -41,7 +41,7 @@ func (m *dependencyManager) FormatRPC(fqrn string, p *FormatRPCParams) (string, 
 		}
 		rpcName := r.Name
 		if p.FullyQualifiedName {
-			fqsn := proto.FullyQualifiedServiceName(m.state.selectedPackage, svc)
+			fqsn := proto.FullyQualifiedServiceName(pkg, svc)
 			rpcName, err = idl.FullyQualifiedRPCName(fqsn, rpcName)
 			if err != nil {
 				return "", errors.Wrap(err, "failed to get fully-qualified service name")
