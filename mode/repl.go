@@ -33,7 +33,7 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 			Spec:              spec,
 			Filler:            proto.NewInteractiveFiller(prompt.New(), cfg.REPL.InputPromptFormat),
 			GRPCClient:        gRPCClient,
-			ResponsePresenter: json.NewPresenter(),
+			ResponsePresenter: json.NewPresenter("  "),
 			ResourcePresenter: table.NewPresenter(),
 		},
 	)

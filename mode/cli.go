@@ -71,7 +71,7 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 		case fname:
 			presenter = name.NewPresenter()
 		case fjson:
-			presenter = json.NewPresenter()
+			presenter = json.NewPresenter("  ")
 		default:
 			presenter = name.NewPresenter()
 		}
@@ -83,6 +83,7 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 		}
 		sp := strings.Split(fqn, ".")
 
+		commonErr := errors.Errorf("unknown fully-qualified service name or method name '%s'", fqn)
 		out, err := func() (string, error) {
 			switch {
 			case len(sp) == 1 && sp[0] == "": // Unspecified.
@@ -92,7 +93,7 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 				}
 				return svc, nil
 
-			case len(sp) == 1 && isNoPackageService(sp[0]): // No package service name.
+			case len(sp) == 1 && isEmptyPackageService(sp[0]): // No package service name.
 				svc := sp[0]
 				if err := usecase.UseService(svc); errors.Cause(err) == idl.ErrUnknownServiceName {
 					return "", errors.Errorf("service name '%s' is not found", svc)
@@ -107,12 +108,24 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 				return rpcs, nil
 
 			case len(sp) >= 2: // Package name and service name.
+				if isFullyQualifiedMethodName(fqn) {
+					// Return as it is (same behavior as grpc_cli).
+					rpc, err := usecase.FormatRPC(
+						fqn,
+						&usecase.FormatRPCParams{FullyQualifiedName: true},
+					)
+					if err != nil {
+						return "", errors.Wrap(err, "failed to format RPC")
+					}
+					return rpc, nil
+				}
+
+				// sp[len(sp)-1] is fully-qualified service or message.
+
 				pkg, svc := strings.Join(sp[:len(sp)-1], "."), sp[len(sp)-1]
 
-				if err := usecase.UsePackage(pkg); errors.Cause(err) == idl.ErrUnknownPackageName {
-					return "", errors.Errorf("package name '%s' is not found", pkg)
-				} else if err != nil {
-					return "", errors.Wrapf(err, "failed to use package '%s'", svc)
+				if err := usecase.UsePackage(pkg); err != nil {
+					return "", commonErr // Return commonErr because UsePackage will be deprecated.
 				}
 
 				if err := usecase.UseService(svc); errors.Cause(err) == idl.ErrUnknownServiceName {
@@ -127,7 +140,7 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 				}
 				return rpcs, nil
 			}
-			return "", errors.Errorf("unknown fully-qualified package or service name '%s'", fqn)
+			return "", commonErr
 		}()
 		if err != nil {
 			return err
@@ -164,8 +177,8 @@ func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 		usecase.Dependencies{
 			Spec:              spec,
 			GRPCClient:        gRPCClient,
-			ResponsePresenter: json.NewPresenter(),
-			ResourcePresenter: json.NewPresenter(),
+			ResponsePresenter: json.NewPresenter("  "),
+			ResourcePresenter: json.NewPresenter("  "),
 		},
 	)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -183,7 +196,7 @@ func IsCLIMode(file string) bool {
 	return file != "" || (!isatty.IsTerminal(os.Stdin.Fd()) && !isatty.IsCygwinTerminal(os.Stdin.Fd()))
 }
 
-func isNoPackageService(n string) bool {
+func isEmptyPackageService(n string) bool {
 	// It is not need to set package because it has no package.
 	svcs := usecase.ListServices()
 	for _, svc := range svcs {
@@ -192,4 +205,9 @@ func isNoPackageService(n string) bool {
 		}
 	}
 	return false
+}
+
+func isFullyQualifiedMethodName(s string) bool {
+	_, _, err := usecase.ParseFullyQualifiedMethodName(s)
+	return err == nil
 }

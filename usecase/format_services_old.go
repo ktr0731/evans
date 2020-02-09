@@ -39,7 +39,7 @@ func (m *dependencyManager) FormatServicesOld() (string, error) {
 	sort.Slice(v.Services, func(i, j int) bool {
 		return v.Services[i].Service < v.Services[j].Service
 	})
-	out, err := m.resourcePresenter.Format(v, "  ")
+	out, err := m.resourcePresenter.Format(v)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to format service names by presenter")
 	}

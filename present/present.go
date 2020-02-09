@@ -7,5 +7,5 @@ type Presenter interface {
 	// Note that v is a type that belongs to the selected IDL.
 	//
 	// For example, v is a proto.Message if IDL is Protocol Buffers.
-	Format(v interface{}, indent string) (string, error)
+	Format(v interface{}) (string, error)
 }

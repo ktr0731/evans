@@ -38,7 +38,7 @@ func (m *dependencyManager) FormatMessages() (string, error) {
 	sort.Slice(v.Messages, func(i, j int) bool {
 		return v.Messages[i].Message < v.Messages[j].Message
 	})
-	out, err := m.resourcePresenter.Format(v, "  ")
+	out, err := m.resourcePresenter.Format(v)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to format message names by presenter")
 	}

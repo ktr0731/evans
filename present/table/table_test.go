@@ -43,7 +43,7 @@ func TestPresenter(t *testing.T) {
 			},
 		}
 		p := NewPresenter()
-		actual, err := p.Format(&vi, "")
+		actual, err := p.Format(&vi)
 		fmt.Println(actual)
 		if err != nil {
 			t.Fatal(err)

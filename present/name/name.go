@@ -28,7 +28,7 @@ func findSlice(rv reflect.Value) (reflect.Value, bool) {
 }
 
 // Format formats v into the list of names. v should be a struct type that have a struct slice.
-func (p *Presenter) Format(v interface{}, indent string) (string, error) {
+func (p *Presenter) Format(v interface{}) (string, error) {
 	rv := indirect(reflect.ValueOf(v))
 	rt := rv.Type()
 	if rt.Kind() != reflect.Struct {
@@ -37,7 +37,7 @@ func (p *Presenter) Format(v interface{}, indent string) (string, error) {
 
 	slice, ok := findSlice(rv)
 	if !ok {
-		return "", errors.New("the struct should have a slice field")
+		return p.formatSingle(rv)
 	}
 
 	rows := make([]string, slice.Len())
@@ -52,6 +52,14 @@ func (p *Presenter) Format(v interface{}, indent string) (string, error) {
 		rows[i] = fmt.Sprint(v.Field(0))
 	}
 	return strings.Join(rows, "\n"), nil
+}
+
+func (p *Presenter) formatSingle(rv reflect.Value) (string, error) {
+	rt := rv.Type()
+	if rt.NumField() == 0 {
+		return "", errors.New("struct should have at least 1 field")
+	}
+	return fmt.Sprint(rv.Field(0)), nil
 }
 
 func NewPresenter() *Presenter {

@@ -419,23 +419,35 @@ func TestE2E_CLI(t *testing.T) {
 			args:        "-o json",
 			expectedOut: `{ "services": [ { "service": "api.Example" } ] }`,
 		},
-		"list RPCs with name format": {
+		"list methods with name format": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "list",
 			args:        "-o name api.Example",
 			expectedOut: `api.Example.BidiStreaming api.Example.ClientStreaming api.Example.ServerStreaming api.Example.Unary api.Example.UnaryBytes api.Example.UnaryEnum api.Example.UnaryHeader api.Example.UnaryMap api.Example.UnaryMapMessage api.Example.UnaryMessage api.Example.UnaryOneof api.Example.UnaryRepeated api.Example.UnaryRepeatedEnum api.Example.UnaryRepeatedMessage api.Example.UnarySelf`,
 		},
-		"list RPCs with JSON format": {
+		"list methods with JSON format": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "list",
 			args:        "-o json api.Example",
 			expectedOut: `{ "rpcs": [ { "rpc": "api.Example.BidiStreaming", "request_type": "SimpleRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.ClientStreaming", "request_type": "SimpleRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.ServerStreaming", "request_type": "SimpleRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.Unary", "request_type": "SimpleRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryBytes", "request_type": "UnaryBytesRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryEnum", "request_type": "UnaryEnumRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryHeader", "request_type": "UnaryHeaderRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryMap", "request_type": "UnaryMapRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryMapMessage", "request_type": "UnaryMapMessageRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryMessage", "request_type": "UnaryMessageRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryOneof", "request_type": "UnaryOneofRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryRepeated", "request_type": "UnaryRepeatedRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryRepeatedEnum", "request_type": "UnaryRepeatedEnumRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnaryRepeatedMessage", "request_type": "UnaryRepeatedMessageRequest", "response_type": "SimpleResponse" }, { "rpc": "api.Example.UnarySelf", "request_type": "UnarySelfRequest", "response_type": "SimpleResponse" } ] }`,
 		},
-		"list RPCs that have empty name": {
+		"list methods that have empty name": {
 			commonFlags: "--proto testdata/empty_package.proto",
 			cmd:         "list",
 			args:        "EmptyPackageService",
 			expectedOut: `EmptyPackageService.Unary`,
+		},
+		"list a method with name format": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "list",
+			args:        "-o name api.Example.Unary",
+			expectedOut: `api.Example.Unary`,
+		},
+		"list a method with JSON format": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "list",
+			args:        "-o json api.Example.Unary",
+			expectedOut: `{ "rpc": "api.Example.Unary", "request_type": "SimpleRequest", "response_type": "SimpleResponse" }`,
 		},
 		"cannot list because of invalid package name": {
 			commonFlags:  "--proto testdata/test.proto",

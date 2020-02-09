@@ -45,7 +45,7 @@ func TestPresenter(t *testing.T) {
 	for tname, c := range cases {
 		t.Run(tname, func(t *testing.T) {
 			p := name.NewPresenter()
-			actual, err := p.Format(c.v, "")
+			actual, err := p.Format(c.v)
 			if c.hasErr {
 				if err == nil {
 					t.Errorf("should return an error, but got nil")

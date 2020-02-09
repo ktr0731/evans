@@ -11,7 +11,6 @@ import (
 //
 //   - ErrPackageUnselected: REPL never call UsePackage.
 //   - ErrUnknownServiceName: svcName is not in loaded services.
-//   - Other errors.
 //
 func UseService(svcName string) error {
 	return dm.UseService(svcName)

@@ -54,7 +54,7 @@ func (m *dependencyManager) FormatRPCs(p *FormatRPCsParams) (string, error) {
 	sort.Slice(v.RPCs, func(i, j int) bool {
 		return v.RPCs[i].RPC < v.RPCs[j].RPC
 	})
-	out, err := m.resourcePresenter.Format(v, "  ")
+	out, err := m.resourcePresenter.Format(v)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to format RPC names by presenter")
 	}
