@@ -60,7 +60,7 @@ var decodeTOML = func(r io.Reader, i interface{}) error {
 }
 
 // Get returns loaded cache contents.
-func Get() (*Cache, error) {
+var Get = func() (*Cache, error) { // Use variable for mocking from means_dev.go.
 	p := resolvePath()
 
 	if _, err := os.Stat(p); os.IsNotExist(err) {
