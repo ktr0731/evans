@@ -90,11 +90,6 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 		}
 		usecase.InjectPartially(usecase.Dependencies{ResourcePresenter: presenter})
 
-		pkgs := make(map[string]struct{})
-		for _, p := range usecase.ListPackages() {
-			pkgs[p] = struct{}{}
-		}
-
 		commonErr := errors.Errorf("unknown fully-qualified service name or method name '%s'", fqn)
 		out, err := func() (string, error) {
 			if fqn == "" {
