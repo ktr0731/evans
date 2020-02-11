@@ -27,39 +27,57 @@ func findSlice(rv reflect.Value) (reflect.Value, bool) {
 	return rv, false
 }
 
-// Format formats v into the list of names. v should be a struct type that have a struct slice.
+// Format formats v into the list of names. v should be a struct type.
+// Format tries to find "name" tag from the struct fields and format the first appeared field.
+// The struct type is only allowed to have struct, slice or primitive type fields.
 func (p *Presenter) Format(v interface{}) (string, error) {
-	rv := indirect(reflect.ValueOf(v))
+	return formatFromStruct(reflect.ValueOf(v))
+}
+
+func formatFromStruct(rv reflect.Value) (string, error) {
+	rv = indirect(rv)
 	rt := rv.Type()
 	if rt.Kind() != reflect.Struct {
 		return "", errors.New("v should be a struct type")
 	}
 
-	slice, ok := findSlice(rv)
-	if !ok {
-		return p.formatSingle(rv)
-	}
-
-	rows := make([]string, slice.Len())
-	for i := 0; i < slice.Len(); i++ {
-		v := slice.Index(i)
-		if v.Type().Kind() != reflect.Struct {
-			return "", errors.New("v should have a slice of a struct")
+	for i := 0; i < rt.NumField(); i++ {
+		f := rt.Field(i)
+		v := f.Tag.Get("name")
+		if v == "" {
+			if f.Type.Kind() == reflect.Struct {
+				s, err := formatFromStruct(rv.Field(i))
+				if err == nil {
+					return s, nil
+				}
+			}
+			continue
 		}
-		if v.NumField() == 0 {
-			return "", errors.New("struct should have at least 1 field")
-		}
-		rows[i] = fmt.Sprint(v.Field(0))
-	}
-	return strings.Join(rows, "\n"), nil
-}
 
-func (p *Presenter) formatSingle(rv reflect.Value) (string, error) {
-	rt := rv.Type()
-	if rt.NumField() == 0 {
-		return "", errors.New("struct should have at least 1 field")
+		if f.Type.Kind() == reflect.Slice {
+			slice := rv.Field(i)
+			rows := make([]string, slice.Len())
+			for i := 0; i < slice.Len(); i++ {
+				v := slice.Index(i)
+				if v.Type().Kind() != reflect.Struct {
+					return "", errors.New("v should have a slice of a struct")
+				}
+				if v.NumField() == 0 {
+					return "", errors.New("struct should have at least 1 field")
+				}
+				for j := 0; j < v.NumField(); j++ {
+					if v.Type().Field(j).Tag.Get("name") == "" {
+						continue
+					}
+					rows[i] = fmt.Sprint(v.Field(j))
+					break
+				}
+			}
+			return strings.Join(rows, "\n"), nil
+		}
+		return fmt.Sprint(rv.Field(i)), nil
 	}
-	return fmt.Sprint(rv.Field(0)), nil
+	return "", errors.New("invalid type")
 }
 
 func NewPresenter() *Presenter {

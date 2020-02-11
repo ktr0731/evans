@@ -35,9 +35,20 @@ func TestPresenter(t *testing.T) {
 		},
 		"normal": {
 			v: struct {
-				V []struct{ int }
+				V []struct {
+					int `name:"target"`
+				} `name:"target"`
 			}{
-				V: []struct{ int }{struct{ int }{100}, struct{ int }{200}},
+				V: []struct {
+					int `name:"target"`
+				}{
+					struct {
+						int `name:"target"`
+					}{100},
+					struct {
+						int `name:"target"`
+					}{200},
+				},
 			},
 			expected: "100\n200",
 		},
