@@ -27,7 +27,7 @@ func (m *dependencyManager) FormatHeaders() (string, error) {
 	sort.Slice(s.Headers, func(i, j int) bool {
 		return s.Headers[i].Key < s.Headers[j].Key
 	})
-	out, err := m.resourcePresenter.Format(s, "  ")
+	out, err := m.resourcePresenter.Format(s)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to format header names by presenter")
 	}

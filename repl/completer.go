@@ -59,7 +59,7 @@ func (c *completer) Complete(d prompt.Document) (s []*prompt.Suggest) {
 			return nil
 		}
 
-		for _, svc := range usecase.ListServices() {
+		for _, svc := range usecase.ListServicesOld() {
 			s = append(s, prompt.NewSuggestion(svc, ""))
 		}
 
@@ -81,7 +81,7 @@ func (c *completer) Complete(d prompt.Document) (s []*prompt.Suggest) {
 		}
 
 		encountered := make(map[string]interface{})
-		for _, svc := range usecase.ListServices() {
+		for _, svc := range usecase.ListServicesOld() {
 			rpcs, err := usecase.ListRPCs(svc)
 			if err != nil {
 				panic(fmt.Sprintf("ListRPCs must not return an error, but got '%s'", err))

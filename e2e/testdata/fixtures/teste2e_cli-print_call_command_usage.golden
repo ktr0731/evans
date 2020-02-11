@@ -1,0 +1,9 @@
+evans 0.8.5
+
+Usage: evans [global options ...] cli call [options ...] <method>
+
+call invokes a RPC based on the passed method name.
+
+Options:
+        --help, -h        display help text and exit (default "false")
+

@@ -1,0 +1,11 @@
+evans 0.8.5
+
+Usage: evans [global options ...] cli
+
+Options:
+        --help, -h        display help text and exit (default "false")
+
+Available Commands:
+        call, c               call a RPC
+        list, ls, show        list services or methods
+

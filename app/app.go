@@ -41,6 +41,7 @@ func (a *App) Run(args []string) int {
 		case "cli", "repl": // Sub commands for new-style interface.
 			// If an arg named "cli" or "repl" is passed, it is regarded as a sub-command of new-style.
 			a.cmd.registerNewCommands()
+			a.cmd.RunE = nil
 		case "-h", "--help":
 			// If the help flags is passed, call registerNewCommands for display sub-command helps.
 			a.cmd.registerNewCommands()

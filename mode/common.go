@@ -74,8 +74,8 @@ func setDefault(cfg *config.Config) error {
 					}
 				}
 				return false
-			}
-			if !hasEmptyPackage() {
+			}()
+			if !hasEmptyPackage {
 				return nil
 			}
 		}
@@ -87,11 +87,16 @@ func setDefault(cfg *config.Config) error {
 
 	// If the spec has only one service, mark it as the default service.
 	if cfg.Default.Service == "" {
-		svcNames := usecase.ListServices()
+		svcNames := usecase.ListServicesOld()
 		if len(svcNames) != 1 {
 			return nil
 		}
+
 		cfg.Default.Service = svcNames[0]
+		i := strings.LastIndex(cfg.Default.Service, ".")
+		if i != -1 {
+			cfg.Default.Service = cfg.Default.Service[i+1:]
+		}
 	}
 	if err := usecase.UseService(cfg.Default.Service); err != nil {
 		return errors.Wrapf(err, "failed to set '%s' as the default service", cfg.Default.Service)

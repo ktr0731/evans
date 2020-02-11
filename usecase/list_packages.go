@@ -2,7 +2,8 @@ package usecase
 
 import (
 	"sort"
-	"strings"
+
+	"github.com/ktr0731/evans/idl/proto"
 )
 
 // ListPackages lists all package names.
@@ -13,11 +14,8 @@ func (m *dependencyManager) ListPackages() []string {
 	svcNames := m.spec.ServiceNames()
 	encountered := make(map[string]interface{})
 	toPackageName := func(svcName string) string {
-		i := strings.LastIndex(svcName, ".")
-		if i == -1 {
-			return ""
-		}
-		return svcName[:i]
+		pkg, _ := proto.ParseFullyQualifiedServiceName(svcName)
+		return pkg
 	}
 	for _, svc := range svcNames {
 		encountered[toPackageName(svc)] = nil

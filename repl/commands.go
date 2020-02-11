@@ -113,11 +113,11 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 	case "p", "package", "packages":
 		f = usecase.FormatPackages
 	case "s", "svc", "service", "services":
-		f = usecase.FormatServices
+		f = usecase.FormatServicesOld
 	case "m", "msg", "message", "messages":
 		f = usecase.FormatMessages
 	case "a", "r", "rpc", "api":
-		f = usecase.FormatRPCs
+		f = usecase.FormatMethods
 	case "h", "header", "headers":
 		f = usecase.FormatHeaders
 	default:

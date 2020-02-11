@@ -6,7 +6,6 @@ import "github.com/ktr0731/evans/idl"
 // UsePackage may return these errors:
 //
 //   - idl.ErrUnknownPackageName: pkgName is not in loaded packages.
-//   - Other errors.
 //
 func UsePackage(pkgName string) error {
 	return dm.UsePackage(pkgName)
