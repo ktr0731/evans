@@ -59,10 +59,13 @@ type Spec interface {
 	TypeDescriptor(msgName string) (interface{}, error)
 }
 
-// FullyQualifiedRPCName returns the fully-qualified RPC joined with '.'.
-func FullyQualifiedRPCName(fqsn, rpcName string) (string, error) {
-	if rpcName == "" {
-		return "", errors.New("rpcName should not be empty")
+// FullyQualifiedMethodName returns the fully-qualified method joined with '.'.
+func FullyQualifiedMethodName(fqsn, methodName string) (string, error) {
+	if fqsn == "" {
+		return "", errors.New("fqsn should not be empty")
 	}
-	return strings.Join([]string{fqsn, rpcName}, "."), nil
+	if methodName == "" {
+		return "", errors.New("methodName should not be empty")
+	}
+	return strings.Join([]string{fqsn, methodName}, "."), nil
 }
