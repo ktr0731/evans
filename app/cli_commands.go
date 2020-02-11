@@ -37,9 +37,9 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceUsage:  true,
 	}
 
-	bindCLICallFlags(cmd.Flags(), flags, ui.Writer())
+	initFlagSet(cmd.Flags(), ui.Writer())
 
-	cmd.SetHelpFunc(usageFunc(ui.Writer()))
+	cmd.SetHelpFunc(usageFunc(ui.Writer(), []string{"file"}))
 	return cmd
 }
 
@@ -79,6 +79,6 @@ list lists method names belong to the service. If not, list lists all services.`
 	initFlagSet(f, ui.Writer())
 	f.StringVarP(&out, "output", "o", "name", `output format. one of "json" or "name".`)
 
-	cmd.SetHelpFunc(usageFunc(ui.Writer()))
+	cmd.SetHelpFunc(usageFunc(ui.Writer(), nil))
 	return cmd
 }
