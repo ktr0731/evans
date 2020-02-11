@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/ktr0731/evans/config"
@@ -95,66 +94,49 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 		for _, p := range usecase.ListPackages() {
 			pkgs[p] = struct{}{}
 		}
-		sp := strings.Split(fqn, ".")
 
 		commonErr := errors.Errorf("unknown fully-qualified service name or method name '%s'", fqn)
 		out, err := func() (string, error) {
-			switch {
-			case len(sp) == 1 && sp[0] == "": // Unspecified.
+			if fqn == "" {
 				svc, err := usecase.FormatServices()
 				if err != nil {
 					return "", errors.Wrap(err, "failed to list services")
 				}
 				return svc, nil
-
-			case len(sp) == 1 && isEmptyPackageService(sp[0]): // No package service name.
-				svc := sp[0]
-				if err := usecase.UseService(svc); errors.Cause(err) == idl.ErrUnknownServiceName {
-					return "", errors.Errorf("service name '%s' is not found", svc)
-				} else if err != nil {
-					return "", errors.Wrapf(err, "failed to use service '%s'", svc)
-				}
-
-				rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: true})
-				if err != nil {
-					return "", errors.Wrap(err, "failed to format RPCs")
-				}
-				return rpcs, nil
-
-			case len(sp) >= 2: // Package name and service name.
-				if isFullyQualifiedMethodName(fqn) {
-					// Return as it is (same behavior as grpc_cli).
-					rpc, err := usecase.FormatRPC(
-						fqn,
-						&usecase.FormatRPCParams{FullyQualifiedName: true},
-					)
-					if err != nil {
-						return "", errors.Wrap(err, "failed to format RPC")
-					}
-					return rpc, nil
-				}
-
-				// sp[len(sp)-1] is fully-qualified service or message.
-
-				pkg, svc := strings.Join(sp[:len(sp)-1], "."), sp[len(sp)-1]
-
-				if err := usecase.UsePackage(pkg); err != nil {
-					return "", commonErr // Return commonErr because UsePackage will be deprecated.
-				}
-
-				if err := usecase.UseService(svc); errors.Cause(err) == idl.ErrUnknownServiceName {
-					return "", errors.Errorf("service name '%s' is not found", svc)
-				} else if err != nil {
-					return "", errors.Wrapf(err, "failed to use service '%s'", svc)
-				}
-
-				rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: true})
-				if err != nil {
-					return "", errors.Wrap(err, "failed to format RPCs")
-				}
-				return rpcs, nil
 			}
-			return "", commonErr
+
+			if isFullyQualifiedMethodName(fqn) {
+				// A fully-qualified method name is passed.
+				// Return as it is (same behavior as grpc_cli).
+				rpc, err := usecase.FormatRPC(
+					fqn,
+					&usecase.FormatRPCParams{FullyQualifiedName: true},
+				)
+				if err != nil {
+					return "", errors.Wrap(err, "failed to format RPC")
+				}
+				return rpc, nil
+			}
+
+			// Parse as a fully-qualified service name.
+
+			pkg, svc := proto.ParseFullyQualifiedServiceName(fqn)
+
+			if err := usecase.UsePackage(pkg); err != nil {
+				return "", commonErr // Return commonErr because UsePackage will be deprecated.
+			}
+
+			if err := usecase.UseService(svc); err != nil && errors.Is(err, idl.ErrUnknownServiceName) {
+				return "", commonErr
+			} else if err != nil {
+				return "", errors.Wrapf(err, "failed to use service '%s'", svc)
+			}
+
+			rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: true})
+			if err != nil {
+				return "", errors.Wrap(err, "failed to format RPCs")
+			}
+			return rpcs, nil
 		}()
 		if err != nil {
 			return err
@@ -208,17 +190,6 @@ func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 // IsCLIMode returns whether Evans is launched as CLI mode or not.
 func IsCLIMode(file string) bool {
 	return file != "" || (!isatty.IsTerminal(os.Stdin.Fd()) && !isatty.IsCygwinTerminal(os.Stdin.Fd()))
-}
-
-func isEmptyPackageService(n string) bool {
-	// It is not need to set package because it has no package.
-	svcs := usecase.ListServices()
-	for _, svc := range svcs {
-		if svc == n {
-			return true
-		}
-	}
-	return false
 }
 
 func isFullyQualifiedMethodName(s string) bool {
