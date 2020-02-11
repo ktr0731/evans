@@ -74,8 +74,8 @@ func setDefault(cfg *config.Config) error {
 					}
 				}
 				return false
-			}
-			if !hasEmptyPackage() {
+			}()
+			if !hasEmptyPackage {
 				return nil
 			}
 		}

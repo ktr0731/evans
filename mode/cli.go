@@ -11,6 +11,7 @@ import (
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/fill"
 	"github.com/ktr0731/evans/idl"
+	"github.com/ktr0731/evans/idl/proto"
 	"github.com/ktr0731/evans/present"
 	"github.com/ktr0731/evans/present/json"
 	"github.com/ktr0731/evans/present/name"
@@ -28,11 +29,10 @@ type CLIInvoker func(context.Context) error
 
 // NewCallCLIInvoker returns an CLIInvoker implementation for calling RPCs.
 // If filePath is empty, the invoker tries to read input from stdin.
-func NewCallCLIInvoker(ui cui.UI, rpcName, filePath string, headers config.Header) (CLIInvoker, error) {
-	if rpcName == "" {
+func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.Header) (CLIInvoker, error) {
+	if methodName == "" {
 		return nil, errors.New("method is required")
 	}
-	// TODO: parse package and service from call.
 	return func(ctx context.Context) error {
 		in := DefaultCLIReader
 		if filePath != "" {
@@ -52,9 +52,23 @@ func NewCallCLIInvoker(ui cui.UI, rpcName, filePath string, headers config.Heade
 			}
 		}
 
-		err := usecase.CallRPC(ctx, ui.Writer(), rpcName)
+		// Try to parse methodName as a fully-qualified method name.
+		// If it is valid, use its fully-qualified service.
+		fqsn, mtd, err := usecase.ParseFullyQualifiedMethodName(methodName)
+		if err == nil {
+			pkg, svc := proto.ParseFullyQualifiedServiceName(fqsn)
+			if err := usecase.UsePackage(pkg); err != nil {
+				return errors.Wrapf(err, "failed to use package '%s'", pkg)
+			}
+			if err := usecase.UseService(svc); err != nil {
+				return errors.Wrapf(err, "failed to use service '%s'", svc)
+			}
+			methodName = mtd
+		}
+
+		err = usecase.CallRPC(ctx, ui.Writer(), methodName)
 		if err != nil {
-			return errors.Wrapf(err, "failed to call RPC '%s'", rpcName)
+			return errors.Wrapf(err, "failed to call RPC '%s'", methodName)
 		}
 		return nil
 	}, nil
