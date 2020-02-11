@@ -4,6 +4,11 @@ Usage: evans [global options ...] cli call [options ...] <method>
 
 call invokes a RPC based on the passed method name.
 
+Examples:
+        $ echo '{}' | evans -r cli call api.Service.Unary # call Unary method with an empty message
+        $ evans -r cli call -f in.json api.Service.Unary  # call Unary method with an input file
+
 Options:
-        --help, -h        display help text and exit (default "false")
+        --file, -f string        a script file that will be executed by (used only CLI mode)
+        --help, -h               display help text and exit (default "false")
 

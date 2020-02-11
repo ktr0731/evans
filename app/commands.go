@@ -128,7 +128,7 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 	}
 	cmd.Flags().SortFlags = false
 	bindFlags(cmd.PersistentFlags(), flags, ui.Writer())
-	cmd.SetHelpFunc(usageFunc(ui.Writer()))
+	cmd.SetHelpFunc(usageFunc(ui.Writer(), nil))
 	cmd.SetOut(ui.Writer())
 	return &command{cmd, flags, ui}
 }
@@ -174,7 +174,8 @@ func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
 
 	// Flags used by old-style only.
-	for _, name := range []string{"repl", "cli", "call", "file"} {
+	// Hidden is enabled only the root command (see printOptions).
+	for _, name := range []string{"repl", "cli", "call", "package", "service", "file"} {
 		if err := f.MarkHidden(name); err != nil {
 			panic(fmt.Sprintf("failed to mark %s as hidden: %s", name, err))
 		}
@@ -210,7 +211,7 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 	}
 	f := cmd.Flags()
 	initFlagSet(f, ui.Writer())
-	cmd.SetHelpFunc(usageFunc(ui.Writer()))
+	cmd.SetHelpFunc(usageFunc(ui.Writer(), nil))
 	cmd.AddCommand(
 		newCLICallCommand(flags, ui),
 		newCLIListCommand(flags, ui),
@@ -228,8 +229,8 @@ func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-	bindREPLFlags(cmd.Flags(), flags, ui.Writer())
-	cmd.SetHelpFunc(usageFunc(ui.Writer()))
+	initFlagSet(cmd.Flags(), ui.Writer())
+	cmd.SetHelpFunc(usageFunc(ui.Writer(), []string{"package", "service"}))
 	return cmd
 }
 
@@ -268,31 +269,22 @@ func runREPLCommand(cfg *mergedConfig, ui cui.UI) error {
 	return nil
 }
 
-func bindCLICallFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
-	initFlagSet(f, w)
-	f.StringVarP(&flags.cli.file, "file", "f", "", "a script file that will be executed by (used only CLI mode)")
-	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
-}
-
-func bindREPLFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
-	initFlagSet(f, w)
-	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
-}
-
 func initFlagSet(f *pflag.FlagSet, w io.Writer) {
 	f.SortFlags = false
 	f.SetOutput(w)
 }
 
-func printOptions(w io.Writer, f *pflag.FlagSet) {
+func printOptions(w io.Writer, cmd *cobra.Command, inheritedFlags []string) {
 	_, err := io.WriteString(w, "Options:\n")
 	if err != nil {
 		logger.Printf("failed to write string: %s", err)
 	}
 	tw := tabwriter.NewWriter(w, 0, 8, 8, ' ', tabwriter.TabIndent)
 	var hasHelp bool
-	f.VisitAll(func(f *pflag.Flag) {
-		if f.Hidden {
+	f := cmd.LocalFlags()
+	isRootCommand := cmd.Parent() == nil
+	printFlag := func(f *pflag.Flag) {
+		if isRootCommand && f.Hidden {
 			return
 		}
 		if f.Name == "help" {
@@ -311,7 +303,18 @@ func printOptions(w io.Writer, f *pflag.FlagSet) {
 			usage += fmt.Sprintf(` (default "%s")`, f.DefValue)
 		}
 		fmt.Fprintf(tw, "        %s\t%s\n", cmd, usage)
-	})
+	}
+	f.VisitAll(printFlag)
+
+	inf := cmd.InheritedFlags()
+	for _, name := range inheritedFlags {
+		f := inf.Lookup(name)
+		if f == nil {
+			continue
+		}
+		printFlag(f)
+	}
+
 	// Always show --help text.
 	if !hasHelp {
 		cmd := "--help, -h"
@@ -322,7 +325,7 @@ func printOptions(w io.Writer, f *pflag.FlagSet) {
 }
 
 // usage is the generator for usage output.
-func usageFunc(out io.Writer) func(*cobra.Command, []string) {
+func usageFunc(out io.Writer, inheritedFlags []string) func(*cobra.Command, []string) {
 	return func(cmd *cobra.Command, _ []string) {
 		rcmd := cmd
 		shortUsages := []string{rcmd.Use}
@@ -338,7 +341,7 @@ func usageFunc(out io.Writer) func(*cobra.Command, []string) {
 		printVersion(out)
 		fmt.Fprint(out, "\n")
 		var buf bytes.Buffer
-		printOptions(&buf, cmd.LocalFlags())
+		printOptions(&buf, cmd, inheritedFlags)
 		fmt.Fprintf(out, "Usage: %s\n\n", strings.Join(shortUsages, " "))
 		if cmd.Long != "" {
 			fmt.Fprint(out, cmd.Long)

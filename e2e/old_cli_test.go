@@ -360,8 +360,6 @@ Usage: evans [global options ...] <command>
 
 Options:
         --silent, -s                     hide redundant output (default "false")
-        --package string                 default package
-        --service string                 default service
         --path strings                   comma-separated proto file paths (default "[]")
         --proto strings                  comma-separated proto file names (default "[]")
         --host string                    gRPC server host
