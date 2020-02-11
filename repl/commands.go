@@ -117,9 +117,7 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 	case "m", "msg", "message", "messages":
 		f = usecase.FormatMessages
 	case "a", "r", "rpc", "api":
-		f = func() (string, error) {
-			return usecase.FormatRPCs(nil)
-		}
+		f = usecase.FormatMethods
 	case "h", "header", "headers":
 		f = usecase.FormatHeaders
 	default:

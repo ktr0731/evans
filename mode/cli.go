@@ -108,10 +108,7 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 			if isFullyQualifiedMethodName(fqn) {
 				// A fully-qualified method name is passed.
 				// Return as it is (same behavior as grpc_cli).
-				rpc, err := usecase.FormatRPC(
-					fqn,
-					&usecase.FormatRPCParams{FullyQualifiedName: true},
-				)
+				rpc, err := usecase.FormatMethod(fqn)
 				if err != nil {
 					return "", errors.Wrap(err, "failed to format RPC")
 				}
@@ -132,7 +129,7 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 				return "", errors.Wrapf(err, "failed to use service '%s'", svc)
 			}
 
-			rpcs, err := usecase.FormatRPCs(&usecase.FormatRPCsParams{FullyQualifiedName: true})
+			rpcs, err := usecase.FormatMethods()
 			if err != nil {
 				return "", errors.Wrap(err, "failed to format RPCs")
 			}

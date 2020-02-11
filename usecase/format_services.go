@@ -11,18 +11,18 @@ func FormatServices() (string, error) {
 	return dm.FormatServices()
 }
 func (m *dependencyManager) FormatServices() (string, error) {
-	svcs := m.ListServices()
+	fqsns := m.ListServices()
 	type svc struct {
-		Service string `json:"service"`
+		Name string `json:"name" name:"target"`
 	}
 	var v struct {
-		Services []svc `json:"services"`
+		Services []svc `json:"services" name:"target"`
 	}
-	for _, svcName := range svcs {
-		v.Services = append(v.Services, svc{svcName})
+	for _, fqsn := range fqsns {
+		v.Services = append(v.Services, svc{fqsn})
 	}
 	sort.Slice(v.Services, func(i, j int) bool {
-		return v.Services[i].Service < v.Services[j].Service
+		return v.Services[i].Name < v.Services[j].Name
 	})
 	out, err := m.resourcePresenter.Format(v)
 	if err != nil {

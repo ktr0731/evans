@@ -17,16 +17,6 @@ func indirect(rv reflect.Value) reflect.Value {
 	return indirect(reflect.Indirect(rv))
 }
 
-func findSlice(rv reflect.Value) (reflect.Value, bool) {
-	for i := 0; i < rv.NumField(); i++ {
-		sf := rv.Field(i)
-		if sf.Kind() == reflect.Slice {
-			return sf, true
-		}
-	}
-	return rv, false
-}
-
 // Format formats v into the list of names. v should be a struct type.
 // Format tries to find "name" tag from the struct fields and format the first appeared field.
 // The struct type is only allowed to have struct, slice or primitive type fields.
