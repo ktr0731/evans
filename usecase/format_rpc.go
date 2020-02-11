@@ -42,7 +42,7 @@ func (m *dependencyManager) FormatRPC(fqrn string, p *FormatRPCParams) (string, 
 		rpcName := r.Name
 		if p.FullyQualifiedName {
 			fqsn := proto.FullyQualifiedServiceName(pkg, svc)
-			rpcName, err = idl.FullyQualifiedRPCName(fqsn, rpcName)
+			rpcName, err = idl.FullyQualifiedMethodName(fqsn, rpcName)
 			if err != nil {
 				return "", errors.Wrap(err, "failed to get fully-qualified service name")
 			}

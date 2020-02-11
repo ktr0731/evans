@@ -60,19 +60,6 @@ func gRPCReflectionPackageFilteredPackages(pkgNames []string) []string {
 	return pkgs
 }
 
-func gRPCReflectionServiceFilteredServices(svcNames []string) []string {
-	svcs := make([]string, len(svcNames))
-	copy(svcs, svcNames)
-
-	n := grpcreflection.ServiceName[strings.LastIndex(grpcreflection.ServiceName, ".")+1:]
-	for i := range svcs {
-		if n == svcs[i] {
-			return append(svcs[:i], svcs[i+1:]...)
-		}
-	}
-	return svcs
-}
-
 func setDefault(cfg *config.Config) error {
 	// If the spec has only one package, mark it as the default package.
 	if cfg.Default.Package == "" {
@@ -100,7 +87,7 @@ func setDefault(cfg *config.Config) error {
 
 	// If the spec has only one service, mark it as the default service.
 	if cfg.Default.Service == "" {
-		svcNames := gRPCReflectionServiceFilteredServices(usecase.ListServicesOld())
+		svcNames := usecase.ListServicesOld()
 		if len(svcNames) != 1 {
 			return nil
 		}
