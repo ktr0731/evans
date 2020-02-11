@@ -13,6 +13,7 @@ import (
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/mode"
+	"github.com/ktr0731/evans/usecase"
 )
 
 func TestE2E_CLI(t *testing.T) {
@@ -49,6 +50,8 @@ func TestE2E_CLI(t *testing.T) {
 
 		// The output we expected. It is ignored if expectedCode isn't 0.
 		expectedOut string
+		// assertWithGolden asserts the output with the golden file.
+		assertWithGolden bool
 
 		// The exit code we expected.
 		expectedCode int
@@ -59,14 +62,14 @@ func TestE2E_CLI(t *testing.T) {
 		unflatten bool
 	}{
 		"print usage text to the Writer (common flag)": {
-			commonFlags: "--help",
-			expectedOut: expectedCLIUsageOut,
-			unflatten:   true,
+			commonFlags:      "--help",
+			assertWithGolden: true,
+			unflatten:        true,
 		},
 		"print usage text to the Writer": {
-			args:        "--help",
-			expectedOut: expectedCLIUsageOut,
-			unflatten:   true,
+			args:             "--help",
+			assertWithGolden: true,
+			unflatten:        true,
 		},
 		"print version text to the Writer (common flag)": {
 			commonFlags: "--version",
@@ -91,8 +94,14 @@ func TestE2E_CLI(t *testing.T) {
 			expectedCode: 1,
 		},
 
-		// CLI mode
+		// call command
 
+		"print call command usage": {
+			commonFlags:      "",
+			cmd:              "call",
+			args:             "-h",
+			assertWithGolden: true,
+		},
 		"cannot launch CLI mode because proto files didn't be passed": {
 			commonFlags:  "--package api --service Example",
 			cmd:          "call",
@@ -145,6 +154,12 @@ func TestE2E_CLI(t *testing.T) {
 			commonFlags: "--package api --service Example --proto testdata/test.proto",
 			cmd:         "call",
 			args:        "--file testdata/unary_call.in Unary",
+			expectedOut: `{ "message": "hello, oumae" }`,
+		},
+		"call fully-qualified unary RPC with an input file by CLI mode": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "call",
+			args:        "--file testdata/unary_call.in api.Example.Unary",
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 		"call unary RPC with --call flag (backward-compatibility)": {
@@ -229,7 +244,7 @@ func TestE2E_CLI(t *testing.T) {
 			},
 		},
 
-		// CLI mode with reflection
+		// call command with reflection
 
 		"cannot launch CLI mode with reflection because method is missing": {
 			commonFlags:  "--reflection --package api --service Example --proto testdata/test.proto",
@@ -253,7 +268,7 @@ func TestE2E_CLI(t *testing.T) {
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 
-		// CLI mode with TLS
+		// call command with TLS
 
 		"cannot launch CLI mode with TLS because the server didn't enable TLS": {
 			commonFlags:  "--tls --service Example --proto testdata/test.proto",
@@ -335,7 +350,7 @@ func TestE2E_CLI(t *testing.T) {
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 
-		// CLI mode with gRPC-Web
+		// call command with gRPC-Web
 
 		"cannot send a request to gRPC-Web server because the server didn't enable gRPC-Web": {
 			commonFlags:  "--web --package api --service Example --proto testdata/test.proto",
@@ -392,10 +407,86 @@ func TestE2E_CLI(t *testing.T) {
 				}
 			},
 		},
+
+		// list command
+		"print list command usage": {
+			commonFlags:      "",
+			cmd:              "list",
+			args:             "-h",
+			assertWithGolden: true,
+		},
+		"list services without args": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "list",
+			args:        "",
+			expectedOut: `api.Example`,
+		},
+		"list services without args and two protos": {
+			commonFlags: "--proto testdata/test.proto,testdata/empty_package.proto",
+			cmd:         "list",
+			args:        "",
+			expectedOut: `EmptyPackageService api.Example`,
+		},
+		"list services with name format": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "list",
+			args:        "-o name",
+			expectedOut: `api.Example`,
+		},
+		"list services with JSON format": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "list",
+			args:        "-o json",
+			expectedOut: `{ "services": [ { "name": "api.Example" } ] }`,
+		},
+		"list methods with name format": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "list",
+			args:        "-o name api.Example",
+			expectedOut: `api.Example.BidiStreaming api.Example.ClientStreaming api.Example.ServerStreaming api.Example.Unary api.Example.UnaryBytes api.Example.UnaryEnum api.Example.UnaryHeader api.Example.UnaryMap api.Example.UnaryMapMessage api.Example.UnaryMessage api.Example.UnaryOneof api.Example.UnaryRepeated api.Example.UnaryRepeatedEnum api.Example.UnaryRepeatedMessage api.Example.UnarySelf`,
+		},
+		"list methods with JSON format": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "list",
+			args:        "-o json api.Example",
+			expectedOut: `{ "methods": [ { "name": "BidiStreaming", "fully_qualified_name": "api.Example.BidiStreaming", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }, { "name": "ClientStreaming", "fully_qualified_name": "api.Example.ClientStreaming", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }, { "name": "ServerStreaming", "fully_qualified_name": "api.Example.ServerStreaming", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }, { "name": "Unary", "fully_qualified_name": "api.Example.Unary", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryBytes", "fully_qualified_name": "api.Example.UnaryBytes", "request_type": "api.UnaryBytesRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryEnum", "fully_qualified_name": "api.Example.UnaryEnum", "request_type": "api.UnaryEnumRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryHeader", "fully_qualified_name": "api.Example.UnaryHeader", "request_type": "api.UnaryHeaderRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryMap", "fully_qualified_name": "api.Example.UnaryMap", "request_type": "api.UnaryMapRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryMapMessage", "fully_qualified_name": "api.Example.UnaryMapMessage", "request_type": "api.UnaryMapMessageRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryMessage", "fully_qualified_name": "api.Example.UnaryMessage", "request_type": "api.UnaryMessageRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryOneof", "fully_qualified_name": "api.Example.UnaryOneof", "request_type": "api.UnaryOneofRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryRepeated", "fully_qualified_name": "api.Example.UnaryRepeated", "request_type": "api.UnaryRepeatedRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryRepeatedEnum", "fully_qualified_name": "api.Example.UnaryRepeatedEnum", "request_type": "api.UnaryRepeatedEnumRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryRepeatedMessage", "fully_qualified_name": "api.Example.UnaryRepeatedMessage", "request_type": "api.UnaryRepeatedMessageRequest", "response_type": "api.SimpleResponse" }, { "name": "UnarySelf", "fully_qualified_name": "api.Example.UnarySelf", "request_type": "api.UnarySelfRequest", "response_type": "api.SimpleResponse" } ] }`,
+		},
+		"list methods that have empty name": {
+			commonFlags: "--proto testdata/empty_package.proto",
+			cmd:         "list",
+			args:        "EmptyPackageService",
+			expectedOut: `EmptyPackageService.Unary`,
+		},
+		"list a method with name format": {
+			commonFlags: "--proto testdata/test.proto,testdata/empty_package.proto",
+			cmd:         "list",
+			args:        "-o name api.Example.Unary",
+			expectedOut: `api.Example.Unary`,
+		},
+		"list a method with JSON format": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "list",
+			args:        "-o json api.Example.Unary",
+			expectedOut: `{ "name": "Unary", "fully_qualified_name": "api.Example.Unary", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }`,
+		},
+		"cannot list because of invalid package name": {
+			commonFlags:  "--proto testdata/test.proto",
+			cmd:          "list",
+			args:         "Foo",
+			expectedCode: 1,
+		},
+		"cannot list because of invalid service name": {
+			commonFlags:  "--proto testdata/test.proto",
+			cmd:          "list",
+			args:         "api.Foo",
+			expectedCode: 1,
+		},
 	}
 	for name, c := range cases {
 		c := c
 		t.Run(name, func(t *testing.T) {
+			defer usecase.Clear()
+
 			stopServer, port := startServer(t, c.tls, c.reflection, c.web, c.registerEmptyPackageService)
 			defer stopServer()
 
@@ -440,6 +531,9 @@ func TestE2E_CLI(t *testing.T) {
 				if c.expectedOut != "" && actual != c.expectedOut {
 					t.Errorf("unexpected output:\n%s", cmp.Diff(c.expectedOut, actual))
 				}
+				if c.assertWithGolden {
+					compareWithGolden(t, outBuf.String())
+				}
 				if eoutBuf.String() != "" {
 					t.Errorf("expected code is 0, but got an error message: '%s'", eoutBuf.String())
 				}
@@ -447,15 +541,3 @@ func TestE2E_CLI(t *testing.T) {
 		})
 	}
 }
-
-var expectedCLIUsageOut = fmt.Sprintf(`evans %s
-
-Usage: evans [global options ...] cli
-
-Options:
-        --help, -h        display help text and exit (default "false")
-
-Available Commands:
-        call        call a RPC
-
-`, meta.Version)

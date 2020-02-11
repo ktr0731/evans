@@ -51,7 +51,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		return res, nil
 	}
 	flushResponse := func(res interface{}) error {
-		out, err := m.responsePresenter.Format(res, "  ")
+		out, err := m.responsePresenter.Format(res)
 		if err != nil {
 			return err
 		}

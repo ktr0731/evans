@@ -98,47 +98,26 @@ func runFunc(
 func newOldCommand(flags *flags, ui cui.UI) *command {
 	cmd := &cobra.Command{
 		Use: "evans [global options ...] <command>",
-		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
+		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) (err error) {
 			if cfg.REPL.ColoredOutput {
 				ui = cui.NewColored(ui)
 			}
 
-			defer ui.Warn("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")
+			defer func() {
+				if err == nil {
+					ui.Warn("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")
+				}
+			}()
 
 			isCLIMode := (cfg.cli || mode.IsCLIMode(cfg.file))
 			if cfg.repl || !isCLIMode {
-				cache, err := cache.Get()
-				if err != nil {
-					return errors.Wrap(err, "failed to get the cache content")
-				}
-
-				baseCtx, cancel := context.WithCancel(context.Background())
-				defer cancel()
-				eg, ctx := errgroup.WithContext(baseCtx)
-				// Run update checker asynchronously.
-				eg.Go(func() error {
-					return checkUpdate(ctx, cfg.Config, cache)
-				})
-
-				if cfg.Config.Meta.AutoUpdate {
-					eg.Go(func() error {
-						return processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New())
-					})
-				} else if err := processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New()); err != nil {
-					return errors.Wrap(err, "failed to update Evans")
-				}
-
-				if err := mode.RunAsREPLMode(cfg.Config, ui, cache); err != nil {
-					return errors.Wrap(err, "failed to run REPL mode")
-				}
-
-				// Always call cancel func because it is hope to abort update checking if REPL mode is finished
-				// before update checking. If update checking is finished before REPL mode, cancel do nothing.
-				cancel()
-				if err := eg.Wait(); err != nil {
-					return errors.Wrap(err, "failed to check application update")
-				}
-			} else if err := mode.RunAsCLIMode(cfg.Config, cfg.call, cfg.file, ui); err != nil {
+				return runREPLCommand(cfg, ui)
+			}
+			invoker, err := mode.NewCallCLIInvoker(ui, cfg.call, cfg.file, cfg.Config.Request.Header)
+			if err != nil {
+				return err
+			}
+			if err := mode.RunAsCLIMode(cfg.Config, invoker); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
 			}
 
@@ -217,7 +196,11 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 				}
 				call = args[0]
 			}
-			if err := mode.RunAsCLIMode(cfg.Config, call, cfg.file, ui); err != nil {
+			invoker, err := mode.NewCallCLIInvoker(ui, call, cfg.file, cfg.Config.Request.Header)
+			if err != nil {
+				return err
+			}
+			if err := mode.RunAsCLIMode(cfg.Config, invoker); err != nil {
 				return errors.Wrap(err, "failed to run CLI mode")
 			}
 			return nil
@@ -225,12 +208,12 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-	f := cmd.LocalFlags()
+	f := cmd.Flags()
 	initFlagSet(f, ui.Writer())
-	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	cmd.AddCommand(
 		newCLICallCommand(flags, ui),
+		newCLIListCommand(flags, ui),
 	)
 	return cmd
 }
@@ -240,48 +223,52 @@ func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 		Use:   "repl [options ...]",
 		Short: "REPL mode",
 		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig) error {
-			cache, err := cache.Get()
-			if err != nil {
-				return errors.Wrap(err, "failed to get the cache content")
-			}
-
-			baseCtx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			eg, ctx := errgroup.WithContext(baseCtx)
-			// Run update checker asynchronously.
-			eg.Go(func() error {
-				return checkUpdate(ctx, cfg.Config, cache)
-			})
-
-			if cfg.Config.Meta.AutoUpdate {
-				eg.Go(func() error {
-					return processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New())
-				})
-			} else if err := processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New()); err != nil {
-				return errors.Wrap(err, "failed to update Evans")
-			}
-
-			if err := mode.RunAsREPLMode(cfg.Config, ui, cache); err != nil {
-				return errors.Wrap(err, "failed to run REPL mode")
-			}
-
-			// Always call cancel func because it is hope to abort update checking if REPL mode is finished
-			// before update checking. If update checking is finished before REPL mode, cancel do nothing.
-			cancel()
-			if err := eg.Wait(); err != nil {
-				return errors.Wrap(err, "failed to check application update")
-			}
-			return nil
+			return runREPLCommand(cfg, ui)
 		}),
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-	bindREPLFlags(cmd.LocalFlags(), flags, ui.Writer())
+	bindREPLFlags(cmd.Flags(), flags, ui.Writer())
 	cmd.SetHelpFunc(usageFunc(ui.Writer()))
 	return cmd
 }
 
-func bindCLIFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
+func runREPLCommand(cfg *mergedConfig, ui cui.UI) error {
+	cache, err := cache.Get()
+	if err != nil {
+		return errors.Wrap(err, "failed to get the cache content")
+	}
+
+	baseCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	eg, ctx := errgroup.WithContext(baseCtx)
+	// Run update checker asynchronously.
+	eg.Go(func() error {
+		return checkUpdate(ctx, cfg.Config, cache)
+	})
+
+	if cfg.Config.Meta.AutoUpdate {
+		eg.Go(func() error {
+			return processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New())
+		})
+	} else if err := processUpdate(ctx, cfg.Config, ui.Writer(), cache, prompt.New()); err != nil {
+		return errors.Wrap(err, "failed to update Evans")
+	}
+
+	if err := mode.RunAsREPLMode(cfg.Config, ui, cache); err != nil {
+		return errors.Wrap(err, "failed to run REPL mode")
+	}
+
+	// Always call cancel func because it is hope to abort update checking if REPL mode is finished
+	// before update checking. If update checking is finished before REPL mode, cancel do nothing.
+	cancel()
+	if err := eg.Wait(); err != nil {
+		return errors.Wrap(err, "failed to check application update")
+	}
+	return nil
+}
+
+func bindCLICallFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	initFlagSet(f, w)
 	f.StringVarP(&flags.cli.file, "file", "f", "", "a script file that will be executed by (used only CLI mode)")
 	f.BoolVarP(&flags.meta.help, "help", "h", false, "display help text and exit")
@@ -303,9 +290,13 @@ func printOptions(w io.Writer, f *pflag.FlagSet) {
 		logger.Printf("failed to write string: %s", err)
 	}
 	tw := tabwriter.NewWriter(w, 0, 8, 8, ' ', tabwriter.TabIndent)
+	var hasHelp bool
 	f.VisitAll(func(f *pflag.Flag) {
 		if f.Hidden {
 			return
+		}
+		if f.Name == "help" {
+			hasHelp = true
 		}
 		cmd := "--" + f.Name
 		if f.Shorthand != "" {
@@ -321,6 +312,12 @@ func printOptions(w io.Writer, f *pflag.FlagSet) {
 		}
 		fmt.Fprintf(tw, "        %s\t%s\n", cmd, usage)
 	})
+	// Always show --help text.
+	if !hasHelp {
+		cmd := "--help, -h"
+		usage := `display help text and exit (default "false")`
+		fmt.Fprintf(tw, "        %s\t%s\n", cmd, usage)
+	}
 	tw.Flush()
 }
 
@@ -339,9 +336,21 @@ func usageFunc(out io.Writer) func(*cobra.Command, []string) {
 		}
 
 		printVersion(out)
+		fmt.Fprint(out, "\n")
 		var buf bytes.Buffer
 		printOptions(&buf, cmd.LocalFlags())
-		fmt.Fprintf(out, usageFormat, strings.Join(shortUsages, " "), buf.String())
+		fmt.Fprintf(out, "Usage: %s\n\n", strings.Join(shortUsages, " "))
+		if cmd.Long != "" {
+			fmt.Fprint(out, cmd.Long)
+			fmt.Fprint(out, "\n\n")
+		}
+		if cmd.Example != "" {
+			fmt.Fprint(out, "Examples:\n")
+			fmt.Fprint(out, cmd.Example)
+			fmt.Fprint(out, "\n\n")
+		}
+		fmt.Fprint(out, buf.String())
+		fmt.Fprint(out, "\n")
 
 		if len(cmd.Commands()) > 0 {
 			fmt.Fprintf(out, "Available Commands:\n")
@@ -351,7 +360,8 @@ func usageFunc(out io.Writer) func(*cobra.Command, []string) {
 				if c.Name() == "help" {
 					continue
 				}
-				fmt.Fprintf(w, "        %s\t%s\n", c.Name(), c.Short)
+				cmdAndAliases := append([]string{c.Name()}, c.Aliases...)
+				fmt.Fprintf(w, "        %s\t%s\n", strings.Join(cmdAndAliases, ", "), c.Short)
 			}
 			w.Flush()
 			fmt.Fprintf(out, "\n")

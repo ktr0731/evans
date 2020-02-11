@@ -191,3 +191,12 @@ func FullyQualifiedMessageName(pkg, msg string) string {
 	}
 	return strings.Join(s, ".")
 }
+
+// ParseFullyQualifiedServiceName returns the package and service name from a fully-qualified service name.
+func ParseFullyQualifiedServiceName(fqsn string) (string, string) {
+	i := strings.LastIndex(fqsn, ".")
+	if i == -1 {
+		return "", fqsn
+	}
+	return fqsn[:i], fqsn[i+1:]
+}

@@ -59,14 +59,13 @@ type Spec interface {
 	TypeDescriptor(msgName string) (interface{}, error)
 }
 
-// FullyQualifiedMessageName returns the fully qualified name joined with '.'.
-// pkgName is an optional value, but msgName is not.
-func FullyQualifiedMessageName(pkgName, msgName string) (string, error) {
-	if msgName == "" {
-		return "", errors.New("msgName should not be empty")
+// FullyQualifiedMethodName returns the fully-qualified method joined with '.'.
+func FullyQualifiedMethodName(fqsn, methodName string) (string, error) {
+	if fqsn == "" {
+		return "", errors.New("fqsn should not be empty")
 	}
-	if pkgName == "" {
-		return msgName, nil
+	if methodName == "" {
+		return "", errors.New("methodName should not be empty")
 	}
-	return strings.Join([]string{pkgName, msgName}, "."), nil
+	return strings.Join([]string{fqsn, methodName}, "."), nil
 }

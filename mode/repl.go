@@ -29,11 +29,13 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 	}
 
 	usecase.Inject(
-		spec,
-		proto.NewInteractiveFiller(prompt.New(), cfg.REPL.InputPromptFormat),
-		gRPCClient,
-		json.NewPresenter(),
-		table.NewPresenter(),
+		usecase.Dependencies{
+			Spec:              spec,
+			Filler:            proto.NewInteractiveFiller(prompt.New(), cfg.REPL.InputPromptFormat),
+			GRPCClient:        gRPCClient,
+			ResponsePresenter: json.NewPresenter("  "),
+			ResourcePresenter: table.NewPresenter(),
+		},
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())

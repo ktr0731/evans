@@ -11,7 +11,7 @@ func FormatMessages() (string, error) {
 	return dm.FormatMessages()
 }
 func (m *dependencyManager) FormatMessages() (string, error) {
-	svcs := m.ListServices()
+	svcs := m.ListServicesOld()
 	type message struct {
 		Message string `json:"message"`
 	}
@@ -38,7 +38,7 @@ func (m *dependencyManager) FormatMessages() (string, error) {
 	sort.Slice(v.Messages, func(i, j int) bool {
 		return v.Messages[i].Message < v.Messages[j].Message
 	})
-	out, err := m.resourcePresenter.Format(v, "  ")
+	out, err := m.resourcePresenter.Format(v)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to format message names by presenter")
 	}

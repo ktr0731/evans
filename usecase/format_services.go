@@ -6,39 +6,25 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FormatServices formats all package names.
+// FormatServices formats all service names the spec loaded.
 func FormatServices() (string, error) {
 	return dm.FormatServices()
 }
 func (m *dependencyManager) FormatServices() (string, error) {
-	svcs := m.ListServices()
-	type service struct {
-		Service      string `json:"service"`
-		RPC          string `json:"rpc"`
-		RequestType  string `json:"request type" table:"request type"`
-		ResponseType string `json:"response type" table:"response type"`
+	fqsns := m.ListServices()
+	type svc struct {
+		Name string `json:"name" name:"target"`
 	}
 	var v struct {
-		Services []service `json:"services"`
+		Services []svc `json:"services" name:"target"`
 	}
-	for _, svcName := range svcs {
-		rpcs, err := m.ListRPCs(svcName)
-		if err != nil {
-			return "", errors.Wrapf(err, "failed to list RPCs associated with '%s'", svcName)
-		}
-		for _, rpc := range rpcs {
-			v.Services = append(v.Services, service{
-				svcName,
-				rpc.Name,
-				rpc.RequestType.Name,
-				rpc.ResponseType.Name,
-			})
-		}
+	for _, fqsn := range fqsns {
+		v.Services = append(v.Services, svc{fqsn})
 	}
 	sort.Slice(v.Services, func(i, j int) bool {
-		return v.Services[i].Service < v.Services[j].Service
+		return v.Services[i].Name < v.Services[j].Name
 	})
-	out, err := m.resourcePresenter.Format(v, "  ")
+	out, err := m.resourcePresenter.Format(v)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to format service names by presenter")
 	}

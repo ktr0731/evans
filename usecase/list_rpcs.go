@@ -16,11 +16,11 @@ func (m *dependencyManager) ListRPCs(svcName string) ([]*grpc.RPC, error) {
 	if svcName == "" {
 		svcName = m.state.selectedService
 	}
-	return m.listRPCs(m.state.selectedPackage, svcName)
+	fqsn := proto.FullyQualifiedServiceName(m.state.selectedPackage, svcName)
+	return m.listRPCs(fqsn)
 }
 
-func (m *dependencyManager) listRPCs(pkgName, svcName string) ([]*grpc.RPC, error) {
-	fqsn := proto.FullyQualifiedServiceName(pkgName, svcName)
+func (m *dependencyManager) listRPCs(fqsn string) ([]*grpc.RPC, error) {
 	rpcs, err := m.spec.RPCs(fqsn)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to list RPCs")
