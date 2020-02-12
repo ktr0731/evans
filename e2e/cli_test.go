@@ -484,6 +484,12 @@ func TestE2E_CLI(t *testing.T) {
 
 		// desc command
 
+		"print desc command usage": {
+			commonFlags:      "",
+			cmd:              "desc",
+			args:             "-h",
+			assertWithGolden: true,
+		},
 		"describe all service descriptors": {
 			commonFlags:      "--proto testdata/test.proto,testdata/empty_package.proto",
 			cmd:              "desc",

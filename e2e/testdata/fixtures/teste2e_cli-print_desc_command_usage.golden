@@ -1,0 +1,15 @@
+evans 0.8.5
+
+Usage: evans [global options ...] cli desc [options ...] [symbol]
+
+desc shows the descriptor of the given symbol.
+The symbol should be a fully-qualified name. If no symbol is passed, desc shows all descriptors of the loaded services.
+
+Examples:
+        $ evans -r cli desc             # describe the descriptors of the loaded services
+        $ evans -r cli desc api.Service # describe the service descriptor of "api.Service"
+        $ evans -r cli desc api.Request # describe the message descriptor of "api.Request"
+
+Options:
+        --help, -h        display help text and exit (default "false")
+
