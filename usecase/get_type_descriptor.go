@@ -15,7 +15,7 @@ func (m *dependencyManager) GetTypeDescriptor(typeName string) (interface{}, err
 		pkgName = "''"
 	}
 	fqmn := proto.FullyQualifiedMessageName(pkgName, typeName)
-	d, err := m.spec.TypeDescriptor(fqmn)
+	d, err := m.spec.ResolveSymbol(fqmn)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get the type descriptor of '%s'", typeName)
 	}

@@ -138,6 +138,25 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 	}
 }
 
+func NewDescribeCLIInvoker(ui cui.UI, fqn string) CLIInvoker {
+	return func(context.Context) error {
+		var (
+			out string
+			err error
+		)
+		if fqn != "" {
+			out, err = usecase.FormatDescriptor(fqn)
+		} else {
+			out, err = usecase.FormatFileDescriptors()
+		}
+		if err != nil {
+			return errors.Wrap(err, "failed to describe")
+		}
+		ui.Output(out)
+		return nil
+	}
+}
+
 // RunAsCLIMode starts Evans as CLI mode.
 func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 	var injectResult error

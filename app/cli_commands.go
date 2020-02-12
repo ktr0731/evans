@@ -82,3 +82,38 @@ list lists method names belong to the service. If not, list lists all services.`
 	cmd.SetHelpFunc(usageFunc(ui.Writer(), nil))
 	return cmd
 }
+
+func newCLIDescribeCommand(flags *flags, ui cui.UI) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "desc [options ...] [symbol]",
+		Aliases: []string{"describe"},
+		Short:   "describe the descriptor of a symbol",
+		Long: `desc shows the descriptor of the given symbol.
+The symbol should be a fully-qualified name. If no symbol is passed, desc shows all descriptors of the loaded services.`,
+		Example: strings.Join([]string{
+			"        $ evans -r cli desc             # describe the descriptors of the loaded services",
+			`        $ evans -r cli desc api.Service # describe the service descriptor of "api.Service"`,
+			`        $ evans -r cli desc api.Request # describe the message descriptor of "api.Request"`,
+		}, "\n"),
+		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
+			var fqn string
+			args := cmd.Flags().Args()
+			if len(args) > 0 {
+				fqn = args[0]
+			}
+			invoker := mode.NewDescribeCLIInvoker(ui, fqn)
+			if err := mode.RunAsCLIMode(cfg.Config, invoker); err != nil {
+				return errors.Wrap(err, "failed to run CLI mode")
+			}
+			return nil
+		}),
+		SilenceErrors: true,
+		SilenceUsage:  true,
+	}
+
+	f := cmd.Flags()
+	initFlagSet(f, ui.Writer())
+
+	cmd.SetHelpFunc(usageFunc(ui.Writer(), nil))
+	return cmd
+}

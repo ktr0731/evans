@@ -10,11 +10,11 @@ import (
 )
 
 var (
-	lockSpecMockPackageNames   sync.RWMutex
-	lockSpecMockRPC            sync.RWMutex
-	lockSpecMockRPCs           sync.RWMutex
-	lockSpecMockServiceNames   sync.RWMutex
-	lockSpecMockTypeDescriptor sync.RWMutex
+	lockSpecMockFormatDescriptor sync.RWMutex
+	lockSpecMockRPC              sync.RWMutex
+	lockSpecMockRPCs             sync.RWMutex
+	lockSpecMockResolveSymbol    sync.RWMutex
+	lockSpecMockServiceNames     sync.RWMutex
 )
 
 // Ensure, that SpecMock does implement idl.Spec.
@@ -27,8 +27,8 @@ var _ idl.Spec = &SpecMock{}
 //
 //         // make and configure a mocked idl.Spec
 //         mockedSpec := &SpecMock{
-//             PackageNamesFunc: func() []string {
-// 	               panic("mock out the PackageNames method")
+//             FormatDescriptorFunc: func(v interface{}) (string, error) {
+// 	               panic("mock out the FormatDescriptor method")
 //             },
 //             RPCFunc: func(svcName string, rpcName string) (*grpc.RPC, error) {
 // 	               panic("mock out the RPC method")
@@ -36,11 +36,11 @@ var _ idl.Spec = &SpecMock{}
 //             RPCsFunc: func(svcName string) ([]*grpc.RPC, error) {
 // 	               panic("mock out the RPCs method")
 //             },
+//             ResolveSymbolFunc: func(symbol string) (interface{}, error) {
+// 	               panic("mock out the ResolveSymbol method")
+//             },
 //             ServiceNamesFunc: func() []string {
 // 	               panic("mock out the ServiceNames method")
-//             },
-//             TypeDescriptorFunc: func(msgName string) (interface{}, error) {
-// 	               panic("mock out the TypeDescriptor method")
 //             },
 //         }
 //
@@ -49,8 +49,8 @@ var _ idl.Spec = &SpecMock{}
 //
 //     }
 type SpecMock struct {
-	// PackageNamesFunc mocks the PackageNames method.
-	PackageNamesFunc func() []string
+	// FormatDescriptorFunc mocks the FormatDescriptor method.
+	FormatDescriptorFunc func(v interface{}) (string, error)
 
 	// RPCFunc mocks the RPC method.
 	RPCFunc func(svcName string, rpcName string) (*grpc.RPC, error)
@@ -58,16 +58,18 @@ type SpecMock struct {
 	// RPCsFunc mocks the RPCs method.
 	RPCsFunc func(svcName string) ([]*grpc.RPC, error)
 
+	// ResolveSymbolFunc mocks the ResolveSymbol method.
+	ResolveSymbolFunc func(symbol string) (interface{}, error)
+
 	// ServiceNamesFunc mocks the ServiceNames method.
 	ServiceNamesFunc func() []string
 
-	// TypeDescriptorFunc mocks the TypeDescriptor method.
-	TypeDescriptorFunc func(msgName string) (interface{}, error)
-
 	// calls tracks calls to the methods.
 	calls struct {
-		// PackageNames holds details about calls to the PackageNames method.
-		PackageNames []struct {
+		// FormatDescriptor holds details about calls to the FormatDescriptor method.
+		FormatDescriptor []struct {
+			// V is the v argument value.
+			V interface{}
 		}
 		// RPC holds details about calls to the RPC method.
 		RPC []struct {
@@ -81,40 +83,45 @@ type SpecMock struct {
 			// SvcName is the svcName argument value.
 			SvcName string
 		}
+		// ResolveSymbol holds details about calls to the ResolveSymbol method.
+		ResolveSymbol []struct {
+			// Symbol is the symbol argument value.
+			Symbol string
+		}
 		// ServiceNames holds details about calls to the ServiceNames method.
 		ServiceNames []struct {
 		}
-		// TypeDescriptor holds details about calls to the TypeDescriptor method.
-		TypeDescriptor []struct {
-			// MsgName is the msgName argument value.
-			MsgName string
-		}
 	}
 }
 
-// PackageNames calls PackageNamesFunc.
-func (mock *SpecMock) PackageNames() []string {
-	if mock.PackageNamesFunc == nil {
-		panic("SpecMock.PackageNamesFunc: method is nil but Spec.PackageNames was just called")
+// FormatDescriptor calls FormatDescriptorFunc.
+func (mock *SpecMock) FormatDescriptor(v interface{}) (string, error) {
+	if mock.FormatDescriptorFunc == nil {
+		panic("SpecMock.FormatDescriptorFunc: method is nil but Spec.FormatDescriptor was just called")
 	}
 	callInfo := struct {
-	}{}
-	lockSpecMockPackageNames.Lock()
-	mock.calls.PackageNames = append(mock.calls.PackageNames, callInfo)
-	lockSpecMockPackageNames.Unlock()
-	return mock.PackageNamesFunc()
+		V interface{}
+	}{
+		V: v,
+	}
+	lockSpecMockFormatDescriptor.Lock()
+	mock.calls.FormatDescriptor = append(mock.calls.FormatDescriptor, callInfo)
+	lockSpecMockFormatDescriptor.Unlock()
+	return mock.FormatDescriptorFunc(v)
 }
 
-// PackageNamesCalls gets all the calls that were made to PackageNames.
+// FormatDescriptorCalls gets all the calls that were made to FormatDescriptor.
 // Check the length with:
-//     len(mockedSpec.PackageNamesCalls())
-func (mock *SpecMock) PackageNamesCalls() []struct {
+//     len(mockedSpec.FormatDescriptorCalls())
+func (mock *SpecMock) FormatDescriptorCalls() []struct {
+	V interface{}
 } {
 	var calls []struct {
+		V interface{}
 	}
-	lockSpecMockPackageNames.RLock()
-	calls = mock.calls.PackageNames
-	lockSpecMockPackageNames.RUnlock()
+	lockSpecMockFormatDescriptor.RLock()
+	calls = mock.calls.FormatDescriptor
+	lockSpecMockFormatDescriptor.RUnlock()
 	return calls
 }
 
@@ -184,6 +191,37 @@ func (mock *SpecMock) RPCsCalls() []struct {
 	return calls
 }
 
+// ResolveSymbol calls ResolveSymbolFunc.
+func (mock *SpecMock) ResolveSymbol(symbol string) (interface{}, error) {
+	if mock.ResolveSymbolFunc == nil {
+		panic("SpecMock.ResolveSymbolFunc: method is nil but Spec.ResolveSymbol was just called")
+	}
+	callInfo := struct {
+		Symbol string
+	}{
+		Symbol: symbol,
+	}
+	lockSpecMockResolveSymbol.Lock()
+	mock.calls.ResolveSymbol = append(mock.calls.ResolveSymbol, callInfo)
+	lockSpecMockResolveSymbol.Unlock()
+	return mock.ResolveSymbolFunc(symbol)
+}
+
+// ResolveSymbolCalls gets all the calls that were made to ResolveSymbol.
+// Check the length with:
+//     len(mockedSpec.ResolveSymbolCalls())
+func (mock *SpecMock) ResolveSymbolCalls() []struct {
+	Symbol string
+} {
+	var calls []struct {
+		Symbol string
+	}
+	lockSpecMockResolveSymbol.RLock()
+	calls = mock.calls.ResolveSymbol
+	lockSpecMockResolveSymbol.RUnlock()
+	return calls
+}
+
 // ServiceNames calls ServiceNamesFunc.
 func (mock *SpecMock) ServiceNames() []string {
 	if mock.ServiceNamesFunc == nil {
@@ -207,36 +245,5 @@ func (mock *SpecMock) ServiceNamesCalls() []struct {
 	lockSpecMockServiceNames.RLock()
 	calls = mock.calls.ServiceNames
 	lockSpecMockServiceNames.RUnlock()
-	return calls
-}
-
-// TypeDescriptor calls TypeDescriptorFunc.
-func (mock *SpecMock) TypeDescriptor(msgName string) (interface{}, error) {
-	if mock.TypeDescriptorFunc == nil {
-		panic("SpecMock.TypeDescriptorFunc: method is nil but Spec.TypeDescriptor was just called")
-	}
-	callInfo := struct {
-		MsgName string
-	}{
-		MsgName: msgName,
-	}
-	lockSpecMockTypeDescriptor.Lock()
-	mock.calls.TypeDescriptor = append(mock.calls.TypeDescriptor, callInfo)
-	lockSpecMockTypeDescriptor.Unlock()
-	return mock.TypeDescriptorFunc(msgName)
-}
-
-// TypeDescriptorCalls gets all the calls that were made to TypeDescriptor.
-// Check the length with:
-//     len(mockedSpec.TypeDescriptorCalls())
-func (mock *SpecMock) TypeDescriptorCalls() []struct {
-	MsgName string
-} {
-	var calls []struct {
-		MsgName string
-	}
-	lockSpecMockTypeDescriptor.RLock()
-	calls = mock.calls.TypeDescriptor
-	lockSpecMockTypeDescriptor.RUnlock()
 	return calls
 }
