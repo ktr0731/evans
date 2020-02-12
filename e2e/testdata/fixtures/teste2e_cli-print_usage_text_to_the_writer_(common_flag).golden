@@ -7,5 +7,6 @@ Options:
 
 Available Commands:
         call, c               call a RPC
+        desc, describe        describe the descriptor of a symbol
         list, ls, show        list services or methods
 

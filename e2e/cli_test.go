@@ -481,6 +481,39 @@ func TestE2E_CLI(t *testing.T) {
 			args:         "api.Foo",
 			expectedCode: 1,
 		},
+
+		// desc command
+
+		"describe all service descriptors": {
+			commonFlags:      "--proto testdata/test.proto,testdata/empty_package.proto",
+			cmd:              "desc",
+			args:             "",
+			assertWithGolden: true,
+		},
+		"describe a service descriptor": {
+			commonFlags:      "--proto testdata/test.proto,testdata/empty_package.proto",
+			cmd:              "desc",
+			args:             "api.Example",
+			assertWithGolden: true,
+		},
+		"describe a method descriptor": {
+			commonFlags:      "--proto testdata/test.proto,testdata/empty_package.proto",
+			cmd:              "desc",
+			args:             "api.Example.Unary",
+			assertWithGolden: true,
+		},
+		"describe a message descriptor": {
+			commonFlags:      "--proto testdata/test.proto,testdata/empty_package.proto",
+			cmd:              "desc",
+			args:             "api.SimpleRequest",
+			assertWithGolden: true,
+		},
+		"invalid symbol": {
+			commonFlags:  "--proto testdata/test.proto,testdata/empty_package.proto",
+			cmd:          "desc",
+			args:         "api.Foo",
+			expectedCode: 1,
+		},
 	}
 	for name, c := range cases {
 		c := c

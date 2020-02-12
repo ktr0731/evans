@@ -1,0 +1,3 @@
+api.Example.Unary:
+rpc Unary ( .api.SimpleRequest ) returns ( .api.SimpleResponse );
+
