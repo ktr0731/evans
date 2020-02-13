@@ -8,6 +8,7 @@ import (
 
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/protoparse"
+	"github.com/jhump/protoreflect/desc/protoprint"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/grpc"
 	"github.com/ktr0731/evans/grpc/grpcreflection"
@@ -16,7 +17,8 @@ import (
 )
 
 type spec struct {
-	pkgNames []string
+	fileDescs []*desc.FileDescriptor
+	pkgNames  []string
 	// Loaded service descriptors.
 	svcDescs []*desc.ServiceDescriptor
 	// key: fully qualified service name, val: method descriptors belong to the service.
@@ -93,13 +95,35 @@ func (s *spec) RPC(svcName, rpcName string) (*grpc.RPC, error) {
 	return nil, idl.ErrUnknownRPCName
 }
 
-// TypeDescriptor returns the descriptor of a message.
-// The actual type of the returned interface{} is *desc.MessageDescriptor.
-func (s *spec) TypeDescriptor(msgName string) (interface{}, error) {
-	if m, ok := s.msgDescs[msgName]; ok {
-		return m, nil
+// ResolveSymbol returns the descriptor of the passed fully-qualified descriptor name.
+// The actual type of the returned interface{} implements desc.Descriptor.
+func (s *spec) ResolveSymbol(symbol string) (interface{}, error) {
+	for _, f := range s.fileDescs {
+		d := f.FindSymbol(symbol)
+		if d != nil {
+			return d, nil
+		}
 	}
-	return nil, idl.ErrUnknownMessageName
+	return nil, idl.ErrUnknownSymbol
+}
+
+// FormatDescriptor formats v as a Protocol Buffers descriptor type.
+// If v doesn't implement desc.Descriptor, it returns an error.
+func (s *spec) FormatDescriptor(v interface{}) (string, error) {
+	desc, ok := v.(desc.Descriptor)
+	if !ok {
+		return "", errors.New("v should be a desc.Descriptor")
+	}
+	p := &protoprint.Printer{
+		Compact:                  true,
+		ForceFullyQualifiedNames: true,
+		SortElements:             true,
+	}
+	str, err := p.PrintProtoToString(desc)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to convert the descriptor to string")
+	}
+	return strings.TrimSpace(str), nil
 }
 
 // LoadFiles receives proto file names and import paths like protoc's options.
@@ -163,10 +187,11 @@ func newSpec(fds []*desc.FileDescriptor) idl.Spec {
 	})
 
 	return &spec{
-		pkgNames: pkgNames,
-		svcDescs: svcDescs,
-		rpcDescs: rpcDescs,
-		msgDescs: msgDescs,
+		fileDescs: fds,
+		pkgNames:  pkgNames,
+		svcDescs:  svcDescs,
+		rpcDescs:  rpcDescs,
+		msgDescs:  msgDescs,
 	}
 }
 

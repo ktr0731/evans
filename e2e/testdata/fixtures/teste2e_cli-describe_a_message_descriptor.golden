@@ -1,0 +1,4 @@
+api.SimpleRequest:
+message SimpleRequest {
+  string name = 1;
+}

@@ -215,6 +215,7 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd.AddCommand(
 		newCLICallCommand(flags, ui),
 		newCLIListCommand(flags, ui),
+		newCLIDescribeCommand(flags, ui),
 	)
 	return cmd
 }

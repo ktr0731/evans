@@ -22,7 +22,7 @@ var (
 	ErrUnknownPackageName = errors.New("unknown package name")
 	ErrUnknownServiceName = errors.New("unknown service name")
 	ErrUnknownRPCName     = errors.New("unknown RPC name")
-	ErrUnknownMessageName = errors.New("unknown message name")
+	ErrUnknownSymbol      = errors.New("unknown symbol")
 )
 
 // Spec represents the interface specification from loaded IDL files.
@@ -49,14 +49,17 @@ type Spec interface {
 	//
 	RPC(svcName, rpcName string) (*grpc.RPC, error)
 
-	// TypeDescriptor returns the descriptor of a type specified by msgName.
-	// Message name should be fully-qualified (the form of <package>.<message> in Protocol Buffers3).
+	// ResolveSymbol returns the descriptor of a symbol.
+	// The symbol should be fully-qualified (the form of <package>.<message> in Protocol Buffers3).
 	// The returned descriptor depends to an codec such that Protocol Buffers.
-	// TypeDescriptor may returns these errors:
+	// ResolveSymbol may returns these errors:
 	//
-	//   - ErrUnknownMessage: msgName is not loaded.
+	//   - ErrUnknownSymbol: symbol is not loaded.
 	//
-	TypeDescriptor(msgName string) (interface{}, error)
+	ResolveSymbol(symbol string) (interface{}, error)
+
+	// FormatDescriptor formats v according to its IDL type.
+	FormatDescriptor(v interface{}) (string, error)
 }
 
 // FullyQualifiedMethodName returns the fully-qualified method joined with '.'.

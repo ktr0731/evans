@@ -1,6 +1,7 @@
 package idl_test
 
 import (
+	"errors"
 	"path/filepath"
 	"testing"
 
@@ -97,14 +98,14 @@ func TestSpec(t *testing.T) {
 					}
 				})
 
-				t.Run("TypeDescriptor", func(t *testing.T) {
-					_, err := spec.TypeDescriptor("Foo")
-					if err == nil {
-						t.Fatalf("TypeDescriptor must return an error because api.Foo is an undefined type, but got nil")
+				t.Run("ResolveSymbol", func(t *testing.T) {
+					_, err := spec.ResolveSymbol("Foo")
+					if !errors.Is(err, idl.ErrUnknownSymbol) {
+						t.Fatalf("ResolveSymbol must return ErrUnknownSymbol because api.Foo is an undefined type, but got '%s'", err)
 					}
-					actual, err := spec.TypeDescriptor("api.Request")
+					actual, err := spec.ResolveSymbol("api.Request")
 					if err != nil {
-						t.Fatalf("TypeDescriptor must return the descriptor of api.Request, but got an error: '%s'", err)
+						t.Fatalf("ResolveSymbol must return the descriptor of api.Request, but got an error: '%s'", err)
 					}
 
 					if actual == nil {
@@ -165,10 +166,10 @@ func TestSpec(t *testing.T) {
 					}
 				})
 
-				t.Run("TypeDescriptor", func(t *testing.T) {
-					actual, err := spec.TypeDescriptor("Request")
+				t.Run("ResolveSymbol", func(t *testing.T) {
+					actual, err := spec.ResolveSymbol("Request")
 					if err != nil {
-						t.Fatalf("TypeDescriptor must return the descriptor of api.Request, but got an error: '%s'", err)
+						t.Fatalf("ResolveSymbol must return the descriptor of api.Request, but got an error: '%s'", err)
 					}
 
 					if actual == nil {
