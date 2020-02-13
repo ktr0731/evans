@@ -96,7 +96,7 @@ func (s *spec) RPC(svcName, rpcName string) (*grpc.RPC, error) {
 }
 
 // ResolveSymbol returns the descriptor of the passed fully-qualified descriptor name.
-// The actual type of the returned interface{} is *desc.MessageDescriptor.
+// The actual type of the returned interface{} implements desc.Descriptor.
 func (s *spec) ResolveSymbol(symbol string) (interface{}, error) {
 	for _, f := range s.fileDescs {
 		d := f.FindSymbol(symbol)
