@@ -123,7 +123,7 @@ func (s *spec) FormatDescriptor(v interface{}) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "failed to convert the descriptor to string")
 	}
-	return str, nil
+	return strings.TrimSpace(str), nil
 }
 
 // LoadFiles receives proto file names and import paths like protoc's options.

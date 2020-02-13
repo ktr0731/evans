@@ -21,4 +21,3 @@ EmptyPackageService:
 service EmptyPackageService {
   rpc Unary ( .SimpleRequest ) returns ( .SimpleResponse );
 }
-

@@ -20,5 +20,5 @@ func (m *dependencyManager) FormatFileDescriptors() (string, error) {
 		}
 		out = append(out, o)
 	}
-	return strings.Join(out, "\n"), nil
+	return strings.Join(out, "\n\n"), nil
 }

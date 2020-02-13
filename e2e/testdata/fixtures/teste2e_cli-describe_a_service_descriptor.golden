@@ -16,4 +16,3 @@ service Example {
   rpc UnaryRepeatedMessage ( .api.UnaryRepeatedMessageRequest ) returns ( .api.SimpleResponse );
   rpc UnarySelf ( .api.UnarySelfRequest ) returns ( .api.SimpleResponse );
 }
-
