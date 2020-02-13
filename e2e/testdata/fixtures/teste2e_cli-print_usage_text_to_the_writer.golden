@@ -6,7 +6,7 @@ Options:
         --help, -h        display help text and exit (default "false")
 
 Available Commands:
-        call, c               call a RPC
+        call, c               call a method
         desc, describe        describe the descriptor of a symbol
         list, ls, show        list services or methods
 

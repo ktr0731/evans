@@ -2,7 +2,7 @@ evans 0.8.5
 
 Usage: evans [global options ...] cli call [options ...] <method>
 
-call invokes a RPC based on the passed method name.
+call invokes a method based on the passed method name.
 
 Examples:
         $ echo '{}' | evans -r cli call api.Service.Unary # call Unary method with an empty message

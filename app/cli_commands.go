@@ -13,8 +13,8 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "call [options ...] <method>",
 		Aliases: []string{"c"},
-		Short:   "call a RPC",
-		Long:    `call invokes a RPC based on the passed method name.`,
+		Short:   "call a method",
+		Long:    `call invokes a method based on the passed method name.`,
 		Example: strings.Join([]string{
 			"        $ echo '{}' | evans -r cli call api.Service.Unary # call Unary method with an empty message",
 			"        $ evans -r cli call -f in.json api.Service.Unary  # call Unary method with an input file",
