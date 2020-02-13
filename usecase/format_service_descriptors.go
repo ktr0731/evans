@@ -6,11 +6,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FormatFileDescriptors formats all file descriptors the spec loaded.
-func FormatFileDescriptors() (string, error) {
-	return dm.FormatFileDescriptors()
+// FormatServiceDescriptors formats all service descriptors the spec loaded.
+func FormatServiceDescriptors() (string, error) {
+	return dm.FormatServiceDescriptors()
 }
-func (m *dependencyManager) FormatFileDescriptors() (string, error) {
+func (m *dependencyManager) FormatServiceDescriptors() (string, error) {
 	svcs := ListServices()
 	out := make([]string, 0, len(svcs))
 	for _, s := range svcs {

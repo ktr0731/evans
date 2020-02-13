@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FormatDescriptor formats all package names.
+// FormatDescriptor formats the descriptor of the passed symbol.
 func FormatDescriptor(symbol string) (string, error) {
 	return dm.FormatDescriptor(symbol)
 }

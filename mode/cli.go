@@ -147,7 +147,7 @@ func NewDescribeCLIInvoker(ui cui.UI, fqn string) CLIInvoker {
 		if fqn != "" {
 			out, err = usecase.FormatDescriptor(fqn)
 		} else {
-			out, err = usecase.FormatFileDescriptors()
+			out, err = usecase.FormatServiceDescriptors()
 		}
 		if err != nil {
 			return errors.Wrap(err, "failed to describe")
