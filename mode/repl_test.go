@@ -15,7 +15,7 @@ func Test_tidyUpHistory(t *testing.T) {
 		"empty": {
 			history:     nil,
 			historySize: 100,
-			expected:    nil,
+			expected:    []string{},
 		},
 		"simple": {
 			history:     []string{"foo", "bar"},
