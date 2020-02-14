@@ -123,7 +123,11 @@ func (p *prompt) Input() (in string, err error) {
 	in, err = p.InputFunc(
 		p.prefix,
 		toGoPromptCompleter(p.completer),
-		append(p.options, goprompt.OptionPrefixTextColor(goprompt.Color(p.prefixColor)))...)
+		append(
+			p.options,
+			goprompt.OptionPrefixTextColor(goprompt.Color(p.prefixColor)),
+			goprompt.OptionHistory(p.commandHistory),
+		)...)
 	if err == goprompt.ErrAbort {
 		return "", ErrAbort
 	} else if err != nil {

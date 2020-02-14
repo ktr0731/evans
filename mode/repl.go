@@ -2,6 +2,7 @@ package mode
 
 import (
 	"context"
+	"sort"
 
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
@@ -55,18 +56,7 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 	replPrompt.SetPrefixColor(prompt.ColorBlue)
 
 	defer func() {
-		history := make([]string, 0, len(replPrompt.GetCommandHistory()))
-		encountered := map[string]interface{}{}
-		for _, e := range replPrompt.GetCommandHistory() {
-			if _, found := encountered[e]; found {
-				continue
-			}
-			history = append(history, e)
-			encountered[e] = nil
-		}
-		if len(history) > cfg.REPL.HistorySize {
-			history = history[len(history)-cfg.REPL.HistorySize:]
-		}
+		history := tidyUpHistory(replPrompt.GetCommandHistory(), cfg.REPL.HistorySize)
 		cache.CommandHistory = history
 		if err := cache.Save(); err != nil {
 			logger.Printf("failed to write command history: %s", err)
@@ -78,4 +68,26 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 		return errors.Wrap(err, "failed to launch a new REPL")
 	}
 	return repl.Run(ctx)
+}
+
+func tidyUpHistory(h []string, maxHistorySize int) []string {
+	m := make(map[string]int)
+	for i := range h {
+		m[h[i]] = i
+	}
+	s := make([]int, 0, len(m))
+	for _, i := range m {
+		s = append(s, i)
+	}
+	sort.Slice(s, func(i, j int) bool {
+		return s[i] < s[j]
+	})
+	history := make([]string, 0, len(h))
+	for _, i := range s {
+		history = append(history, h[i])
+	}
+	if len(history) > maxHistorySize {
+		history = history[len(history)-maxHistorySize:]
+	}
+	return history
 }
