@@ -104,7 +104,8 @@ func (r *REPL) Run(ctx context.Context) error {
 
 		part, err := shellstring.Parse(in)
 		if err != nil {
-			return nil
+			r.ui.Error(fmt.Sprintln(err))
+			continue
 		}
 
 		err = r.runCommand(part[0], part[1:])

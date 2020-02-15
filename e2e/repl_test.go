@@ -43,6 +43,15 @@ func TestE2E_REPL(t *testing.T) {
 		// hasErr checks whether REPL wrote some errors to UI.ErrWriter.
 		hasErr bool
 	}{
+		// Common.
+
+		"corresponding symbol is missing": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"show '"},
+			skipGolden:  true,
+			hasErr:      true,
+		},
+
 		// RPC calls.
 
 		"call Unary by selecting package and service": {
