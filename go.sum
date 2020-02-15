@@ -132,6 +132,8 @@ github.com/ktr0731/go-prompt v0.2.2-0.20190609072126-7894cc3f2925 h1:nV9LIfb0tEv
 github.com/ktr0731/go-prompt v0.2.2-0.20190609072126-7894cc3f2925/go.mod h1:wmOS5scuWlKkbJFD0l2d/Uc6M8h01Zw4y1lPpzYerhc=
 github.com/ktr0731/go-shellstring v0.1.1 h1:3OWd4kQmcUcsP2T2WFC6YpdTr8+PAXvipa3N7av5TsY=
 github.com/ktr0731/go-shellstring v0.1.1/go.mod h1:f0/XX0hsm6A02Es/UDQ9MGd3VqpCHrCw5pMjE2y6qTU=
+github.com/ktr0731/go-shellstring v0.1.3 h1:PH3Y2SHbdBF5G9+XrRlT3Dpgl/2CzQHIqFOOBz6Nco8=
+github.com/ktr0731/go-shellstring v0.1.3/go.mod h1:f0/XX0hsm6A02Es/UDQ9MGd3VqpCHrCw5pMjE2y6qTU=
 github.com/ktr0731/go-updater v0.1.5 h1:AiaQxJoI0OTGqvsJYdIITCOaEzQQOqU2MHKUwttVShY=
 github.com/ktr0731/go-updater v0.1.5/go.mod h1:dsdOg7a9sj6ttcOU5ZxPCtKdm9WeB1hwcX/7oKgz9/0=
 github.com/ktr0731/grpc-test v0.1.0/go.mod h1:deptvEeND4faWsF2MGTanL6/2SaX8lgdmF3yEXWge5U=
