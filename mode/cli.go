@@ -184,7 +184,7 @@ func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 		usecase.Dependencies{
 			Spec:              spec,
 			GRPCClient:        gRPCClient,
-			ResponsePresenter: json.NewPresenter("  "),
+			ResponsePresenter: newJSONResponsePresenter(),
 			ResourcePresenter: json.NewPresenter("  "),
 		},
 	)

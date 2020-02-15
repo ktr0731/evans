@@ -2,13 +2,16 @@ package mode
 
 import (
 	"context"
+	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/ktr0731/evans/cache"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/fill/proto"
 	"github.com/ktr0731/evans/logger"
+	"github.com/ktr0731/evans/present"
 	"github.com/ktr0731/evans/present/json"
 	"github.com/ktr0731/evans/present/table"
 	"github.com/ktr0731/evans/prompt"
@@ -34,7 +37,7 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 			Spec:              spec,
 			Filler:            proto.NewInteractiveFiller(prompt.New(), cfg.REPL.InputPromptFormat),
 			GRPCClient:        gRPCClient,
-			ResponsePresenter: json.NewPresenter("  "),
+			ResponsePresenter: newCurlLikeResponsePresenter(),
 			ResourcePresenter: table.NewPresenter(),
 		},
 	)
@@ -90,4 +93,69 @@ func tidyUpHistory(h []string, maxHistorySize int) []string {
 		history = history[len(history)-maxHistorySize:]
 	}
 	return history
+}
+
+type curlLikeResponsePresenter struct {
+	json present.Presenter
+}
+
+func newCurlLikeResponsePresenter() *curlLikeResponsePresenter {
+	return &curlLikeResponsePresenter{
+		json: json.NewPresenter("  "),
+	}
+}
+
+func (p *curlLikeResponsePresenter) Format(res *usecase.GRPCResponse) (string, error) {
+	var b strings.Builder
+	if res.Status != nil {
+		fmt.Fprintf(&b, "%d %s\n", *res.Status, res.Status.String())
+	}
+	if res.HeaderMetadata != nil {
+		var s []string
+		for k, v := range *res.HeaderMetadata {
+			for _, vv := range v {
+				s = append(s, fmt.Sprintf("%s: %s", k, vv))
+			}
+		}
+		sort.Slice(s, func(i, j int) bool {
+			return s[i] < s[j]
+		})
+		fmt.Fprintf(&b, "%s\n\n", strings.Join(s, "\n"))
+	} else if res.Status != nil {
+		fmt.Fprintf(&b, "\n")
+	}
+
+	msg, err := p.json.Format(res.Message)
+	if err != nil {
+		return "", err
+	}
+	fmt.Fprintf(&b, "%s", msg)
+
+	if res.TrailerMetadata != nil {
+		fmt.Fprintf(&b, "\n\n")
+		var s []string
+		for k, v := range *res.TrailerMetadata {
+			for _, vv := range v {
+				s = append(s, fmt.Sprintf("%s: %s", k, vv))
+			}
+		}
+		sort.Slice(s, func(i, j int) bool {
+			return s[i] < s[j]
+		})
+		fmt.Fprintf(&b, "%s", strings.Join(s, "\n"))
+	}
+	return b.String(), nil
+}
+
+// jsonResponsePresenter is a formatter that formats *usecase.GRPCResponse into a JSON object.
+type jsonResponsePresenter struct {
+	p present.Presenter
+}
+
+func newJSONResponsePresenter() *jsonResponsePresenter {
+	return &jsonResponsePresenter{p: json.NewPresenter("  ")}
+}
+
+func (p *jsonResponsePresenter) Format(res *usecase.GRPCResponse) (string, error) {
+	return p.p.Format(res)
 }
