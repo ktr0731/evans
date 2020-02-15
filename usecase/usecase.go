@@ -18,7 +18,7 @@ type dependencyManager struct {
 	spec              idl.Spec
 	filler            fill.Filler
 	gRPCClient        grpc.Client
-	responsePresenter present.Presenter
+	responsePresenter ResponsePresenter
 	resourcePresenter present.Presenter
 
 	state state
@@ -34,7 +34,7 @@ type Dependencies struct {
 	Spec              idl.Spec
 	Filler            fill.Filler
 	GRPCClient        grpc.Client
-	ResponsePresenter present.Presenter
+	ResponsePresenter ResponsePresenter
 	ResourcePresenter present.Presenter
 }
 
