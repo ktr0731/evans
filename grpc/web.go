@@ -34,7 +34,7 @@ func NewWebClient(addr string, useReflection, useTLS bool, cacert, cert, certKey
 	return client
 }
 
-func (c *webClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {
+func (c *webClient) Invoke(ctx context.Context, fqrn string, req, res interface{}, opts ...gogrpc.CallOption) error {
 	endpoint, err := fqrnToEndpoint(fqrn)
 	if err != nil {
 		return errors.Wrap(err, "grpc-web: failed to convert FQRN to endpoint")

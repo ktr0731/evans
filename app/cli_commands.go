@@ -10,6 +10,7 @@ import (
 )
 
 func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
+	var responseFormat string
 	cmd := &cobra.Command{
 		Use:     "call [options ...] <method>",
 		Aliases: []string{"c"},
@@ -18,13 +19,19 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 		Example: strings.Join([]string{
 			"        $ echo '{}' | evans -r cli call api.Service.Unary # call Unary method with an empty message",
 			"        $ evans -r cli call -f in.json api.Service.Unary  # call Unary method with an input file",
+			"",
+			"        $ evans -r cli call -f in.json --response header,message api.Service.Unary  # output the response headers and message",
 		}, "\n"),
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
 			args := cmd.Flags().Args()
 			if len(args) == 0 {
 				return errors.New("method is required")
 			}
-			invoker, err := mode.NewCallCLIInvoker(ui, args[0], cfg.file, cfg.Config.Request.Header)
+			respFormat := make(map[string]struct{})
+			for _, v := range strings.Split(responseFormat, ",") {
+				respFormat[v] = struct{}{}
+			}
+			invoker, err := mode.NewCallCLIInvoker(ui, args[0], cfg.file, cfg.Config.Request.Header, respFormat)
 			if err != nil {
 				return err
 			}
@@ -37,7 +44,9 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 		SilenceUsage:  true,
 	}
 
-	initFlagSet(cmd.Flags(), ui.Writer())
+	f := cmd.Flags()
+	initFlagSet(f, ui.Writer())
+	f.StringVar(&responseFormat, "response", "message", `response format. combination of status, header, message and trailer.`)
 
 	cmd.SetHelpFunc(usageFunc(ui.Writer(), []string{"file"}))
 	return cmd

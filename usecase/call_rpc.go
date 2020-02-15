@@ -10,6 +10,7 @@ import (
 	gogrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // CallRPC constructs a request with input source such that prompt inputting, stdin or a file. After that, it sends
@@ -51,11 +52,12 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		}
 		return res, nil
 	}
-	flushResponse := func(res interface{}, header, trailer *metadata.MD) error {
+	flushResponse := func(res interface{}, status *status.Status, header, trailer metadata.MD) error {
 		out, err := m.responsePresenter.Format(&GRPCResponse{
-			HeaderMetadata:  header,
-			Message:         res,
-			TrailerMetadata: trailer,
+			Status:  status.Code(),
+			Header:  header,
+			Message: res,
+			Trailer: trailer,
 		})
 		if err != nil {
 			return err
@@ -117,7 +119,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 						"failed to receive a response from the server stream '%s'",
 						streamDesc.StreamName)
 				}
-				if err := flushResponse(res, nil, nil); err != nil {
+				if err := flushResponse(res, nil, nil, nil); err != nil {
 					return err
 				}
 			}
@@ -183,7 +185,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 						"failed to close the stream of RPC '%s'",
 						streamDesc.StreamName)
 				}
-				if err := flushResponse(res, nil, nil); err != nil {
+				if err := flushResponse(res, nil, nil, nil); err != nil {
 					return err
 				}
 				return nil
@@ -244,7 +246,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 					"failed to receive a response from the server stream '%s'",
 					streamDesc.StreamName)
 			}
-			if err := flushResponse(res, nil, nil); err != nil {
+			if err := flushResponse(res, nil, nil, nil); err != nil {
 				return err
 			}
 		}
@@ -266,12 +268,20 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		if err != nil {
 			return err
 		}
-		var header, trailer metadata.MD
+		var (
+			header, trailer metadata.MD
+			stat            *status.Status
+		)
 		opts := []gogrpc.CallOption{gogrpc.Header(&header), gogrpc.Trailer(&trailer)}
-		if err := m.gRPCClient.Invoke(ctx, rpc.FullyQualifiedName, req, res, opts...); err != nil {
-			return errors.Wrap(err, "failed to send a request")
+		err = m.gRPCClient.Invoke(ctx, rpc.FullyQualifiedName, req, res, opts...)
+		if err != nil {
+			var ok bool
+			stat, ok = status.FromError(err)
+			if !ok {
+				return errors.Wrap(err, "failed to send a request")
+			}
 		}
-		if err := flushResponse(res, &header, &trailer); err != nil {
+		if err := flushResponse(res, stat, header, trailer); err != nil {
 			return err
 		}
 		return nil
@@ -283,8 +293,8 @@ type ResponsePresenter interface {
 }
 
 type GRPCResponse struct {
-	Status          *codes.Code  `json:"status"`
-	HeaderMetadata  *metadata.MD `json:"header_metadata"`
-	Message         interface{}  `json:"message"`
-	TrailerMetadata *metadata.MD `json:"trailer_metadata"`
+	Status  codes.Code  `json:"status"`
+	Header  metadata.MD `json:"header"`
+	Message interface{} `json:"message"`
+	Trailer metadata.MD `json:"trailer"`
 }

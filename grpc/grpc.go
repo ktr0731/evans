@@ -50,7 +50,7 @@ type Type struct {
 // Client represents the gRPC client.
 type Client interface {
 	// Invoke invokes a request req to the gRPC server. Then, Invoke decodes the response to res.
-	Invoke(ctx context.Context, fqrn string, req, res interface{}) error
+	Invoke(ctx context.Context, fqrn string, req, res interface{}, opts ...gogrpc.CallOption) error
 
 	// NewClientStream creates a new client stream.
 	NewClientStream(ctx context.Context, streamDesc *gogrpc.StreamDesc, fqrn string) (ClientStream, error)
@@ -158,7 +158,7 @@ func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert
 	return client, nil
 }
 
-func (c *client) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {
+func (c *client) Invoke(ctx context.Context, fqrn string, req, res interface{}, opts ...gogrpc.CallOption) error {
 	logger.Scriptln(func() []interface{} {
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if !ok {
@@ -173,7 +173,7 @@ func (c *client) Invoke(ctx context.Context, fqrn string, req, res interface{}) 
 	}
 	loggingRequest(req)
 	wakeUpClientConn(c.conn)
-	return c.conn.Invoke(ctx, endpoint, req, res)
+	return c.conn.Invoke(ctx, endpoint, req, res, opts...)
 }
 
 func (c *client) Close(ctx context.Context) error {

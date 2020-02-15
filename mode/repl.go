@@ -37,7 +37,7 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 			Spec:              spec,
 			Filler:            proto.NewInteractiveFiller(prompt.New(), cfg.REPL.InputPromptFormat),
 			GRPCClient:        gRPCClient,
-			ResponsePresenter: newCurlLikeResponsePresenter(),
+			ResponsePresenter: newCurlLikeResponsePresenter(nil),
 			ResourcePresenter: table.NewPresenter(),
 		},
 	)
@@ -96,23 +96,29 @@ func tidyUpHistory(h []string, maxHistorySize int) []string {
 }
 
 type curlLikeResponsePresenter struct {
-	json present.Presenter
+	format map[string]struct{}
+	json   present.Presenter
 }
 
-func newCurlLikeResponsePresenter() *curlLikeResponsePresenter {
+func newCurlLikeResponsePresenter(format map[string]struct{}) *curlLikeResponsePresenter {
 	return &curlLikeResponsePresenter{
-		json: json.NewPresenter("  "),
+		format: format,
+		json:   json.NewPresenter("  "),
 	}
 }
 
 func (p *curlLikeResponsePresenter) Format(res *usecase.GRPCResponse) (string, error) {
-	var b strings.Builder
-	if res.Status != nil {
-		fmt.Fprintf(&b, "%d %s\n", *res.Status, res.Status.String())
+	specified := func(k string) bool {
+		_, ok := p.format[k]
+		return ok
 	}
-	if res.HeaderMetadata != nil {
+	var b strings.Builder
+	if specified("status") {
+		fmt.Fprintf(&b, "%d %s\n", res.Status, res.Status.String())
+	}
+	if specified("header") {
 		var s []string
-		for k, v := range *res.HeaderMetadata {
+		for k, v := range res.Header {
 			for _, vv := range v {
 				s = append(s, fmt.Sprintf("%s: %s", k, vv))
 			}
@@ -120,21 +126,22 @@ func (p *curlLikeResponsePresenter) Format(res *usecase.GRPCResponse) (string, e
 		sort.Slice(s, func(i, j int) bool {
 			return s[i] < s[j]
 		})
-		fmt.Fprintf(&b, "%s\n\n", strings.Join(s, "\n"))
-	} else if res.Status != nil {
+		fmt.Fprintf(&b, "%s\n", strings.Join(s, "\n"))
+	}
+
+	if specified("message") {
 		fmt.Fprintf(&b, "\n")
+		msg, err := p.json.Format(res.Message)
+		if err != nil {
+			return "", err
+		}
+		fmt.Fprintf(&b, "%s", msg)
 	}
 
-	msg, err := p.json.Format(res.Message)
-	if err != nil {
-		return "", err
-	}
-	fmt.Fprintf(&b, "%s", msg)
-
-	if res.TrailerMetadata != nil {
+	if specified("trailer") {
 		fmt.Fprintf(&b, "\n\n")
 		var s []string
-		for k, v := range *res.TrailerMetadata {
+		for k, v := range res.Trailer {
 			for _, vv := range v {
 				s = append(s, fmt.Sprintf("%s: %s", k, vv))
 			}
@@ -144,7 +151,7 @@ func (p *curlLikeResponsePresenter) Format(res *usecase.GRPCResponse) (string, e
 		})
 		fmt.Fprintf(&b, "%s", strings.Join(s, "\n"))
 	}
-	return b.String(), nil
+	return strings.TrimSpace(b.String()), nil
 }
 
 // jsonResponsePresenter is a formatter that formats *usecase.GRPCResponse into a JSON object.
