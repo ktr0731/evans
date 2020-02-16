@@ -165,7 +165,7 @@ func (s *webBidiStream) Send(req interface{}) error {
 
 func (s *webBidiStream) Receive(res interface{}) error {
 	err := s.stream.Receive(s.ctx, res)
-	if errors.Cause(err) == io.EOF {
+	if errors.Is(err, io.EOF) {
 		return io.EOF
 	}
 	if err != nil {

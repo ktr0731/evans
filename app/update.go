@@ -38,7 +38,7 @@ func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache) error 
 		}
 		m, err = updater.SelectAvailableMeansFrom(ctx, meansBuilders...)
 		// if ErrUnavailable, user installed Evans by manually, ignore.
-		if err == updater.ErrUnavailable {
+		if errors.Is(err, updater.ErrUnavailable) {
 			return nil
 		} else if err != nil {
 			return errors.Wrap(err, "failed to instantiate new means, available means not found")
@@ -110,7 +110,7 @@ func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer, c *cach
 	if cfg.Meta.AutoUpdate {
 		// If canceled, ignore and return
 		err := update(ctx, ioutil.Discard, newUpdater(cfg, meta.Version, m), c)
-		if errors.Cause(err) == context.Canceled {
+		if errors.Is(err, context.Canceled) {
 			return nil
 		}
 		return err
@@ -128,7 +128,7 @@ func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer, c *cach
 
 	// If canceled, ignore and return
 	err = update(ctx, w, newUpdater(cfg, meta.Version, m), c)
-	if errors.Cause(err) == context.Canceled {
+	if errors.Is(err, context.Canceled) {
 		return nil
 	} else if err != nil {
 		return errors.Wrap(err, "failed to update binary")

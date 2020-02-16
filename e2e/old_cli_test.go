@@ -14,6 +14,7 @@ import (
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/meta"
 	"github.com/ktr0731/evans/mode"
+	"github.com/pkg/errors"
 )
 
 func TestE2E_OldCLI(t *testing.T) {
@@ -151,7 +152,7 @@ func TestE2E_OldCLI(t *testing.T) {
 				for {
 					var iface interface{}
 					err := dec.Decode(&iface)
-					if err == io.EOF {
+					if errors.Is(err, io.EOF) {
 						return
 					}
 					if err != nil {
@@ -293,7 +294,7 @@ func TestE2E_OldCLI(t *testing.T) {
 				for {
 					var iface interface{}
 					err := dec.Decode(&iface)
-					if err == io.EOF {
+					if errors.Is(err, io.EOF) {
 						return
 					}
 					if err != nil {

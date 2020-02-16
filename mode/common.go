@@ -19,7 +19,7 @@ func newSpec(cfg *config.Config, grpcClient grpc.Client) (spec idl.Spec, err err
 	} else {
 		spec, err = proto.LoadFiles(cfg.Default.ProtoPath, cfg.Default.ProtoFile)
 	}
-	if err := errors.Cause(err); err == grpcreflection.ErrTLSHandshakeFailed {
+	if errors.Is(err, grpcreflection.ErrTLSHandshakeFailed) {
 		return nil, errors.New("TLS handshake failed. check whether client or server is misconfigured")
 	} else if err != nil {
 		return nil, errors.Wrap(err, "failed to instantiate the spec from proto files")

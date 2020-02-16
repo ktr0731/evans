@@ -53,7 +53,7 @@ func (c *packageCommand) Validate(args []string) error {
 func (c *packageCommand) Run(_ io.Writer, args []string) error {
 	pkgName := args[0]
 	err := usecase.UsePackage(pkgName)
-	if errors.Cause(err) == idl.ErrUnknownPackageName {
+	if errors.Is(err, idl.ErrUnknownPackageName) {
 		return errors.Errorf("unknown package name '%s'", args[0])
 	}
 	return err
@@ -154,7 +154,7 @@ func (c *callCommand) Validate(args []string) error {
 
 func (c *callCommand) Run(w io.Writer, args []string) error {
 	err := usecase.CallRPC(context.Background(), w, args[0])
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		return errors.New("inputting canceled")
 	}
 	return err

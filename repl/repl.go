@@ -93,7 +93,7 @@ func (r *REPL) Run(ctx context.Context) error {
 		r.prompt.SetPrefix(r.makePrefix())
 
 		in, err := r.prompt.Input()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		}
 
@@ -109,7 +109,7 @@ func (r *REPL) Run(ctx context.Context) error {
 		}
 
 		err = r.runCommand(part[0], part[1:])
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		}
 		if err != nil {
