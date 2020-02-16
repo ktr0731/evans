@@ -3,6 +3,7 @@ package mode
 import (
 	"context"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 
@@ -18,6 +19,8 @@ import (
 	"github.com/ktr0731/evans/repl"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 )
 
 func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
@@ -37,7 +40,7 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 			Spec:              spec,
 			Filler:            proto.NewInteractiveFiller(prompt.New(), cfg.REPL.InputPromptFormat),
 			GRPCClient:        gRPCClient,
-			ResponsePresenter: newCurlLikeResponsePresenter(nil),
+			ResponsePresenter: newCurlLikeResponsePresenter(ui.Writer(), nil),
 			ResourcePresenter: table.NewPresenter(),
 		},
 	)
@@ -96,29 +99,36 @@ func tidyUpHistory(h []string, maxHistorySize int) []string {
 }
 
 type curlLikeResponsePresenter struct {
+	w io.Writer
+
 	format map[string]struct{}
 	json   present.Presenter
 }
 
-func newCurlLikeResponsePresenter(format map[string]struct{}) *curlLikeResponsePresenter {
+func newCurlLikeResponsePresenter(w io.Writer, format map[string]struct{}) *curlLikeResponsePresenter {
 	return &curlLikeResponsePresenter{
+		w:      w,
 		format: format,
 		json:   json.NewPresenter("  "),
 	}
 }
 
-func (p *curlLikeResponsePresenter) Format(res *usecase.GRPCResponse) (string, error) {
-	specified := func(k string) bool {
-		_, ok := p.format[k]
-		return ok
+func (p *curlLikeResponsePresenter) Format(s codes.Code, header, trailer metadata.MD, v interface{}) error {
+	p.FormatHeader(s, header)
+	if err := p.FormatMessage(v); err != nil {
+		return err
 	}
-	var b strings.Builder
-	if specified("status") {
-		fmt.Fprintf(&b, "%d %s\n", res.Status, res.Status.String())
+	p.FormatTrailer(trailer)
+	return nil
+}
+
+func (p *curlLikeResponsePresenter) FormatHeader(status codes.Code, header metadata.MD) {
+	if has(p.format, "status") {
+		fmt.Fprintf(p.w, "%d %s\n", status, status.String())
 	}
-	if specified("header") {
+	if has(p.format, "header") {
 		var s []string
-		for k, v := range res.Header {
+		for k, v := range header {
 			for _, vv := range v {
 				s = append(s, fmt.Sprintf("%s: %s", k, vv))
 			}
@@ -126,43 +136,105 @@ func (p *curlLikeResponsePresenter) Format(res *usecase.GRPCResponse) (string, e
 		sort.Slice(s, func(i, j int) bool {
 			return s[i] < s[j]
 		})
-		fmt.Fprintf(&b, "%s\n", strings.Join(s, "\n"))
+		fmt.Fprintf(p.w, "%s\n", strings.Join(s, "\n"))
+	}
+}
+
+func (p *curlLikeResponsePresenter) FormatMessage(v interface{}) error {
+	if !has(p.format, "message") {
+		return nil
 	}
 
-	if specified("message") {
-		fmt.Fprintf(&b, "\n")
-		msg, err := p.json.Format(res.Message)
-		if err != nil {
-			return "", err
-		}
-		fmt.Fprintf(&b, "%s", msg)
+	if has(p.format, "status") || has(p.format, "header") {
+		fmt.Fprintf(p.w, "\n")
+	}
+	msg, err := p.json.Format(v)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(p.w, "%s\n", msg)
+	return nil
+}
+
+func (p *curlLikeResponsePresenter) FormatTrailer(trailer metadata.MD) {
+	if !has(p.format, "trailer") {
+		return
 	}
 
-	if specified("trailer") {
-		fmt.Fprintf(&b, "\n\n")
-		var s []string
-		for k, v := range res.Trailer {
-			for _, vv := range v {
-				s = append(s, fmt.Sprintf("%s: %s", k, vv))
-			}
-		}
-		sort.Slice(s, func(i, j int) bool {
-			return s[i] < s[j]
-		})
-		fmt.Fprintf(&b, "%s", strings.Join(s, "\n"))
+	if has(p.format, "status") || has(p.format, "header") || has(p.format, "message") {
+		fmt.Fprintf(p.w, "\n")
 	}
-	return strings.TrimSpace(b.String()), nil
+
+	var s []string
+	for k, v := range trailer {
+		for _, vv := range v {
+			s = append(s, fmt.Sprintf("%s: %s", k, vv))
+		}
+	}
+	sort.Slice(s, func(i, j int) bool {
+		return s[i] < s[j]
+	})
+	fmt.Fprintf(p.w, "%s\n", strings.Join(s, "\n"))
+}
+
+func (p *curlLikeResponsePresenter) Done() error {
+	return nil
 }
 
 // jsonResponsePresenter is a formatter that formats *usecase.GRPCResponse into a JSON object.
 type jsonResponsePresenter struct {
+	w io.Writer
+	s struct {
+		Status struct {
+			Code       uint32 `json:"code"`
+			StringCode string `json:"string_code"`
+		} `json:"status"`
+		Header  metadata.MD `json:"header_metadata"`
+		Message interface{} `json:"message"`
+		Trailer metadata.MD `json:"trailer_metadata"`
+	}
 	p present.Presenter
 }
 
-func newJSONResponsePresenter() *jsonResponsePresenter {
-	return &jsonResponsePresenter{p: json.NewPresenter("  ")}
+func newJSONResponsePresenter(w io.Writer) *jsonResponsePresenter {
+	return &jsonResponsePresenter{w: w, p: json.NewPresenter("  ")}
 }
 
-func (p *jsonResponsePresenter) Format(res *usecase.GRPCResponse) (string, error) {
-	return p.p.Format(res)
+func (p *jsonResponsePresenter) Format(s codes.Code, header, trailer metadata.MD, v interface{}) error {
+	p.FormatHeader(s, header)
+	_ = p.FormatMessage(v)
+	p.FormatTrailer(trailer)
+	p.Done()
+	return nil
+}
+
+func (p *jsonResponsePresenter) FormatHeader(s codes.Code, header metadata.MD) {
+	p.s.Status = struct {
+		Code       uint32 `json:"code"`
+		StringCode string `json:"string_code"`
+	}{uint32(s), s.String()}
+	p.s.Header = header
+}
+
+func (p *jsonResponsePresenter) FormatMessage(v interface{}) error {
+	p.s.Message = v
+	return nil
+}
+
+func (p *jsonResponsePresenter) FormatTrailer(trailer metadata.MD) {
+	p.s.Trailer = trailer
+}
+
+func (p *jsonResponsePresenter) Done() error {
+	s, err := p.p.Format(p.s)
+	if err != nil {
+		return err
+	}
+	_, err = io.WriteString(p.w, s)
+	return err
+}
+
+func has(m map[string]struct{}, k string) bool {
+	_, ok := m[k]
+	return ok
 }

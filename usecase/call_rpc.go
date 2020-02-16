@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"io"
+	"sync"
 
 	"github.com/ktr0731/evans/idl/proto"
 	"github.com/pkg/errors"
@@ -52,33 +53,25 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		}
 		return res, nil
 	}
-	flushResponse := func(res interface{}, status *status.Status, header, trailer metadata.MD) error {
-		out, err := m.responsePresenter.Format(&GRPCResponse{
-			Status:  status.Code(),
-			Header:  header,
-			Message: res,
-			Trailer: trailer,
-		})
-		if err != nil {
+	flushHeader := func(status *status.Status, header metadata.MD) {
+		m.responsePresenter.FormatHeader(status.Code(), header)
+	}
+	flushResponse := func(res interface{}) error {
+		return m.responsePresenter.FormatMessage(res)
+	}
+	flushTrailer := func(trailer metadata.MD) {
+		m.responsePresenter.FormatTrailer(trailer)
+	}
+	flushDone := func() {
+		m.responsePresenter.Done()
+	}
+	flushAll := func(status *status.Status, header, trailer metadata.MD, res interface{}) error {
+		flushHeader(status, header)
+		if err := flushResponse(res); err != nil {
 			return err
 		}
-		// if _, err := io.WriteString(w, out+"\n"); err != nil {
-		// 	return err
-		// }
-		// out, err = m.responsePresenter.Format(res)
-		// if err != nil {
-		// 	return err
-		// }
-		// if _, err := io.WriteString(w, out+"\n"); err != nil {
-		// 	return err
-		// }
-		// out, err = m.responsePresenter.Format(trailer)
-		// if err != nil {
-		// 	return err
-		// }
-		if _, err := io.WriteString(w, out+"\n"); err != nil {
-			return err
-		}
+		flushTrailer(trailer)
+		flushDone()
 		return nil
 	}
 
@@ -99,8 +92,15 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		if err != nil {
 			return errors.Wrapf(err, "failed to create a bidi stream for RPC '%s'", streamDesc.StreamName)
 		}
+		defer func() {
+			flushTrailer(stream.Trailer())
+			flushDone()
+		}()
 
-		var eg errgroup.Group
+		var (
+			eg              errgroup.Group
+			writeHeaderOnce sync.Once
+		)
 		eg.Go(func() error {
 			for {
 				res, err := newResponse()
@@ -119,7 +119,18 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 						"failed to receive a response from the server stream '%s'",
 						streamDesc.StreamName)
 				}
-				if err := flushResponse(res, nil, nil, nil); err != nil {
+
+				writeHeaderOnce.Do(func() {
+					header, err := stream.Header()
+					if err != nil {
+						err = errors.Wrap(err, "failed to get header metadata")
+					}
+					flushHeader(nil, header) // TODO: status
+				})
+				if err != nil {
+					return err
+				}
+				if err := flushResponse(res); err != nil {
 					return err
 				}
 			}
@@ -172,6 +183,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				"failed to create a new client stream for RPC '%s'",
 				streamDesc.StreamName)
 		}
+
 		for {
 			req, err := newRequest()
 			if err == io.EOF {
@@ -185,10 +197,11 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 						"failed to close the stream of RPC '%s'",
 						streamDesc.StreamName)
 				}
-				if err := flushResponse(res, nil, nil, nil); err != nil {
-					return err
+				header, err := stream.Header()
+				if err != nil {
+					return errors.Wrap(err, "failed to get header metadata")
 				}
-				return nil
+				return flushAll(nil, header, stream.Trailer(), res) // TODO
 			}
 			if err != nil {
 				return err
@@ -229,24 +242,49 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				streamDesc.StreamName)
 		}
 
+		var writeHeaderOnce sync.Once
 		for {
 			res, err := newResponse()
 			if err != nil {
 				return err
 			}
 			err = stream.Receive(res)
-			switch {
-			case err == context.Canceled:
-				return nil
-			case err == io.EOF:
-				return nil
-			case err != nil:
+			if err != nil {
+				if err == context.Canceled {
+					return nil
+				}
+				defer func() {
+					flushTrailer(stream.Trailer())
+					flushDone()
+				}()
+				var whErr error
+				writeHeaderOnce.Do(func() {
+					header, err := stream.Header()
+					if err != nil {
+						whErr = errors.Wrap(err, "failed to get header metadata")
+					}
+					flushHeader(nil, header)
+				})
+				if whErr != nil {
+					return whErr
+				}
+				if err == io.EOF { // TODO: use errors.Is
+					return nil
+				}
 				return errors.Wrapf(
 					err,
 					"failed to receive a response from the server stream '%s'",
 					streamDesc.StreamName)
 			}
-			if err := flushResponse(res, nil, nil, nil); err != nil {
+			var whErr error
+			writeHeaderOnce.Do(func() {
+				header, err := stream.Header()
+				if err != nil {
+					whErr = errors.Wrap(err, "failed to get header metadata")
+				}
+				flushHeader(nil, header)
+			})
+			if err := flushResponse(res); err != nil {
 				return err
 			}
 		}
@@ -281,7 +319,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				return errors.Wrap(err, "failed to send a request")
 			}
 		}
-		if err := flushResponse(res, stat, header, trailer); err != nil {
+
+		err = flushAll(stat, header, trailer, res)
+		if err != nil {
 			return err
 		}
 		return nil
@@ -289,12 +329,10 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 }
 
 type ResponsePresenter interface {
-	Format(res *GRPCResponse) (string, error)
-}
-
-type GRPCResponse struct {
-	Status  codes.Code  `json:"status"`
-	Header  metadata.MD `json:"header"`
-	Message interface{} `json:"message"`
-	Trailer metadata.MD `json:"trailer"`
+	// Format is a utility method that do FormatHeader, FormatMessage, FormatTrailer and Flush in one shot.
+	Format(status codes.Code, header, trailer metadata.MD, message interface{}) error
+	FormatHeader(status codes.Code, header metadata.MD)
+	FormatMessage(v interface{}) error
+	FormatTrailer(trailer metadata.MD)
+	Done() error
 }

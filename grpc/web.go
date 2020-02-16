@@ -8,6 +8,7 @@ import (
 	"github.com/ktr0731/grpc-web-go-client/grpcweb"
 	"github.com/pkg/errors"
 	gogrpc "google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 type webClient struct {
@@ -55,6 +56,14 @@ type webClientStream struct {
 	stream grpcweb.ClientStream
 }
 
+func (s *webClientStream) Header() (metadata.MD, error) {
+	return nil, errors.New("not supported yet")
+}
+
+func (s *webClientStream) Trailer() metadata.MD {
+	panic("not supported yet")
+}
+
 func (s *webClientStream) Send(req interface{}) error {
 	loggingRequest(req)
 	if err := s.stream.Send(s.ctx, req); err != nil {
@@ -90,6 +99,14 @@ func (c *webClient) NewClientStream(ctx context.Context, streamDesc *gogrpc.Stre
 type webServerStream struct {
 	ctx    context.Context
 	stream grpcweb.ServerStream
+}
+
+func (s *webServerStream) Header() (metadata.MD, error) {
+	return nil, errors.New("not supported yet")
+}
+
+func (s *webServerStream) Trailer() metadata.MD {
+	panic("not supported yet")
 }
 
 func (s *webServerStream) Send(req interface{}) (err error) {
@@ -128,6 +145,14 @@ func (c *webClient) NewServerStream(ctx context.Context, streamDesc *gogrpc.Stre
 type webBidiStream struct {
 	ctx    context.Context
 	stream grpcweb.BidiStream
+}
+
+func (s *webBidiStream) Header() (metadata.MD, error) {
+	return nil, errors.New("not supported yet")
+}
+
+func (s *webBidiStream) Trailer() metadata.MD {
+	panic("not supported yet")
 }
 
 func (s *webBidiStream) Send(req interface{}) error {

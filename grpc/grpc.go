@@ -71,16 +71,22 @@ type Client interface {
 }
 
 type ClientStream interface {
+	Header() (metadata.MD, error)
+	Trailer() metadata.MD
 	Send(req interface{}) error
 	CloseAndReceive(res interface{}) error
 }
 
 type ServerStream interface {
+	Header() (metadata.MD, error)
+	Trailer() metadata.MD
 	Send(req interface{}) error
 	Receive(res interface{}) error
 }
 
 type BidiStream interface {
+	Header() (metadata.MD, error)
+	Trailer() metadata.MD
 	Send(req interface{}) error
 	Receive(res interface{}) error
 	CloseSend() error
@@ -205,6 +211,14 @@ type clientStream struct {
 	cs gogrpc.ClientStream
 }
 
+func (s *clientStream) Header() (metadata.MD, error) {
+	return s.cs.Header()
+}
+
+func (s *clientStream) Trailer() metadata.MD {
+	return s.cs.Trailer()
+}
+
 func (s *clientStream) Send(req interface{}) error {
 	loggingRequest(req)
 	return s.cs.SendMsg(req)
@@ -253,6 +267,14 @@ func (c *client) NewServerStream(ctx context.Context, streamDesc *gogrpc.StreamD
 
 type bidiStream struct {
 	s *serverStream
+}
+
+func (s *bidiStream) Header() (metadata.MD, error) {
+	return s.s.Header()
+}
+
+func (s *bidiStream) Trailer() metadata.MD {
+	return s.s.Trailer()
 }
 
 func (s *bidiStream) Send(req interface{}) error {
