@@ -45,7 +45,8 @@ func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.He
 		filler := fill.NewSilentFiller(in)
 		usecase.InjectPartially(usecase.Dependencies{
 			ResponsePresenter: newCurlLikeResponsePresenter(ui.Writer(), respFormat),
-			Filler:            filler,
+			// ResponsePresenter: newJSONResponsePresenter(ui.Writer()),
+			Filler: filler,
 		})
 
 		for k, v := range headers {

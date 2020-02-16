@@ -114,18 +114,15 @@ func newCurlLikeResponsePresenter(w io.Writer, format map[string]struct{}) *curl
 }
 
 func (p *curlLikeResponsePresenter) Format(s codes.Code, header, trailer metadata.MD, v interface{}) error {
-	p.FormatHeader(s, header)
+	p.FormatHeader(header)
 	if err := p.FormatMessage(v); err != nil {
 		return err
 	}
-	p.FormatTrailer(trailer)
+	p.FormatTrailer(s, trailer)
 	return nil
 }
 
-func (p *curlLikeResponsePresenter) FormatHeader(status codes.Code, header metadata.MD) {
-	if has(p.format, "status") {
-		fmt.Fprintf(p.w, "%d %s\n", status, status.String())
-	}
+func (p *curlLikeResponsePresenter) FormatHeader(header metadata.MD) {
 	if has(p.format, "header") {
 		var s []string
 		for k, v := range header {
@@ -145,7 +142,7 @@ func (p *curlLikeResponsePresenter) FormatMessage(v interface{}) error {
 		return nil
 	}
 
-	if has(p.format, "status") || has(p.format, "header") {
+	if has(p.format, "header") {
 		fmt.Fprintf(p.w, "\n")
 	}
 	msg, err := p.json.Format(v)
@@ -156,25 +153,30 @@ func (p *curlLikeResponsePresenter) FormatMessage(v interface{}) error {
 	return nil
 }
 
-func (p *curlLikeResponsePresenter) FormatTrailer(trailer metadata.MD) {
-	if !has(p.format, "trailer") {
-		return
-	}
-
-	if has(p.format, "status") || has(p.format, "header") || has(p.format, "message") {
-		fmt.Fprintf(p.w, "\n")
-	}
-
-	var s []string
-	for k, v := range trailer {
-		for _, vv := range v {
-			s = append(s, fmt.Sprintf("%s: %s", k, vv))
+func (p *curlLikeResponsePresenter) FormatTrailer(status codes.Code, trailer metadata.MD) {
+	if has(p.format, "trailer") {
+		if has(p.format, "header") || has(p.format, "message") {
+			fmt.Fprintf(p.w, "\n")
 		}
+
+		var s []string
+		for k, v := range trailer {
+			for _, vv := range v {
+				s = append(s, fmt.Sprintf("%s: %s", k, vv))
+			}
+		}
+		sort.Slice(s, func(i, j int) bool {
+			return s[i] < s[j]
+		})
+		fmt.Fprintf(p.w, "%s\n", strings.Join(s, "\n"))
 	}
-	sort.Slice(s, func(i, j int) bool {
-		return s[i] < s[j]
-	})
-	fmt.Fprintf(p.w, "%s\n", strings.Join(s, "\n"))
+
+	if has(p.format, "status") {
+		if has(p.format, "trailer") {
+			fmt.Fprintf(p.w, "\n")
+		}
+		fmt.Fprintf(p.w, "%d %s\n", status, status.String())
+	}
 }
 
 func (p *curlLikeResponsePresenter) Done() error {
@@ -201,18 +203,14 @@ func newJSONResponsePresenter(w io.Writer) *jsonResponsePresenter {
 }
 
 func (p *jsonResponsePresenter) Format(s codes.Code, header, trailer metadata.MD, v interface{}) error {
-	p.FormatHeader(s, header)
+	p.FormatHeader(header)
 	_ = p.FormatMessage(v)
-	p.FormatTrailer(trailer)
+	p.FormatTrailer(s, trailer)
 	p.Done()
 	return nil
 }
 
-func (p *jsonResponsePresenter) FormatHeader(s codes.Code, header metadata.MD) {
-	p.s.Status = struct {
-		Code       uint32 `json:"code"`
-		StringCode string `json:"string_code"`
-	}{uint32(s), s.String()}
+func (p *jsonResponsePresenter) FormatHeader(header metadata.MD) {
 	p.s.Header = header
 }
 
@@ -221,7 +219,11 @@ func (p *jsonResponsePresenter) FormatMessage(v interface{}) error {
 	return nil
 }
 
-func (p *jsonResponsePresenter) FormatTrailer(trailer metadata.MD) {
+func (p *jsonResponsePresenter) FormatTrailer(s codes.Code, trailer metadata.MD) {
+	p.s.Status = struct {
+		Code       uint32 `json:"code"`
+		StringCode string `json:"string_code"`
+	}{uint32(s), s.String()}
 	p.s.Trailer = trailer
 }
 

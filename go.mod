@@ -41,7 +41,9 @@ require (
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sys v0.0.0-20200212091648-12a6c2dcc1e4 // indirect
 	golang.org/x/tools v0.0.0-20190930201159-7c411dea38b0
+	google.golang.org/genproto v0.0.0-20200212174721-66ed5ce911ce // indirect
 	google.golang.org/grpc v1.27.1
 )
 
