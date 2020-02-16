@@ -128,7 +128,7 @@ func (p *prompt) Input() (in string, err error) {
 			goprompt.OptionPrefixTextColor(goprompt.Color(p.prefixColor)),
 			goprompt.OptionHistory(p.commandHistory),
 		)...)
-	if err == goprompt.ErrAbort {
+	if errors.Is(err, goprompt.ErrAbort) {
 		return "", ErrAbort
 	} else if err != nil {
 		return "", err
@@ -140,10 +140,10 @@ func (p *prompt) Input() (in string, err error) {
 func (p *prompt) Select(message string, options []string) (string, error) {
 	for {
 		res, err := p.SelectFunc(message, options)
-		if err == promptui.ErrInterrupt {
+		if errors.Is(err, promptui.ErrInterrupt) {
 			continue
 		}
-		if err == promptui.ErrEOF {
+		if errors.Is(err, promptui.ErrEOF) {
 			return "", io.EOF
 		}
 		if err != nil {

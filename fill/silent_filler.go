@@ -24,7 +24,7 @@ func NewSilentFiller(in io.Reader) *SilentFiller {
 func (f *SilentFiller) Fill(v interface{}) error {
 	err := f.dec.Decode(v)
 	if err != nil {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return io.EOF
 		}
 

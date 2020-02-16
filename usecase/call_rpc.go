@@ -32,7 +32,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				rpc.RequestType.FullyQualifiedName)
 		}
 		err = m.filler.Fill(req)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil, io.EOF
 		}
 		if err != nil {
@@ -88,9 +88,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				}
 				err = stream.Receive(res)
 				switch {
-				case err == context.Canceled:
+				case errors.Is(err, context.Canceled):
 					return nil
-				case err == io.EOF:
+				case errors.Is(err, io.EOF):
 					return nil
 				case err != nil:
 					return errors.Wrapf(
@@ -107,7 +107,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		eg.Go(func() error {
 			for {
 				req, err := newRequest()
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					if err := stream.CloseSend(); err != nil {
 						return errors.Wrapf(
 							err,
@@ -153,7 +153,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		}
 		for {
 			req, err := newRequest()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				res, err := newResponse()
 				if err != nil {
 					return err
@@ -215,9 +215,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			}
 			err = stream.Receive(res)
 			switch {
-			case err == context.Canceled:
+			case errors.Is(err, context.Canceled):
 				return nil
-			case err == io.EOF:
+			case errors.Is(err, io.EOF):
 				return nil
 			case err != nil:
 				return errors.Wrapf(

@@ -43,10 +43,10 @@ func (f *InteractiveFiller) Fill(v interface{}) error {
 	err := f.inputMessage(msg)
 	// If io.EOF is returned, it means CTRL+d is entered.
 	// In this case, Input skips rest fields and finishes normally.
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		return io.EOF
 	}
-	if errors.Cause(err) == prompt.ErrAbort {
+	if errors.Is(err, prompt.ErrAbort) {
 		return nil
 	}
 	if err != nil {
@@ -82,7 +82,7 @@ func (f *InteractiveFiller) inputMessage(dmsg *dynamic.Message) error {
 
 	for _, field := range dmsg.GetMessageDescriptor().GetFields() {
 		err := f.inputField(dmsg, field, false)
-		if errors.Cause(err) == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return io.EOF
 		}
 		if err != nil {
@@ -166,10 +166,10 @@ func (f *InteractiveFiller) inputField(dmsg *dynamic.Message, field *desc.FieldD
 		msg := dynamic.NewMessage(field.GetMessageType())
 		err := f.inputMessage(msg)
 		// If io.EOF is returned, msg isn't nil (see inputMessage comments).
-		if err != nil && errors.Cause(err) != prompt.ErrAbort {
+		if err != nil && !errors.Is(err, prompt.ErrAbort) {
 			return err
 		}
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return io.EOF
 		}
 
@@ -183,7 +183,7 @@ func (f *InteractiveFiller) inputField(dmsg *dynamic.Message, field *desc.FieldD
 			}
 		}
 
-		if partOfRepeatedField && errors.Cause(err) == prompt.ErrAbort {
+		if partOfRepeatedField && errors.Is(err, prompt.ErrAbort) {
 			return prompt.ErrAbort
 		}
 
@@ -267,7 +267,7 @@ func (f *InteractiveFiller) inputRepeatedField(dmsg *dynamic.Message, field *des
 		f.prompt.SetPrefixColor(f.state.color)
 
 		err := f.inputField(dmsg, field, true)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		}
 		if err != nil {
@@ -282,7 +282,7 @@ func (f *InteractiveFiller) inputRepeatedField(dmsg *dynamic.Message, field *des
 // If CTRL+d is entered, inputPrimitiveField returns io.EOF.
 func (f *InteractiveFiller) inputPrimitiveField(field *desc.FieldDescriptor) (interface{}, error) {
 	in, err := f.prompt.Input()
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		return "", io.EOF
 	}
 	if err != nil {
