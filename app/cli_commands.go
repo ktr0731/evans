@@ -10,7 +10,7 @@ import (
 )
 
 func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
-	var responseFormat string
+	var responseFormat, out string
 	cmd := &cobra.Command{
 		Use:     "call [options ...] <method>",
 		Aliases: []string{"c"},
@@ -34,7 +34,7 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 			for _, v := range strings.Split(responseFormat, ",") {
 				respFormat[v] = struct{}{}
 			}
-			invoker, err := mode.NewCallCLIInvoker(ui, args[0], cfg.file, cfg.Config.Request.Header, respFormat)
+			invoker, err := mode.NewCallCLIInvoker(ui, args[0], cfg.file, cfg.Config.Request.Header, respFormat, out)
 			if err != nil {
 				return err
 			}
@@ -49,7 +49,8 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 
 	f := cmd.Flags()
 	initFlagSet(f, ui.Writer())
-	f.StringVar(&responseFormat, "response", "message", `response format. combination of status, header, message and trailer.`)
+	f.StringVar(&responseFormat, "response", "message", `response format. combination of header, message, trailer and status.`)
+	f.StringVarP(&out, "output", "o", "curl", `output format. one of "json" or "curl". "curl" is a curl-like format.`)
 
 	cmd.SetHelpFunc(usageFunc(ui.Writer(), []string{"file"}))
 	return cmd

@@ -205,19 +205,21 @@ func (p *curlLikeResponsePresenter) Done() error {
 type jsonResponsePresenter struct {
 	w io.Writer
 	s struct {
-		Status struct {
-			Code       uint32 `json:"code"`
-			StringCode string `json:"string_code"`
-		} `json:"status"`
-		Header   metadata.MD   `json:"header_metadata"`
-		Messages []interface{} `json:"messages"`
-		Trailer  metadata.MD   `json:"trailer_metadata"`
+		Status *struct {
+			Code    string `json:"code"`
+			Number  uint32 `json:"number"`
+			Message string `json:"message"`
+		} `json:"status,omitempty"`
+		Header   *metadata.MD  `json:"header,omitempty"`
+		Messages []interface{} `json:"messages,omitempty"`
+		Trailer  *metadata.MD  `json:"trailer,omitempty"`
 	}
-	p present.Presenter
+	p      present.Presenter
+	format map[string]struct{}
 }
 
-func newJSONResponsePresenter(w io.Writer) *jsonResponsePresenter {
-	return &jsonResponsePresenter{w: w, p: json.NewPresenter("  ")}
+func newJSONResponsePresenter(w io.Writer, format map[string]struct{}) *jsonResponsePresenter {
+	return &jsonResponsePresenter{w: w, p: json.NewPresenter("  "), format: format}
 }
 
 func (p *jsonResponsePresenter) Format(s *status.Status, header, trailer metadata.MD, v interface{}) error {
@@ -229,20 +231,29 @@ func (p *jsonResponsePresenter) Format(s *status.Status, header, trailer metadat
 }
 
 func (p *jsonResponsePresenter) FormatHeader(header metadata.MD) {
-	p.s.Header = header
+	if has(p.format, "header") {
+		p.s.Header = &header
+	}
 }
 
 func (p *jsonResponsePresenter) FormatMessage(v interface{}) error {
-	p.s.Messages = append(p.s.Messages, v)
+	if has(p.format, "message") {
+		p.s.Messages = append(p.s.Messages, v)
+	}
 	return nil
 }
 
 func (p *jsonResponsePresenter) FormatTrailer(s *status.Status, trailer metadata.MD) {
-	p.s.Status = struct {
-		Code       uint32 `json:"code"`
-		StringCode string `json:"string_code"`
-	}{uint32(s.Code()), s.Code().String()}
-	p.s.Trailer = trailer
+	if has(p.format, "status") {
+		p.s.Status = &struct {
+			Code    string `json:"code"`
+			Number  uint32 `json:"number"`
+			Message string `json:"message"`
+		}{s.Code().String(), uint32(s.Code()), s.Message()}
+	}
+	if has(p.format, "trailer") {
+		p.s.Trailer = &trailer
+	}
 }
 
 func (p *jsonResponsePresenter) Done() error {
@@ -250,7 +261,7 @@ func (p *jsonResponsePresenter) Done() error {
 	if err != nil {
 		return err
 	}
-	_, err = io.WriteString(p.w, s)
+	_, err = io.WriteString(p.w, s+"\n")
 	return err
 }
 

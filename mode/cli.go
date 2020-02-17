@@ -28,7 +28,7 @@ type CLIInvoker func(context.Context) error
 
 // NewCallCLIInvoker returns an CLIInvoker implementation for calling RPCs.
 // If filePath is empty, the invoker tries to read input from stdin.
-func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.Header, respFormat map[string]struct{}) (CLIInvoker, error) {
+func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.Header, respFormat map[string]struct{}, format string) (CLIInvoker, error) {
 	if methodName == "" {
 		return nil, errors.New("method is required")
 	}
@@ -43,10 +43,18 @@ func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.He
 			in = f
 		}
 		filler := fill.NewSilentFiller(in)
+		var responsePresenter usecase.ResponsePresenter
+		switch format {
+		case "curl":
+			responsePresenter = newCurlLikeResponsePresenter(ui.Writer(), respFormat)
+		case "json":
+			responsePresenter = newJSONResponsePresenter(ui.Writer(), respFormat)
+		default:
+			responsePresenter = newCurlLikeResponsePresenter(ui.Writer(), respFormat)
+		}
 		usecase.InjectPartially(usecase.Dependencies{
-			ResponsePresenter: newCurlLikeResponsePresenter(ui.Writer(), respFormat),
-			// ResponsePresenter: newJSONResponsePresenter(ui.Writer()),
-			Filler: filler,
+			ResponsePresenter: responsePresenter,
+			Filler:            filler,
 		})
 
 		for k, v := range headers {
