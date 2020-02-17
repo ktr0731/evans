@@ -19,8 +19,8 @@ import (
 	"github.com/ktr0731/evans/repl"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
@@ -103,6 +103,8 @@ type curlLikeResponsePresenter struct {
 
 	format map[string]struct{}
 	json   present.Presenter
+
+	wroteHeader, wroteMessage bool
 }
 
 func newCurlLikeResponsePresenter(w io.Writer, format map[string]struct{}) *curlLikeResponsePresenter {
@@ -113,7 +115,7 @@ func newCurlLikeResponsePresenter(w io.Writer, format map[string]struct{}) *curl
 	}
 }
 
-func (p *curlLikeResponsePresenter) Format(s codes.Code, header, trailer metadata.MD, v interface{}) error {
+func (p *curlLikeResponsePresenter) Format(s *status.Status, header, trailer metadata.MD, v interface{}) error {
 	p.FormatHeader(header)
 	if err := p.FormatMessage(v); err != nil {
 		return err
@@ -124,6 +126,10 @@ func (p *curlLikeResponsePresenter) Format(s codes.Code, header, trailer metadat
 
 func (p *curlLikeResponsePresenter) FormatHeader(header metadata.MD) {
 	if has(p.format, "header") {
+		if header.Len() == 0 {
+			return
+		}
+
 		var s []string
 		for k, v := range header {
 			for _, vv := range v {
@@ -134,6 +140,8 @@ func (p *curlLikeResponsePresenter) FormatHeader(header metadata.MD) {
 			return s[i] < s[j]
 		})
 		fmt.Fprintf(p.w, "%s\n", strings.Join(s, "\n"))
+
+		p.wroteHeader = true
 	}
 }
 
@@ -142,7 +150,11 @@ func (p *curlLikeResponsePresenter) FormatMessage(v interface{}) error {
 		return nil
 	}
 
-	if has(p.format, "header") {
+	if v == nil {
+		return nil
+	}
+
+	if p.wroteHeader {
 		fmt.Fprintf(p.w, "\n")
 	}
 	msg, err := p.json.Format(v)
@@ -150,12 +162,16 @@ func (p *curlLikeResponsePresenter) FormatMessage(v interface{}) error {
 		return err
 	}
 	fmt.Fprintf(p.w, "%s\n", msg)
+
+	p.wroteMessage = true
+
 	return nil
 }
 
-func (p *curlLikeResponsePresenter) FormatTrailer(status codes.Code, trailer metadata.MD) {
-	if has(p.format, "trailer") {
-		if has(p.format, "header") || has(p.format, "message") {
+func (p *curlLikeResponsePresenter) FormatTrailer(status *status.Status, trailer metadata.MD) {
+	var wroteTrailer bool
+	if has(p.format, "trailer") && trailer.Len() != 0 {
+		if p.wroteHeader || p.wroteMessage {
 			fmt.Fprintf(p.w, "\n")
 		}
 
@@ -169,13 +185,15 @@ func (p *curlLikeResponsePresenter) FormatTrailer(status codes.Code, trailer met
 			return s[i] < s[j]
 		})
 		fmt.Fprintf(p.w, "%s\n", strings.Join(s, "\n"))
+
+		wroteTrailer = true
 	}
 
 	if has(p.format, "status") {
-		if has(p.format, "trailer") {
+		if p.wroteHeader || p.wroteMessage || wroteTrailer {
 			fmt.Fprintf(p.w, "\n")
 		}
-		fmt.Fprintf(p.w, "%d %s\n", status, status.String())
+		fmt.Fprintf(p.w, "code: %s, number: %d, message: %q\n", status.Code().String(), status.Code(), status.Message())
 	}
 }
 
@@ -191,9 +209,9 @@ type jsonResponsePresenter struct {
 			Code       uint32 `json:"code"`
 			StringCode string `json:"string_code"`
 		} `json:"status"`
-		Header  metadata.MD `json:"header_metadata"`
-		Message interface{} `json:"message"`
-		Trailer metadata.MD `json:"trailer_metadata"`
+		Header   metadata.MD   `json:"header_metadata"`
+		Messages []interface{} `json:"messages"`
+		Trailer  metadata.MD   `json:"trailer_metadata"`
 	}
 	p present.Presenter
 }
@@ -202,7 +220,7 @@ func newJSONResponsePresenter(w io.Writer) *jsonResponsePresenter {
 	return &jsonResponsePresenter{w: w, p: json.NewPresenter("  ")}
 }
 
-func (p *jsonResponsePresenter) Format(s codes.Code, header, trailer metadata.MD, v interface{}) error {
+func (p *jsonResponsePresenter) Format(s *status.Status, header, trailer metadata.MD, v interface{}) error {
 	p.FormatHeader(header)
 	_ = p.FormatMessage(v)
 	p.FormatTrailer(s, trailer)
@@ -215,15 +233,15 @@ func (p *jsonResponsePresenter) FormatHeader(header metadata.MD) {
 }
 
 func (p *jsonResponsePresenter) FormatMessage(v interface{}) error {
-	p.s.Message = v
+	p.s.Messages = append(p.s.Messages, v)
 	return nil
 }
 
-func (p *jsonResponsePresenter) FormatTrailer(s codes.Code, trailer metadata.MD) {
+func (p *jsonResponsePresenter) FormatTrailer(s *status.Status, trailer metadata.MD) {
 	p.s.Status = struct {
 		Code       uint32 `json:"code"`
 		StringCode string `json:"string_code"`
-	}{uint32(s), s.String()}
+	}{uint32(s.Code()), s.Code().String()}
 	p.s.Trailer = trailer
 }
 

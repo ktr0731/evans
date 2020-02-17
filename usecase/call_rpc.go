@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var NopErr = errors.New("nop")
+
 // CallRPC constructs a request with input source such that prompt inputting, stdin or a file. After that, it sends
 // the request to the gRPC server and decodes the response body to res.
 // Note that req and res must be JSON-decodable structs. The output is written to w.
@@ -60,7 +62,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		return m.responsePresenter.FormatMessage(res)
 	}
 	flushTrailer := func(status *status.Status, trailer metadata.MD) {
-		m.responsePresenter.FormatTrailer(status.Code(), trailer)
+		m.responsePresenter.FormatTrailer(status, trailer)
 	}
 	flushDone := func() {
 		m.responsePresenter.Done()
@@ -92,14 +94,10 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		if err != nil {
 			return errors.Wrapf(err, "failed to create a bidi stream for RPC '%s'", streamDesc.StreamName)
 		}
-		defer func() {
-			flushTrailer(nil, stream.Trailer())
-			flushDone()
-		}()
 
 		var (
-			eg              errgroup.Group
-			writeHeaderOnce sync.Once
+			eg                                errgroup.Group
+			writeHeaderOnce, writeTrailerOnce sync.Once
 		)
 		eg.Go(func() error {
 			for {
@@ -107,29 +105,44 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				if err != nil {
 					return err
 				}
-				err = stream.Receive(res)
-				switch {
-				case errors.Is(err, context.Canceled):
-					return nil
-				case errors.Is(err, io.EOF):
-					return nil
-				case err != nil:
+				stat, err := handleGRPCResponseError(stream.Receive(res))
+				if err != nil {
+					if errors.Is(err, context.Canceled) {
+						return nil
+					}
+					if errors.Is(err, io.EOF) {
+						return nil
+					}
 					return errors.Wrapf(
 						err,
 						"failed to receive a response from the server stream '%s'",
 						streamDesc.StreamName)
 				}
 
+				// Trailer is now available.
+				defer func(stat *status.Status) {
+					writeTrailerOnce.Do(func() {
+						flushTrailer(stat, stream.Trailer())
+						flushDone()
+					})
+				}(stat)
+
+				var whErr error
 				writeHeaderOnce.Do(func() {
 					header, err := stream.Header()
 					if err != nil {
-						err = errors.Wrap(err, "failed to get header metadata")
+						whErr = errors.Wrap(err, "failed to get header metadata")
 					}
 					flushHeader(header)
 				})
-				if err != nil {
-					return err
+				if whErr != nil {
+					return whErr
 				}
+
+				if stat.Code() != codes.OK {
+					return NopErr
+				}
+
 				if err := flushResponse(res); err != nil {
 					return err
 				}
@@ -151,7 +164,11 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				if err != nil {
 					return err
 				}
-				if err := stream.Send(req); err != nil {
+				err = stream.Send(req)
+				if errors.Is(err, io.EOF) {
+					return nil
+				}
+				if err != nil {
 					return errors.Wrapf(
 						err,
 						"failed to send a RPC to the client stream '%s'",
@@ -191,29 +208,34 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				if err != nil {
 					return err
 				}
-				err = stream.CloseAndReceive(res)
-				stat, ok := status.FromError(errors.Cause(err))
+				stat, err := handleGRPCResponseError(stream.CloseAndReceive(res))
 				if err != nil {
-					if !ok {
-						return errors.Wrapf(
-							err,
-							"failed to close the stream of RPC '%s'",
-							streamDesc.StreamName)
-					}
-
-					// gRPC error. Treat as a normal response.
-
-					header, err := stream.Header()
-					if err != nil {
-						return errors.Wrap(err, "failed to get header metadata")
-					}
-					return flushAll(stat, header, stream.Trailer(), res)
+					return errors.Wrapf(
+						err,
+						"failed to close the stream of RPC '%s'",
+						streamDesc.StreamName)
 				}
-				header, herr := stream.Header()
-				if herr != nil {
-					return errors.Wrap(herr, "failed to get header metadata")
+
+				// gRPC error. Treat as a normal response.
+
+				header, err := stream.Header()
+				if err != nil {
+					return errors.Wrap(err, "failed to get header metadata")
 				}
-				return flushAll(stat, header, stream.Trailer(), res)
+
+				if stat.Code() != codes.OK {
+					res = nil
+				}
+
+				err = flushAll(stat, header, stream.Trailer(), res)
+				if err != nil {
+					return err
+				}
+
+				if stat.Code() != codes.OK {
+					return NopErr
+				}
+				return nil
 			}
 			if err != nil {
 				return err
@@ -254,23 +276,14 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				streamDesc.StreamName)
 		}
 
-		var (
-			writeHeaderOnce sync.Once
-			stat            *status.Status
-		)
-		defer func() {
-			if stat != nil { // Trailer is available.
-				flushTrailer(stat, stream.Trailer())
-			}
-			flushDone()
-		}()
+		var writeHeaderOnce, writeTrailerOnce sync.Once
 
 		for {
 			res, err := newResponse()
 			if err != nil {
 				return err
 			}
-			stat, err = handleGRPCResponseError(stream.Receive(res))
+			stat, err := handleGRPCResponseError(stream.Receive(res))
 			if err != nil {
 				if errors.Is(err, context.Canceled) {
 					return nil
@@ -283,6 +296,14 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 					"failed to receive a response from the server stream '%s'",
 					streamDesc.StreamName)
 			}
+
+			// Trailer is now available.
+			defer func(stat *status.Status) {
+				writeTrailerOnce.Do(func() {
+					flushTrailer(stat, stream.Trailer())
+					flushDone()
+				})
+			}(stat)
 
 			var whErr error
 			writeHeaderOnce.Do(func() {
@@ -297,7 +318,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			}
 
 			if stat.Code() != codes.OK {
-				return nil
+				return NopErr
 			}
 
 			if err := flushResponse(res); err != nil {
@@ -322,23 +343,24 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		if err != nil {
 			return err
 		}
-		var (
-			header, trailer metadata.MD
-			stat            *status.Status
-		)
+		var header, trailer metadata.MD
 		opts := []gogrpc.CallOption{gogrpc.Header(&header), gogrpc.Trailer(&trailer)}
-		err = m.gRPCClient.Invoke(ctx, rpc.FullyQualifiedName, req, res, opts...)
+		stat, err := handleGRPCResponseError(m.gRPCClient.Invoke(ctx, rpc.FullyQualifiedName, req, res, opts...))
 		if err != nil {
-			var ok bool
-			stat, ok = status.FromError(err)
-			if !ok {
-				return errors.Wrap(err, "failed to send a request")
-			}
+			return errors.Wrap(err, "failed to send a request")
+		}
+
+		if stat.Code() != codes.OK {
+			res = nil
 		}
 
 		err = flushAll(stat, header, trailer, res)
 		if err != nil {
 			return err
+		}
+
+		if stat.Code() != codes.OK {
+			return NopErr
 		}
 		return nil
 	}
@@ -346,10 +368,10 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 
 type ResponsePresenter interface {
 	// Format is a utility method that do FormatHeader, FormatMessage, FormatTrailer and Flush in one shot.
-	Format(status codes.Code, header, trailer metadata.MD, message interface{}) error
+	Format(status *status.Status, header, trailer metadata.MD, message interface{}) error
 	FormatHeader(header metadata.MD)
 	FormatMessage(v interface{}) error
-	FormatTrailer(status codes.Code, trailer metadata.MD)
+	FormatTrailer(status *status.Status, trailer metadata.MD)
 	Done() error
 }
 
