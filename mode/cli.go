@@ -9,6 +9,9 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/fill"
+	"github.com/ktr0731/evans/format"
+	"github.com/ktr0731/evans/format/curl"
+	fmtjson "github.com/ktr0731/evans/format/json"
 	"github.com/ktr0731/evans/idl"
 	"github.com/ktr0731/evans/idl/proto"
 	"github.com/ktr0731/evans/present"
@@ -28,7 +31,7 @@ type CLIInvoker func(context.Context) error
 
 // NewCallCLIInvoker returns an CLIInvoker implementation for calling RPCs.
 // If filePath is empty, the invoker tries to read input from stdin.
-func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.Header, respFormat map[string]struct{}, format string) (CLIInvoker, error) {
+func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.Header, respFormat map[string]struct{}, formatType string) (CLIInvoker, error) {
 	if methodName == "" {
 		return nil, errors.New("method is required")
 	}
@@ -43,17 +46,17 @@ func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.He
 			in = f
 		}
 		filler := fill.NewSilentFiller(in)
-		var responsePresenter usecase.ResponsePresenter
-		switch format {
+		var rfi format.ResponseFormatterInterface
+		switch formatType {
 		case "curl":
-			responsePresenter = newCurlLikeResponsePresenter(ui.Writer(), respFormat)
+			rfi = curl.NewResponseFormatter(ui.Writer())
 		case "json":
-			responsePresenter = newJSONResponsePresenter(ui.Writer(), respFormat)
+			rfi = fmtjson.NewResponseFormatter(ui.Writer())
 		default:
-			responsePresenter = newCurlLikeResponsePresenter(ui.Writer(), respFormat)
+			rfi = curl.NewResponseFormatter(ui.Writer())
 		}
 		usecase.InjectPartially(usecase.Dependencies{
-			ResponsePresenter: responsePresenter,
+			ResponseFormatter: format.NewResponseFormatter(rfi, respFormat),
 			Filler:            filler,
 		})
 

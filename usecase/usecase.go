@@ -4,6 +4,7 @@ package usecase
 
 import (
 	"github.com/ktr0731/evans/fill"
+	"github.com/ktr0731/evans/format"
 	"github.com/ktr0731/evans/grpc"
 	"github.com/ktr0731/evans/idl"
 	"github.com/ktr0731/evans/present"
@@ -18,7 +19,7 @@ type dependencyManager struct {
 	spec              idl.Spec
 	filler            fill.Filler
 	gRPCClient        grpc.Client
-	responsePresenter ResponsePresenter
+	responseFormatter *format.ResponseFormatter
 	resourcePresenter present.Presenter
 
 	state state
@@ -34,7 +35,7 @@ type Dependencies struct {
 	Spec              idl.Spec
 	Filler            fill.Filler
 	GRPCClient        grpc.Client
-	ResponsePresenter ResponsePresenter
+	ResponseFormatter *format.ResponseFormatter
 	ResourcePresenter present.Presenter
 }
 
@@ -48,7 +49,7 @@ func (m *dependencyManager) Inject(d Dependencies) {
 		spec:              d.Spec,
 		filler:            d.Filler,
 		gRPCClient:        d.GRPCClient,
-		responsePresenter: d.ResponsePresenter,
+		responseFormatter: d.ResponseFormatter,
 		resourcePresenter: d.ResourcePresenter,
 
 		state: defaultState,
@@ -70,8 +71,8 @@ func (m *dependencyManager) InjectPartially(d Dependencies) {
 	if d.GRPCClient != nil {
 		m.gRPCClient = d.GRPCClient
 	}
-	if d.ResponsePresenter != nil {
-		m.responsePresenter = d.ResponsePresenter
+	if d.ResponseFormatter != nil {
+		m.responseFormatter = d.ResponseFormatter
 	}
 	if d.ResourcePresenter != nil {
 		m.resourcePresenter = d.ResourcePresenter

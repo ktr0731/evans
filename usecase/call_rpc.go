@@ -56,16 +56,16 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		return res, nil
 	}
 	flushHeader := func(header metadata.MD) {
-		m.responsePresenter.FormatHeader(header)
+		m.responseFormatter.FormatHeader(header)
 	}
 	flushResponse := func(res interface{}) error {
-		return m.responsePresenter.FormatMessage(res)
+		return m.responseFormatter.FormatMessage(res)
 	}
 	flushTrailer := func(status *status.Status, trailer metadata.MD) {
-		m.responsePresenter.FormatTrailer(status, trailer)
+		m.responseFormatter.FormatTrailer(status, trailer)
 	}
 	flushDone := func() {
-		m.responsePresenter.Done()
+		m.responseFormatter.Done()
 	}
 	flushAll := func(status *status.Status, header, trailer metadata.MD, res interface{}) error {
 		flushHeader(header)
@@ -364,15 +364,6 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		}
 		return nil
 	}
-}
-
-type ResponsePresenter interface {
-	// Format is a utility method that do FormatHeader, FormatMessage, FormatTrailer and Flush in one shot.
-	Format(status *status.Status, header, trailer metadata.MD, message interface{}) error
-	FormatHeader(header metadata.MD)
-	FormatMessage(v interface{}) error
-	FormatTrailer(status *status.Status, trailer metadata.MD)
-	Done() error
 }
 
 func handleGRPCResponseError(err error) (*status.Status, error) {
