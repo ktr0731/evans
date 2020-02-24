@@ -186,10 +186,8 @@ func (c *client) Invoke(ctx context.Context, fqrn string, req, res interface{}) 
 	loggingRequest(req)
 	wakeUpClientConn(c.conn)
 	opts := []gogrpc.CallOption{gogrpc.Header(&header), gogrpc.Trailer(&trailer)}
-	if err := c.conn.Invoke(ctx, endpoint, req, res, opts...); err != nil {
-		return nil, nil, err
-	}
-	return header, trailer, nil
+	err = c.conn.Invoke(ctx, endpoint, req, res, opts...)
+	return header, trailer, err
 }
 
 func (c *client) Close(ctx context.Context) error {

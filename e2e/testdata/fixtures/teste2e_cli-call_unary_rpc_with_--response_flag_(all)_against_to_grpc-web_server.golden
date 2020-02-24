@@ -1,0 +1,14 @@
+access-control-expose-headers: Header_key2, Header_key1, Date, Content-Type, Vary, grpc-status, grpc-message
+content-type: application/grpc-web+proto
+header_key1: header_val1
+header_key2: header_val2
+vary: Origin
+
+{
+  "message": "response"
+}
+
+trailer_key1: trailer_val1
+trailer_key2: trailer_val2
+
+code: OK, number: 0, message: ""

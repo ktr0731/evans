@@ -456,6 +456,32 @@ func TestE2E_CLI(t *testing.T) {
 			unflatten:        true,
 			assertWithGolden: true,
 		},
+		"call failure unary RPC with --response flag (all)": {
+			commonFlags:      "-r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --response header,message,trailer,status UnaryHeaderTrailerFailure",
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
+		"call unary RPC with --response flag (all) against to gRPC-Web server": {
+			commonFlags:      "--web -r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --response header,message,trailer,status UnaryHeaderTrailer",
+			web:              true,
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
+		"call failure unary RPC with --response flag (all) against to gRPC-Web server": {
+			commonFlags:      "--web -r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --response header,message,trailer,status UnaryHeaderTrailerFailure",
+			web:              true,
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
 
 		// list command
 		"print list command usage": {

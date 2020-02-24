@@ -44,11 +44,7 @@ func (c *webClient) Invoke(ctx context.Context, fqrn string, req, res interface{
 	loggingRequest(req)
 
 	err = c.conn.Invoke(ctx, endpoint, req, res, grpcweb.Header(&header), grpcweb.Trailer(&trailer))
-	// TODO: Handle gRPC-Web misconfiguration errors for more helpful message.
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "grpc-web: failed to send a request")
-	}
-	return header, trailer, nil
+	return header, trailer, errors.Wrap(err, "grpc-web: failed to send a request")
 }
 
 type webClientStream struct {
