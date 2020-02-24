@@ -42,11 +42,13 @@ require (
 	go.uber.org/goleak v0.10.0
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200212091648-12a6c2dcc1e4 // indirect
-	golang.org/x/tools v0.0.0-20190930201159-7c411dea38b0
+	golang.org/x/tools v0.0.0-20200221224223-e1da425f72fd
 	google.golang.org/genproto v0.0.0-20200212174721-66ed5ce911ce // indirect
 	google.golang.org/grpc v1.27.1
 )
 
-replace github.com/ktr0731/grpc-web-go-client => github.com/ktr0731/grpc-web-go-client v0.2.5-0.20190505140201-c24452752d52
+replace github.com/ktr0731/grpc-web-go-client => ../grpc-web-go-client
 
 replace github.com/nicksnyder/go-i18n => github.com/nicksnyder/go-i18n/v2 v2.0.2-0.20190606144950-25e77afbf581
+
+replace github.com/ktr0731/grpc-test => ../grpc-test

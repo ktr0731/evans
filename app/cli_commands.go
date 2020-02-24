@@ -27,9 +27,9 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 			if len(args) == 0 {
 				return errors.New("method is required")
 			}
-			if responseFormat != "message" && cfg.Config.Request.Web {
-				return errors.New("currently, gRPC-Web requesting with --response is not supported")
-			}
+			// if responseFormat != "message" && cfg.Config.Request.Web {
+			// 	return errors.New("currently, gRPC-Web requesting with --response is not supported")
+			// }
 			respFormat := make(map[string]struct{})
 			for _, v := range strings.Split(responseFormat, ",") {
 				respFormat[v] = struct{}{}

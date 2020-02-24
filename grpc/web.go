@@ -35,20 +35,20 @@ func NewWebClient(addr string, useReflection, useTLS bool, cacert, cert, certKey
 	return client
 }
 
-func (c *webClient) Invoke(ctx context.Context, fqrn string, req, res interface{}, opts ...gogrpc.CallOption) error {
+func (c *webClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) (header, trailer metadata.MD, _ error) {
 	endpoint, err := fqrnToEndpoint(fqrn)
 	if err != nil {
-		return errors.Wrap(err, "grpc-web: failed to convert FQRN to endpoint")
+		return nil, nil, errors.Wrap(err, "grpc-web: failed to convert FQRN to endpoint")
 	}
 
 	loggingRequest(req)
 
-	err = c.conn.Invoke(ctx, endpoint, req, res)
+	err = c.conn.Invoke(ctx, endpoint, req, res, grpcweb.Header(&header), grpcweb.Trailer(&trailer))
 	// TODO: Handle gRPC-Web misconfiguration errors for more helpful message.
 	if err != nil {
-		return errors.Wrap(err, "grpc-web: failed to send a request")
+		return nil, nil, errors.Wrap(err, "grpc-web: failed to send a request")
 	}
-	return nil
+	return header, trailer, nil
 }
 
 type webClientStream struct {
@@ -57,11 +57,13 @@ type webClientStream struct {
 }
 
 func (s *webClientStream) Header() (metadata.MD, error) {
-	return nil, errors.New("not supported yet")
+	// TODO: not supported yet
+	return nil, nil
 }
 
 func (s *webClientStream) Trailer() metadata.MD {
-	panic("not supported yet")
+	// panic("not supported yet")
+	return nil
 }
 
 func (s *webClientStream) Send(req interface{}) error {
@@ -102,11 +104,13 @@ type webServerStream struct {
 }
 
 func (s *webServerStream) Header() (metadata.MD, error) {
-	return nil, errors.New("not supported yet")
+	// return nil, errors.New("not supported yet")
+	return nil, nil
 }
 
 func (s *webServerStream) Trailer() metadata.MD {
-	panic("not supported yet")
+	// panic("not supported yet")
+	return nil
 }
 
 func (s *webServerStream) Send(req interface{}) (err error) {
@@ -148,11 +152,13 @@ type webBidiStream struct {
 }
 
 func (s *webBidiStream) Header() (metadata.MD, error) {
-	return nil, errors.New("not supported yet")
+	// return nil, errors.New("not supported yet")
+	return nil, nil
 }
 
 func (s *webBidiStream) Trailer() metadata.MD {
-	panic("not supported yet")
+	// panic("not supported yet")
+	return nil
 }
 
 func (s *webBidiStream) Send(req interface{}) error {
@@ -205,6 +211,6 @@ func (c *webClient) Close(ctx context.Context) error {
 	return nil
 }
 
-func (c *webClient) Headers() Headers {
+func (c *webClient) Header() Headers {
 	return c.headers
 }

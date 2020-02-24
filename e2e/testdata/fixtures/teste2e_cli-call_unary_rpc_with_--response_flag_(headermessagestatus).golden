@@ -1,0 +1,9 @@
+content-type: application/grpc
+header_key1: header_val1
+header_key2: header_val2
+
+{
+  "message": "response"
+}
+
+code: OK, number: 0, message: ""

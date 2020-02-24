@@ -8,7 +8,11 @@ Examples:
         $ echo '{}' | evans -r cli call api.Service.Unary # call Unary method with an empty message
         $ evans -r cli call -f in.json api.Service.Unary  # call Unary method with an input file
 
+        $ evans -r cli call -f in.json --response header,message api.Service.Unary  # output the response headers and message
+
 Options:
-        --file, -f string        a script file that will be executed by (used only CLI mode)
-        --help, -h               display help text and exit (default "false")
+        --response string          response format. combination of header, message, trailer and status. (default "message")
+        --output, -o string        output format. one of "json" or "curl". "curl" is a curl-like format. (default "curl")
+        --file, -f string          a script file that will be executed by (used only CLI mode)
+        --help, -h                 display help text and exit (default "false")
 

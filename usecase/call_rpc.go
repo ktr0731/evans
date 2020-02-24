@@ -343,9 +343,8 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		if err != nil {
 			return err
 		}
-		var header, trailer metadata.MD
-		opts := []gogrpc.CallOption{gogrpc.Header(&header), gogrpc.Trailer(&trailer)}
-		stat, err := handleGRPCResponseError(m.gRPCClient.Invoke(ctx, rpc.FullyQualifiedName, req, res, opts...))
+		header, trailer, err := m.gRPCClient.Invoke(ctx, rpc.FullyQualifiedName, req, res)
+		stat, err := handleGRPCResponseError(err)
 		if err != nil {
 			return errors.Wrap(err, "failed to send a request")
 		}

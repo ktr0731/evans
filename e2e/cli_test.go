@@ -408,6 +408,54 @@ func TestE2E_CLI(t *testing.T) {
 				}
 			},
 		},
+		"call unary RPC with --response flag (all)": {
+			commonFlags:      "-r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --response header,message,trailer,status UnaryHeaderTrailer",
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
+		"call unary RPC with --response flag (header)": {
+			commonFlags:      "-r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --response header UnaryHeaderTrailer",
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
+		"call unary RPC with --response flag (message)": {
+			commonFlags:      "-r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --response message UnaryHeaderTrailer",
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
+		"call unary RPC with --response flag (trailer)": {
+			commonFlags:      "-r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --response trailer UnaryHeaderTrailer",
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
+		"call unary RPC with --response flag (status)": {
+			commonFlags:      "-r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --response status UnaryHeaderTrailer",
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
+		"call unary RPC with --response flag (header,message,status)": {
+			commonFlags:      "-r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --response header,message,status UnaryHeaderTrailer",
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
 
 		// list command
 		"print list command usage": {
