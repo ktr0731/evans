@@ -463,24 +463,28 @@ func TestE2E_CLI(t *testing.T) {
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
+			expectedCode:     1,
 		},
-		"call unary RPC with --response flag (all) against to gRPC-Web server": {
+		// NOTE: Currently, gRPC-Web server implementation returns disorderly Access-Control-Expose-Headers.
+		// So, for golden file testing, we discard headers.
+		"call unary RPC with --response flag (message,trailer,status) against to gRPC-Web server": {
 			commonFlags:      "--web -r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --response header,message,trailer,status UnaryHeaderTrailer",
+			args:             "--file testdata/unary_call.in --response message,trailer,status UnaryHeaderTrailer",
 			web:              true,
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
-		"call failure unary RPC with --response flag (all) against to gRPC-Web server": {
+		"call failure unary RPC with --response flag (message,trailer,status) against to gRPC-Web server": {
 			commonFlags:      "--web -r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --response header,message,trailer,status UnaryHeaderTrailerFailure",
+			args:             "--file testdata/unary_call.in --response message,trailer,status UnaryHeaderTrailerFailure",
 			web:              true,
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
+			expectedCode:     1,
 		},
 
 		// list command
@@ -639,18 +643,18 @@ func TestE2E_CLI(t *testing.T) {
 			}
 
 			if c.expectedCode == 0 {
-				if c.assertTest != nil {
-					c.assertTest(t, actual)
-				}
 				if c.expectedOut != "" && actual != c.expectedOut {
 					t.Errorf("unexpected output:\n%s", cmp.Diff(c.expectedOut, actual))
-				}
-				if c.assertWithGolden {
-					compareWithGolden(t, outBuf.String())
 				}
 				if eoutBuf.String() != "" {
 					t.Errorf("expected code is 0, but got an error message: '%s'", eoutBuf.String())
 				}
+			}
+			if c.assertTest != nil {
+				c.assertTest(t, actual)
+			}
+			if c.assertWithGolden {
+				compareWithGolden(t, outBuf.String())
 			}
 		})
 	}

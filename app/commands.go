@@ -259,7 +259,9 @@ func runREPLCommand(cfg *mergedConfig, ui cui.UI) error {
 
 	respFormat := map[string]struct{}{"message": struct{}{}}
 	if cfg.verbose {
-
+		for _, k := range []string{"header", "trailer", "status"} {
+			respFormat[k] = struct{}{}
+		}
 	}
 
 	if err := mode.RunAsREPLMode(cfg.Config, ui, cache, respFormat); err != nil {
