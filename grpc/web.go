@@ -53,13 +53,11 @@ type webClientStream struct {
 }
 
 func (s *webClientStream) Header() (metadata.MD, error) {
-	// TODO: not supported yet
-	return nil, nil
+	return s.stream.Header()
 }
 
 func (s *webClientStream) Trailer() metadata.MD {
-	// panic("not supported yet")
-	return nil
+	return s.stream.Trailer()
 }
 
 func (s *webClientStream) Send(req interface{}) error {
@@ -100,13 +98,11 @@ type webServerStream struct {
 }
 
 func (s *webServerStream) Header() (metadata.MD, error) {
-	// return nil, errors.New("not supported yet")
-	return nil, nil
+	return s.stream.Header()
 }
 
 func (s *webServerStream) Trailer() metadata.MD {
-	// panic("not supported yet")
-	return nil
+	return s.stream.Trailer()
 }
 
 func (s *webServerStream) Send(req interface{}) (err error) {
