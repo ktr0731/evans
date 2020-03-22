@@ -111,6 +111,10 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 						return nil
 					}
 					if errors.Is(err, io.EOF) {
+						writeTrailerOnce.Do(func() {
+							flushTrailer(status.New(codes.OK, ""), stream.Trailer())
+							flushDone()
+						})
 						return nil
 					}
 					return errors.Wrapf(
