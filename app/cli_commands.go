@@ -10,7 +10,7 @@ import (
 )
 
 func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
-	var responseFormat, out string
+	var printFormat, out string
 	cmd := &cobra.Command{
 		Use:     "call [options ...] <method>",
 		Aliases: []string{"c"},
@@ -27,14 +27,11 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 			if len(args) == 0 {
 				return errors.New("method is required")
 			}
-			// if responseFormat != "message" && cfg.Config.Request.Web {
-			// 	return errors.New("currently, gRPC-Web requesting with --response is not supported")
-			// }
-			respFormat := make(map[string]struct{})
-			for _, v := range strings.Split(responseFormat, ",") {
-				respFormat[v] = struct{}{}
+			m := make(map[string]struct{})
+			for _, v := range strings.Split(printFormat, ",") {
+				m[v] = struct{}{}
 			}
-			invoker, err := mode.NewCallCLIInvoker(ui, args[0], cfg.file, cfg.Config.Request.Header, respFormat, out)
+			invoker, err := mode.NewCallCLIInvoker(ui, args[0], cfg.file, cfg.Config.Request.Header, m, out)
 			if err != nil {
 				return err
 			}
@@ -49,7 +46,7 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 
 	f := cmd.Flags()
 	initFlagSet(f, ui.Writer())
-	f.StringVar(&responseFormat, "response", "message", `response format. combination of header, message, trailer and status.`)
+	f.StringVar(&printFormat, "print", "message", `items what should be printed. "all" or combination of "header", "message", "trailer" and "status".`)
 	f.StringVarP(&out, "output", "o", "curl", `output format. one of "json" or "curl". "curl" is a curl-like format.`)
 
 	cmd.SetHelpFunc(usageFunc(ui.Writer(), []string{"file"}))

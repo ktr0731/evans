@@ -119,13 +119,15 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 						streamDesc.StreamName)
 				}
 
-				// Trailer is now available.
-				defer func(stat *status.Status) {
-					writeTrailerOnce.Do(func() {
-						flushTrailer(stat, stream.Trailer())
-						flushDone()
-					})
-				}(stat)
+				if stat != nil {
+					// Trailer is now available.
+					defer func(stat *status.Status) {
+						writeTrailerOnce.Do(func() {
+							flushTrailer(stat, stream.Trailer())
+							flushDone()
+						})
+					}(stat)
+				}
 
 				var whErr error
 				writeHeaderOnce.Do(func() {

@@ -144,13 +144,11 @@ type webBidiStream struct {
 }
 
 func (s *webBidiStream) Header() (metadata.MD, error) {
-	// return nil, errors.New("not supported yet")
-	return nil, nil
+	return s.stream.Header()
 }
 
 func (s *webBidiStream) Trailer() metadata.MD {
-	// panic("not supported yet")
-	return nil
+	return s.stream.Trailer()
 }
 
 func (s *webBidiStream) Send(req interface{}) error {

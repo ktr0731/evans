@@ -22,24 +22,24 @@ func (f *ResponseFormatter) Format(s *status.Status, header, trailer metadata.MD
 }
 
 func (f *ResponseFormatter) FormatHeader(header metadata.MD) {
-	if has(f.format, "header") && header.Len() != 0 {
+	if (has(f.format, "all") || has(f.format, "header")) && header.Len() != 0 {
 		f.ResponseFormatterInterface.FormatHeader(header)
 	}
 }
 
 func (f *ResponseFormatter) FormatMessage(v interface{}) error {
-	if !has(f.format, "message") || v == nil {
+	if (!has(f.format, "message") && !has(f.format, "all")) || v == nil {
 		return nil
 	}
 	return f.ResponseFormatterInterface.FormatMessage(v)
 }
 
 func (f *ResponseFormatter) FormatTrailer(status *status.Status, trailer metadata.MD) {
-	if has(f.format, "trailer") && trailer.Len() != 0 {
+	if (has(f.format, "all") || has(f.format, "trailer")) && trailer.Len() != 0 {
 		f.ResponseFormatterInterface.FormatTrailer(trailer)
 	}
 
-	if has(f.format, "status") {
+	if has(f.format, "all") || has(f.format, "status") {
 		f.ResponseFormatterInterface.FormatStatus(status)
 	}
 }
