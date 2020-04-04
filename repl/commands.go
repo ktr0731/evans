@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 	"unicode"
 
+	"github.com/ktr0731/evans/format"
+	"github.com/ktr0731/evans/format/curl"
 	"github.com/ktr0731/evans/idl"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/pkg/errors"
@@ -135,24 +138,62 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 	return nil
 }
 
-type callCommand struct{}
+type callCommand struct {
+	fs       *pflag.FlagSet
+	initOnce sync.Once
+
+	verbose bool
+}
+
+func (c *callCommand) init() {
+	c.initOnce.Do(func() {
+		c.fs = pflag.NewFlagSet("call", pflag.ContinueOnError)
+		c.fs.BoolVarP(&c.verbose, "verbose", "v", false, "verbose output")
+	})
+}
 
 func (c *callCommand) Synopsis() string {
 	return "call a RPC"
 }
 
 func (c *callCommand) Help() string {
-	return "usage: call <RPC name>"
+	c.init()
+	var buf bytes.Buffer
+	c.fs.SetOutput(&buf)
+	c.fs.PrintDefaults()
+	return fmt.Sprintf(`usage: call <method name>
+
+Options:
+%s`, strings.TrimRightFunc(buf.String(), unicode.IsSpace))
 }
 
 func (c *callCommand) Validate(args []string) error {
+	c.init()
+	if err := c.fs.Parse(args); err != nil {
+		return errors.Wrap(err, "failed to parse args")
+	}
+	args = c.fs.Args()
 	if len(args) < 1 {
 		return errArgumentRequired
 	}
 	return nil
 }
 
-func (c *callCommand) Run(w io.Writer, args []string) error {
+func (c *callCommand) Run(w io.Writer, _ []string) error {
+	args := c.fs.Args()
+
+	respFormat := make(map[string]struct{})
+	if c.verbose {
+		respFormat["all"] = struct{}{}
+	} else {
+		respFormat["message"] = struct{}{}
+	}
+	usecase.InjectPartially(
+		usecase.Dependencies{
+			ResponseFormatter: format.NewResponseFormatter(curl.NewResponseFormatter(w), respFormat),
+		},
+	)
+
 	err := usecase.CallRPC(context.Background(), w, args[0])
 	if errors.Is(err, io.EOF) {
 		return errors.New("inputting canceled")
@@ -161,13 +202,17 @@ func (c *callCommand) Run(w io.Writer, args []string) error {
 }
 
 type headerCommand struct {
-	fs  *pflag.FlagSet
 	raw bool
+
+	fs       *pflag.FlagSet
+	initOnce sync.Once
 }
 
 func (c *headerCommand) init() {
-	c.fs = pflag.NewFlagSet("header", pflag.ContinueOnError)
-	c.fs.BoolVarP(&c.raw, "raw", "r", false, "treat the value as a raw string")
+	c.initOnce.Do(func() {
+		c.fs = pflag.NewFlagSet("header", pflag.ContinueOnError)
+		c.fs.BoolVarP(&c.raw, "raw", "r", false, "treat the value as a raw string")
+	})
 }
 
 func (c *headerCommand) Synopsis() string {

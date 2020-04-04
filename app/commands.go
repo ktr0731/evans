@@ -257,14 +257,7 @@ func runREPLCommand(cfg *mergedConfig, ui cui.UI) error {
 		return errors.Wrap(err, "failed to update Evans")
 	}
 
-	respFormat := map[string]struct{}{"message": struct{}{}}
-	if cfg.verbose {
-		for _, k := range []string{"header", "trailer", "status"} {
-			respFormat[k] = struct{}{}
-		}
-	}
-
-	if err := mode.RunAsREPLMode(cfg.Config, ui, cache, respFormat); err != nil {
+	if err := mode.RunAsREPLMode(cfg.Config, ui, cache); err != nil {
 		return errors.Wrap(err, "failed to run REPL mode")
 	}
 

@@ -8,8 +8,6 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/fill/proto"
-	"github.com/ktr0731/evans/format"
-	"github.com/ktr0731/evans/format/curl"
 	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/present/table"
 	"github.com/ktr0731/evans/prompt"
@@ -18,7 +16,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache, respFormat map[string]struct{}) error {
+func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 	gRPCClient, err := newGRPCClient(cfg)
 	if err != nil {
 		return errors.Wrap(err, "failed to instantiate a new gRPC client")
@@ -30,13 +28,11 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache, respFormat
 		return errors.Wrap(err, "failed to instantiate a new spec")
 	}
 
-	respFormatter := format.NewResponseFormatter(curl.NewResponseFormatter(ui.Writer()), respFormat)
 	usecase.Inject(
 		usecase.Dependencies{
 			Spec:              spec,
 			Filler:            proto.NewInteractiveFiller(prompt.New(), cfg.REPL.InputPromptFormat),
 			GRPCClient:        gRPCClient,
-			ResponseFormatter: respFormatter,
 			ResourcePresenter: table.NewPresenter(),
 		},
 	)
