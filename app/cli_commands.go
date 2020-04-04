@@ -20,7 +20,8 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 			"        $ echo '{}' | evans -r cli call api.Service.Unary # call Unary method with an empty message",
 			"        $ evans -r cli call -f in.json api.Service.Unary  # call Unary method with an input file",
 			"",
-			"        $ evans -r cli call -f in.json --response header,message api.Service.Unary  # output the response headers and message",
+			"        $ evans -r cli call -f in.json --print header,message api.Service.Unary # output the response headers and message",
+			"        $ evans -r cli call -f in.json --output json api.Service.Unary          # output the response with JSON format",
 		}, "\n"),
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
 			args := cmd.Flags().Args()
