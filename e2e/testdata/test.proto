@@ -15,6 +15,10 @@ service Example {
   rpc UnaryEnum (UnaryEnumRequest) returns (SimpleResponse) {}
   rpc UnaryBytes (UnaryBytesRequest) returns (SimpleResponse) {}
   rpc UnaryHeader (UnaryHeaderRequest) returns (SimpleResponse) {}
+  rpc UnaryHeaderTrailer (SimpleRequest) returns (SimpleResponse) {}
+  rpc UnaryHeaderTrailerFailure (SimpleRequest) returns (SimpleResponse) {}
+
+  rpc UnaryWithMapResponse (SimpleRequest) returns (MapResponse) {}
 
   rpc ClientStreaming (stream SimpleRequest) returns (SimpleResponse) {}
   rpc ServerStreaming (SimpleRequest) returns (stream SimpleResponse) {}
@@ -89,3 +93,7 @@ message UnaryBytesRequest {
 }
 
 message UnaryHeaderRequest {}
+
+message MapResponse {
+  map<string, Name> names = 1;
+}

@@ -1,20 +1,23 @@
-+----------------------+----------------------------------+---------------------------------+--------------------+
-|         NAME         |       FULLY-QUALIFIED NAME       |          REQUEST TYPE           |   RESPONSE TYPE    |
-+----------------------+----------------------------------+---------------------------------+--------------------+
-| BidiStreaming        | api.Example.BidiStreaming        | api.SimpleRequest               | api.SimpleResponse |
-| ClientStreaming      | api.Example.ClientStreaming      | api.SimpleRequest               | api.SimpleResponse |
-| ServerStreaming      | api.Example.ServerStreaming      | api.SimpleRequest               | api.SimpleResponse |
-| Unary                | api.Example.Unary                | api.SimpleRequest               | api.SimpleResponse |
-| UnaryBytes           | api.Example.UnaryBytes           | api.UnaryBytesRequest           | api.SimpleResponse |
-| UnaryEnum            | api.Example.UnaryEnum            | api.UnaryEnumRequest            | api.SimpleResponse |
-| UnaryHeader          | api.Example.UnaryHeader          | api.UnaryHeaderRequest          | api.SimpleResponse |
-| UnaryMap             | api.Example.UnaryMap             | api.UnaryMapRequest             | api.SimpleResponse |
-| UnaryMapMessage      | api.Example.UnaryMapMessage      | api.UnaryMapMessageRequest      | api.SimpleResponse |
-| UnaryMessage         | api.Example.UnaryMessage         | api.UnaryMessageRequest         | api.SimpleResponse |
-| UnaryOneof           | api.Example.UnaryOneof           | api.UnaryOneofRequest           | api.SimpleResponse |
-| UnaryRepeated        | api.Example.UnaryRepeated        | api.UnaryRepeatedRequest        | api.SimpleResponse |
-| UnaryRepeatedEnum    | api.Example.UnaryRepeatedEnum    | api.UnaryRepeatedEnumRequest    | api.SimpleResponse |
-| UnaryRepeatedMessage | api.Example.UnaryRepeatedMessage | api.UnaryRepeatedMessageRequest | api.SimpleResponse |
-| UnarySelf            | api.Example.UnarySelf            | api.UnarySelfRequest            | api.SimpleResponse |
-+----------------------+----------------------------------+---------------------------------+--------------------+
++---------------------------+---------------------------------------+---------------------------------+--------------------+
+|           NAME            |         FULLY-QUALIFIED NAME          |          REQUEST TYPE           |   RESPONSE TYPE    |
++---------------------------+---------------------------------------+---------------------------------+--------------------+
+| BidiStreaming             | api.Example.BidiStreaming             | api.SimpleRequest               | api.SimpleResponse |
+| ClientStreaming           | api.Example.ClientStreaming           | api.SimpleRequest               | api.SimpleResponse |
+| ServerStreaming           | api.Example.ServerStreaming           | api.SimpleRequest               | api.SimpleResponse |
+| Unary                     | api.Example.Unary                     | api.SimpleRequest               | api.SimpleResponse |
+| UnaryBytes                | api.Example.UnaryBytes                | api.UnaryBytesRequest           | api.SimpleResponse |
+| UnaryEnum                 | api.Example.UnaryEnum                 | api.UnaryEnumRequest            | api.SimpleResponse |
+| UnaryHeader               | api.Example.UnaryHeader               | api.UnaryHeaderRequest          | api.SimpleResponse |
+| UnaryHeaderTrailer        | api.Example.UnaryHeaderTrailer        | api.SimpleRequest               | api.SimpleResponse |
+| UnaryHeaderTrailerFailure | api.Example.UnaryHeaderTrailerFailure | api.SimpleRequest               | api.SimpleResponse |
+| UnaryMap                  | api.Example.UnaryMap                  | api.UnaryMapRequest             | api.SimpleResponse |
+| UnaryMapMessage           | api.Example.UnaryMapMessage           | api.UnaryMapMessageRequest      | api.SimpleResponse |
+| UnaryMessage              | api.Example.UnaryMessage              | api.UnaryMessageRequest         | api.SimpleResponse |
+| UnaryOneof                | api.Example.UnaryOneof                | api.UnaryOneofRequest           | api.SimpleResponse |
+| UnaryRepeated             | api.Example.UnaryRepeated             | api.UnaryRepeatedRequest        | api.SimpleResponse |
+| UnaryRepeatedEnum         | api.Example.UnaryRepeatedEnum         | api.UnaryRepeatedEnumRequest    | api.SimpleResponse |
+| UnaryRepeatedMessage      | api.Example.UnaryRepeatedMessage      | api.UnaryRepeatedMessageRequest | api.SimpleResponse |
+| UnarySelf                 | api.Example.UnarySelf                 | api.UnarySelfRequest            | api.SimpleResponse |
+| UnaryWithMapResponse      | api.Example.UnaryWithMapResponse      | api.SimpleRequest               | api.MapResponse    |
++---------------------------+---------------------------------------+---------------------------------+--------------------+
 

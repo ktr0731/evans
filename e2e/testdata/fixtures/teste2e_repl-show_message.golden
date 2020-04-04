@@ -1,6 +1,7 @@
 +-----------------------------+
 |           MESSAGE           |
 +-----------------------------+
+| MapResponse                 |
 | SimpleRequest               |
 | SimpleResponse              |
 | UnaryBytesRequest           |

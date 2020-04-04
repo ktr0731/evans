@@ -408,58 +408,58 @@ func TestE2E_CLI(t *testing.T) {
 				}
 			},
 		},
-		"call unary RPC with --response flag (all)": {
+		"call unary RPC with --print flag (all)": {
 			commonFlags:      "-r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --response header,message,trailer,status UnaryHeaderTrailer",
+			args:             "--file testdata/unary_call.in --print all UnaryHeaderTrailer",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
-		"call unary RPC with --response flag (header)": {
+		"call unary RPC with --print flag (header)": {
 			commonFlags:      "-r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --response header UnaryHeaderTrailer",
+			args:             "--file testdata/unary_call.in --print header UnaryHeaderTrailer",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
-		"call unary RPC with --response flag (message)": {
+		"call unary RPC with --print flag (message)": {
 			commonFlags:      "-r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --response message UnaryHeaderTrailer",
+			args:             "--file testdata/unary_call.in --print message UnaryHeaderTrailer",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
-		"call unary RPC with --response flag (trailer)": {
+		"call unary RPC with --print flag (trailer)": {
 			commonFlags:      "-r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --response trailer UnaryHeaderTrailer",
+			args:             "--file testdata/unary_call.in --print trailer UnaryHeaderTrailer",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
-		"call unary RPC with --response flag (status)": {
+		"call unary RPC with --print flag (status)": {
 			commonFlags:      "-r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --response status UnaryHeaderTrailer",
+			args:             "--file testdata/unary_call.in --print status UnaryHeaderTrailer",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
-		"call unary RPC with --response flag (header,message,status)": {
+		"call unary RPC with --print flag (header,message,status)": {
 			commonFlags:      "-r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --response header,message,status UnaryHeaderTrailer",
+			args:             "--file testdata/unary_call.in --print header,message,status UnaryHeaderTrailer",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
-		"call failure unary RPC with --response flag (all)": {
+		"call failure unary RPC with --print flag (all)": {
 			commonFlags:      "-r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --response header,message,trailer,status UnaryHeaderTrailerFailure",
+			args:             "--file testdata/unary_call.in --print header,message,trailer,status UnaryHeaderTrailerFailure",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
@@ -467,19 +467,19 @@ func TestE2E_CLI(t *testing.T) {
 		},
 		// NOTE: Currently, gRPC-Web server implementation returns disorderly Access-Control-Expose-Headers.
 		// So, for golden file testing, we discard headers.
-		"call unary RPC with --response flag (message,trailer,status) against to gRPC-Web server": {
+		"call unary RPC with --print flag (message,trailer,status) against to gRPC-Web server": {
 			commonFlags:      "--web -r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --response message,trailer,status UnaryHeaderTrailer",
+			args:             "--file testdata/unary_call.in --print message,trailer,status UnaryHeaderTrailer",
 			web:              true,
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
-		"call failure unary RPC with --response flag (message,trailer,status) against to gRPC-Web server": {
+		"call failure unary RPC with --print flag (message,trailer,status) against to gRPC-Web server": {
 			commonFlags:      "--web -r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --response message,trailer,status UnaryHeaderTrailerFailure",
+			args:             "--file testdata/unary_call.in --print message,trailer,status UnaryHeaderTrailerFailure",
 			web:              true,
 			reflection:       true,
 			unflatten:        true,
@@ -519,16 +519,16 @@ func TestE2E_CLI(t *testing.T) {
 			expectedOut: `{ "services": [ { "name": "api.Example" } ] }`,
 		},
 		"list methods with name format": {
-			commonFlags: "--proto testdata/test.proto",
-			cmd:         "list",
-			args:        "-o name api.Example",
-			expectedOut: `api.Example.BidiStreaming api.Example.ClientStreaming api.Example.ServerStreaming api.Example.Unary api.Example.UnaryBytes api.Example.UnaryEnum api.Example.UnaryHeader api.Example.UnaryMap api.Example.UnaryMapMessage api.Example.UnaryMessage api.Example.UnaryOneof api.Example.UnaryRepeated api.Example.UnaryRepeatedEnum api.Example.UnaryRepeatedMessage api.Example.UnarySelf`,
+			commonFlags:      "--proto testdata/test.proto",
+			cmd:              "list",
+			args:             "-o name api.Example",
+			assertWithGolden: true,
 		},
 		"list methods with JSON format": {
-			commonFlags: "--proto testdata/test.proto",
-			cmd:         "list",
-			args:        "-o json api.Example",
-			expectedOut: `{ "methods": [ { "name": "BidiStreaming", "fully_qualified_name": "api.Example.BidiStreaming", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }, { "name": "ClientStreaming", "fully_qualified_name": "api.Example.ClientStreaming", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }, { "name": "ServerStreaming", "fully_qualified_name": "api.Example.ServerStreaming", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }, { "name": "Unary", "fully_qualified_name": "api.Example.Unary", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryBytes", "fully_qualified_name": "api.Example.UnaryBytes", "request_type": "api.UnaryBytesRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryEnum", "fully_qualified_name": "api.Example.UnaryEnum", "request_type": "api.UnaryEnumRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryHeader", "fully_qualified_name": "api.Example.UnaryHeader", "request_type": "api.UnaryHeaderRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryMap", "fully_qualified_name": "api.Example.UnaryMap", "request_type": "api.UnaryMapRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryMapMessage", "fully_qualified_name": "api.Example.UnaryMapMessage", "request_type": "api.UnaryMapMessageRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryMessage", "fully_qualified_name": "api.Example.UnaryMessage", "request_type": "api.UnaryMessageRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryOneof", "fully_qualified_name": "api.Example.UnaryOneof", "request_type": "api.UnaryOneofRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryRepeated", "fully_qualified_name": "api.Example.UnaryRepeated", "request_type": "api.UnaryRepeatedRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryRepeatedEnum", "fully_qualified_name": "api.Example.UnaryRepeatedEnum", "request_type": "api.UnaryRepeatedEnumRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryRepeatedMessage", "fully_qualified_name": "api.Example.UnaryRepeatedMessage", "request_type": "api.UnaryRepeatedMessageRequest", "response_type": "api.SimpleResponse" }, { "name": "UnarySelf", "fully_qualified_name": "api.Example.UnarySelf", "request_type": "api.UnarySelfRequest", "response_type": "api.SimpleResponse" } ] }`,
+			commonFlags:      "--proto testdata/test.proto",
+			cmd:              "list",
+			args:             "-o json api.Example",
+			assertWithGolden: true,
 		},
 		"list methods that have empty name": {
 			commonFlags: "--proto testdata/empty_package.proto",

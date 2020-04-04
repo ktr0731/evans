@@ -1,0 +1,112 @@
+{
+  "methods": [
+    {
+      "name": "BidiStreaming",
+      "fully_qualified_name": "api.Example.BidiStreaming",
+      "request_type": "api.SimpleRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "ClientStreaming",
+      "fully_qualified_name": "api.Example.ClientStreaming",
+      "request_type": "api.SimpleRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "ServerStreaming",
+      "fully_qualified_name": "api.Example.ServerStreaming",
+      "request_type": "api.SimpleRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "Unary",
+      "fully_qualified_name": "api.Example.Unary",
+      "request_type": "api.SimpleRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryBytes",
+      "fully_qualified_name": "api.Example.UnaryBytes",
+      "request_type": "api.UnaryBytesRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryEnum",
+      "fully_qualified_name": "api.Example.UnaryEnum",
+      "request_type": "api.UnaryEnumRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryHeader",
+      "fully_qualified_name": "api.Example.UnaryHeader",
+      "request_type": "api.UnaryHeaderRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryHeaderTrailer",
+      "fully_qualified_name": "api.Example.UnaryHeaderTrailer",
+      "request_type": "api.SimpleRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryHeaderTrailerFailure",
+      "fully_qualified_name": "api.Example.UnaryHeaderTrailerFailure",
+      "request_type": "api.SimpleRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryMap",
+      "fully_qualified_name": "api.Example.UnaryMap",
+      "request_type": "api.UnaryMapRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryMapMessage",
+      "fully_qualified_name": "api.Example.UnaryMapMessage",
+      "request_type": "api.UnaryMapMessageRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryMessage",
+      "fully_qualified_name": "api.Example.UnaryMessage",
+      "request_type": "api.UnaryMessageRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryOneof",
+      "fully_qualified_name": "api.Example.UnaryOneof",
+      "request_type": "api.UnaryOneofRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryRepeated",
+      "fully_qualified_name": "api.Example.UnaryRepeated",
+      "request_type": "api.UnaryRepeatedRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryRepeatedEnum",
+      "fully_qualified_name": "api.Example.UnaryRepeatedEnum",
+      "request_type": "api.UnaryRepeatedEnumRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryRepeatedMessage",
+      "fully_qualified_name": "api.Example.UnaryRepeatedMessage",
+      "request_type": "api.UnaryRepeatedMessageRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnarySelf",
+      "fully_qualified_name": "api.Example.UnarySelf",
+      "request_type": "api.UnarySelfRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
+      "name": "UnaryWithMapResponse",
+      "fully_qualified_name": "api.Example.UnaryWithMapResponse",
+      "request_type": "api.SimpleRequest",
+      "response_type": "api.MapResponse"
+    }
+  ]
+}
