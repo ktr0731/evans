@@ -117,15 +117,7 @@ func TestREPL_makePrefix(t *testing.T) {
 			},
 		}
 		t.Run(name, func(t *testing.T) {
-			usecase.Inject(
-				usecase.Dependencies{
-					Spec:              dummySpec,
-					Filler:            nil,
-					GRPCClient:        nil,
-					ResponsePresenter: nil,
-					ResourcePresenter: nil,
-				},
-			)
+			usecase.Inject(usecase.Dependencies{Spec: dummySpec})
 
 			r, err := New(dummyCfg, prompt.New(), nil, c.pkgName, c.svcName)
 			if c.hasErr {

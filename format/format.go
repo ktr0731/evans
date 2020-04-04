@@ -9,7 +9,8 @@ import (
 // ResponseFormatter provides formatting feature for gRPC response.
 type ResponseFormatter struct {
 	format map[string]struct{}
-	ResponseFormatterInterface
+
+	impl ResponseFormatterInterface
 }
 
 func (f *ResponseFormatter) Format(s *status.Status, header, trailer metadata.MD, v interface{}) error {
@@ -23,7 +24,7 @@ func (f *ResponseFormatter) Format(s *status.Status, header, trailer metadata.MD
 
 func (f *ResponseFormatter) FormatHeader(header metadata.MD) {
 	if (has(f.format, "all") || has(f.format, "header")) && header.Len() != 0 {
-		f.ResponseFormatterInterface.FormatHeader(header)
+		f.impl.FormatHeader(header)
 	}
 }
 
@@ -31,24 +32,25 @@ func (f *ResponseFormatter) FormatMessage(v interface{}) error {
 	if (!has(f.format, "message") && !has(f.format, "all")) || v == nil {
 		return nil
 	}
-	return f.ResponseFormatterInterface.FormatMessage(v)
+	return f.impl.FormatMessage(v)
 }
 
 func (f *ResponseFormatter) FormatTrailer(status *status.Status, trailer metadata.MD) {
 	if (has(f.format, "all") || has(f.format, "trailer")) && trailer.Len() != 0 {
-		f.ResponseFormatterInterface.FormatTrailer(trailer)
+		f.impl.FormatTrailer(trailer)
 	}
 
 	if has(f.format, "all") || has(f.format, "status") {
-		f.ResponseFormatterInterface.FormatStatus(status)
+		f.impl.FormatStatus(status)
 	}
 }
 
+func (f *ResponseFormatter) Done() error {
+	return f.impl.Done()
+}
+
 func NewResponseFormatter(f ResponseFormatterInterface, format map[string]struct{}) *ResponseFormatter {
-	return &ResponseFormatter{
-		ResponseFormatterInterface: f,
-		format:                     format,
-	}
+	return &ResponseFormatter{impl: f, format: format}
 }
 
 type ResponseFormatterInterface interface {

@@ -82,7 +82,7 @@ func (p *responsePresenter) FormatStatus(status *status.Status) {
 	if p.wroteHeader || p.wroteMessage || p.wroteTrailer {
 		fmt.Fprintf(p.w, "\n")
 	}
-	fmt.Fprintf(p.w, "code: %s, number: %d, message: %q\n", status.Code().String(), status.Code(), status.Message())
+	fmt.Fprintf(p.w, "code = %s, number = %d, message = %q\n", status.Code().String(), status.Code(), status.Message())
 }
 
 func (p *responsePresenter) Done() error {

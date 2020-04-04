@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ktr0731/evans/idl/proto"
+	"github.com/ktr0731/evans/logger"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 	gogrpc "google.golang.org/grpc"
@@ -14,7 +15,27 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var NopErr = errors.New("nop")
+type ErrorCode int
+
+func (e ErrorCode) String() string {
+	return codes.Code(e).String()
+}
+
+type gRPCError struct {
+	*status.Status
+}
+
+func (e *gRPCError) Unwrap() error {
+	return e.Status.Err()
+}
+
+func (e *gRPCError) Error() string {
+	return e.Status.Err().Error()
+}
+
+func (e *gRPCError) Code() ErrorCode {
+	return ErrorCode(e.Status.Code())
+}
 
 // CallRPC constructs a request with input source such that prompt inputting, stdin or a file. After that, it sends
 // the request to the gRPC server and decodes the response body to res.
@@ -64,8 +85,8 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	flushTrailer := func(status *status.Status, trailer metadata.MD) {
 		m.responseFormatter.FormatTrailer(status, trailer)
 	}
-	flushDone := func() {
-		m.responseFormatter.Done()
+	flushDone := func() error {
+		return m.responseFormatter.Done()
 	}
 	flushAll := func(status *status.Status, header, trailer metadata.MD, res interface{}) error {
 		flushHeader(header)
@@ -73,8 +94,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			return err
 		}
 		flushTrailer(status, trailer)
-		flushDone()
-		return nil
+		return flushDone()
 	}
 
 	md := metadata.New(nil)
@@ -113,7 +133,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 					if errors.Is(err, io.EOF) {
 						writeTrailerOnce.Do(func() {
 							flushTrailer(status.New(codes.OK, ""), stream.Trailer())
-							flushDone()
+							if err := flushDone(); err != nil {
+								logger.Printf("failed to call Done: %s", err)
+							}
 						})
 						return nil
 					}
@@ -128,7 +150,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 					defer func(stat *status.Status) {
 						writeTrailerOnce.Do(func() {
 							flushTrailer(stat, stream.Trailer())
-							flushDone()
+							if err := flushDone(); err != nil {
+								logger.Printf("failed to call Done: %s", err)
+							}
 						})
 					}(stat)
 				}
@@ -146,7 +170,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				}
 
 				if stat.Code() != codes.OK {
-					return NopErr
+					return &gRPCError{stat}
 				}
 
 				if err := flushResponse(res); err != nil {
@@ -239,7 +263,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				}
 
 				if stat.Code() != codes.OK {
-					return NopErr
+					return &gRPCError{stat}
 				}
 				return nil
 			}
@@ -307,7 +331,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			defer func(stat *status.Status) {
 				writeTrailerOnce.Do(func() {
 					flushTrailer(stat, stream.Trailer())
-					flushDone()
+					if err := flushDone(); err != nil {
+						logger.Printf("failed to call Done: %s", err)
+					}
 				})
 			}(stat)
 
@@ -324,7 +350,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			}
 
 			if stat.Code() != codes.OK {
-				return NopErr
+				return &gRPCError{stat}
 			}
 
 			if err := flushResponse(res); err != nil {
@@ -365,7 +391,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		}
 
 		if stat.Code() != codes.OK {
-			return NopErr
+			return &gRPCError{stat}
 		}
 		return nil
 	}

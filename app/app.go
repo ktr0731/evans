@@ -53,7 +53,14 @@ func (a *App) Run(args []string) int {
 		return 0
 	}
 
-	if errors.Is(err, usecase.NopErr) {
+	var e interface {
+		Code() usecase.ErrorCode
+		Message() string
+	}
+	if errors.As(err, &e) {
+		a.cui.Error(
+			fmt.Sprintf("evans: code = %s, number = %d, message = %q", e.Code().String(), e.Code(), e.Message()),
+		)
 		return 1
 	}
 
