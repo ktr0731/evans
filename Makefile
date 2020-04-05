@@ -53,18 +53,6 @@ gotest: lint
 lint:
 	golangci-lint run ./...
 
-.PHONY: coverage
-coverage:
-	go test -coverpkg ./... -covermode=atomic -coverprofile=coverage.txt -race ./...
-
-.PHONY: coverage-circleci
-coverage-circleci:
-	go test -p 1 -coverpkg ./... -covermode=atomic -coverprofile=coverage.txt ./...
-
-.PHONY: coverage-web
-coverage-web: coverage
-	go tool cover -html=coverage.txt
-
 .PHONY: brew-update
 release:
 	bash .circleci/scripts/release.bash $(shell _tools/bump show meta/meta.go)

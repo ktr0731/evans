@@ -1,77 +1,5 @@
 version: 2
 jobs:
-  common:
-    working_directory: /go/src/github.com/ktr0731/evans
-    docker:
-      - image: ktr0731/circleci-evans
-    environment:
-      - GOCACHE: "/tmp/go/cache"
-      - GO111MODULE: "on"
-
-    steps:
-      - checkout
-
-      - restore_cache:
-          keys:
-            - mod-{{ checksum "go.sum" }}
-
-      - run:
-          name: install dependencies
-          command: make deps
-
-      - save_cache:
-          key: mod-{{ checksum "go.sum" }}
-          paths:
-            - /go/pkg/mod
-          when: always
-
-      - restore_cache:
-          keys:
-            - tool-{{ checksum "gotool.sum" }}
-
-      - run:
-          name: install tools
-          command: make tools
-
-      - save_cache:
-          key: tool-{{ checksum "gotool.sum" }}
-          paths:
-            - /go/pkg/dept
-          when: always
-
-      - restore_cache:
-          keys:
-            - build-cache-{{ .Branch }}--{{ .Revision }}
-
-      - persist_to_workspace:
-          root: /go
-          paths:
-            - "pkg/dept/*"
-            - "pkg/mod/*"
-            - "src/github.com/ktr0731/evans/_tools/*"
-
-      - run:
-          name: build
-          command: make build
-
-      - run:
-          name: coverage
-          command: make coverage-circleci
-
-      - run:
-          name: test
-          command: make test
-
-      - save_cache:
-          key: build-cache-{{ .Branch }}--{{ .Revision }}
-          paths:
-              - /tmp/go/cache
-          when: always
-
-      - run:
-          name: codecov
-          command: bash <(curl -s https://codecov.io/bash)
-
   update-release:
     working_directory: /go/src/github.com/ktr0731/evans
     docker:
@@ -91,10 +19,7 @@ workflows:
   version: 2
   build_and_deploy:
     jobs:
-      - common
       - update-release:
-          requires:
-            - common
           filters:
             branches:
               only:
