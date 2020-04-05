@@ -8,7 +8,7 @@ require (
 	github.com/golang/protobuf v1.3.5
 	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/websocket v1.4.2 // indirect
-	github.com/hashicorp/go-multierror v1.0.0
+	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/jhump/protoreflect v1.5.1-0.20191024213132-10815c273d3f
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
@@ -18,10 +18,10 @@ require (
 	github.com/ktr0731/go-shellstring v0.1.3
 	github.com/ktr0731/go-updater v0.1.5
 	github.com/ktr0731/grpc-test v0.1.4
-	github.com/ktr0731/grpc-web-go-client v0.2.4
+	github.com/ktr0731/grpc-web-go-client v0.2.5
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
-	github.com/mattn/go-colorable v0.1.4
+	github.com/mattn/go-colorable v0.1.6
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-pipeline v0.0.0-20190323144519-32d779b32768 // indirect
 	github.com/mattn/go-tty v0.0.0-20190424173100-523744f04859 // indirect
@@ -33,11 +33,11 @@ require (
 	github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 // indirect
 	github.com/rakyll/statik v0.1.7
 	github.com/spf13/afero v1.2.2 // indirect
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v0.0.7
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.2
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/tj/go-spin v1.1.0
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
@@ -49,8 +49,4 @@ require (
 	google.golang.org/grpc v1.28.0
 )
 
-replace github.com/ktr0731/grpc-web-go-client => ../grpc-web-go-client
-
 replace github.com/nicksnyder/go-i18n => github.com/nicksnyder/go-i18n/v2 v2.0.2-0.20190606144950-25e77afbf581
-
-replace github.com/ktr0731/grpc-test => ../grpc-test
