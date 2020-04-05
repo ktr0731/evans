@@ -48,5 +48,3 @@ require (
 	google.golang.org/genproto v0.0.0-20200403120447-c50568487044 // indirect
 	google.golang.org/grpc v1.28.0
 )
-
-replace github.com/nicksnyder/go-i18n => github.com/nicksnyder/go-i18n/v2 v2.0.2-0.20190606144950-25e77afbf581
