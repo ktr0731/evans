@@ -54,6 +54,10 @@ func TestE2E_REPL(t *testing.T) {
 
 		// RPC calls.
 
+		"call --help": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"call --help"},
+		},
 		"call Unary by selecting package and service": {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"package api", "service Example", "call Unary", "kaguya"},
