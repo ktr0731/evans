@@ -58,6 +58,10 @@ func TestE2E_REPL(t *testing.T) {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"package api", "service Example", "call Unary", "kaguya"},
 		},
+		"call Unary by selecting package and service with verbose output": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"package api", "service Example", "call -v Unary", "kaguya"},
+		},
 		"call Unary by selecting only service": {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"service Example", "call Unary", "kaguya"},

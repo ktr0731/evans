@@ -416,6 +416,14 @@ func TestE2E_CLI(t *testing.T) {
 			unflatten:        true,
 			assertWithGolden: true,
 		},
+		"call unary RPC with --print flag (all) and JSON format": {
+			commonFlags:      "-r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --print all UnaryHeaderTrailer --output json",
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
 		"call unary RPC with --print flag (header)": {
 			commonFlags:      "-r --service Example",
 			cmd:              "call",
@@ -558,6 +566,12 @@ func TestE2E_CLI(t *testing.T) {
 			commonFlags:  "--proto testdata/test.proto",
 			cmd:          "list",
 			args:         "api.Foo",
+			expectedCode: 1,
+		},
+		"cannot list because of invalid method name": {
+			commonFlags:  "--proto testdata/test.proto",
+			cmd:          "list",
+			args:         "api.Example.UnaryFoo",
 			expectedCode: 1,
 		},
 
