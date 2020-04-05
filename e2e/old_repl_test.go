@@ -387,7 +387,7 @@ func compareWithGolden(t *testing.T, actual string) {
 	fname := normalizeFilename(name)
 
 	if *update {
-		if err := ioutil.WriteFile(fname, []byte(actual), 0644); err != nil {
+		if err := ioutil.WriteFile(fname, []byte(actual), 0600); err != nil {
 			t.Fatalf("failed to update the golden file: %s", err)
 		}
 		return

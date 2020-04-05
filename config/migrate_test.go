@@ -26,7 +26,7 @@ func Test_migration(t *testing.T) {
 				t.Fatalf("failed to read a config file, but got '%s'", err)
 			}
 
-			err = ioutil.WriteFile(filepath.Join(cfgDir, "config.toml"), b, 0644)
+			err = ioutil.WriteFile(filepath.Join(cfgDir, "config.toml"), b, 0600)
 			if err != nil {
 				t.Fatalf("failed to copy a config file to a temp config dir, but got '%s'", err)
 			}

@@ -27,25 +27,16 @@ jobs:
     - name: Build
       run: go build
 
-    - name: Cache tool modules
-      uses: actions/cache@v1
-      with:
-        path: ~/go/pkg/dept
-        key: ${{ runner.OS }}-go-${{ hashFiles('**/go.sum') }}
-
-    - name: Install dept
-      run: |
-        go get github.com/ktr0731/dept@v0.1.3
-        go build -o _tools/dept github.com/ktr0731/dept
-
-    - name: Install tools
-      run: _tools/dept -v build
-
     - name: Lint
-      run: _tools/golangci-lint run ./... 2>&1
+      uses: actions-contrib/golangci-lint@v1
+      if: matrix.os == 'ubuntu-18.04'
+      env:
+        GOROOT: ''
+      with:
+        args: run ./...
 
     - name: Test
-      run: go test -p 1 -coverpkg ./... -covermode=atomic -coverprofile=coverage.txt ./...
+      run: go test -p 1 -coverpkg ./... -covermode atomic -coverprofile coverage.txt ./...
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1

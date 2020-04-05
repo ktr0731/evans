@@ -4,8 +4,6 @@ import (
 	"io"
 	"os"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestWriter(t *testing.T) {
@@ -20,10 +18,13 @@ func TestWriter(t *testing.T) {
 	}
 
 	for name, c := range cases {
+		c := c
 		t.Run(name, func(t *testing.T) {
 			ui := &basicUI{}
 			Writer(c.w)(ui)
-			assert.Equal(t, c.expected, ui.writer)
+			if c.expected != ui.writer {
+				t.Errorf("expected %T, but got %T", c.expected, ui.writer)
+			}
 		})
 	}
 }
@@ -40,10 +41,14 @@ func TestErrWriter(t *testing.T) {
 	}
 
 	for name, c := range cases {
+		c := c
+
 		t.Run(name, func(t *testing.T) {
 			ui := &basicUI{}
 			ErrWriter(c.ew)(ui)
-			assert.Equal(t, c.expected, ui.errWriter)
+			if c.expected != ui.errWriter {
+				t.Errorf("expected %T, but got %T", c.expected, ui.errWriter)
+			}
 		})
 	}
 }
