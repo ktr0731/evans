@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"sync"
 	"unicode"
 
 	"github.com/ktr0731/evans/format"
@@ -139,17 +138,14 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 }
 
 type callCommand struct {
-	fs       *pflag.FlagSet
-	initOnce sync.Once
+	fs *pflag.FlagSet
 
 	verbose bool
 }
 
 func (c *callCommand) init() {
-	c.initOnce.Do(func() {
-		c.fs = pflag.NewFlagSet("call", pflag.ContinueOnError)
-		c.fs.BoolVarP(&c.verbose, "verbose", "v", false, "verbose output")
-	})
+	c.fs = pflag.NewFlagSet("call", pflag.ContinueOnError)
+	c.fs.BoolVarP(&c.verbose, "verbose", "v", false, "verbose output")
 }
 
 func (c *callCommand) Synopsis() string {
@@ -204,15 +200,12 @@ func (c *callCommand) Run(w io.Writer, _ []string) error {
 type headerCommand struct {
 	raw bool
 
-	fs       *pflag.FlagSet
-	initOnce sync.Once
+	fs *pflag.FlagSet
 }
 
 func (c *headerCommand) init() {
-	c.initOnce.Do(func() {
-		c.fs = pflag.NewFlagSet("header", pflag.ContinueOnError)
-		c.fs.BoolVarP(&c.raw, "raw", "r", false, "treat the value as a raw string")
-	})
+	c.fs = pflag.NewFlagSet("header", pflag.ContinueOnError)
+	c.fs.BoolVarP(&c.raw, "raw", "r", false, "treat the value as a raw string")
 }
 
 func (c *headerCommand) Synopsis() string {
