@@ -52,10 +52,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	newRequest := func() (interface{}, error) {
 		req, err := rpc.RequestType.New()
 		if err != nil {
-			return nil, errors.Wrapf(
-				err,
-				"failed to instantiate an instance of the request type '%s'",
-				rpc.RequestType.FullyQualifiedName)
+			return nil, errors.Wrapf(err, "failed to instantiate an instance of the request type '%s'", rpc.RequestType.FullyQualifiedName)
 		}
 		err = m.filler.Fill(req)
 		if errors.Is(err, io.EOF) {
@@ -69,10 +66,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	newResponse := func() (interface{}, error) {
 		res, err := rpc.ResponseType.New()
 		if err != nil {
-			return nil, errors.Wrapf(
-				err,
-				"failed to instantiate an instance of the response type '%s'",
-				rpc.RequestType.FullyQualifiedName)
+			return nil, errors.Wrapf(err, "failed to instantiate an instance of the response type '%s'", rpc.RequestType.FullyQualifiedName)
 		}
 		return res, nil
 	}
@@ -139,10 +133,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 						})
 						return nil
 					}
-					return errors.Wrapf(
-						err,
-						"failed to receive a response from the server stream '%s'",
-						streamDesc.StreamName)
+					return errors.Wrapf(err, "failed to receive a response from the server stream '%s'", streamDesc.StreamName)
 				}
 
 				if stat != nil {
@@ -184,10 +175,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				req, err := newRequest()
 				if errors.Is(err, io.EOF) {
 					if err := stream.CloseSend(); err != nil {
-						return errors.Wrapf(
-							err,
-							"failed to close the stream of RPC '%s'",
-							streamDesc.StreamName)
+						return errors.Wrapf(err, "failed to close the stream of RPC '%s'", streamDesc.StreamName)
 					}
 					return nil
 				}
@@ -199,10 +187,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 					return nil
 				}
 				if err != nil {
-					return errors.Wrapf(
-						err,
-						"failed to send a RPC to the client stream '%s'",
-						streamDesc.StreamName)
+					return errors.Wrapf(err, "failed to send a RPC to the client stream '%s'", streamDesc.StreamName)
 				}
 			}
 		})
@@ -225,10 +210,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	case rpc.IsClientStreaming:
 		stream, err := m.gRPCClient.NewClientStream(ctx, streamDesc, rpc.FullyQualifiedName)
 		if err != nil {
-			return errors.Wrapf(
-				err,
-				"failed to create a new client stream for RPC '%s'",
-				streamDesc.StreamName)
+			return errors.Wrapf(err, "failed to create a new client stream for RPC '%s'", streamDesc.StreamName)
 		}
 
 		for {
@@ -240,10 +222,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				}
 				stat, err := handleGRPCResponseError(stream.CloseAndReceive(res))
 				if err != nil {
-					return errors.Wrapf(
-						err,
-						"failed to close the stream of RPC '%s'",
-						streamDesc.StreamName)
+					return errors.Wrapf(err, "failed to close the stream of RPC '%s'", streamDesc.StreamName)
 				}
 
 				// gRPC error. Treat as a normal response.
@@ -271,10 +250,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				return err
 			}
 			if err := stream.Send(req); err != nil {
-				return errors.Wrapf(
-					err,
-					"failed to send a RPC to the client stream '%s'",
-					streamDesc.StreamName)
+				return errors.Wrapf(err, "failed to send a RPC to the client stream '%s'", streamDesc.StreamName)
 			}
 		}
 
@@ -290,20 +266,14 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	case rpc.IsServerStreaming:
 		stream, err := m.gRPCClient.NewServerStream(ctx, streamDesc, rpc.FullyQualifiedName)
 		if err != nil {
-			return errors.Wrapf(
-				err,
-				"failed to create a new server stream for RPC '%s'",
-				streamDesc.StreamName)
+			return errors.Wrapf(err, "failed to create a new server stream for RPC '%s'", streamDesc.StreamName)
 		}
 		req, err := newRequest()
 		if err != nil {
 			return err
 		}
 		if err := stream.Send(req); err != nil {
-			return errors.Wrapf(
-				err,
-				"failed to send a RPC to the server stream '%s'",
-				streamDesc.StreamName)
+			return errors.Wrapf(err, "failed to send a RPC to the server stream '%s'", streamDesc.StreamName)
 		}
 
 		var writeHeaderOnce, writeTrailerOnce sync.Once
@@ -321,10 +291,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				if errors.Is(err, io.EOF) {
 					return nil
 				}
-				return errors.Wrapf(
-					err,
-					"failed to receive a response from the server stream '%s'",
-					streamDesc.StreamName)
+				return errors.Wrapf(err, "failed to receive a response from the server stream '%s'", streamDesc.StreamName)
 			}
 
 			// Trailer is now available.
