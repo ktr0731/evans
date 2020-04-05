@@ -42,7 +42,7 @@ jobs:
       run: _tools/dept -v build
 
     - name: Lint
-      run: _tools/golangci-lint run ./...
+      run: _tools/golangci-lint run ./... 2>&1
 
     - name: Test
       run: go test -p 1 -coverpkg ./... -covermode=atomic -coverprofile=coverage.txt ./...
