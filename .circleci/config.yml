@@ -41,8 +41,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - build-cache-{{ .Branch }}--
-            - build-cache-master--
+            - build-cache-{{ .Branch }}--{{ .Revision }}
 
       - persist_to_workspace:
           root: /go
