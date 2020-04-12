@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -16,6 +17,8 @@ import (
 	"github.com/ktr0731/evans/usecase"
 	"github.com/pkg/errors"
 )
+
+var replacer = regexp.MustCompile(`access-control-expose-headers: .*\n`)
 
 func TestE2E_CLI(t *testing.T) {
 	commonFlags := []string{"--verbose"}
@@ -408,86 +411,44 @@ func TestE2E_CLI(t *testing.T) {
 				}
 			},
 		},
-		"call unary RPC with --print flag (all)": {
+		"call unary RPC with --enrich flag": {
 			commonFlags:      "-r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --print all UnaryHeaderTrailer",
+			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailer",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
-		"call unary RPC with --print flag (all) and JSON format": {
+		"call unary RPC with --enrich flag and JSON format": {
 			commonFlags:      "-r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --print all UnaryHeaderTrailer --output json",
+			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailer --output json",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
-		"call unary RPC with --print flag (header)": {
+		"call failure unary RPC with --enrich flag": {
 			commonFlags:      "-r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --print header UnaryHeaderTrailer",
-			reflection:       true,
-			unflatten:        true,
-			assertWithGolden: true,
-		},
-		"call unary RPC with --print flag (message)": {
-			commonFlags:      "-r --service Example",
-			cmd:              "call",
-			args:             "--file testdata/unary_call.in --print message UnaryHeaderTrailer",
-			reflection:       true,
-			unflatten:        true,
-			assertWithGolden: true,
-		},
-		"call unary RPC with --print flag (trailer)": {
-			commonFlags:      "-r --service Example",
-			cmd:              "call",
-			args:             "--file testdata/unary_call.in --print trailer UnaryHeaderTrailer",
-			reflection:       true,
-			unflatten:        true,
-			assertWithGolden: true,
-		},
-		"call unary RPC with --print flag (status)": {
-			commonFlags:      "-r --service Example",
-			cmd:              "call",
-			args:             "--file testdata/unary_call.in --print status UnaryHeaderTrailer",
-			reflection:       true,
-			unflatten:        true,
-			assertWithGolden: true,
-		},
-		"call unary RPC with --print flag (header,message,status)": {
-			commonFlags:      "-r --service Example",
-			cmd:              "call",
-			args:             "--file testdata/unary_call.in --print header,message,status UnaryHeaderTrailer",
-			reflection:       true,
-			unflatten:        true,
-			assertWithGolden: true,
-		},
-		"call failure unary RPC with --print flag (all)": {
-			commonFlags:      "-r --service Example",
-			cmd:              "call",
-			args:             "--file testdata/unary_call.in --print header,message,trailer,status UnaryHeaderTrailerFailure",
+			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailerFailure",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 			expectedCode:     1,
 		},
-		// NOTE: Currently, gRPC-Web server implementation returns disorderly Access-Control-Expose-Headers.
-		// So, for golden file testing, we discard headers.
-		"call unary RPC with --print flag (message,trailer,status) against to gRPC-Web server": {
+		"call unary RPC with --enrich flag against to gRPC-Web server": {
 			commonFlags:      "--web -r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --print message,trailer,status UnaryHeaderTrailer",
+			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailer",
 			web:              true,
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
-		"call failure unary RPC with --print flag (message,trailer,status) against to gRPC-Web server": {
+		"call failure unary RPC with --enrich flag against to gRPC-Web server": {
 			commonFlags:      "--web -r --service Example",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --print message,trailer,status UnaryHeaderTrailerFailure",
+			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailerFailure",
 			web:              true,
 			reflection:       true,
 			unflatten:        true,
@@ -668,7 +629,9 @@ func TestE2E_CLI(t *testing.T) {
 				c.assertTest(t, actual)
 			}
 			if c.assertWithGolden {
-				compareWithGolden(t, outBuf.String())
+				s := outBuf.String()
+				s = replacer.ReplaceAllString(s, "")
+				compareWithGolden(t, s)
 			}
 		})
 	}
