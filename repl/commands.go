@@ -140,12 +140,12 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 type callCommand struct {
 	fs *pflag.FlagSet
 
-	verbose bool
+	enrich bool
 }
 
 func (c *callCommand) init() {
 	c.fs = pflag.NewFlagSet("call", pflag.ContinueOnError)
-	c.fs.BoolVarP(&c.verbose, "verbose", "v", false, "verbose output")
+	c.fs.BoolVar(&c.enrich, "enrich", false, "enrich response output includes header, message, trailer and status")
 }
 
 func (c *callCommand) Synopsis() string {
@@ -180,7 +180,7 @@ func (c *callCommand) Run(w io.Writer, _ []string) error {
 
 	usecase.InjectPartially(
 		usecase.Dependencies{
-			ResponseFormatter: format.NewResponseFormatter(curl.NewResponseFormatter(w), true),
+			ResponseFormatter: format.NewResponseFormatter(curl.NewResponseFormatter(w), c.enrich),
 		},
 	)
 
