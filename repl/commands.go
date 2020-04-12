@@ -178,15 +178,9 @@ func (c *callCommand) Validate(args []string) error {
 func (c *callCommand) Run(w io.Writer, _ []string) error {
 	args := c.fs.Args()
 
-	respFormat := make(map[string]struct{})
-	if c.verbose {
-		respFormat["all"] = struct{}{}
-	} else {
-		respFormat["message"] = struct{}{}
-	}
 	usecase.InjectPartially(
 		usecase.Dependencies{
-			ResponseFormatter: format.NewResponseFormatter(curl.NewResponseFormatter(w), respFormat),
+			ResponseFormatter: format.NewResponseFormatter(curl.NewResponseFormatter(w), true),
 		},
 	)
 

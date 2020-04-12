@@ -10,7 +10,10 @@ import (
 )
 
 func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
-	var printFormat, out string
+	var (
+		out    string
+		enrich bool
+	)
 	cmd := &cobra.Command{
 		Use:     "call [options ...] <method>",
 		Aliases: []string{"c"},
@@ -20,19 +23,14 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 			"        $ echo '{}' | evans -r cli call api.Service.Unary # call Unary method with an empty message",
 			"        $ evans -r cli call -f in.json api.Service.Unary  # call Unary method with an input file",
 			"",
-			"        $ evans -r cli call -f in.json --print header,message api.Service.Unary # output the response headers and message",
-			"        $ evans -r cli call -f in.json --output json api.Service.Unary          # output the response with JSON format",
+			"        $ evans -r cli call -f in.json --enrich --output json api.Service.Unary # enrich output with JSON format",
 		}, "\n"),
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
 			args := cmd.Flags().Args()
 			if len(args) == 0 {
 				return errors.New("method is required")
 			}
-			m := make(map[string]struct{})
-			for _, v := range strings.Split(printFormat, ",") {
-				m[v] = struct{}{}
-			}
-			invoker, err := mode.NewCallCLIInvoker(ui, args[0], cfg.file, cfg.Config.Request.Header, m, out)
+			invoker, err := mode.NewCallCLIInvoker(ui, args[0], cfg.file, cfg.Config.Request.Header, enrich, out)
 			if err != nil {
 				return err
 			}
@@ -47,7 +45,7 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 
 	f := cmd.Flags()
 	initFlagSet(f, ui.Writer())
-	f.StringVar(&printFormat, "print", "message", `items what should be printed. "all" or combination of "header", "message", "trailer" and "status".`)
+	f.BoolVar(&enrich, "enrich", false, `enrich response output includes header, message, trailer and status`)
 	f.StringVarP(&out, "output", "o", "curl", `output format. one of "json" or "curl". "curl" is a curl-like format.`)
 
 	cmd.SetHelpFunc(usageFunc(ui.Writer(), []string{"file"}))

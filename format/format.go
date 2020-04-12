@@ -8,7 +8,7 @@ import (
 
 // ResponseFormatter provides formatting feature for gRPC response.
 type ResponseFormatter struct {
-	format map[string]struct{}
+	enrich bool
 
 	impl ResponseFormatterInterface
 }
@@ -23,24 +23,18 @@ func (f *ResponseFormatter) Format(s *status.Status, header, trailer metadata.MD
 }
 
 func (f *ResponseFormatter) FormatHeader(header metadata.MD) {
-	if (has(f.format, "all") || has(f.format, "header")) && header.Len() != 0 {
+	if f.enrich {
 		f.impl.FormatHeader(header)
 	}
 }
 
 func (f *ResponseFormatter) FormatMessage(v interface{}) error {
-	if (!has(f.format, "message") && !has(f.format, "all")) || v == nil {
-		return nil
-	}
 	return f.impl.FormatMessage(v)
 }
 
 func (f *ResponseFormatter) FormatTrailer(status *status.Status, trailer metadata.MD) {
-	if (has(f.format, "all") || has(f.format, "trailer")) && trailer.Len() != 0 {
+	if f.enrich {
 		f.impl.FormatTrailer(trailer)
-	}
-
-	if has(f.format, "all") || has(f.format, "status") {
 		f.impl.FormatStatus(status)
 	}
 }
@@ -49,10 +43,14 @@ func (f *ResponseFormatter) Done() error {
 	return f.impl.Done()
 }
 
-func NewResponseFormatter(f ResponseFormatterInterface, format map[string]struct{}) *ResponseFormatter {
-	return &ResponseFormatter{impl: f, format: format}
+// NewResponseFormatter formats gRPC response with a specific formatter.
+// If enrich is false, the formatter prints only messages.
+// Or else, it prints all includes headers, messages, trailers and status.
+func NewResponseFormatter(f ResponseFormatterInterface, enrich bool) *ResponseFormatter {
+	return &ResponseFormatter{impl: f, enrich: enrich}
 }
 
+// ResponseFormatterInterface is an interface for formatting gRPC response.
 type ResponseFormatterInterface interface {
 	// FormatHeader formats the response header.
 	FormatHeader(header metadata.MD)
@@ -65,9 +63,4 @@ type ResponseFormatterInterface interface {
 	// Done indicates all response information is formatted.
 	// The client of ResponseFormatter should call it at the end.
 	Done() error
-}
-
-func has(m map[string]struct{}, k string) bool {
-	_, ok := m[k]
-	return ok
 }

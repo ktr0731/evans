@@ -36,20 +36,17 @@ func (f *formatter) Done() error {
 
 func TestResponseFormatter(t *testing.T) {
 	cases := map[string]struct {
-		format map[string]struct{}
+		enrich bool
 	}{
-		"all":     {format: map[string]struct{}{"all": {}}},
-		"header":  {format: map[string]struct{}{"header": {}}},
-		"message": {format: map[string]struct{}{"message": {}}},
-		"trailer": {format: map[string]struct{}{"trailer": {}}},
-		"status":  {format: map[string]struct{}{"status": {}}},
+		"enrich=true":  {true},
+		"enrich=false": {false},
 	}
 
 	for name, c := range cases {
 		c := c
 		t.Run(name, func(t *testing.T) {
 			impl := &formatter{}
-			f := NewResponseFormatter(impl, c.format)
+			f := NewResponseFormatter(impl, c.enrich)
 			f.FormatHeader(metadata.Pairs("key", "val"))
 			if err := f.FormatMessage(struct{}{}); err != nil {
 				t.Fatalf("FormatMessage should no return an error, but got '%s'", err)
@@ -59,23 +56,18 @@ func TestResponseFormatter(t *testing.T) {
 				t.Fatalf("Done should not return an error, but got '%s'", err)
 			}
 
-			res := map[string]bool{
-				"all":     impl.FormatHeaderCalled && impl.FormatMessageCalled && impl.FormatTrailerCalled && impl.FormatStatusCalled,
-				"header":  impl.FormatHeaderCalled,
-				"message": impl.FormatMessageCalled,
-				"trailer": impl.FormatTrailerCalled,
-				"status":  impl.FormatStatusCalled,
+			res := map[bool]bool{
+				true:  impl.FormatHeaderCalled && impl.FormatMessageCalled && impl.FormatTrailerCalled && impl.FormatStatusCalled,
+				false: impl.FormatMessageCalled,
 			}
 
-			for k := range c.format {
-				if called, ok := res[k]; ok && !called {
-					t.Errorf("Format method associated with %s should be called", k)
-				}
+			if called, ok := res[c.enrich]; ok && !called {
+				t.Errorf("expected true, but false")
 			}
 
 			t.Run("Format", func(t *testing.T) {
 				impl := &formatter{}
-				f := NewResponseFormatter(impl, c.format)
+				f := NewResponseFormatter(impl, c.enrich)
 				err := f.Format(
 					status.New(codes.Internal, "internal error"),
 					metadata.Pairs("key", "val"),
@@ -89,12 +81,9 @@ func TestResponseFormatter(t *testing.T) {
 					t.Fatalf("Done should not return an error, but got '%s'", err)
 				}
 
-				FormatRes := map[string]bool{
-					"all":     impl.FormatHeaderCalled && impl.FormatMessageCalled && impl.FormatTrailerCalled && impl.FormatStatusCalled,
-					"header":  impl.FormatHeaderCalled,
-					"message": impl.FormatMessageCalled,
-					"trailer": impl.FormatTrailerCalled,
-					"status":  impl.FormatStatusCalled,
+				FormatRes := map[bool]bool{
+					true:  impl.FormatHeaderCalled && impl.FormatMessageCalled && impl.FormatTrailerCalled && impl.FormatStatusCalled,
+					false: impl.FormatMessageCalled,
 				}
 
 				if diff := cmp.Diff(res, FormatRes); diff != "" {
