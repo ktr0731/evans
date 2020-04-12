@@ -3,14 +3,40 @@ linters-settings:
     simplify: false
 
 linters:
-  enable-all: true
-  disable:
-    - gochecknoinits
-    - gochecknoglobals
+  enable:
+    - bodyclose
+    - deadcode
+    - dogsled
+    - dupl
+    - errcheck
+    - goconst
+    - gocritic
+    - gofmt
+    - goimports
+    - golint
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - prealloc
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - whitespace
     - interfacer
-    - lll
     - scopelint
-    - maligned
-    - gocyclo
-    - funlen
-    - godox
+
+issues:
+  exclude:
+    - G307 # gosec
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - interfacer

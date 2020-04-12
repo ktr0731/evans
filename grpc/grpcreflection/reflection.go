@@ -36,7 +36,7 @@ type client struct {
 }
 
 // NewClient returns an instance of gRPC reflection client for gRPC protocol.
-func NewClient(conn *grpc.ClientConn) Client {
+func NewClient(conn grpc.ClientConnInterface) Client {
 	return &client{
 		client: gr.NewClient(context.Background(), grpc_reflection_v1alpha.NewServerReflectionClient(conn)),
 	}

@@ -17,7 +17,6 @@ import (
 	"github.com/ktr0731/evans/logger"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
-	gogrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
@@ -53,13 +52,13 @@ type Client interface {
 	Invoke(ctx context.Context, fqrn string, req, res interface{}) error
 
 	// NewClientStream creates a new client stream.
-	NewClientStream(ctx context.Context, streamDesc *gogrpc.StreamDesc, fqrn string) (ClientStream, error)
+	NewClientStream(ctx context.Context, streamDesc *grpc.StreamDesc, fqrn string) (ClientStream, error)
 
 	// NewServerStream creates a new server stream.
-	NewServerStream(ctx context.Context, streamDesc *gogrpc.StreamDesc, fqrn string) (ServerStream, error)
+	NewServerStream(ctx context.Context, streamDesc *grpc.StreamDesc, fqrn string) (ServerStream, error)
 
 	// NewBidiStream creates a new bidirectional stream.
-	NewBidiStream(ctx context.Context, streamDesc *gogrpc.StreamDesc, fqrn string) (BidiStream, error)
+	NewBidiStream(ctx context.Context, streamDesc *grpc.StreamDesc, fqrn string) (BidiStream, error)
 
 	// Close closes all connections the client has.
 	Close(ctx context.Context) error
@@ -87,7 +86,7 @@ type BidiStream interface {
 }
 
 type client struct {
-	conn    *gogrpc.ClientConn
+	conn    *grpc.ClientConn
 	headers Headers
 
 	grpcreflection.Client
@@ -104,9 +103,9 @@ type client struct {
 // If one of it is not found, NewClient returns ErrMutualAuthParamsAreNotEnough.
 // If useTLS is false, cacert, cert and certKey are ignored.
 func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert, certKey string) (Client, error) {
-	var opts []gogrpc.DialOption
+	var opts []grpc.DialOption
 	if !useTLS {
-		opts = append(opts, gogrpc.WithInsecure())
+		opts = append(opts, grpc.WithInsecure())
 	} else { // Enable TLS authentication
 		var tlsCfg tls.Config
 		if cacert != "" {
@@ -137,11 +136,11 @@ func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert
 				return nil, errors.Wrapf(err, "failed to override the server name by '%s'", serverName)
 			}
 		}
-		opts = append(opts, gogrpc.WithTransportCredentials(creds))
+		opts = append(opts, grpc.WithTransportCredentials(creds))
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
 	defer cancel()
-	conn, err := gogrpc.DialContext(ctx, addr, opts...)
+	conn, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to dial to gRPC server")
 	}
@@ -202,7 +201,7 @@ func (c *client) Headers() Headers {
 }
 
 type clientStream struct {
-	cs gogrpc.ClientStream
+	cs grpc.ClientStream
 }
 
 func (s *clientStream) Send(req interface{}) error {
@@ -222,7 +221,7 @@ func (s *clientStream) CloseAndReceive(res interface{}) error {
 	return nil
 }
 
-func (c *client) NewClientStream(ctx context.Context, streamDesc *gogrpc.StreamDesc, fqrn string) (ClientStream, error) {
+func (c *client) NewClientStream(ctx context.Context, streamDesc *grpc.StreamDesc, fqrn string) (ClientStream, error) {
 	endpoint, err := fqrnToEndpoint(fqrn)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert fqrn to endpoint")
@@ -243,7 +242,7 @@ func (s *serverStream) Receive(res interface{}) error {
 	return s.cs.RecvMsg(res)
 }
 
-func (c *client) NewServerStream(ctx context.Context, streamDesc *gogrpc.StreamDesc, fqrn string) (ServerStream, error) {
+func (c *client) NewServerStream(ctx context.Context, streamDesc *grpc.StreamDesc, fqrn string) (ServerStream, error) {
 	s, err := c.NewClientStream(ctx, streamDesc, fqrn)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create server stream")
@@ -268,7 +267,7 @@ func (s *bidiStream) CloseSend() error {
 	return s.s.cs.CloseSend()
 }
 
-func (c *client) NewBidiStream(ctx context.Context, streamDesc *gogrpc.StreamDesc, fqrn string) (BidiStream, error) {
+func (c *client) NewBidiStream(ctx context.Context, streamDesc *grpc.StreamDesc, fqrn string) (BidiStream, error) {
 	s, err := c.NewServerStream(ctx, streamDesc, fqrn)
 	if err != nil {
 		return nil, err

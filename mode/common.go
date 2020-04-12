@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func newSpec(cfg *config.Config, grpcClient grpc.Client) (spec idl.Spec, err error) {
+func newSpec(cfg *config.Config, grpcClient grpcreflection.Client) (spec idl.Spec, err error) {
 	if cfg.Server.Reflection {
 		spec, err = proto.LoadByReflection(grpcClient)
 	} else {

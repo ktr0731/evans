@@ -23,7 +23,7 @@ deps: dep
 
 .PHONY: dept
 dept:
-	@go get github.com/ktr0731/dept@v0.1.1
+	@go get github.com/ktr0731/dept@v0.1.3
 	@go build -o _tools/dept github.com/ktr0731/dept
 
 .PHONY: tools
@@ -52,18 +52,6 @@ gotest: lint
 .PHONY: lint
 lint:
 	golangci-lint run ./...
-
-.PHONY: coverage
-coverage:
-	go test -coverpkg ./... -covermode=atomic -coverprofile=coverage.txt -race ./...
-
-.PHONY: coverage-circleci
-coverage-circleci:
-	go test -p 1 -coverpkg ./... -covermode=atomic -coverprofile=coverage.txt ./...
-
-.PHONY: coverage-web
-coverage-web: coverage
-	go tool cover -html=coverage.txt
 
 .PHONY: brew-update
 release:

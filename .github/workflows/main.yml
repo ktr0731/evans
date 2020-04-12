@@ -6,7 +6,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04, windows-2019, macOS-10.14]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
         go: ['1.14']
     steps:
     - name: Set up Go ${{ matrix.go }}
@@ -18,12 +18,29 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
 
-    - name: Get dependencies
-      run: |
-        go mod tidy
+    - name: Cache modules
+      uses: actions/cache@v1
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.OS }}-go-${{ hashFiles('**/go.sum') }}
 
     - name: Build
       run: go build
 
+    - name: Lint
+      uses: actions-contrib/golangci-lint@v1
+      if: matrix.os == 'ubuntu-latest'
+      env:
+        GOROOT: ''
+      with:
+        args: run ./...
+
     - name: Test
-      run: go test -v -race ./...
+      run: go test -p 1 -coverpkg ./... -covermode atomic -coverprofile coverage.txt ./...
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      if: matrix.os == 'ubuntu-latest'
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.txt
