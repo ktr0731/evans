@@ -23,7 +23,7 @@ deps: dep
 
 .PHONY: dept
 dept:
-	@go get github.com/ktr0731/dept@v0.1.1
+	@go get github.com/ktr0731/dept@v0.1.3
 	@go build -o _tools/dept github.com/ktr0731/dept
 
 .PHONY: tools
