@@ -32,9 +32,6 @@ func NewResponseFormatter(w io.Writer) format.ResponseFormatterInterface {
 func (p *responsePresenter) FormatHeader(header metadata.MD) {
 	var s []string
 	for k, v := range header {
-		sort.Slice(v, func(i, j int) bool {
-			return v[i] < v[j]
-		})
 		for _, vv := range v {
 			s = append(s, fmt.Sprintf("%s: %s", k, vv))
 		}
