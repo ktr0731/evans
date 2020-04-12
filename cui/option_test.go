@@ -42,7 +42,6 @@ func TestErrWriter(t *testing.T) {
 
 	for name, c := range cases {
 		c := c
-
 		t.Run(name, func(t *testing.T) {
 			ui := &basicUI{}
 			ErrWriter(c.ew)(ui)
