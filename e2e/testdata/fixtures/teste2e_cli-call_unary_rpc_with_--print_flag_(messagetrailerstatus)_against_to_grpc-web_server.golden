@@ -1,8 +1,0 @@
-{
-  "message": "response"
-}
-
-trailer_key1: trailer_val1
-trailer_key2: trailer_val2
-
-code = OK, number = 0, message = ""

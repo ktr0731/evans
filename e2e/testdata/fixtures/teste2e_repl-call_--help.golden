@@ -1,5 +1,5 @@
 usage: call <method name>
 
 Options:
-  -v, --verbose   verbose output
+      --enrich   enrich response output includes header, message, trailer and status
 

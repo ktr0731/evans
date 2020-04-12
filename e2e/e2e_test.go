@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/grpc-test/server"
 	"github.com/phayes/freeport"
@@ -93,4 +94,34 @@ func flatten(s string) string {
 	s = strings.TrimSpace(s)
 	re := regexp.MustCompile(" +")
 	return re.ReplaceAllString(s, " ")
+}
+
+func compareWithGolden(t *testing.T, actual string) {
+	t.Helper()
+
+	name := t.Name()
+	normalizeFilename := func(name string) string {
+		fname := goldenPathReplacer.Replace(strings.ToLower(name)) + ".golden"
+		return filepath.Join("testdata", "fixtures", fname)
+	}
+
+	fname := normalizeFilename(name)
+
+	if *update {
+		if err := ioutil.WriteFile(fname, []byte(actual), 0600); err != nil {
+			t.Fatalf("failed to update the golden file: %s", err)
+		}
+		return
+	}
+
+	// Load the golden file.
+	b, err := ioutil.ReadFile(fname)
+	if err != nil {
+		t.Fatalf("failed to load a golden file: %s", err)
+	}
+	expected := goldenReplacer.Replace(string(b))
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("wrong result: \n%s", diff)
+	}
 }

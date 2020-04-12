@@ -1,4 +1,0 @@
-trailer_key1: trailer_val1
-trailer_key2: trailer_val2
-
-code = Internal, number = 13, message = "internal error"
