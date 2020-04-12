@@ -62,7 +62,7 @@ func TestE2E_REPL(t *testing.T) {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"package api", "service Example", "call Unary", "kaguya"},
 		},
-		"call Unary by selecting package and service with verbose output": {
+		"call Unary by selecting package and service with enriched output": {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"package api", "service Example", "call --enrich Unary", "kaguya"},
 		},

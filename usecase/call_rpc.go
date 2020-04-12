@@ -15,8 +15,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// ErrorCode represents an application error code.
 type ErrorCode int
 
+// String implements fmt.Stringer.
 func (e ErrorCode) String() string {
 	return codes.Code(e).String()
 }

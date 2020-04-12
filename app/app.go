@@ -91,9 +91,6 @@ type mergedConfig struct {
 
 	// Explicit using REPL mode.
 	repl bool
-
-	// Verbose output.
-	verbose bool
 }
 
 func mergeConfig(fs *pflag.FlagSet, flags *flags, protos []string) (*mergedConfig, error) {
@@ -108,11 +105,10 @@ func mergeConfig(fs *pflag.FlagSet, flags *flags, protos []string) (*mergedConfi
 	}
 
 	return &mergedConfig{
-		Config:  cfg,
-		call:    flags.cli.call,
-		file:    flags.cli.file,
-		repl:    flags.mode.repl,
-		cli:     flags.mode.cli,
-		verbose: flags.meta.verbose,
+		Config: cfg,
+		call:   flags.cli.call,
+		file:   flags.cli.file,
+		repl:   flags.mode.repl,
+		cli:    flags.mode.cli,
 	}, nil
 }
