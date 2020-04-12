@@ -29,6 +29,9 @@ func (f *ResponseFormatter) FormatHeader(header metadata.MD) {
 }
 
 func (f *ResponseFormatter) FormatMessage(v interface{}) error {
+	if v == nil {
+		v = struct{}{}
+	}
 	return f.impl.FormatMessage(v)
 }
 
