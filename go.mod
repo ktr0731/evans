@@ -46,5 +46,5 @@ require (
 	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d // indirect
 	golang.org/x/tools v0.0.0-20200221224223-e1da425f72fd
 	google.golang.org/genproto v0.0.0-20200403120447-c50568487044 // indirect
-	google.golang.org/grpc v1.28.0
+	google.golang.org/grpc v1.28.1
 )
