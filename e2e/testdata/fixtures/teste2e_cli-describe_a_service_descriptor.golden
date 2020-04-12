@@ -7,6 +7,8 @@ service Example {
   rpc UnaryBytes ( .api.UnaryBytesRequest ) returns ( .api.SimpleResponse );
   rpc UnaryEnum ( .api.UnaryEnumRequest ) returns ( .api.SimpleResponse );
   rpc UnaryHeader ( .api.UnaryHeaderRequest ) returns ( .api.SimpleResponse );
+  rpc UnaryHeaderTrailer ( .api.SimpleRequest ) returns ( .api.SimpleResponse );
+  rpc UnaryHeaderTrailerFailure ( .api.SimpleRequest ) returns ( .api.SimpleResponse );
   rpc UnaryMap ( .api.UnaryMapRequest ) returns ( .api.SimpleResponse );
   rpc UnaryMapMessage ( .api.UnaryMapMessageRequest ) returns ( .api.SimpleResponse );
   rpc UnaryMessage ( .api.UnaryMessageRequest ) returns ( .api.SimpleResponse );
@@ -15,4 +17,5 @@ service Example {
   rpc UnaryRepeatedEnum ( .api.UnaryRepeatedEnumRequest ) returns ( .api.SimpleResponse );
   rpc UnaryRepeatedMessage ( .api.UnaryRepeatedMessageRequest ) returns ( .api.SimpleResponse );
   rpc UnarySelf ( .api.UnarySelfRequest ) returns ( .api.SimpleResponse );
+  rpc UnaryWithMapResponse ( .api.SimpleRequest ) returns ( .api.MapResponse );
 }

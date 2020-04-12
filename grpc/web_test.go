@@ -10,7 +10,7 @@ import (
 func TestWebClient(t *testing.T) {
 	client := grpc.NewWebClient("", false, false, "", "", "")
 	t.Run("Invoke returns an error if FQRN is invalid", func(t *testing.T) {
-		err := client.Invoke(context.Background(), "invalid-fqrn", nil, nil)
+		_, _, err := client.Invoke(context.Background(), "invalid-fqrn", nil, nil)
 		if err == nil {
 			t.Errorf("expected an error, but got nil")
 		}

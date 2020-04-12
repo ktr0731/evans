@@ -8,6 +8,7 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/meta"
+	"github.com/ktr0731/evans/usecase"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 )
@@ -50,6 +51,17 @@ func (a *App) Run(args []string) int {
 	err := a.cmd.Execute()
 	if err == nil {
 		return 0
+	}
+
+	var e interface {
+		Code() usecase.ErrorCode
+		Message() string
+	}
+	if errors.As(err, &e) {
+		a.cui.Error(
+			fmt.Sprintf("evans: code = %s, number = %d, message = %q", e.Code().String(), e.Code(), e.Message()),
+		)
+		return 1
 	}
 
 	a.cui.Error(fmt.Sprintf("evans: %s", err))

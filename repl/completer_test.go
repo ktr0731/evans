@@ -27,15 +27,7 @@ func TestCompleter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadFiles must not return an error, but got '%s'", err)
 	}
-	usecase.Inject(
-		usecase.Dependencies{
-			Spec:              spec,
-			Filler:            nil,
-			GRPCClient:        nil,
-			ResponsePresenter: nil,
-			ResourcePresenter: nil,
-		},
-	)
+	usecase.Inject(usecase.Dependencies{Spec: spec})
 	err = usecase.UsePackage("api")
 	if err != nil {
 		t.Fatalf("UsePackage must not return an error, but got '%s'", err)

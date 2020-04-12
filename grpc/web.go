@@ -8,6 +8,7 @@ import (
 	"github.com/ktr0731/grpc-web-go-client/grpcweb"
 	"github.com/pkg/errors"
 	gogrpc "google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 type webClient struct {
@@ -34,25 +35,29 @@ func NewWebClient(addr string, useReflection, useTLS bool, cacert, cert, certKey
 	return client
 }
 
-func (c *webClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) error {
+func (c *webClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) (header, trailer metadata.MD, _ error) {
 	endpoint, err := fqrnToEndpoint(fqrn)
 	if err != nil {
-		return errors.Wrap(err, "grpc-web: failed to convert FQRN to endpoint")
+		return nil, nil, errors.Wrap(err, "grpc-web: failed to convert FQRN to endpoint")
 	}
 
 	loggingRequest(req)
 
-	err = c.conn.Invoke(ctx, endpoint, req, res)
-	// TODO: Handle gRPC-Web misconfiguration errors for more helpful message.
-	if err != nil {
-		return errors.Wrap(err, "grpc-web: failed to send a request")
-	}
-	return nil
+	err = c.conn.Invoke(ctx, endpoint, req, res, grpcweb.Header(&header), grpcweb.Trailer(&trailer))
+	return header, trailer, errors.Wrap(err, "grpc-web: failed to send a request")
 }
 
 type webClientStream struct {
 	ctx    context.Context
 	stream grpcweb.ClientStream
+}
+
+func (s *webClientStream) Header() (metadata.MD, error) {
+	return s.stream.Header()
+}
+
+func (s *webClientStream) Trailer() metadata.MD {
+	return s.stream.Trailer()
 }
 
 func (s *webClientStream) Send(req interface{}) error {
@@ -92,6 +97,14 @@ type webServerStream struct {
 	stream grpcweb.ServerStream
 }
 
+func (s *webServerStream) Header() (metadata.MD, error) {
+	return s.stream.Header()
+}
+
+func (s *webServerStream) Trailer() metadata.MD {
+	return s.stream.Trailer()
+}
+
 func (s *webServerStream) Send(req interface{}) (err error) {
 	loggingRequest(req)
 	if err := s.stream.Send(s.ctx, req); err != nil {
@@ -128,6 +141,14 @@ func (c *webClient) NewServerStream(ctx context.Context, streamDesc *gogrpc.Stre
 type webBidiStream struct {
 	ctx    context.Context
 	stream grpcweb.BidiStream
+}
+
+func (s *webBidiStream) Header() (metadata.MD, error) {
+	return s.stream.Header()
+}
+
+func (s *webBidiStream) Trailer() metadata.MD {
+	return s.stream.Trailer()
 }
 
 func (s *webBidiStream) Send(req interface{}) error {
@@ -180,6 +201,6 @@ func (c *webClient) Close(ctx context.Context) error {
 	return nil
 }
 
-func (c *webClient) Headers() Headers {
+func (c *webClient) Header() Headers {
 	return c.headers
 }

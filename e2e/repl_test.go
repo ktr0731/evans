@@ -54,9 +54,17 @@ func TestE2E_REPL(t *testing.T) {
 
 		// RPC calls.
 
+		"call --help": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"call --help"},
+		},
 		"call Unary by selecting package and service": {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"package api", "service Example", "call Unary", "kaguya"},
+		},
+		"call Unary by selecting package and service with enriched output": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"package api", "service Example", "call --enrich Unary", "kaguya"},
 		},
 		"call Unary by selecting only service": {
 			commonFlags: "--proto testdata/test.proto",
@@ -114,6 +122,12 @@ func TestE2E_REPL(t *testing.T) {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"call UnaryRepeatedEnum", "Male", "Male", "Female", io.EOF},
 		},
+		"call Unary with an invalid flag": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"package api", "service Example", "call -foo Unary", "kaguya"},
+			skipGolden:  true,
+			hasErr:      true,
+		},
 
 		// call (gRPC-Web)
 
@@ -142,6 +156,11 @@ func TestE2E_REPL(t *testing.T) {
 		"show package": {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"show package"},
+		},
+		"show package with empty package": {
+			commonFlags:                 "--proto testdata/test.proto",
+			registerEmptyPackageService: true,
+			input:                       []interface{}{"show package"},
 		},
 		"show service": {
 			commonFlags: "--proto testdata/test.proto",
@@ -218,6 +237,24 @@ func TestE2E_REPL(t *testing.T) {
 		"remove a header": {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"header grpc-client", "show header"},
+		},
+		"header with an invalid flag": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"header -foo touma=youko"},
+			skipGolden:  true,
+			hasErr:      true,
+		},
+		"header with unusable chars": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"header sh!nonome=nano"},
+			skipGolden:  true,
+			hasErr:      true,
+		},
+		"header with unusable chars and --raw": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"header --raw sh!nonome=nano"},
+			skipGolden:  true,
+			hasErr:      true,
 		},
 
 		// desc command.

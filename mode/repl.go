@@ -9,7 +9,6 @@ import (
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/fill/proto"
 	"github.com/ktr0731/evans/logger"
-	"github.com/ktr0731/evans/present/json"
 	"github.com/ktr0731/evans/present/table"
 	"github.com/ktr0731/evans/prompt"
 	"github.com/ktr0731/evans/repl"
@@ -34,7 +33,6 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 			Spec:              spec,
 			Filler:            proto.NewInteractiveFiller(prompt.New(), cfg.REPL.InputPromptFormat),
 			GRPCClient:        gRPCClient,
-			ResponsePresenter: json.NewPresenter("  "),
 			ResourcePresenter: table.NewPresenter(),
 		},
 	)

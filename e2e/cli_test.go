@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -16,6 +17,8 @@ import (
 	"github.com/ktr0731/evans/usecase"
 	"github.com/pkg/errors"
 )
+
+var replacer = regexp.MustCompile(`access-control-expose-headers: .*\n`)
 
 func TestE2E_CLI(t *testing.T) {
 	commonFlags := []string{"--verbose"}
@@ -408,6 +411,50 @@ func TestE2E_CLI(t *testing.T) {
 				}
 			},
 		},
+		"call unary RPC with --enrich flag": {
+			commonFlags:      "-r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailer",
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
+		"call unary RPC with --enrich flag and JSON format": {
+			commonFlags:      "-r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailer --output json",
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
+		"call failure unary RPC with --enrich flag": {
+			commonFlags:      "-r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailerFailure",
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+			expectedCode:     1,
+		},
+		"call unary RPC with --enrich flag against to gRPC-Web server": {
+			commonFlags:      "--web -r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailer",
+			web:              true,
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+		},
+		"call failure unary RPC with --enrich flag against to gRPC-Web server": {
+			commonFlags:      "--web -r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailerFailure",
+			web:              true,
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+			expectedCode:     1,
+		},
 
 		// list command
 		"print list command usage": {
@@ -441,16 +488,16 @@ func TestE2E_CLI(t *testing.T) {
 			expectedOut: `{ "services": [ { "name": "api.Example" } ] }`,
 		},
 		"list methods with name format": {
-			commonFlags: "--proto testdata/test.proto",
-			cmd:         "list",
-			args:        "-o name api.Example",
-			expectedOut: `api.Example.BidiStreaming api.Example.ClientStreaming api.Example.ServerStreaming api.Example.Unary api.Example.UnaryBytes api.Example.UnaryEnum api.Example.UnaryHeader api.Example.UnaryMap api.Example.UnaryMapMessage api.Example.UnaryMessage api.Example.UnaryOneof api.Example.UnaryRepeated api.Example.UnaryRepeatedEnum api.Example.UnaryRepeatedMessage api.Example.UnarySelf`,
+			commonFlags:      "--proto testdata/test.proto",
+			cmd:              "list",
+			args:             "-o name api.Example",
+			assertWithGolden: true,
 		},
 		"list methods with JSON format": {
-			commonFlags: "--proto testdata/test.proto",
-			cmd:         "list",
-			args:        "-o json api.Example",
-			expectedOut: `{ "methods": [ { "name": "BidiStreaming", "fully_qualified_name": "api.Example.BidiStreaming", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }, { "name": "ClientStreaming", "fully_qualified_name": "api.Example.ClientStreaming", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }, { "name": "ServerStreaming", "fully_qualified_name": "api.Example.ServerStreaming", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }, { "name": "Unary", "fully_qualified_name": "api.Example.Unary", "request_type": "api.SimpleRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryBytes", "fully_qualified_name": "api.Example.UnaryBytes", "request_type": "api.UnaryBytesRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryEnum", "fully_qualified_name": "api.Example.UnaryEnum", "request_type": "api.UnaryEnumRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryHeader", "fully_qualified_name": "api.Example.UnaryHeader", "request_type": "api.UnaryHeaderRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryMap", "fully_qualified_name": "api.Example.UnaryMap", "request_type": "api.UnaryMapRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryMapMessage", "fully_qualified_name": "api.Example.UnaryMapMessage", "request_type": "api.UnaryMapMessageRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryMessage", "fully_qualified_name": "api.Example.UnaryMessage", "request_type": "api.UnaryMessageRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryOneof", "fully_qualified_name": "api.Example.UnaryOneof", "request_type": "api.UnaryOneofRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryRepeated", "fully_qualified_name": "api.Example.UnaryRepeated", "request_type": "api.UnaryRepeatedRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryRepeatedEnum", "fully_qualified_name": "api.Example.UnaryRepeatedEnum", "request_type": "api.UnaryRepeatedEnumRequest", "response_type": "api.SimpleResponse" }, { "name": "UnaryRepeatedMessage", "fully_qualified_name": "api.Example.UnaryRepeatedMessage", "request_type": "api.UnaryRepeatedMessageRequest", "response_type": "api.SimpleResponse" }, { "name": "UnarySelf", "fully_qualified_name": "api.Example.UnarySelf", "request_type": "api.UnarySelfRequest", "response_type": "api.SimpleResponse" } ] }`,
+			commonFlags:      "--proto testdata/test.proto",
+			cmd:              "list",
+			args:             "-o json api.Example",
+			assertWithGolden: true,
 		},
 		"list methods that have empty name": {
 			commonFlags: "--proto testdata/empty_package.proto",
@@ -480,6 +527,12 @@ func TestE2E_CLI(t *testing.T) {
 			commonFlags:  "--proto testdata/test.proto",
 			cmd:          "list",
 			args:         "api.Foo",
+			expectedCode: 1,
+		},
+		"cannot list because of invalid method name": {
+			commonFlags:  "--proto testdata/test.proto",
+			cmd:          "list",
+			args:         "api.Example.UnaryFoo",
 			expectedCode: 1,
 		},
 
@@ -565,18 +618,20 @@ func TestE2E_CLI(t *testing.T) {
 			}
 
 			if c.expectedCode == 0 {
-				if c.assertTest != nil {
-					c.assertTest(t, actual)
-				}
 				if c.expectedOut != "" && actual != c.expectedOut {
 					t.Errorf("unexpected output:\n%s", cmp.Diff(c.expectedOut, actual))
-				}
-				if c.assertWithGolden {
-					compareWithGolden(t, outBuf.String())
 				}
 				if eoutBuf.String() != "" {
 					t.Errorf("expected code is 0, but got an error message: '%s'", eoutBuf.String())
 				}
+			}
+			if c.assertTest != nil {
+				c.assertTest(t, actual)
+			}
+			if c.assertWithGolden {
+				s := outBuf.String()
+				s = replacer.ReplaceAllString(s, "")
+				compareWithGolden(t, s)
 			}
 		})
 	}

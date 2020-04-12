@@ -64,6 +64,12 @@ func (c *completer) Complete(d prompt.Document) (s []*prompt.Suggest) {
 		}
 
 	case "call":
+		cmd := commands["call"].(*callCommand)
+		cmd.init() // TODO: constructor
+		_ = cmd.fs.Parse(args)
+
+		args := cmd.fs.Args()
+
 		if len(args) != 2 {
 			return nil
 		}

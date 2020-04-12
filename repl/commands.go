@@ -8,6 +8,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/ktr0731/evans/format"
+	"github.com/ktr0731/evans/format/curl"
 	"github.com/ktr0731/evans/idl"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/pkg/errors"
@@ -135,24 +137,53 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 	return nil
 }
 
-type callCommand struct{}
+type callCommand struct {
+	fs *pflag.FlagSet
+
+	enrich bool
+}
+
+func (c *callCommand) init() {
+	c.fs = pflag.NewFlagSet("call", pflag.ContinueOnError)
+	c.fs.BoolVar(&c.enrich, "enrich", false, "enrich response output includes header, message, trailer and status")
+}
 
 func (c *callCommand) Synopsis() string {
 	return "call a RPC"
 }
 
 func (c *callCommand) Help() string {
-	return "usage: call <RPC name>"
+	c.init()
+	var buf bytes.Buffer
+	c.fs.SetOutput(&buf)
+	c.fs.PrintDefaults()
+	return fmt.Sprintf(`usage: call <method name>
+
+Options:
+%s`, strings.TrimRightFunc(buf.String(), unicode.IsSpace))
 }
 
 func (c *callCommand) Validate(args []string) error {
+	c.init()
+	if err := c.fs.Parse(args); err != nil {
+		return errors.Wrap(err, "failed to parse args")
+	}
+	args = c.fs.Args()
 	if len(args) < 1 {
 		return errArgumentRequired
 	}
 	return nil
 }
 
-func (c *callCommand) Run(w io.Writer, args []string) error {
+func (c *callCommand) Run(w io.Writer, _ []string) error {
+	args := c.fs.Args()
+
+	usecase.InjectPartially(
+		usecase.Dependencies{
+			ResponseFormatter: format.NewResponseFormatter(curl.NewResponseFormatter(w), c.enrich),
+		},
+	)
+
 	err := usecase.CallRPC(context.Background(), w, args[0])
 	if errors.Is(err, io.EOF) {
 		return errors.New("inputting canceled")
@@ -161,8 +192,9 @@ func (c *callCommand) Run(w io.Writer, args []string) error {
 }
 
 type headerCommand struct {
-	fs  *pflag.FlagSet
 	raw bool
+
+	fs *pflag.FlagSet
 }
 
 func (c *headerCommand) init() {

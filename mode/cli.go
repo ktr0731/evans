@@ -9,6 +9,9 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
 	"github.com/ktr0731/evans/fill"
+	"github.com/ktr0731/evans/format"
+	"github.com/ktr0731/evans/format/curl"
+	fmtjson "github.com/ktr0731/evans/format/json"
 	"github.com/ktr0731/evans/idl"
 	"github.com/ktr0731/evans/idl/proto"
 	"github.com/ktr0731/evans/present"
@@ -28,7 +31,7 @@ type CLIInvoker func(context.Context) error
 
 // NewCallCLIInvoker returns an CLIInvoker implementation for calling RPCs.
 // If filePath is empty, the invoker tries to read input from stdin.
-func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.Header) (CLIInvoker, error) {
+func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.Header, enrich bool, formatType string) (CLIInvoker, error) {
 	if methodName == "" {
 		return nil, errors.New("method is required")
 	}
@@ -43,7 +46,19 @@ func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.He
 			in = f
 		}
 		filler := fill.NewSilentFiller(in)
-		usecase.InjectPartially(usecase.Dependencies{Filler: filler})
+		var rfi format.ResponseFormatterInterface
+		switch formatType {
+		case "curl":
+			rfi = curl.NewResponseFormatter(ui.Writer())
+		case "json":
+			rfi = fmtjson.NewResponseFormatter(ui.Writer())
+		default:
+			rfi = curl.NewResponseFormatter(ui.Writer())
+		}
+		usecase.InjectPartially(usecase.Dependencies{
+			ResponseFormatter: format.NewResponseFormatter(rfi, enrich),
+			Filler:            filler,
+		})
 
 		for k, v := range headers {
 			for _, vv := range v {
@@ -184,7 +199,6 @@ func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 		usecase.Dependencies{
 			Spec:              spec,
 			GRPCClient:        gRPCClient,
-			ResponsePresenter: json.NewPresenter("  "),
 			ResourcePresenter: json.NewPresenter("  "),
 		},
 	)

@@ -1,20 +1,23 @@
-+---------+----------------------+-----------------------------+----------------+
-| SERVICE |         RPC          |        REQUEST TYPE         | RESPONSE TYPE  |
-+---------+----------------------+-----------------------------+----------------+
-| Example | Unary                | SimpleRequest               | SimpleResponse |
-| Example | UnaryMessage         | UnaryMessageRequest         | SimpleResponse |
-| Example | UnaryRepeated        | UnaryRepeatedRequest        | SimpleResponse |
-| Example | UnaryRepeatedMessage | UnaryRepeatedMessageRequest | SimpleResponse |
-| Example | UnaryRepeatedEnum    | UnaryRepeatedEnumRequest    | SimpleResponse |
-| Example | UnarySelf            | UnarySelfRequest            | SimpleResponse |
-| Example | UnaryMap             | UnaryMapRequest             | SimpleResponse |
-| Example | UnaryMapMessage      | UnaryMapMessageRequest      | SimpleResponse |
-| Example | UnaryOneof           | UnaryOneofRequest           | SimpleResponse |
-| Example | UnaryEnum            | UnaryEnumRequest            | SimpleResponse |
-| Example | UnaryBytes           | UnaryBytesRequest           | SimpleResponse |
-| Example | UnaryHeader          | UnaryHeaderRequest          | SimpleResponse |
-| Example | ClientStreaming      | SimpleRequest               | SimpleResponse |
-| Example | ServerStreaming      | SimpleRequest               | SimpleResponse |
-| Example | BidiStreaming        | SimpleRequest               | SimpleResponse |
-+---------+----------------------+-----------------------------+----------------+
++---------+---------------------------+-----------------------------+----------------+
+| SERVICE |            RPC            |        REQUEST TYPE         | RESPONSE TYPE  |
++---------+---------------------------+-----------------------------+----------------+
+| Example | Unary                     | SimpleRequest               | SimpleResponse |
+| Example | UnaryMessage              | UnaryMessageRequest         | SimpleResponse |
+| Example | UnaryRepeated             | UnaryRepeatedRequest        | SimpleResponse |
+| Example | UnaryRepeatedMessage      | UnaryRepeatedMessageRequest | SimpleResponse |
+| Example | UnaryRepeatedEnum         | UnaryRepeatedEnumRequest    | SimpleResponse |
+| Example | UnarySelf                 | UnarySelfRequest            | SimpleResponse |
+| Example | UnaryMap                  | UnaryMapRequest             | SimpleResponse |
+| Example | UnaryMapMessage           | UnaryMapMessageRequest      | SimpleResponse |
+| Example | UnaryOneof                | UnaryOneofRequest           | SimpleResponse |
+| Example | UnaryEnum                 | UnaryEnumRequest            | SimpleResponse |
+| Example | UnaryBytes                | UnaryBytesRequest           | SimpleResponse |
+| Example | UnaryHeader               | UnaryHeaderRequest          | SimpleResponse |
+| Example | UnaryHeaderTrailer        | SimpleRequest               | SimpleResponse |
+| Example | UnaryHeaderTrailerFailure | SimpleRequest               | SimpleResponse |
+| Example | UnaryWithMapResponse      | SimpleRequest               | MapResponse    |
+| Example | ClientStreaming           | SimpleRequest               | SimpleResponse |
+| Example | ServerStreaming           | SimpleRequest               | SimpleResponse |
+| Example | BidiStreaming             | SimpleRequest               | SimpleResponse |
++---------+---------------------------+-----------------------------+----------------+
 
