@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 
 	b, err := exec.Command("git", "rev-parse", "--show-cdup").Output()
 	if err != nil {
-		panic(fmt.Sprintf("failed to execute 'git rev-parse --show-cdup'"))
+		panic(fmt.Sprintf("failed to execute 'git rev-parse --show-cdup': %s", err))
 	}
 	projRoot := strings.TrimSpace(string(b))
 	os.Remove(filepath.Join(projRoot, ".evans.toml"))

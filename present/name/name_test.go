@@ -54,6 +54,7 @@ func TestPresenter(t *testing.T) {
 		},
 	}
 	for tname, c := range cases {
+		c := c
 		t.Run(tname, func(t *testing.T) {
 			p := name.NewPresenter()
 			actual, err := p.Format(c.v)
