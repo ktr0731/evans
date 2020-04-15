@@ -8,6 +8,20 @@ jobs:
     steps:
       - checkout
 
+      - restore_cache:
+          keys:
+            - tool-{{ checksum "gotool.sum" }}
+
+      - run:
+          name: install tools
+          command: make tools
+
+      - save_cache:
+          key: tool-{{ checksum "gotool.sum" }}
+          paths:
+            - /go/pkg/dept
+          when: always
+
       - attach_workspace:
           at: /go
 
