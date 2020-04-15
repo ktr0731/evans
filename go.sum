@@ -136,8 +136,8 @@ github.com/ktr0731/grpc-test v0.1.4 h1:FtZtbAUcQY1nye7zwwjZBT8usJkusWF0+Gtq+UlHy
 github.com/ktr0731/grpc-test v0.1.4/go.mod h1:v47616grayBYXQveGWxO3OwjLB3nEEnHsZuMTc73FM0=
 github.com/ktr0731/grpc-test v0.1.5 h1:pI6V3pNx4qRBdV0t6IA3r9DciLiu2xhikKq7m6/Xm88=
 github.com/ktr0731/grpc-test v0.1.5/go.mod h1:P3ZgFp0SWUwnW8y7R2ATV+jn8crLBf2f1UdtOE4I4qo=
-github.com/ktr0731/grpc-web-go-client v0.2.5 h1:4BpqeqjjlJyTajkYuUHG5grc4h6eSSnpRCB6HSm7UK4=
-github.com/ktr0731/grpc-web-go-client v0.2.5/go.mod h1:OMPf98saG1hxdh0lWY+GXvQaZ/944WEwDCCjuGebPYw=
+github.com/ktr0731/grpc-web-go-client v0.2.6 h1:lt52qtjeayppBzr13L5RZdNhRIPD0D4udmWX1+lWaQA=
+github.com/ktr0731/grpc-web-go-client v0.2.6/go.mod h1:OMPf98saG1hxdh0lWY+GXvQaZ/944WEwDCCjuGebPYw=
 github.com/ktr0731/modfile v1.11.2 h1:TRz8W9M0W2sRbPf/tainqLkwE9bUQ4anGqZN8A8nymw=
 github.com/ktr0731/modfile v1.11.2/go.mod h1:LzNwnHJWHbuDh3BO17lIqzqDldXqGu1HCydWH3SinE0=
 github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a/go.mod h1:pHhQNgMf3btfWnGBVipUOjRYhoOsdGqdm/+2c2E2WMI=
