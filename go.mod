@@ -18,7 +18,7 @@ require (
 	github.com/ktr0731/go-shellstring v0.1.3
 	github.com/ktr0731/go-updater v0.1.5
 	github.com/ktr0731/grpc-test v0.1.5
-	github.com/ktr0731/grpc-web-go-client v0.2.5
+	github.com/ktr0731/grpc-web-go-client v0.2.6
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mattn/go-colorable v0.1.6
