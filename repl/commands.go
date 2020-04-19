@@ -140,12 +140,14 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 type callCommand struct {
 	fs *pflag.FlagSet
 
-	enrich bool
+	enrich, digManually bool
 }
 
 func (c *callCommand) init() {
 	c.fs = pflag.NewFlagSet("call", pflag.ContinueOnError)
+	c.fs.Usage = func() {} // Disable help output when an error occurred.
 	c.fs.BoolVar(&c.enrich, "enrich", false, "enrich response output includes header, message, trailer and status")
+	c.fs.BoolVar(&c.digManually, "dig-manually", false, "prompt asks whether to dig down if it encountered to a message field")
 }
 
 func (c *callCommand) Synopsis() string {
@@ -184,7 +186,7 @@ func (c *callCommand) Run(w io.Writer, _ []string) error {
 		},
 	)
 
-	err := usecase.CallRPC(context.Background(), w, args[0])
+	err := usecase.CallRPCInteractively(context.Background(), w, args[0], c.digManually)
 	if errors.Is(err, io.EOF) {
 		return errors.New("inputting canceled")
 	}
@@ -199,6 +201,7 @@ type headerCommand struct {
 
 func (c *headerCommand) init() {
 	c.fs = pflag.NewFlagSet("header", pflag.ContinueOnError)
+	c.fs.Usage = func() {} // Disable help output when an error occurred.
 	c.fs.BoolVarP(&c.raw, "raw", "r", false, "treat the value as a raw string")
 }
 
