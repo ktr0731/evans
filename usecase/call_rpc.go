@@ -40,10 +40,6 @@ func (e *gRPCError) Code() ErrorCode {
 	return ErrorCode(e.Status.Code())
 }
 
-type CallOption struct {
-	DigManually bool
-}
-
 // CallRPC constructs a request with input source such that prompt inputting, stdin or a file. After that, it sends
 // the request to the gRPC server and decodes the response body to res.
 // Note that req and res must be JSON-decodable structs. The output is written to w.
