@@ -183,6 +183,10 @@ func TestE2E_REPL(t *testing.T) {
 
 		// package command.
 
+		"package --help": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"package --help"},
+		},
 		"select a package": {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"package api"},
@@ -197,6 +201,10 @@ func TestE2E_REPL(t *testing.T) {
 
 		// service command.
 
+		"service --help": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"service --help"},
+		},
 		"select a service": {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"service Example"},
@@ -278,8 +286,12 @@ func TestE2E_REPL(t *testing.T) {
 			hasErr:      true,
 		},
 
-		// quit command.
+		// exit and quit command.
 
+		"exit --help": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"exit --help"},
+		},
 		"quit executes exit": {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"quit"},
