@@ -78,19 +78,6 @@ func (f *InteractiveFiller) Fill(v interface{}, digManually bool) error {
 func (f *InteractiveFiller) inputMessage(dmsg *dynamic.Message) error {
 	f.prompt.SetPrefixColor(f.state.color)
 
-	if f.digManually {
-		choice, err := f.prompt.Select(
-			fmt.Sprintf("dig down? message: %s", dmsg.GetMessageDescriptor().GetFullyQualifiedName()),
-			[]string{"dig down", "skip"},
-		)
-		if err != nil {
-			return err
-		}
-		if choice == "skip" {
-			return nil
-		}
-	}
-
 	// f.state is message-scoped, so we reset f.state after inputting msg.
 	currentState := f.state.clone()
 	defer func() {
@@ -179,6 +166,23 @@ func (f *InteractiveFiller) inputField(dmsg *dynamic.Message, field *desc.FieldD
 
 		ancestorLen := len(f.state.ancestor)
 		f.state.ancestor = append(f.state.ancestor, field.GetName())
+
+		if f.digManually {
+			choice, err := f.prompt.Select(
+				fmt.Sprintf(
+					"dig down? field: %s, message: %s",
+					field.GetFullyQualifiedName(),
+					dmsg.GetMessageDescriptor().GetFullyQualifiedName(),
+				),
+				[]string{"dig down", "skip"},
+			)
+			if err != nil {
+				return err
+			}
+			if choice == "skip" {
+				return nil
+			}
+		}
 
 		msg := dynamic.NewMessage(field.GetMessageType())
 		err := f.inputMessage(msg)
