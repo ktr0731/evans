@@ -2,14 +2,21 @@ package repl
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
+	"github.com/k0kubun/pp"
+	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/prompt"
 	"github.com/ktr0731/evans/usecase"
+	"github.com/spf13/pflag"
 )
 
+var spaces = regexp.MustCompile(`\s+`)
+
 type completer struct {
-	cmds map[string]commander
+	cmds        map[string]commander
+	completions map[string]func(args []string) (s []*prompt.Suggest)
 }
 
 // Complete completes suggestions from the input. In the completion, if an error is occurred, it will be ignored.
@@ -19,7 +26,8 @@ func (c *completer) Complete(d prompt.Document) (s []*prompt.Suggest) {
 		return nil
 	}
 
-	args := strings.Split(bc, " ")
+	// TODO: We should consider about spaces used as a part of test.
+	args := strings.Split(spaces.ReplaceAllString(bc, " "), " ")
 
 	var isDefault bool
 	defer func() {
@@ -64,22 +72,39 @@ func (c *completer) Complete(d prompt.Document) (s []*prompt.Suggest) {
 		}
 
 	case "call":
-		cmd := commands["call"].(*callCommand)
-		cmd.init() // TODO: constructor
-		_ = cmd.fs.Parse(args)
+		cmd := c.cmds["call"]
+		fs, _ := cmd.FlagSet()
 
-		args := cmd.fs.Args()
-
-		if len(args) != 2 {
-			return nil
+		if args[len(args)-1] == "-" || args[len(args)-1] == "--" {
+			fs.VisitAll(func(f *pflag.Flag) {
+				s = append(s, prompt.NewSuggestion("--"+f.Name, f.Usage))
+			})
+			return s
 		}
-		rpcs, err := usecase.ListRPCs("")
+
+		err := fs.Parse(args[1:]) // Ignore command name.
 		if err != nil {
-			return nil
+			logger.Printf("failed to parse flag: %s\n", err)
+			return s
 		}
-		for _, rpc := range rpcs {
-			s = append(s, prompt.NewSuggestion(rpc.Name, ""))
-		}
+
+		return c.completions["call"](fs.Args())
+		// cmd := commands["call"].(*callCommand)
+		// cmd.init() // TODO: constructor
+		// _ = cmd.fs.Parse(args)
+		//
+		// args := cmd.fs.Args()
+		//
+		// if len(args) != 2 {
+		// 	return nil
+		// }
+		// rpcs, err := usecase.ListRPCs("")
+		// if err != nil {
+		// 	return nil
+		// }
+		// for _, rpc := range rpcs {
+		// 	s = append(s, prompt.NewSuggestion(rpc.Name, ""))
+		// }
 
 	case "desc":
 		if len(args) != 2 {
@@ -119,4 +144,25 @@ func (c *completer) Complete(d prompt.Document) (s []*prompt.Suggest) {
 		}
 	}
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
+}
+
+func newCompleter(cmds map[string]commander) *completer {
+	return &completer{
+		cmds: cmds,
+		completions: map[string]func(args []string) (s []*prompt.Suggest){
+			"call": func(args []string) (s []*prompt.Suggest) {
+				pp.Println(args)
+				if len(args) == 1 && args[0] == "" {
+					rpcs, err := usecase.ListRPCs("")
+					if err != nil {
+						return nil
+					}
+					for _, rpc := range rpcs {
+						s = append(s, prompt.NewSuggestion(rpc.Name, ""))
+					}
+				}
+				return s
+			},
+		},
+	}
 }
