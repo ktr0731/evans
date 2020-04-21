@@ -155,13 +155,14 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 }
 
 type callCommand struct {
-	enrich bool
+	enrich, digManually bool
 }
 
 func (c *callCommand) FlagSet() (*pflag.FlagSet, bool) {
 	fs := pflag.NewFlagSet("call", pflag.ContinueOnError)
 	fs.Usage = func() {} // Disable help output when an error occurred.
 	fs.BoolVar(&c.enrich, "enrich", false, "enrich response output includes header, message, trailer and status")
+	fs.BoolVar(&c.digManually, "dig-manually", false, "prompt asks whether to dig down if it encountered to a message field")
 	return fs, true
 }
 
@@ -194,7 +195,7 @@ func (c *callCommand) Run(w io.Writer, args []string) error {
 		},
 	)
 
-	err := usecase.CallRPC(context.Background(), w, args[0])
+	err := usecase.CallRPCInteractively(context.Background(), w, args[0], c.digManually)
 	if errors.Is(err, io.EOF) {
 		return errors.New("inputting canceled")
 	}

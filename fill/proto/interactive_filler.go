@@ -13,12 +13,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-// InteractiveFiller is an implementation of fill.Filler.
+// InteractiveFiller is an implementation of fill.InteractiveFiller.
 // It let you input request fields interactively.
 type InteractiveFiller struct {
 	prompt       prompt.Prompt
 	prefixFormat string
 	state        promptInputterState
+
+	digManually bool
 }
 
 // NewInteractiveFiller instantiates a new filler that fills each field interactively.
@@ -33,7 +35,9 @@ func NewInteractiveFiller(prompt prompt.Prompt, prefixFormat string) *Interactiv
 // Fill let you input each field interactively by using a prompt. v will be set field values inputted by a prompt.
 //
 // Note that Fill resets the previous state when it is called again.
-func (f *InteractiveFiller) Fill(v interface{}) error {
+func (f *InteractiveFiller) Fill(v interface{}, digManually bool) error {
+	f.digManually = digManually
+
 	msg, ok := v.(*dynamic.Message)
 	if !ok {
 		return fill.ErrCodecMismatch
@@ -146,7 +150,7 @@ func (f *InteractiveFiller) inputField(dmsg *dynamic.Message, field *desc.FieldD
 			prefix += field.GetName()
 
 			choice, err := f.prompt.Select(
-				fmt.Sprintf("circulated field was found. dig down or finish?\nfield: %s (%s)", prefix, strings.Join(f.state.circulatedMessages[field.GetMessageType().GetFullyQualifiedName()], ">")),
+				fmt.Sprintf("circulated field was found. dig down or finish? field: %s (%s)", prefix, strings.Join(f.state.circulatedMessages[field.GetMessageType().GetFullyQualifiedName()], ">")),
 				[]string{"dig down", "finish"},
 			)
 			if err != nil {
@@ -162,6 +166,23 @@ func (f *InteractiveFiller) inputField(dmsg *dynamic.Message, field *desc.FieldD
 
 		ancestorLen := len(f.state.ancestor)
 		f.state.ancestor = append(f.state.ancestor, field.GetName())
+
+		if f.digManually {
+			choice, err := f.prompt.Select(
+				fmt.Sprintf(
+					"dig down? field: %s, message: %s",
+					field.GetFullyQualifiedName(),
+					dmsg.GetMessageDescriptor().GetFullyQualifiedName(),
+				),
+				[]string{"dig down", "skip"},
+			)
+			if err != nil {
+				return err
+			}
+			if choice == "skip" {
+				return nil
+			}
+		}
 
 		msg := dynamic.NewMessage(field.GetMessageType())
 		err := f.inputMessage(msg)

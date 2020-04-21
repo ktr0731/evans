@@ -16,6 +16,7 @@
 | Example | UnaryHeaderTrailer        | SimpleRequest               | SimpleResponse |
 | Example | UnaryHeaderTrailerFailure | SimpleRequest               | SimpleResponse |
 | Example | UnaryWithMapResponse      | SimpleRequest               | MapResponse    |
+| Example | UnaryEcho                 | UnaryMessageRequest         | SimpleResponse |
 | Example | ClientStreaming           | SimpleRequest               | SimpleResponse |
 | Example | ServerStreaming           | SimpleRequest               | SimpleResponse |
 | Example | BidiStreaming             | SimpleRequest               | SimpleResponse |

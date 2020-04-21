@@ -1,5 +1,6 @@
 usage: call <method name>
 
 Options:
-      --enrich   enrich response output includes header, message, trailer and status
+      --dig-manually   prompt asks whether to dig down if it encountered to a message field
+      --enrich         enrich response output includes header, message, trailer and status
 

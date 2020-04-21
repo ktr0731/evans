@@ -18,6 +18,7 @@ var (
 type dependencyManager struct {
 	spec              idl.Spec
 	filler            fill.Filler
+	interactiveFiller fill.InteractiveFiller
 	gRPCClient        grpc.Client
 	responseFormatter *format.ResponseFormatter
 	resourcePresenter present.Presenter
@@ -34,6 +35,7 @@ type state struct {
 type Dependencies struct {
 	Spec              idl.Spec
 	Filler            fill.Filler
+	InteractiveFiller fill.InteractiveFiller
 	GRPCClient        grpc.Client
 	ResponseFormatter *format.ResponseFormatter
 	ResourcePresenter present.Presenter
@@ -48,6 +50,7 @@ func (m *dependencyManager) Inject(d Dependencies) {
 	dm = &dependencyManager{
 		spec:              d.Spec,
 		filler:            d.Filler,
+		interactiveFiller: d.InteractiveFiller,
 		gRPCClient:        d.GRPCClient,
 		responseFormatter: d.ResponseFormatter,
 		resourcePresenter: d.ResourcePresenter,
@@ -67,6 +70,9 @@ func (m *dependencyManager) InjectPartially(d Dependencies) {
 	}
 	if d.Filler != nil {
 		m.filler = d.Filler
+	}
+	if d.InteractiveFiller != nil {
+		m.interactiveFiller = d.InteractiveFiller
 	}
 	if d.GRPCClient != nil {
 		m.gRPCClient = d.GRPCClient

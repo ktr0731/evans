@@ -5,6 +5,7 @@ import (
 	"io"
 	"sync"
 
+	"github.com/ktr0731/evans/fill"
 	"github.com/ktr0731/evans/idl/proto"
 	"github.com/ktr0731/evans/logger"
 	"github.com/pkg/errors"
@@ -43,9 +44,9 @@ func (e *gRPCError) Code() ErrorCode {
 // the request to the gRPC server and decodes the response body to res.
 // Note that req and res must be JSON-decodable structs. The output is written to w.
 func CallRPC(ctx context.Context, w io.Writer, rpcName string) error {
-	return dm.CallRPC(ctx, w, rpcName)
+	return dm.CallRPC(ctx, w, rpcName, dm.filler)
 }
-func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName string) error {
+func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName string, filler fill.Filler) error {
 	fqsn := proto.FullyQualifiedServiceName(m.state.selectedPackage, m.state.selectedService)
 	rpc, err := m.spec.RPC(fqsn, rpcName)
 	if err != nil {
@@ -56,7 +57,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to instantiate an instance of the request type '%s'", rpc.RequestType.FullyQualifiedName)
 		}
-		err = m.filler.Fill(req)
+		err = filler.Fill(req)
 		if errors.Is(err, io.EOF) {
 			return nil, io.EOF
 		}
@@ -364,6 +365,26 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		}
 		return nil
 	}
+}
+
+type interactiveFiller struct {
+	fillFunc func(v interface{}) error
+}
+
+func (f *interactiveFiller) Fill(v interface{}) error {
+	return f.fillFunc(v)
+}
+
+func CallRPCInteractively(ctx context.Context, w io.Writer, rpcName string, digManually bool) error {
+	return dm.CallRPCInteractively(ctx, w, rpcName, digManually)
+}
+
+func (m *dependencyManager) CallRPCInteractively(ctx context.Context, w io.Writer, rpcName string, digManually bool) error {
+	return m.CallRPC(ctx, w, rpcName, &interactiveFiller{
+		fillFunc: func(v interface{}) error {
+			return m.interactiveFiller.Fill(v, digManually)
+		},
+	})
 }
 
 func handleGRPCResponseError(err error) (*status.Status, error) {

@@ -3,6 +3,7 @@ api.Example.ClientStreaming
 api.Example.ServerStreaming
 api.Example.Unary
 api.Example.UnaryBytes
+api.Example.UnaryEcho
 api.Example.UnaryEnum
 api.Example.UnaryHeader
 api.Example.UnaryHeaderTrailer
