@@ -6,6 +6,7 @@
 | ServerStreaming           | api.Example.ServerStreaming           | api.SimpleRequest               | api.SimpleResponse |
 | Unary                     | api.Example.Unary                     | api.SimpleRequest               | api.SimpleResponse |
 | UnaryBytes                | api.Example.UnaryBytes                | api.UnaryBytesRequest           | api.SimpleResponse |
+| UnaryEcho                 | api.Example.UnaryEcho                 | api.UnaryMessageRequest         | api.SimpleResponse |
 | UnaryEnum                 | api.Example.UnaryEnum                 | api.UnaryEnumRequest            | api.SimpleResponse |
 | UnaryHeader               | api.Example.UnaryHeader               | api.UnaryHeaderRequest          | api.SimpleResponse |
 | UnaryHeaderTrailer        | api.Example.UnaryHeaderTrailer        | api.SimpleRequest               | api.SimpleResponse |

@@ -46,7 +46,6 @@ type Request struct {
 type REPL struct {
 	PromptFormat      string `toml:"promptFormat"`
 	InputPromptFormat string `toml:"inputPromptFormat"`
-	DigDownManually   bool   `toml:"digDownManually"`
 
 	ColoredOutput bool `toml:"coloredOutput"`
 

@@ -31,6 +31,12 @@
       "response_type": "api.SimpleResponse"
     },
     {
+      "name": "UnaryEcho",
+      "fully_qualified_name": "api.Example.UnaryEcho",
+      "request_type": "api.UnaryMessageRequest",
+      "response_type": "api.SimpleResponse"
+    },
+    {
       "name": "UnaryEnum",
       "fully_qualified_name": "api.Example.UnaryEnum",
       "request_type": "api.UnaryEnumRequest",

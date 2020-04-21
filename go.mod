@@ -17,13 +17,14 @@ require (
 	github.com/ktr0731/go-prompt v0.2.2-0.20190609072126-7894cc3f2925
 	github.com/ktr0731/go-shellstring v0.1.3
 	github.com/ktr0731/go-updater v0.1.5
-	github.com/ktr0731/grpc-test v0.1.5
+	github.com/ktr0731/grpc-test v0.1.6
 	github.com/ktr0731/grpc-web-go-client v0.2.6
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mattn/go-colorable v0.1.6
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-pipeline v0.0.0-20190323144519-32d779b32768 // indirect
+	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/mattn/go-tty v0.0.0-20190424173100-523744f04859 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.4
@@ -41,10 +42,11 @@ require (
 	github.com/tj/go-spin v1.1.0
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
+	golang.org/x/mod v0.2.0 // indirect
 	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d // indirect
+	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
 	golang.org/x/tools v0.0.0-20200221224223-e1da425f72fd
-	google.golang.org/genproto v0.0.0-20200403120447-c50568487044 // indirect
+	google.golang.org/genproto v0.0.0-20200420144010-e5e8543f8aeb // indirect
 	google.golang.org/grpc v1.28.1
 )

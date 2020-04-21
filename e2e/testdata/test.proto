@@ -20,6 +20,8 @@ service Example {
 
   rpc UnaryWithMapResponse (SimpleRequest) returns (MapResponse) {}
 
+  rpc UnaryEcho (UnaryMessageRequest) returns (SimpleResponse) {}
+
   rpc ClientStreaming (stream SimpleRequest) returns (SimpleResponse) {}
   rpc ServerStreaming (SimpleRequest) returns (stream SimpleResponse) {}
   rpc BidiStreaming(stream SimpleRequest) returns (stream SimpleResponse) {}

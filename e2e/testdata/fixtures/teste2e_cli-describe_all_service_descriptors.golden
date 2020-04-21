@@ -5,6 +5,7 @@ service Example {
   rpc ServerStreaming ( .api.SimpleRequest ) returns ( stream .api.SimpleResponse );
   rpc Unary ( .api.SimpleRequest ) returns ( .api.SimpleResponse );
   rpc UnaryBytes ( .api.UnaryBytesRequest ) returns ( .api.SimpleResponse );
+  rpc UnaryEcho ( .api.UnaryMessageRequest ) returns ( .api.SimpleResponse );
   rpc UnaryEnum ( .api.UnaryEnumRequest ) returns ( .api.SimpleResponse );
   rpc UnaryHeader ( .api.UnaryHeaderRequest ) returns ( .api.SimpleResponse );
   rpc UnaryHeaderTrailer ( .api.SimpleRequest ) returns ( .api.SimpleResponse );
