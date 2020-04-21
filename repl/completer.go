@@ -15,9 +15,6 @@ var spaces = regexp.MustCompile(`\s+`)
 type completer struct {
 	cmds        map[string]commander
 	completions map[string]func(args []string) (s []*prompt.Suggest)
-
-	commandCompleter prompt.Completer
-	argCompleter     prompt.Completer
 }
 
 // Complete completes suggestions from the input. In the completion, if an error is occurred, it will be ignored.

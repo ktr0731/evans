@@ -22,7 +22,7 @@ func (d *dummyDocument) TextBeforeCursor() string {
 }
 
 func TestCompleter(t *testing.T) {
-	cmpl := &completer{cmds: commands}
+	cmpl := newCompleter(commands)
 	spec, err := proto.LoadFiles([]string{"testdata"}, []string{"test.proto"})
 	if err != nil {
 		t.Fatalf("LoadFiles must not return an error, but got '%s'", err)
