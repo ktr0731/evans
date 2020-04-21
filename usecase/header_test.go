@@ -13,7 +13,7 @@ func TestHeader(t *testing.T) {
 	if err != nil {
 		t.Fatalf("grpc.NewClient must not return an error, but got '%s'", err)
 	}
-	Inject(Dependencies{nil, nil, client, nil, nil})
+	Inject(Dependencies{GRPCClient: client})
 
 	AddHeader("kumiko", "oumae")
 

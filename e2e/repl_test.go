@@ -130,7 +130,7 @@ func TestE2E_REPL(t *testing.T) {
 		},
 		"call UnaryEcho": {
 			commonFlags: "--proto testdata/test.proto",
-			input:       []interface{}{"call UnaryEcho", "kaguya", "shinomiya"},
+			input:       []interface{}{"call --dig-manually UnaryEcho", "dig down", "kaguya", "shinomiya"},
 		},
 		"call UnaryEcho with empty request": {
 			commonFlags: "--proto testdata/test.proto",
@@ -138,7 +138,7 @@ func TestE2E_REPL(t *testing.T) {
 		},
 		"call UnaryEcho with empty name request": {
 			commonFlags: "--proto testdata/test.proto",
-			input:       []interface{}{"call --dig-manually UnaryEcho", "dig down", "skip"},
+			input:       []interface{}{"call --dig-manually UnaryEcho", "dig down", prompt.ErrAbort},
 		},
 
 		// call (gRPC-Web)

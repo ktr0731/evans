@@ -9,7 +9,7 @@ import (
 
 func TestInteractiveProtoFiller(t *testing.T) {
 	f := proto.NewInteractiveFiller(nil, "")
-	err := f.Fill("invalid type")
+	err := f.Fill("invalid type", false)
 	if err != fill.ErrCodecMismatch {
 		t.Errorf("must return fill.ErrCodecMismatch because the arg is invalid type, but got: %s", err)
 	}
