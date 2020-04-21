@@ -11,6 +11,7 @@ import (
 	"github.com/ktr0731/evans/usecase"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 )
 
 type descCommand struct{}
@@ -21,6 +22,10 @@ func (c *descCommand) Synopsis() string {
 
 func (c *descCommand) Help() string {
 	return "usage: desc <message name>"
+}
+
+func (c *descCommand) FlagSet() (*pflag.FlagSet, bool) {
+	return nil, false
 }
 
 func (c *descCommand) Validate(args []string) error {

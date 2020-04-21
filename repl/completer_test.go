@@ -22,7 +22,7 @@ func (d *dummyDocument) TextBeforeCursor() string {
 }
 
 func TestCompleter(t *testing.T) {
-	cmpl := &completer{cmds: commands}
+	cmpl := newCompleter(commands)
 	spec, err := proto.LoadFiles([]string{"testdata"}, []string{"test.proto"})
 	if err != nil {
 		t.Fatalf("LoadFiles must not return an error, but got '%s'", err)
@@ -51,9 +51,13 @@ func TestCompleter(t *testing.T) {
 		"service":                 {text: "service "},
 		"service returns nothing": {text: "service Example ", isEmpty: true},
 		"call":                    {text: "call "},
+		"call flag1":              {text: "call -"},
+		"call flag2":              {text: "call --"},
+		"call flag3":              {text: "call --e"},
 		"call returns nothing":    {text: "call RPC ", isEmpty: true},
 		"desc":                    {text: "desc "},
 		"desc returns nothing":    {text: "desc Request ", isEmpty: true},
+		"header":                  {text: "header -"},
 		"default":                 {text: "s", isDefault: true},
 	}
 
@@ -68,7 +72,7 @@ func TestCompleter(t *testing.T) {
 					t.Errorf("in default completion, it must not return --help suggestion")
 				}
 			} else {
-				if len(suggestions) != 0 &&
+				if len(suggestions) != 0 && !strings.HasPrefix(suggestions[0].Text, "--") &&
 					!strings.HasPrefix(suggestions[len(suggestions)-1].Text, "--help") {
 					t.Errorf("completion must return --help suggestion at the final suggestion")
 				}

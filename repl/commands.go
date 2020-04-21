@@ -27,6 +27,11 @@ type commander interface {
 	// Synopsis returns the usage of the command.
 	Synopsis() string
 
+	// FlagSet returns a flagset.
+	// If the command doesn't have a flagset, the second returned value is false.
+	// Note that FlagSet is for read-only, so don't modify it.
+	FlagSet() (*pflag.FlagSet, bool)
+
 	// Valdiate validates whether args satisfies preconditions for running the command.
 	Validate(args []string) error
 
@@ -43,6 +48,10 @@ func (c *packageCommand) Synopsis() string {
 
 func (c *packageCommand) Help() string {
 	return "usage: package <package name>"
+}
+
+func (c *packageCommand) FlagSet() (*pflag.FlagSet, bool) {
+	return nil, false
 }
 
 func (c *packageCommand) Validate(args []string) error {
@@ -71,6 +80,10 @@ func (c *serviceCommand) Help() string {
 	return "usage: service <service name>"
 }
 
+func (c *serviceCommand) FlagSet() (*pflag.FlagSet, bool) {
+	return nil, false
+}
+
 func (c *serviceCommand) Validate(args []string) error {
 	if len(args) < 1 {
 		return errArgumentRequired
@@ -97,6 +110,10 @@ func (c *showCommand) Synopsis() string {
 
 func (c *showCommand) Help() string {
 	return "usage: show <package | service | message | rpc | header>"
+}
+
+func (c *showCommand) FlagSet() (*pflag.FlagSet, bool) {
+	return nil, false
 }
 
 func (c *showCommand) Validate(args []string) error {
@@ -138,16 +155,15 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 }
 
 type callCommand struct {
-	fs *pflag.FlagSet
-
 	enrich, digManually bool
 }
 
-func (c *callCommand) init() {
-	c.fs = pflag.NewFlagSet("call", pflag.ContinueOnError)
-	c.fs.Usage = func() {} // Disable help output when an error occurred.
-	c.fs.BoolVar(&c.enrich, "enrich", false, "enrich response output includes header, message, trailer and status")
-	c.fs.BoolVar(&c.digManually, "dig-manually", false, "prompt asks whether to dig down if it encountered to a message field")
+func (c *callCommand) FlagSet() (*pflag.FlagSet, bool) {
+	fs := pflag.NewFlagSet("call", pflag.ContinueOnError)
+	fs.Usage = func() {} // Disable help output when an error occurred.
+	fs.BoolVar(&c.enrich, "enrich", false, "enrich response output includes header, message, trailer and status")
+	fs.BoolVar(&c.digManually, "dig-manually", false, "prompt asks whether to dig down if it encountered to a message field")
+	return fs, true
 }
 
 func (c *callCommand) Synopsis() string {
@@ -155,10 +171,10 @@ func (c *callCommand) Synopsis() string {
 }
 
 func (c *callCommand) Help() string {
-	c.init()
 	var buf bytes.Buffer
-	c.fs.SetOutput(&buf)
-	c.fs.PrintDefaults()
+	fs, _ := c.FlagSet()
+	fs.SetOutput(&buf)
+	fs.PrintDefaults()
 	return fmt.Sprintf(`usage: call <method name>
 
 Options:
@@ -166,20 +182,13 @@ Options:
 }
 
 func (c *callCommand) Validate(args []string) error {
-	c.init()
-	if err := c.fs.Parse(args); err != nil {
-		return errors.Wrap(err, "failed to parse args")
-	}
-	args = c.fs.Args()
 	if len(args) < 1 {
 		return errArgumentRequired
 	}
 	return nil
 }
 
-func (c *callCommand) Run(w io.Writer, _ []string) error {
-	args := c.fs.Args()
-
+func (c *callCommand) Run(w io.Writer, args []string) error {
 	usecase.InjectPartially(
 		usecase.Dependencies{
 			ResponseFormatter: format.NewResponseFormatter(curl.NewResponseFormatter(w), c.enrich),
@@ -195,14 +204,13 @@ func (c *callCommand) Run(w io.Writer, _ []string) error {
 
 type headerCommand struct {
 	raw bool
-
-	fs *pflag.FlagSet
 }
 
-func (c *headerCommand) init() {
-	c.fs = pflag.NewFlagSet("header", pflag.ContinueOnError)
-	c.fs.Usage = func() {} // Disable help output when an error occurred.
-	c.fs.BoolVarP(&c.raw, "raw", "r", false, "treat the value as a raw string")
+func (c *headerCommand) FlagSet() (*pflag.FlagSet, bool) {
+	fs := pflag.NewFlagSet("header", pflag.ContinueOnError)
+	fs.Usage = func() {} // Disable help output when an error occurred.
+	fs.BoolVarP(&c.raw, "raw", "r", false, "treat the value as a raw string")
+	return fs, true
 }
 
 func (c *headerCommand) Synopsis() string {
@@ -210,10 +218,10 @@ func (c *headerCommand) Synopsis() string {
 }
 
 func (c *headerCommand) Help() string {
-	c.init()
 	var buf bytes.Buffer
-	c.fs.SetOutput(&buf)
-	c.fs.PrintDefaults()
+	fs, _ := c.FlagSet()
+	fs.SetOutput(&buf)
+	fs.PrintDefaults()
 	return fmt.Sprintf(`usage: header [options ...] <key>=<value>[, <key>=<value>...]
 
 Options:
@@ -221,11 +229,6 @@ Options:
 }
 
 func (c *headerCommand) Validate(args []string) error {
-	c.init()
-	if err := c.fs.Parse(args); err != nil {
-		return errors.Wrap(err, "failed to parse args")
-	}
-	args = c.fs.Args()
 	if len(args) < 1 {
 		return errArgumentRequired
 	}
@@ -267,6 +270,10 @@ func (c *exitCommand) Synopsis() string {
 
 func (c *exitCommand) Help() string {
 	return "usage: exit"
+}
+
+func (c *exitCommand) FlagSet() (*pflag.FlagSet, bool) {
+	return nil, false
 }
 
 func (c *exitCommand) Validate([]string) error { return nil }

@@ -54,7 +54,7 @@ func New(cfg *config.Config, p prompt.Prompt, ui cui.UI, pkgName, svcName string
 		"quit": "exit",
 	}
 
-	p.SetCompleter(&completer{cmds: cmds})
+	p.SetCompleter(newCompleter(cmds))
 
 	var result error
 	if pkgName != "" {
@@ -143,6 +143,13 @@ func (r *REPL) runCommand(cmdName string, args []string) error {
 		}
 	}
 
+	fs, ok := cmd.FlagSet()
+	if ok {
+		if err := fs.Parse(args); err != nil {
+			return errors.Wrap(err, "failed to parse args")
+		}
+		args = fs.Args()
+	}
 	if err := cmd.Validate(args); err != nil {
 		return err
 	}
