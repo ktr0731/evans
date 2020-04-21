@@ -364,6 +364,23 @@ The actual request value is just like this.
 }
 ```
 
+By default, Evans digs down each message field automatically.  
+For example, we assume that we are inputting `Request` described in the following message:
+
+``` proto
+message FullName {
+  string first_name = 1;
+  string last_name = 2;
+}
+
+message Request {
+  FullName full_name = 1;
+}
+```
+
+In this case, REPL prompts `full_name.first_name` automatically. To skip `full_name` itself, we can use `--dig-manually` option.
+It asks whether dig down a message field when the prompt encountered it.
+
 ## Usage (CLI)
 ### Basic usage
 You can input requests from `stdin` or files.  
