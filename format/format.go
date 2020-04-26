@@ -2,6 +2,7 @@
 package format
 
 import (
+	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
@@ -18,7 +19,9 @@ func (f *ResponseFormatter) Format(s *status.Status, header, trailer metadata.MD
 	if err := f.FormatMessage(v); err != nil {
 		return err
 	}
-	f.FormatTrailer(s, trailer)
+	if err := f.FormatTrailer(s, trailer); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -30,16 +33,19 @@ func (f *ResponseFormatter) FormatHeader(header metadata.MD) {
 
 func (f *ResponseFormatter) FormatMessage(v interface{}) error {
 	if v == nil {
-		v = struct{}{}
+		v = &empty.Empty{}
 	}
 	return f.impl.FormatMessage(v)
 }
 
-func (f *ResponseFormatter) FormatTrailer(status *status.Status, trailer metadata.MD) {
+func (f *ResponseFormatter) FormatTrailer(status *status.Status, trailer metadata.MD) error {
 	if f.enrich {
 		f.impl.FormatTrailer(trailer)
-		f.impl.FormatStatus(status)
+		if err := f.impl.FormatStatus(status); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (f *ResponseFormatter) Done() error {
@@ -60,7 +66,7 @@ type ResponseFormatterInterface interface {
 	// FormatMessage formats the response message (body).
 	FormatMessage(v interface{}) error
 	// FormatStatus formats the response status.
-	FormatStatus(status *status.Status)
+	FormatStatus(status *status.Status) error
 	// FormatTrailer formats the response trailer.
 	FormatTrailer(trailer metadata.MD)
 	// Done indicates all response information is formatted.

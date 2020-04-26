@@ -5,7 +5,8 @@ go 1.12
 require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.9.0
-	github.com/golang/protobuf v1.4.0
+	github.com/gogo/protobuf v1.3.1
+	github.com/golang/protobuf v1.4.0-rc.4.0.20200313231945-b860323f09d0
 	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
@@ -47,6 +48,7 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
 	golang.org/x/tools v0.0.0-20200221224223-e1da425f72fd
-	google.golang.org/genproto v0.0.0-20200420144010-e5e8543f8aeb // indirect
+	google.golang.org/genproto v0.0.0-20200420144010-e5e8543f8aeb
 	google.golang.org/grpc v1.29.1
+	google.golang.org/protobuf v1.21.0 // indirect
 )

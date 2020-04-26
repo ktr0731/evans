@@ -79,8 +79,8 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	flushResponse := func(res interface{}) error {
 		return m.responseFormatter.FormatMessage(res)
 	}
-	flushTrailer := func(status *status.Status, trailer metadata.MD) {
-		m.responseFormatter.FormatTrailer(status, trailer)
+	flushTrailer := func(status *status.Status, trailer metadata.MD) error {
+		return m.responseFormatter.FormatTrailer(status, trailer)
 	}
 	flushDone := func() error {
 		return m.responseFormatter.Done()
@@ -90,7 +90,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		if err := flushResponse(res); err != nil {
 			return err
 		}
-		flushTrailer(status, trailer)
+		if err := flushTrailer(status, trailer); err != nil {
+			return err
+		}
 		return flushDone()
 	}
 
@@ -129,7 +131,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 					}
 					if errors.Is(err, io.EOF) {
 						writeTrailerOnce.Do(func() {
-							flushTrailer(status.New(codes.OK, ""), stream.Trailer())
+							if err := flushTrailer(status.New(codes.OK, ""), stream.Trailer()); err != nil {
+								logger.Printf("failed to call Done: %s", err)
+							}
 							if err := flushDone(); err != nil {
 								logger.Printf("failed to call Done: %s", err)
 							}
@@ -143,7 +147,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 					// Trailer is now available.
 					defer func(stat *status.Status) {
 						writeTrailerOnce.Do(func() {
-							flushTrailer(stat, stream.Trailer())
+							if err := flushTrailer(stat, stream.Trailer()); err != nil {
+								logger.Printf("failed to call Done: %s", err)
+							}
 							if err := flushDone(); err != nil {
 								logger.Printf("failed to call Done: %s", err)
 							}
@@ -300,7 +306,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			// Trailer is now available.
 			defer func(stat *status.Status) {
 				writeTrailerOnce.Do(func() {
-					flushTrailer(stat, stream.Trailer())
+					if err := flushTrailer(stat, stream.Trailer()); err != nil {
+						logger.Printf("failed to call Done: %s", err)
+					}
 					if err := flushDone(); err != nil {
 						logger.Printf("failed to call Done: %s", err)
 					}

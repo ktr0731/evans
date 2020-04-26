@@ -2,11 +2,15 @@
 package curl
 
 import (
+	"bytes"
+	gojson "encoding/json"
 	"fmt"
 	"io"
 	"sort"
 	"strings"
 
+	"github.com/gogo/protobuf/jsonpb"
+	"github.com/gogo/protobuf/proto"
 	"github.com/ktr0731/evans/format"
 	"github.com/ktr0731/evans/present"
 	"github.com/ktr0731/evans/present/json"
@@ -14,22 +18,24 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type responsePresenter struct {
+type responseFormatter struct {
 	w io.Writer
 
-	json present.Presenter
+	json        present.Presenter
+	pbMarshaler *jsonpb.Marshaler
 
 	wroteHeader, wroteMessage, wroteTrailer bool
 }
 
 func NewResponseFormatter(w io.Writer) format.ResponseFormatterInterface {
-	return &responsePresenter{
-		w:    w,
-		json: json.NewPresenter("  "),
+	return &responseFormatter{
+		w:           w,
+		json:        json.NewPresenter("  "),
+		pbMarshaler: &jsonpb.Marshaler{},
 	}
 }
 
-func (p *responsePresenter) FormatHeader(header metadata.MD) {
+func (p *responseFormatter) FormatHeader(header metadata.MD) {
 	var s []string
 	for k, v := range header {
 		for _, vv := range v {
@@ -44,7 +50,7 @@ func (p *responsePresenter) FormatHeader(header metadata.MD) {
 	p.wroteHeader = true
 }
 
-func (p *responsePresenter) FormatMessage(v interface{}) error {
+func (p *responseFormatter) FormatMessage(v interface{}) error {
 	if p.wroteHeader {
 		fmt.Fprintf(p.w, "\n")
 	}
@@ -59,7 +65,10 @@ func (p *responsePresenter) FormatMessage(v interface{}) error {
 	return nil
 }
 
-func (p *responsePresenter) FormatTrailer(trailer metadata.MD) {
+func (p *responseFormatter) FormatTrailer(trailer metadata.MD) {
+	if len(trailer) == 0 {
+		return
+	}
 	if p.wroteHeader || p.wroteMessage {
 		fmt.Fprintf(p.w, "\n")
 	}
@@ -78,13 +87,46 @@ func (p *responsePresenter) FormatTrailer(trailer metadata.MD) {
 	p.wroteTrailer = true
 }
 
-func (p *responsePresenter) FormatStatus(status *status.Status) {
+func (p *responseFormatter) FormatStatus(status *status.Status) error {
 	if p.wroteHeader || p.wroteMessage || p.wroteTrailer {
 		fmt.Fprintf(p.w, "\n")
 	}
-	fmt.Fprintf(p.w, "code = %s, number = %d, message = %q\n", status.Code().String(), status.Code(), status.Message())
+	fmt.Fprintf(p.w, "code: %s\nnumber: %d\nmessage: %q\n", status.Code().String(), status.Code(), status.Message())
+	if len(status.Details()) > 0 {
+		details := make([]interface{}, 0, len(status.Details()))
+		for _, d := range status.Details() {
+			d, ok := d.(proto.Message)
+			if !ok {
+				continue
+			}
+			m, err := p.convertProtoMessageToMap(d)
+			if err != nil {
+				return err
+			}
+			details = append(details, m)
+		}
+		b, err := gojson.MarshalIndent(details, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(p.w, "details: \n%s\n", string(b))
+	}
+	return nil
 }
 
-func (p *responsePresenter) Done() error {
+func (p *responseFormatter) Done() error {
 	return nil
+}
+
+func (p *responseFormatter) convertProtoMessageToMap(m proto.Message) (map[string]interface{}, error) {
+	var buf bytes.Buffer
+	err := p.pbMarshaler.Marshal(&buf, m)
+	if err != nil {
+		return nil, err
+	}
+	var res map[string]interface{}
+	if err := gojson.Unmarshal(buf.Bytes(), &res); err != nil {
+		return nil, err
+	}
+	return res, nil
 }

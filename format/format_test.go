@@ -22,8 +22,9 @@ func (f *formatter) FormatMessage(v interface{}) error {
 	return nil
 }
 
-func (f *formatter) FormatStatus(status *status.Status) {
+func (f *formatter) FormatStatus(status *status.Status) error {
 	f.FormatStatusCalled = true
+	return nil
 }
 
 func (f *formatter) FormatTrailer(trailer metadata.MD) {
@@ -49,9 +50,11 @@ func TestResponseFormatter(t *testing.T) {
 			f := NewResponseFormatter(impl, c.enrich)
 			f.FormatHeader(metadata.Pairs("key", "val"))
 			if err := f.FormatMessage(struct{}{}); err != nil {
-				t.Fatalf("FormatMessage should no return an error, but got '%s'", err)
+				t.Fatalf("FormatMessage should not return an error, but got '%s'", err)
 			}
-			f.FormatTrailer(status.New(codes.Internal, "internal error"), metadata.Pairs("key", "val"))
+			if err := f.FormatTrailer(status.New(codes.Internal, "internal error"), metadata.Pairs("key", "val")); err != nil {
+				t.Fatalf("FormatTrailer should not return an error, but got '%s'", err)
+			}
 			if err := f.Done(); err != nil {
 				t.Fatalf("Done should not return an error, but got '%s'", err)
 			}
