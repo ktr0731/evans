@@ -5,7 +5,7 @@ go 1.12
 require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.9.0
-	github.com/golang/protobuf v1.4.0-rc.4.0.20200313231945-b860323f09d0
+	github.com/golang/protobuf v1.4.0
 	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
@@ -17,7 +17,7 @@ require (
 	github.com/ktr0731/go-prompt v0.2.2-0.20190609072126-7894cc3f2925
 	github.com/ktr0731/go-shellstring v0.1.3
 	github.com/ktr0731/go-updater v0.1.5
-	github.com/ktr0731/grpc-test v0.1.6
+	github.com/ktr0731/grpc-test v0.1.7
 	github.com/ktr0731/grpc-web-go-client v0.2.6
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
@@ -43,11 +43,10 @@ require (
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
 	golang.org/x/mod v0.2.0 // indirect
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
+	golang.org/x/net v0.0.0-20200425230154-ff2c4b7c35a0 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
+	golang.org/x/sys v0.0.0-20200428200454-593003d681fa // indirect
 	golang.org/x/tools v0.0.0-20200221224223-e1da425f72fd
-	google.golang.org/genproto v0.0.0-20200420144010-e5e8543f8aeb
+	google.golang.org/genproto v0.0.0-20200428115010-c45acf45369a
 	google.golang.org/grpc v1.29.1
-	google.golang.org/protobuf v1.21.0 // indirect
 )
