@@ -4,8 +4,6 @@ content-type: application/grpc
 header_key1: header_val1
 header_key2: header_val2
 
-{}
-
 trailer_key1: trailer_val1
 trailer_key2: trailer_val2
 
@@ -15,4 +13,5 @@ message: "internal error"
 details: 
   {"@type": "type.googleapis.com/google.rpc.BadRequest", "fieldViolations": [{"description": "description", "field": "field"}]}
   {"@type": "type.googleapis.com/google.rpc.PreconditionFailure", "violations": [{"description": "description", "subject": "subject", "type": "type"}]}
+
 

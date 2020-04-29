@@ -17,6 +17,7 @@ import (
 	"github.com/ktr0731/evans/present/json"
 	"github.com/pkg/errors"
 	_ "google.golang.org/genproto/googleapis/rpc/errdetails" // For calling RegisterType.
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
@@ -117,6 +118,9 @@ func (p *responseFormatter) FormatStatus(status *status.Status) error {
 			details = append(details, "  "+replacer.Replace(string(b)))
 		}
 		fmt.Fprintf(p.w, "details: \n%s\n", strings.Join(details, "\n"))
+	}
+	if status.Code() != codes.OK {
+		fmt.Fprintf(p.w, "\n")
 	}
 	return nil
 }

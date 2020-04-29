@@ -36,9 +36,6 @@
       "header_val2"
     ]
   },
-  "messages": [
-    {}
-  ],
   "trailer": {
     "trailer_key1": [
       "trailer_val1"
