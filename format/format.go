@@ -2,7 +2,6 @@
 package format
 
 import (
-	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
@@ -33,7 +32,7 @@ func (f *ResponseFormatter) FormatHeader(header metadata.MD) {
 
 func (f *ResponseFormatter) FormatMessage(v interface{}) error {
 	if v == nil {
-		v = &empty.Empty{}
+		return nil
 	}
 	return f.impl.FormatMessage(v)
 }
