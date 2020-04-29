@@ -5,10 +5,12 @@ vary: Origin
 
 {}
 
-grpc-status-details-bin: CA0SDmludGVybmFsIGVycm9yGkMKKXR5cGUuZ29vZ2xlYXBpcy5jb20vZ29vZ2xlLnJwYy5CYWRSZXF1ZXN0EhYKFAoFZmllbGQSC2Rlc2NyaXB0aW9uGlQKMnR5cGUuZ29vZ2xlYXBpcy5jb20vZ29vZ2xlLnJwYy5QcmVjb25kaXRpb25GYWlsdXJlEh4KHAoEdHlwZRIHc3ViamVjdBoLZGVzY3JpcHRpb24
 trailer_key1: trailer_val1
 trailer_key2: trailer_val2
 
 code: Internal
 number: 13
 message: "internal error"
+details: 
+  {"@type": "type.googleapis.com/google.rpc.BadRequest", "fieldViolations": [{"description": "description", "field": "field"}]}
+  {"@type": "type.googleapis.com/google.rpc.PreconditionFailure", "violations": [{"description": "description", "subject": "subject", "type": "type"}]}

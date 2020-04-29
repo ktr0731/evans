@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
+	"github.com/golang/protobuf/proto"  //nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
 	"github.com/ktr0731/evans/format"
 	"github.com/ktr0731/evans/present"
