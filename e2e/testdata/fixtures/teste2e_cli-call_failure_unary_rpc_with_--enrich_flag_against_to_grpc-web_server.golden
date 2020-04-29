@@ -8,4 +8,9 @@ vary: Origin
 trailer_key1: trailer_val1
 trailer_key2: trailer_val2
 
-code = Internal, number = 13, message = "internal error"
+code: Internal
+number: 13
+message: "internal error"
+details: 
+  {"@type": "type.googleapis.com/google.rpc.BadRequest", "fieldViolations": [{"description": "description", "field": "field"}]}
+  {"@type": "type.googleapis.com/google.rpc.PreconditionFailure", "violations": [{"description": "description", "subject": "subject", "type": "type"}]}

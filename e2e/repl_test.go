@@ -66,6 +66,11 @@ func TestE2E_REPL(t *testing.T) {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"package api", "service Example", "call --enrich Unary", "kaguya"},
 		},
+		"call UnaryHeaderTrailerFailure by selecting package and service with enriched output": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"package api", "service Example", "call --enrich UnaryHeaderTrailerFailure", "kaguya"},
+			hasErr:      true,
+		},
 		"call Unary by selecting only service": {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"service Example", "call Unary", "kaguya"},

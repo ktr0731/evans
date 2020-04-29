@@ -436,6 +436,15 @@ func TestE2E_CLI(t *testing.T) {
 			assertWithGolden: true,
 			expectedCode:     1,
 		},
+		"call failure unary RPC with --enrich and JSON format": {
+			commonFlags:      "-r --service Example",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailerFailure --output json",
+			reflection:       true,
+			unflatten:        true,
+			assertWithGolden: true,
+			expectedCode:     1,
+		},
 		"call unary RPC with --enrich flag against to gRPC-Web server": {
 			commonFlags:      "--web -r --service Example",
 			cmd:              "call",

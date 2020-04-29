@@ -17,8 +17,8 @@ require (
 	github.com/ktr0731/go-prompt v0.2.2-0.20190609072126-7894cc3f2925
 	github.com/ktr0731/go-shellstring v0.1.3
 	github.com/ktr0731/go-updater v0.1.5
-	github.com/ktr0731/grpc-test v0.1.6
-	github.com/ktr0731/grpc-web-go-client v0.2.6
+	github.com/ktr0731/grpc-test v0.1.7
+	github.com/ktr0731/grpc-web-go-client v0.2.7
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mattn/go-colorable v0.1.6
@@ -43,10 +43,10 @@ require (
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
 	golang.org/x/mod v0.2.0 // indirect
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
+	golang.org/x/net v0.0.0-20200425230154-ff2c4b7c35a0 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
+	golang.org/x/sys v0.0.0-20200428200454-593003d681fa // indirect
 	golang.org/x/tools v0.0.0-20200221224223-e1da425f72fd
-	google.golang.org/genproto v0.0.0-20200420144010-e5e8543f8aeb // indirect
+	google.golang.org/genproto v0.0.0-20200428115010-c45acf45369a
 	google.golang.org/grpc v1.29.1
 )
