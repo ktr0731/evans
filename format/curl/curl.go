@@ -9,11 +9,14 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gogo/protobuf/jsonpb"
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/ktr0731/evans/format"
 	"github.com/ktr0731/evans/present"
 	"github.com/ktr0731/evans/present/json"
+	"github.com/pkg/errors"
+	_ "google.golang.org/genproto/googleapis/rpc/errdetails" // For calling RegisterType.
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
@@ -87,29 +90,33 @@ func (p *responseFormatter) FormatTrailer(trailer metadata.MD) {
 	p.wroteTrailer = true
 }
 
+var replacer = strings.NewReplacer("\n", "", ",", ", ")
+
 func (p *responseFormatter) FormatStatus(status *status.Status) error {
 	if p.wroteHeader || p.wroteMessage || p.wroteTrailer {
 		fmt.Fprintf(p.w, "\n")
 	}
 	fmt.Fprintf(p.w, "code: %s\nnumber: %d\nmessage: %q\n", status.Code().String(), status.Code(), status.Message())
 	if len(status.Details()) > 0 {
-		details := make([]interface{}, 0, len(status.Details()))
+		details := make([]string, 0, len(status.Details()))
 		for _, d := range status.Details() {
 			d, ok := d.(proto.Message)
 			if !ok {
 				continue
 			}
-			m, err := p.convertProtoMessageToMap(d)
+			// Convert to Any to insert @type field.
+			m, err := p.convertProtoMessageAsAnyToMap(d)
 			if err != nil {
 				return err
 			}
-			details = append(details, m)
+
+			b, err := gojson.MarshalIndent(m, "", "")
+			if err != nil {
+				return err
+			}
+			details = append(details, "  "+replacer.Replace(string(b)))
 		}
-		b, err := gojson.MarshalIndent(details, "", "  ")
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(p.w, "details: \n%s\n", string(b))
+		fmt.Fprintf(p.w, "details: \n%s\n", strings.Join(details, "\n"))
 	}
 	return nil
 }
@@ -129,4 +136,12 @@ func (p *responseFormatter) convertProtoMessageToMap(m proto.Message) (map[strin
 		return nil, err
 	}
 	return res, nil
+}
+
+func (p *responseFormatter) convertProtoMessageAsAnyToMap(m proto.Message) (map[string]interface{}, error) {
+	any, err := ptypes.MarshalAny(m)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to convert a message to *any.Any")
+	}
+	return p.convertProtoMessageToMap(any)
 }

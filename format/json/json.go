@@ -8,9 +8,11 @@ import (
 
 	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
 	"github.com/golang/protobuf/proto"  //nolint:staticcheck
+	"github.com/golang/protobuf/ptypes"
 	"github.com/ktr0731/evans/format"
 	"github.com/ktr0731/evans/present"
 	"github.com/ktr0731/evans/present/json"
+	"github.com/pkg/errors"
 	_ "google.golang.org/genproto/googleapis/rpc/errdetails" // For calling RegisterType.
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -64,7 +66,8 @@ func (p *responseFormatter) FormatStatus(s *status.Status) error {
 			if !ok {
 				continue
 			}
-			m, err := p.convertProtoMessageToMap(d)
+			// Convert to Any to insert @type field.
+			m, err := p.convertProtoMessageAsAnyToMap(d)
 			if err != nil {
 				return err
 			}
@@ -106,4 +109,12 @@ func (p *responseFormatter) convertProtoMessageToMap(m proto.Message) (map[strin
 		return nil, err
 	}
 	return res, nil
+}
+
+func (p *responseFormatter) convertProtoMessageAsAnyToMap(m proto.Message) (map[string]interface{}, error) {
+	any, err := ptypes.MarshalAny(m)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to convert a message to *any.Any")
+	}
+	return p.convertProtoMessageToMap(any)
 }
