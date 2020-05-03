@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fatih/color"
 	"github.com/google/go-cmp/cmp"
 	"github.com/ktr0731/evans/app"
 	"github.com/ktr0731/evans/cui"
@@ -64,6 +65,8 @@ func TestE2E_CLI(t *testing.T) {
 		// But, if it is prefer to show as it is, you can it by specifying
 		// unflatten to true.
 		unflatten bool
+
+		deprecatedUsage bool
 	}{
 		"print usage text to the Writer (common flag)": {
 			commonFlags:      "--help",
@@ -154,10 +157,11 @@ func TestE2E_CLI(t *testing.T) {
 			expectedCode: 1,
 		},
 		"call unary RPC with an input file by CLI mode (backward-compatibility)": {
-			commonFlags: "--package api --service Example --proto testdata/test.proto",
-			cmd:         "call",
-			args:        "--file testdata/unary_call.in Unary",
-			expectedOut: `{ "message": "hello, oumae" }`,
+			commonFlags:     "--package api --service Example --proto testdata/test.proto",
+			cmd:             "call",
+			args:            "--file testdata/unary_call.in Unary",
+			deprecatedUsage: true,
+			expectedOut:     `{ "message": "hello, oumae" }`,
 		},
 		"call unary RPC with an input file by CLI mode": {
 			commonFlags: "--proto testdata/test.proto",
@@ -172,16 +176,18 @@ func TestE2E_CLI(t *testing.T) {
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 		"call unary RPC with --call flag (backward-compatibility)": {
-			commonFlags: "--package api --service Example --proto testdata/test.proto",
-			cmd:         "",
-			args:        "--file testdata/unary_call.in --call Unary",
-			expectedOut: `{ "message": "hello, oumae" }`,
+			commonFlags:     "--package api --service Example --proto testdata/test.proto",
+			cmd:             "",
+			args:            "--file testdata/unary_call.in --call Unary",
+			deprecatedUsage: true,
+			expectedOut:     `{ "message": "hello, oumae" }`,
 		},
 		"call unary RPC without package name because the size of packages is 1 (backward-compatibility)": {
-			commonFlags: "--service Example --proto testdata/test.proto",
-			cmd:         "call",
-			args:        "--file testdata/unary_call.in Unary",
-			expectedOut: `{ "message": "hello, oumae" }`,
+			commonFlags:     "--service Example --proto testdata/test.proto",
+			cmd:             "call",
+			args:            "--file testdata/unary_call.in Unary",
+			deprecatedUsage: true,
+			expectedOut:     `{ "message": "hello, oumae" }`,
 		},
 		"call unary RPC without package and service name because the size of packages and services are 1": {
 			commonFlags: "--proto testdata/test.proto",
@@ -270,11 +276,12 @@ func TestE2E_CLI(t *testing.T) {
 			expectedCode: 1,
 		},
 		"call unary RPC by CLI mode with reflection with an input file (backward-compatibility)": {
-			commonFlags: "--reflection --package api --service Example",
-			cmd:         "call",
-			args:        "--file testdata/unary_call.in Unary",
-			reflection:  true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			commonFlags:     "--reflection --package api --service Example",
+			cmd:             "call",
+			args:            "--file testdata/unary_call.in Unary",
+			reflection:      true,
+			deprecatedUsage: true,
+			expectedOut:     `{ "message": "hello, oumae" }`,
 		},
 		"call unary RPC by CLI mode with reflection with an input file": {
 			commonFlags: "--reflection",
@@ -642,7 +649,12 @@ func TestE2E_CLI(t *testing.T) {
 				if c.expectedOut != "" && actual != c.expectedOut {
 					t.Errorf("unexpected output:\n%s", cmp.Diff(c.expectedOut, actual))
 				}
-				if eoutBuf.String() != "" {
+				eout := eoutBuf.String()
+				if c.deprecatedUsage {
+					// Trim "deprecated" message.
+					eout = strings.Replace(eout, color.YellowString("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")+"\n", "", -1)
+				}
+				if eout != "" {
 					t.Errorf("expected code is 0, but got an error message: '%s'", eoutBuf.String())
 				}
 			}

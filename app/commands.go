@@ -186,7 +186,17 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cli",
 		Short: "CLI mode",
-		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
+		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) (err error) {
+			if cfg.REPL.ColoredOutput {
+				ui = cui.NewColored(ui)
+			}
+
+			defer func() {
+				if err == nil {
+					ui.Warn("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")
+				}
+			}()
+
 			// For backward-compatibility.
 			// If the method is specified by passing --call option, use it.
 			call := cfg.call
@@ -225,6 +235,9 @@ func newREPLCommand(flags *flags, ui cui.UI) *cobra.Command {
 		Use:   "repl [options ...]",
 		Short: "REPL mode",
 		RunE: runFunc(flags, func(_ *cobra.Command, cfg *mergedConfig) error {
+			if cfg.REPL.ColoredOutput {
+				ui = cui.NewColored(ui)
+			}
 			return runREPLCommand(cfg, ui)
 		}),
 		SilenceErrors: true,
