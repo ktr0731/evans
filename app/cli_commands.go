@@ -26,6 +26,10 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 			"        $ evans -r cli call -f in.json --enrich --output json api.Service.Unary # enrich output with JSON format",
 		}, "\n"),
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
+			if cfg.REPL.ColoredOutput {
+				ui = cui.NewColored(ui)
+			}
+
 			args := cmd.Flags().Args()
 			if len(args) == 0 {
 				return errors.New("method is required")
@@ -69,6 +73,10 @@ list lists method names belong to the service. If not, list lists all services.`
 			`        $ evans -r cli list api.Service # list all methods belong to service "api.Service"`,
 		}, "\n"),
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
+			if cfg.REPL.ColoredOutput {
+				ui = cui.NewColored(ui)
+			}
+
 			var dsn string
 			args := cmd.Flags().Args()
 			if len(args) > 0 {
@@ -105,6 +113,10 @@ The symbol should be a fully-qualified name. If no symbol is passed, desc shows 
 			`        $ evans -r cli desc api.Request # describe the message descriptor of "api.Request"`,
 		}, "\n"),
 		RunE: runFunc(flags, func(cmd *cobra.Command, cfg *mergedConfig) error {
+			if cfg.REPL.ColoredOutput {
+				ui = cui.NewColored(ui)
+			}
+
 			var fqn string
 			args := cmd.Flags().Args()
 			if len(args) > 0 {
