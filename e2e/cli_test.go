@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fatih/color"
 	"github.com/google/go-cmp/cmp"
 	"github.com/ktr0731/evans/app"
 	"github.com/ktr0731/evans/cui"
@@ -64,6 +65,8 @@ func TestE2E_CLI(t *testing.T) {
 		// But, if it is prefer to show as it is, you can it by specifying
 		// unflatten to true.
 		unflatten bool
+
+		deprecatedUsage bool
 	}{
 		"print usage text to the Writer (common flag)": {
 			commonFlags:      "--help",
@@ -107,57 +110,63 @@ func TestE2E_CLI(t *testing.T) {
 			assertWithGolden: true,
 		},
 		"cannot launch CLI mode because proto files didn't be passed": {
-			commonFlags:  "--package api --service Example",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in api.Example.Unary",
 			expectedCode: 1,
 		},
-		"cannot launch CLI mode because --package is invalid value": {
-			commonFlags:  "--package foo --service Example --proto testdata/test.proto",
+		"cannot launch CLI mode because package name is invalid value": {
+			commonFlags:  "--proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in foo.Example.Unary",
 			expectedCode: 1,
 		},
-		"cannot launch CLI mode because --service is invalid value": {
-			commonFlags:  "--package api --service Foo --proto testdata/test.proto",
+		"cannot launch CLI mode because service name is invalid value": {
+			commonFlags:  "--proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in api.Foo.Unary",
 			expectedCode: 1,
 		},
-		"cannot launch CLI mode because method is missing": {
-			commonFlags:  "--package api --service Example --proto testdata/test.proto",
+		"cannot launch CLI mode because method name is missing": {
+			commonFlags:  "--proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in",
+			args:         "--file testdata/unary_call.in api.Example",
 			expectedCode: 1,
 		},
-		"cannot launch CLI mode because method is invalid value": {
-			commonFlags:  "--package api --service Example --proto testdata/test.proto",
+		"cannot launch CLI mode because method name is invalid value": {
+			commonFlags:  "--proto testdata/test.proto",
 			cmd:          "call",
-			args:         "Foo --file testdata/unary_call.in",
+			args:         "--file testdata/unary_call.in api.Example.Foo",
 			expectedCode: 1,
 		},
 		"cannot launch CLI mode because the path of --file is invalid path": {
-			commonFlags:  "--package api --service Example --proto testdata/test.proto",
+			commonFlags:  "--proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file foo Unary",
+			args:         "--file foo api.Example.Unary",
 			expectedCode: 1,
 		},
 		"cannot launch CLI mode because the path of --file is invalid input": {
-			commonFlags:  "--package api --service Example --proto testdata/test.proto",
+			commonFlags:  "--proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/invalid.in Unary",
+			args:         "--file testdata/invalid.in api.Example.Unary",
 			expectedCode: 1,
 		},
 		"cannot launch CLI mode because --header didn't have value": {
-			commonFlags:  "--header foo --package api --service Example --proto testdata/test.proto",
+			commonFlags:  "--header foo --proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in api.Example.Unary",
 			expectedCode: 1,
 		},
+		"call unary RPC with an input file by CLI mode (backward-compatibility)": {
+			commonFlags:     "--package api --service Example --proto testdata/test.proto",
+			cmd:             "call",
+			args:            "--file testdata/unary_call.in Unary",
+			deprecatedUsage: true,
+			expectedOut:     `{ "message": "hello, oumae" }`,
+		},
 		"call unary RPC with an input file by CLI mode": {
-			commonFlags: "--package api --service Example --proto testdata/test.proto",
+			commonFlags: "--proto testdata/test.proto",
 			cmd:         "call",
-			args:        "--file testdata/unary_call.in Unary",
+			args:        "--file testdata/unary_call.in api.Example.Unary",
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 		"call fully-qualified unary RPC with an input file by CLI mode": {
@@ -167,16 +176,18 @@ func TestE2E_CLI(t *testing.T) {
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 		"call unary RPC with --call flag (backward-compatibility)": {
-			commonFlags: "--package api --service Example --proto testdata/test.proto",
-			cmd:         "",
-			args:        "--file testdata/unary_call.in --call Unary",
-			expectedOut: `{ "message": "hello, oumae" }`,
+			commonFlags:     "--package api --service Example --proto testdata/test.proto",
+			cmd:             "",
+			args:            "--file testdata/unary_call.in --call Unary",
+			deprecatedUsage: true,
+			expectedOut:     `{ "message": "hello, oumae" }`,
 		},
-		"call unary RPC without package name because the size of packages is 1": {
-			commonFlags: "--service Example --proto testdata/test.proto",
-			cmd:         "call",
-			args:        "--file testdata/unary_call.in Unary",
-			expectedOut: `{ "message": "hello, oumae" }`,
+		"call unary RPC without package name because the size of packages is 1 (backward-compatibility)": {
+			commonFlags:     "--service Example --proto testdata/test.proto",
+			cmd:             "call",
+			args:            "--file testdata/unary_call.in Unary",
+			deprecatedUsage: true,
+			expectedOut:     `{ "message": "hello, oumae" }`,
 		},
 		"call unary RPC without package and service name because the size of packages and services are 1": {
 			commonFlags: "--proto testdata/test.proto",
@@ -185,9 +196,9 @@ func TestE2E_CLI(t *testing.T) {
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 		"call unary RPC with an input reader by CLI mode": {
-			commonFlags: "--package api --service Example --proto testdata/test.proto",
+			commonFlags: "--proto testdata/test.proto",
 			cmd:         "call",
-			args:        "Unary",
+			args:        "api.Example.Unary",
 			beforeTest: func(t *testing.T) func(*testing.T) {
 				old := mode.DefaultCLIReader
 				mode.DefaultCLIReader = strings.NewReader(`{"name": "oumae"}`)
@@ -198,21 +209,21 @@ func TestE2E_CLI(t *testing.T) {
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 		"call client streaming RPC by CLI mode": {
-			commonFlags: "--package api --service Example --proto testdata/test.proto",
+			commonFlags: "--proto testdata/test.proto",
 			cmd:         "call",
-			args:        "ClientStreaming --file testdata/client_streaming.in",
+			args:        "--file testdata/client_streaming.in api.Example.ClientStreaming",
 			expectedOut: `{ "message": "you sent requests 4 times (oumae, kousaka, kawashima, kato)." }`,
 		},
 		"call server streaming RPC by CLI mode": {
-			commonFlags: "--package api --service Example --proto testdata/test.proto",
+			commonFlags: "--proto testdata/test.proto",
 			cmd:         "call",
-			args:        "ServerStreaming --file testdata/server_streaming.in",
+			args:        "--file testdata/server_streaming.in api.Example.ServerStreaming",
 			expectedOut: `{ "message": "hello oumae, I greet 1 times." } { "message": "hello oumae, I greet 2 times." } { "message": "hello oumae, I greet 3 times." }`,
 		},
 		"call bidi streaming RPC by CLI mode": {
-			commonFlags: "--package api --service Example --proto testdata/test.proto",
+			commonFlags: "--proto testdata/test.proto",
 			cmd:         "call",
-			args:        "BidiStreaming --file testdata/bidi_streaming.in",
+			args:        "--file testdata/bidi_streaming.in api.Example.BidiStreaming",
 			assertTest: func(t *testing.T, output string) {
 				dec := json.NewDecoder(strings.NewReader(output))
 				for {
@@ -228,9 +239,9 @@ func TestE2E_CLI(t *testing.T) {
 			},
 		},
 		"call unary RPC with an input file and custom headers by CLI mode": {
-			commonFlags: "--header ogiso=setsuna --header touma=kazusa,youko --header sound=of=destiny --package api --service Example --proto testdata/test.proto",
+			commonFlags: "--header ogiso=setsuna --header touma=kazusa,youko --header sound=of=destiny --proto testdata/test.proto",
 			cmd:         "call",
-			args:        "UnaryHeader --file testdata/unary_header.in",
+			args:        "--file testdata/unary_header.in api.Example.UnaryHeader",
 			assertTest: func(t *testing.T, output string) {
 				expectedStrings := []string{
 					"key = ogiso",
@@ -250,24 +261,32 @@ func TestE2E_CLI(t *testing.T) {
 
 		// call command with reflection
 
-		"cannot launch CLI mode with reflection because method is missing": {
-			commonFlags:  "--reflection --package api --service Example --proto testdata/test.proto",
+		"cannot launch CLI mode with reflection because method name is missing": {
+			commonFlags:  "--reflection --proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in",
+			args:         "--file testdata/unary_call.in api.Example",
 			reflection:   true,
 			expectedCode: 1,
 		},
 		"cannot launch CLI mode with reflection because server didn't enable reflection": {
-			commonFlags:  "--reflection --package api --service Example",
+			commonFlags:  "--reflection",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in api.Example.Unary",
 			reflection:   false,
 			expectedCode: 1,
 		},
+		"call unary RPC by CLI mode with reflection with an input file (backward-compatibility)": {
+			commonFlags:     "--reflection --package api --service Example",
+			cmd:             "call",
+			args:            "--file testdata/unary_call.in Unary",
+			reflection:      true,
+			deprecatedUsage: true,
+			expectedOut:     `{ "message": "hello, oumae" }`,
+		},
 		"call unary RPC by CLI mode with reflection with an input file": {
-			commonFlags: "--reflection --package api --service Example",
+			commonFlags: "--reflection",
 			cmd:         "call",
-			args:        "--file testdata/unary_call.in Unary",
+			args:        "--file testdata/unary_call.in api.Example.Unary",
 			reflection:  true,
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
@@ -275,81 +294,81 @@ func TestE2E_CLI(t *testing.T) {
 		// call command with TLS
 
 		"cannot launch CLI mode with TLS because the server didn't enable TLS": {
-			commonFlags:  "--tls --service Example --proto testdata/test.proto",
+			commonFlags:  "--tls --proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in api.Example.Unary",
 			tls:          false,
 			expectedCode: 1,
 		},
 		"cannot launch CLI mode with TLS because the client didn't enable TLS": {
-			commonFlags:  "--service Example --proto testdata/test.proto",
+			commonFlags:  "--proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in api.Example.Unary",
 			tls:          true,
 			expectedCode: 1,
 		},
 		"cannot launch CLI mode with TLS because cannot validate certs for 127.0.0.1 (default value)": {
-			commonFlags:  "--tls --service Example --proto testdata/test.proto",
+			commonFlags:  "--tls --proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in api.Example.Unary",
 			tls:          true,
 			expectedCode: 1,
 		},
 		"cannot launch CLI mode with TLS because signed authority is unknown": {
-			commonFlags:  "--tls --host localhost --service Example --proto testdata/test.proto",
+			commonFlags:  "--tls --host localhost --proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in api.Example.Unary",
 			tls:          true,
 			expectedCode: 1,
 		},
 		"call unary RPC with TLS by CLI mode": {
-			commonFlags: "--tls --host localhost --cacert testdata/rootCA.pem --service Example --proto testdata/test.proto",
+			commonFlags: "--tls --host localhost --cacert testdata/rootCA.pem --proto testdata/test.proto",
 			cmd:         "call",
-			args:        "--file testdata/unary_call.in Unary",
+			args:        "--file testdata/unary_call.in api.Example.Unary",
 			tls:         true,
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 		"cannot launch CLI mode with TLS and reflection by CLI mode because server didn't enable TLS": {
-			commonFlags:  "--tls -r --host localhost --cacert testdata/rootCA.pem --service Example",
+			commonFlags:  "--tls -r --host localhost --cacert testdata/rootCA.pem",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in api.Example.Unary",
 			tls:          false,
 			reflection:   true,
 			expectedCode: 1,
 		},
 		"call unary RPC with TLS and reflection by CLI mode": {
-			commonFlags: "--tls -r --host localhost --cacert testdata/rootCA.pem --service Example",
+			commonFlags: "--tls -r --host localhost --cacert testdata/rootCA.pem",
 			cmd:         "call",
-			args:        "--file testdata/unary_call.in Unary",
+			args:        "--file testdata/unary_call.in api.Example.Unary",
 			tls:         true,
 			reflection:  true,
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 		"call unary RPC with TLS and --servername by CLI mode": {
-			commonFlags: "--tls --servername localhost --cacert testdata/rootCA.pem --service Example --proto testdata/test.proto",
+			commonFlags: "--tls --servername localhost --cacert testdata/rootCA.pem --proto testdata/test.proto",
 			cmd:         "call",
-			args:        "--file testdata/unary_call.in Unary",
+			args:        "--file testdata/unary_call.in api.Example.Unary",
 			tls:         true,
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 		"cannot launch CLI mode with mutual TLS auth because --certkey is missing": {
-			commonFlags:  "--tls --host localhost --cacert testdata/rootCA.pem --cert testdata/localhost.pem --service Example --proto testdata/test.proto",
+			commonFlags:  "--tls --host localhost --cacert testdata/rootCA.pem --cert testdata/localhost.pem --proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in api.Example.Unary",
 			tls:          true,
 			expectedCode: 1,
 		},
 		"cannot launch CLI mode with mutual TLS auth because --cert is missing": {
-			commonFlags:  "--tls --host localhost --cacert testdata/rootCA.pem --certkey testdata/localhost-key.pem --service Example --proto testdata/test.proto",
+			commonFlags:  "--tls --host localhost --cacert testdata/rootCA.pem --certkey testdata/localhost-key.pem --proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in api.Example.Unary",
 			tls:          true,
 			expectedCode: 1,
 		},
 		"call unary RPC with mutual TLS auth by CLI mode": {
-			commonFlags: "--tls --host localhost --cacert testdata/rootCA.pem --cert testdata/localhost.pem --certkey testdata/localhost-key.pem --service Example --proto testdata/test.proto",
+			commonFlags: "--tls --host localhost --cacert testdata/rootCA.pem --cert testdata/localhost.pem --certkey testdata/localhost-key.pem --proto testdata/test.proto",
 			cmd:         "call",
-			args:        "--file testdata/unary_call.in Unary",
+			args:        "--file testdata/unary_call.in api.Example.Unary",
 			tls:         true,
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
@@ -357,45 +376,45 @@ func TestE2E_CLI(t *testing.T) {
 		// call command with gRPC-Web
 
 		"cannot send a request to gRPC-Web server because the server didn't enable gRPC-Web": {
-			commonFlags:  "--web --package api --service Example --proto testdata/test.proto",
+			commonFlags:  "--web --proto testdata/test.proto",
 			cmd:          "call",
-			args:         "--file testdata/unary_call.in Unary",
+			args:         "--file testdata/unary_call.in api.Example.Unary",
 			web:          false,
 			expectedCode: 1,
 		},
 		"call unary RPC with an input file by CLI mode against to gRPC-Web server": {
-			commonFlags: "--web --package api --service Example --proto testdata/test.proto",
+			commonFlags: "--web --proto testdata/test.proto",
 			cmd:         "call",
-			args:        "--file testdata/unary_call.in Unary",
+			args:        "--file testdata/unary_call.in api.Example.Unary",
 			web:         true,
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 		"call unary RPC with an input file by CLI mode and reflection against to gRPC-Web server": {
-			commonFlags: "--web -r --service Example",
+			commonFlags: "--web -r",
 			cmd:         "call",
-			args:        "--file testdata/unary_call.in Unary",
+			args:        "--file testdata/unary_call.in api.Example.Unary",
 			web:         true,
 			reflection:  true,
 			expectedOut: `{ "message": "hello, oumae" }`,
 		},
 		"call client streaming RPC by CLI mode against to gRPC-Web server": {
-			commonFlags: "--web --service Example --proto testdata/test.proto",
+			commonFlags: "--web --proto testdata/test.proto",
 			cmd:         "call",
-			args:        "ClientStreaming --file testdata/client_streaming.in",
+			args:        "--file testdata/client_streaming.in api.Example.ClientStreaming",
 			web:         true,
 			expectedOut: `{ "message": "you sent requests 4 times (oumae, kousaka, kawashima, kato)." }`,
 		},
 		"call server streaming RPC by CLI mode against to gRPC-Web server": {
-			commonFlags: "--web --service Example --proto testdata/test.proto",
+			commonFlags: "--web --proto testdata/test.proto",
 			cmd:         "call",
-			args:        "ServerStreaming --file testdata/server_streaming.in",
+			args:        "--file testdata/server_streaming.in api.Example.ServerStreaming",
 			web:         true,
 			expectedOut: `{ "message": "hello oumae, I greet 1 times." } { "message": "hello oumae, I greet 2 times." } { "message": "hello oumae, I greet 3 times." }`,
 		},
 		"call bidi streaming RPC by CLI mode against to gRPC-Web server": {
-			commonFlags: "--web --service Example --proto testdata/test.proto",
+			commonFlags: "--web --proto testdata/test.proto",
 			cmd:         "call",
-			args:        "BidiStreaming --file testdata/bidi_streaming.in",
+			args:        "--file testdata/bidi_streaming.in api.Example.BidiStreaming",
 			web:         true,
 			assertTest: func(t *testing.T, output string) {
 				dec := json.NewDecoder(strings.NewReader(output))
@@ -412,52 +431,52 @@ func TestE2E_CLI(t *testing.T) {
 			},
 		},
 		"call unary RPC with --enrich flag": {
-			commonFlags:      "-r --service Example",
+			commonFlags:      "-r",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailer",
+			args:             "--file testdata/unary_call.in --enrich api.Example.UnaryHeaderTrailer",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
 		"call unary RPC with --enrich flag and JSON format": {
-			commonFlags:      "-r --service Example",
+			commonFlags:      "-r",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailer --output json",
+			args:             "--file testdata/unary_call.in --enrich --output json api.Example.UnaryHeaderTrailer",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
 		"call failure unary RPC with --enrich flag": {
-			commonFlags:      "-r --service Example",
+			commonFlags:      "-r",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailerFailure",
+			args:             "--file testdata/unary_call.in --enrich api.Example.UnaryHeaderTrailerFailure",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 			expectedCode:     1,
 		},
 		"call failure unary RPC with --enrich and JSON format": {
-			commonFlags:      "-r --service Example",
+			commonFlags:      "-r",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailerFailure --output json",
+			args:             "--file testdata/unary_call.in --enrich --output json api.Example.UnaryHeaderTrailerFailure",
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 			expectedCode:     1,
 		},
 		"call unary RPC with --enrich flag against to gRPC-Web server": {
-			commonFlags:      "--web -r --service Example",
+			commonFlags:      "--web -r",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailer",
+			args:             "--file testdata/unary_call.in --enrich api.Example.UnaryHeaderTrailer",
 			web:              true,
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
 		},
 		"call failure unary RPC with --enrich flag against to gRPC-Web server": {
-			commonFlags:      "--web -r --service Example",
+			commonFlags:      "--web -r",
 			cmd:              "call",
-			args:             "--file testdata/unary_call.in --enrich UnaryHeaderTrailerFailure",
+			args:             "--file testdata/unary_call.in --enrich api.Example.UnaryHeaderTrailerFailure",
 			web:              true,
 			reflection:       true,
 			unflatten:        true,
@@ -630,7 +649,12 @@ func TestE2E_CLI(t *testing.T) {
 				if c.expectedOut != "" && actual != c.expectedOut {
 					t.Errorf("unexpected output:\n%s", cmp.Diff(c.expectedOut, actual))
 				}
-				if eoutBuf.String() != "" {
+				eout := eoutBuf.String()
+				if c.deprecatedUsage {
+					// Trim "deprecated" message.
+					eout = strings.Replace(eout, color.YellowString("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")+"\n", "", -1)
+				}
+				if eout != "" {
 					t.Errorf("expected code is 0, but got an error message: '%s'", eoutBuf.String())
 				}
 			}

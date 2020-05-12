@@ -47,6 +47,7 @@ So, you can format it by any commands like `jq`. Also, if you want to use the sa
    - [Server streaming RPC](#server-streaming-rpc)
    - [Bidirectional streaming RPC](#bidirectional-streaming-rpc)
    - [Skip the rest of fields](#skip-the-rest-of-fields)
+   - [Enriched response](#enriched-response)
 - [Usage (CLI)](#usage-cli)
    - [Basic usage](#basic-usage-1)
    - [Repeated fields](#repeated-fields-1)
@@ -55,6 +56,7 @@ So, you can format it by any commands like `jq`. Also, if you want to use the sa
    - [Client streaming RPC](#client-streaming-rpc-1)
    - [Server streaming RPC](#server-streaming-rpc-1)
    - [Bidirectional streaming RPC](#bidirectional-streaming-rpc-1)
+   - [Enriched response](#enriched-response-1)
 - [Other features](#other-features)
    - [gRPC-Web](#grpc-web)
 - [Supported IDL (interface definition language)](#supported-idl-interface-definition-language)
@@ -175,9 +177,6 @@ To show more description of a message:
 
 Set headers for each request:
 ```
-> header -h
-usage: header <key>=<value>[, <key>=<value>...]
-
 > header foo=bar
 ```
 
@@ -191,6 +190,8 @@ To show headers:
 | grpc-client | evans |
 +-------------+-------+
 ```
+
+Note that if you want to set comma-included string to a header value, it is required to specify `--raw` option.
 
 To remove the added header:
 ```
@@ -387,11 +388,64 @@ message Request {
 In this case, REPL prompts `full_name.first_name` automatically. To skip `full_name` itself, we can use `--dig-manually` option.
 It asks whether dig down a message field when the prompt encountered it.
 
+### Enriched response
+To display more enriched response, you can use `--enrich` option.
+
+```
+> call --enrich Unary
+name (TYPE_STRING) => ktr
+content-type: application/grpc
+header_key1: header_val1
+header_key2: header_val2
+
+{
+  "message": "hello, ktr"
+}
+
+trailer_key1: trailer_val1
+trailer_key2: trailer_val2
+
+code: OK
+number: 0
+message: ""
+```
+
 ## Usage (CLI)
 ### Basic usage
+CLI mode also has some commands.  
+
+`list` command provides gRPC service inspection against to the gRPC server.
+
+``` sh
+$ evans -r cli list
+api.Example
+grpc.reflection.v1alpha.ServerReflection
+```
+
+If an service name is specified, it displays methods belonging to the service.
+
+``` sh
+$ evans -r cli list api.Example
+api.Example.Unary
+api.Example.UnaryBytes
+api.Example.UnaryEnum
+...
+```
+
+`desc` command describes the passed symbol (service, method, message, and so on).
+
+``` sh
+api.Example:
+service Example {
+  rpc Unary ( .api.SimpleRequest ) returns ( .api.SimpleResponse );
+  rpc UnaryBytes ( .api.UnaryBytesRequest ) returns ( .api.SimpleResponse );
+  rpc UnaryEnum ( .api.UnaryEnumRequest ) returns ( .api.SimpleResponse );
+  ...
+}
+```
+
+`call` command invokes a method.
 You can input requests from `stdin` or files.  
-Unlike REPL mode, you need to specify `--package`, `--service` and the method you want to call.
-If gRPC server enables gRPC reflection, `--package` is unnecessary. (instead, `-r` requires)  
 
 Use `--file` (`-f`) to specify a file.
 ``` sh
@@ -400,7 +454,16 @@ $ cat request.json
   "name": "ktr"
 }
 
-$ evans --service Example cli --call --file request.json Unary
+$ evans --proto api/api.proto cli call --file request.json api.Example.Unary
+{
+  "message": "hello, ktr"
+}
+```
+
+If gRPC reflection is enabled, `--reflection` (`-r`) is available instead of specifying proto files.
+
+``` sh
+$ evans -r cli call --file request.json api.Example.Unary
 {
   "message": "hello, ktr"
 }
@@ -408,7 +471,7 @@ $ evans --service Example cli --call --file request.json Unary
 
 Use `stdin`.
 ``` sh
-$ echo '{ "name": "ktr" }' | evans --service Example cli --call Unary
+$ echo '{ "name": "ktr" }' | evans cli call api.Example.Unary
 {
   "message": "hello, ktr"
 }
@@ -425,9 +488,16 @@ service = "Example"
 
 Then, the command will be more clear.  
 
+``` sh
+$ echo '{ "name": "ktr" }' | evans cli call Unary
+{
+  "message": "hello, ktr"
+}
+```
+
 ### Repeated fields
 ``` sh
-$ echo '{ "name": ["foo", "bar"] }' | evans -r --service Example cli --call UnaryRepeated
+$ echo '{ "name": ["foo", "bar"] }' | evans -r cli call api.Example.UnaryRepeated
 {
   "message": "hello, foo, bar"
 }
@@ -435,7 +505,7 @@ $ echo '{ "name": ["foo", "bar"] }' | evans -r --service Example cli --call Unar
 
 ### Enum fields
 ``` sh
-$ echo '{ "gender": 0 }' | evans -r --service Example cli --call UnaryEnum
+$ echo '{ "gender": 0 }' | evans -r cli call api.Example.UnaryEnum
 {
   "message": "M"
 }
@@ -448,12 +518,12 @@ This constraint is come from Go's standard package [encoding/json](https://golan
 $ echo 'Foo' | base64
 Rm9vCg==
 
-$ echo '{"data": "Rm9vCg=="}' | evans -r --service Example cli --call UnaryBytes
+$ echo '{"data": "Rm9vCg=="}' | evans -r cli call api.Example.UnaryBytes
 ```
 
 ### Client streaming RPC
 ``` sh
-$ echo '{ "name": "ktr" } { "name": "ktr" }' | evans -r --service Example cli --call ClientStreaming
+$ echo '{ "name": "ktr" } { "name": "ktr" }' | evans -r cli call api.Example.ClientStreaming
 {
   "message": "ktr, you greet 2 times."
 }
@@ -461,7 +531,7 @@ $ echo '{ "name": "ktr" } { "name": "ktr" }' | evans -r --service Example cli --
 
 ### Server streaming RPC
 ``` sh
-$ echo '{ "name": "ktr" }' | evans -r --service Example cli --call ServerStreaming
+$ echo '{ "name": "ktr" }' | evans -r cli call api.Example.ServerStreaming
 {
   "message": "hello ktr, I greet 0 times."
 }
@@ -477,7 +547,7 @@ $ echo '{ "name": "ktr" }' | evans -r --service Example cli --call ServerStreami
 
 ### Bidirectional streaming RPC
 ``` sh
-$ echo '{ "name": "foo" } { "name": "bar" }' | evans -r --service Example cli --call BidiStreaming
+$ echo '{ "name": "foo" } { "name": "bar" }' | evans -r cli call api.Example.BidiStreaming
 {
   "message": "hello foo, I greet 0 times."
 }
@@ -498,6 +568,29 @@ $ echo '{ "name": "foo" } { "name": "bar" }' | evans -r --service Example cli --
   "message": "hello bar, I greet 0 times."
 }
 ```
+
+### Enriched response
+To display more enriched response, you can use `--enrich` option.
+
+``` 
+$ echo '{"name": "ktr"}' | evans -r cli call --enrich api.Example.Unary                                                                                     ~/.ghq/src/github.com/ktr0731/grpc-test master
+content-type: application/grpc
+header_key1: header_val1
+header_key2: header_val2
+
+{
+  "message": "hello, ktr"
+}
+
+trailer_key1: trailer_val1
+trailer_key2: trailer_val2
+
+code: OK
+number: 0
+message: ""
+```
+
+JSON output is also available with `--json` option.
 
 ## Other features
 ### gRPC-Web
