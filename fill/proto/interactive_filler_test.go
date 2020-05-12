@@ -1,10 +1,11 @@
 package proto
 
 import (
+	"testing"
+
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/ktr0731/evans/fill"
 	"github.com/ktr0731/evans/prompt"
-	"testing"
 )
 
 type testPrompt struct {
