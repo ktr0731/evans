@@ -155,7 +155,7 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 }
 
 type callCommand struct {
-	enrich, digManually bool
+	enrich, digManually, bytesFromFile bool
 }
 
 func (c *callCommand) FlagSet() (*pflag.FlagSet, bool) {
@@ -163,6 +163,7 @@ func (c *callCommand) FlagSet() (*pflag.FlagSet, bool) {
 	fs.Usage = func() {} // Disable help output when an error occurred.
 	fs.BoolVar(&c.enrich, "enrich", false, "enrich response output includes header, message, trailer and status")
 	fs.BoolVar(&c.digManually, "dig-manually", false, "prompt asks whether to dig down if it encountered to a message field")
+	fs.BoolVar(&c.bytesFromFile, "bytes-from-file", false, "interpret TYPE_BYTES input as a relative path to a file")
 	return fs, true
 }
 
@@ -195,7 +196,9 @@ func (c *callCommand) Run(w io.Writer, args []string) error {
 		},
 	)
 
-	err := usecase.CallRPCInteractively(context.Background(), w, args[0], c.digManually)
+	// here we create the request context
+	// we also add the call command flags here
+	err := usecase.CallRPCInteractively(context.Background(), w, args[0], c.digManually, c.bytesFromFile)
 	if errors.Is(err, io.EOF) {
 		return errors.New("inputting canceled")
 	}

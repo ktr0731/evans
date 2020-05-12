@@ -3,6 +3,8 @@ package proto
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
+	"path/filepath"
 	"strings"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -20,7 +22,8 @@ type InteractiveFiller struct {
 	prefixFormat string
 	state        promptInputterState
 
-	digManually bool
+	digManually   bool
+	bytesFromFile bool
 }
 
 // NewInteractiveFiller instantiates a new filler that fills each field interactively.
@@ -35,8 +38,9 @@ func NewInteractiveFiller(prompt prompt.Prompt, prefixFormat string) *Interactiv
 // Fill let you input each field interactively by using a prompt. v will be set field values inputted by a prompt.
 //
 // Note that Fill resets the previous state when it is called again.
-func (f *InteractiveFiller) Fill(v interface{}, digManually bool) error {
-	f.digManually = digManually
+func (f *InteractiveFiller) Fill(v interface{}, opts fill.InteractiveFillerOpts) error {
+	f.digManually = opts.DigManually
+	f.bytesFromFile = opts.BytesFromFile
 
 	msg, ok := v.(*dynamic.Message)
 	if !ok {
@@ -213,7 +217,7 @@ func (f *InteractiveFiller) inputField(dmsg *dynamic.Message, field *desc.FieldD
 		f.state.color.Next()
 	default: // Normal fields.
 		f.prompt.SetPrefix(f.makePrefix(field))
-		v, err := f.inputPrimitiveField(field)
+		v, err := f.inputPrimitiveField(descriptor.FieldDescriptorProto_Type(descriptor.FieldDescriptorProto_Type_value[field.GetType().String()]))
 		if err != nil {
 			return err
 		}
@@ -301,7 +305,7 @@ func (f *InteractiveFiller) inputRepeatedField(dmsg *dynamic.Message, field *des
 
 // inputPrimitiveField reads an input and converts it to a Go type.
 // If CTRL+d is entered, inputPrimitiveField returns io.EOF.
-func (f *InteractiveFiller) inputPrimitiveField(field *desc.FieldDescriptor) (interface{}, error) {
+func (f *InteractiveFiller) inputPrimitiveField(fieldType descriptor.FieldDescriptorProto_Type) (interface{}, error) {
 	in, err := f.prompt.Input()
 	if errors.Is(err, io.EOF) {
 		return "", io.EOF
@@ -310,7 +314,28 @@ func (f *InteractiveFiller) inputPrimitiveField(field *desc.FieldDescriptor) (in
 		return "", errors.Wrap(err, "failed to read user input")
 	}
 
-	return convertValue(in, descriptor.FieldDescriptorProto_Type(descriptor.FieldDescriptorProto_Type_value[field.GetType().String()]))
+	v, err := convertValue(in, fieldType)
+	if err != nil {
+		return nil, err
+	}
+
+	if fieldType == descriptor.FieldDescriptorProto_TYPE_BYTES {
+		return f.processBytesInput(v)
+	}
+
+	return v, err
+}
+
+func (f *InteractiveFiller) processBytesInput(v interface{}) (interface{}, error) {
+	if _, ok := v.([]byte); !ok {
+		return nil, errors.New("value is not of type bytes")
+	}
+
+	if f.bytesFromFile {
+		return readFileFromRelativePath(string(v.([]byte)))
+	}
+
+	return v, nil
 }
 
 func (f *InteractiveFiller) isSelectedOneOf(field *desc.FieldDescriptor) bool {
@@ -437,4 +462,17 @@ func makePrefix(s string, field *desc.FieldDescriptor, ancestor []string, ancest
 
 func isOneOfField(field *desc.FieldDescriptor) bool {
 	return field.GetOneOf() != nil
+}
+
+func readFileFromRelativePath(path string) ([]byte, error) {
+	if path == "" {
+		return nil, nil
+	}
+
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadFile(absPath)
 }
