@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"path/filepath"
 	"strings"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -217,7 +216,7 @@ func (f *InteractiveFiller) inputField(dmsg *dynamic.Message, field *desc.FieldD
 		f.state.color.Next()
 	default: // Normal fields.
 		f.prompt.SetPrefix(f.makePrefix(field))
-		v, err := f.inputPrimitiveField(descriptor.FieldDescriptorProto_Type(descriptor.FieldDescriptorProto_Type_value[field.GetType().String()]))
+		v, err := f.inputPrimitiveField(field.GetType())
 		if err != nil {
 			return err
 		}
@@ -468,11 +467,5 @@ func readFileFromRelativePath(path string) ([]byte, error) {
 	if path == "" {
 		return nil, nil
 	}
-
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return ioutil.ReadFile(absPath)
+	return ioutil.ReadFile(path)
 }

@@ -9,28 +9,13 @@ import (
 )
 
 type testPrompt struct {
+	prompt.Prompt
+
 	input string
 }
 
 func (t *testPrompt) Input() (string, error) {
 	return t.input, nil
-}
-
-func (t *testPrompt) Select(message string, options []string) (selected string, _ error) {
-	panic("implement me")
-}
-
-func (t *testPrompt) SetPrefix(prefix string) {
-}
-
-func (t *testPrompt) SetPrefixColor(color prompt.Color) {
-}
-
-func (t *testPrompt) SetCompleter(c prompt.Completer) {
-}
-
-func (t *testPrompt) GetCommandHistory() []string {
-	return []string{}
 }
 
 func TestInteractiveProtoFiller(t *testing.T) {
