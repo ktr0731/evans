@@ -1,6 +1,7 @@
 usage: call <method name>
 
 Options:
-      --dig-manually   prompt asks whether to dig down if it encountered to a message field
-      --enrich         enrich response output includes header, message, trailer and status
+      --bytes-from-file   interpret TYPE_BYTES input as a relative path to a file
+      --dig-manually      prompt asks whether to dig down if it encountered to a message field
+      --enrich            enrich response output includes header, message, trailer and status
 
