@@ -2,7 +2,7 @@
 [default]
   package = ""
   protofile = []
-  protopath = ["bar","yoko.touma"]
+  protopath = ["bar", "yoko.touma"]
   service = ""
 
 [log]
