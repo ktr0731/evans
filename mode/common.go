@@ -22,7 +22,7 @@ func newSpec(cfg *config.Config, grpcClient grpcreflection.Client) (spec idl.Spe
 	if errors.Is(err, grpcreflection.ErrTLSHandshakeFailed) {
 		return nil, errors.New("TLS handshake failed. check whether client or server is misconfigured")
 	} else if err != nil {
-		return nil, errors.Wrap(err, "failed to instantiate the spec from proto files")
+		return nil, errors.Wrap(err, "failed to instantiate the spec")
 	}
 	return spec, nil
 }
