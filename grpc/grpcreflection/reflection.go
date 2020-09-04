@@ -68,8 +68,13 @@ func (c *client) ListPackages() ([]*desc.FileDescriptor, error) {
 	for _, s := range ssvcs {
 		svc, err := c.client.ResolveService(s)
 		if err != nil {
-			return nil, err
+			if gr.IsElementNotFoundError(err) {
+				// Service doesn't expose the ServiceDescriptor, skip.
+				continue
+			}
+			return nil, errors.Wrapf(err, "failed to resolve service '%s'", s)
 		}
+
 		fds = append(fds, svc.GetFile())
 	}
 
