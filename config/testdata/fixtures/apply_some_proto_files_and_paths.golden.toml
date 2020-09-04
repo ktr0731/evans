@@ -1,8 +1,8 @@
 
 [default]
   package = ""
-  protofile = ["hoge","fuga"]
-  protopath = ["foo","bar"]
+  protofile = ["hoge", "fuga"]
+  protopath = ["foo", "bar"]
   service = ""
 
 [log]
