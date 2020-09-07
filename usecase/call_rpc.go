@@ -133,10 +133,8 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 
 		go func() {
 			t := time.NewTicker(timeout)
-			select {
-			case <-t.C:
-				cancel()
-			}
+			<-t.C
+			cancel()
 		}()
 
 		return ctx, nil
