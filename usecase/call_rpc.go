@@ -129,7 +129,15 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			return nil, err
 		}
 
-		ctx, _ = context.WithTimeout(ctx, timeout)
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+
+		go func() {
+			t := time.NewTicker(timeout)
+			select {
+			case <-t.C:
+				cancel()
+			}
+		}()
 
 		return ctx, nil
 	}
