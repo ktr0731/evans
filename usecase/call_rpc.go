@@ -99,20 +99,16 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	}
 
 	parseDuration := func(duration string) (time.Duration, error) {
-		duration = strings.Replace(duration, "n", "ns", 1)
-		duration = strings.Replace(duration, "u", "us", 1)
-		duration = strings.Replace(duration, "m", "ms", 1)
-		duration = strings.Replace(duration, "S", "s", 1)
-		duration = strings.Replace(duration, "M", "m", 1)
-		duration = strings.Replace(duration, "H", "h", 1)
+		replacer := strings.NewReplacer("n", "ns", "u", "us", "m", "ms", "S", "s", "M", "m", "H", "h")
+		duration = replacer.Replace(duration)
 		timeout, err := time.ParseDuration(duration)
 		if err != nil {
-			return 0, errors.Wrapf(err, "Malformed grpc-timeout header")
+			return 0, errors.Wrapf(err, "malformed grpc-timeout header")
 		}
 		return timeout, err
 	}
 
-	enhanceContext := func(ctx context.Context) (context.Context, error) {
+	enhanceContext := func(ctx context.Context) (context.Context, context.CancelFunc, error) {
 		md := metadata.New(nil)
 		for k, v := range m.ListHeaders() {
 			md.Append(k, v...)
@@ -121,23 +117,17 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		ctx = metadata.NewOutgoingContext(ctx, md)
 		values := md.Get("grpc-timeout")
 		if len(values) == 0 {
-			return ctx, nil
+			return ctx, func() {}, nil
 		}
 
 		timeout, err := parseDuration(values[len(values)-1])
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 
-		go func() {
-			t := time.NewTicker(timeout)
-			<-t.C
-			cancel()
-		}()
-
-		return ctx, nil
+		return ctx, cancel, nil
 	}
 
 	streamDesc := &gogrpc.StreamDesc{
@@ -148,6 +138,11 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 
 	switch {
 	case rpc.IsClientStreaming && rpc.IsServerStreaming:
+		ctx, _, err := enhanceContext(ctx)
+		if err != nil {
+			return errors.Wrap(err, "failed to enhance context with metadata")
+		}
+
 		stream, err := m.gRPCClient.NewBidiStream(ctx, streamDesc, rpc.FullyQualifiedName)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create a bidi stream for RPC '%s'", streamDesc.StreamName)
@@ -255,6 +250,11 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	//   6. Format the response and output it.
 	//
 	case rpc.IsClientStreaming:
+		ctx, _, err := enhanceContext(ctx)
+		if err != nil {
+			return errors.Wrap(err, "failed to enhance context with metadata")
+		}
+
 		stream, err := m.gRPCClient.NewClientStream(ctx, streamDesc, rpc.FullyQualifiedName)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create a new client stream for RPC '%s'", streamDesc.StreamName)
@@ -317,7 +317,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			return err
 		}
 
-		ctx, err := enhanceContext(ctx)
+		ctx, _, err := enhanceContext(ctx)
 		if err != nil {
 			return errors.Wrap(err, "failed to enhance context with metadata")
 		}
@@ -396,7 +396,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			return err
 		}
 
-		ctx, err = enhanceContext(ctx)
+		ctx, _, err := enhanceContext(ctx)
 		if err != nil {
 			return errors.Wrap(err, "failed to enhance context with metadata")
 		}
