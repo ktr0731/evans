@@ -122,7 +122,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 
 		timeout, err := parseDuration(values[len(values)-1])
 		if err != nil {
-			return nil, nil, err
+			return nil, func() {}, err
 		}
 
 		ctx, cancel := context.WithTimeout(ctx, timeout)
@@ -138,13 +138,15 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 
 	switch {
 	case rpc.IsClientStreaming && rpc.IsServerStreaming:
-		ctx, _, err := enhanceContext(ctx)
+		ctx, cancel, err := enhanceContext(ctx)
 		if err != nil {
+			cancel()
 			return errors.Wrap(err, "failed to enhance context with metadata")
 		}
 
 		stream, err := m.gRPCClient.NewBidiStream(ctx, streamDesc, rpc.FullyQualifiedName)
 		if err != nil {
+			cancel()
 			return errors.Wrapf(err, "failed to create a bidi stream for RPC '%s'", streamDesc.StreamName)
 		}
 
@@ -250,13 +252,15 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	//   6. Format the response and output it.
 	//
 	case rpc.IsClientStreaming:
-		ctx, _, err := enhanceContext(ctx)
+		ctx, cancel, err := enhanceContext(ctx)
 		if err != nil {
+			cancel()
 			return errors.Wrap(err, "failed to enhance context with metadata")
 		}
 
 		stream, err := m.gRPCClient.NewClientStream(ctx, streamDesc, rpc.FullyQualifiedName)
 		if err != nil {
+			cancel()
 			return errors.Wrapf(err, "failed to create a new client stream for RPC '%s'", streamDesc.StreamName)
 		}
 
@@ -317,13 +321,15 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			return err
 		}
 
-		ctx, _, err := enhanceContext(ctx)
+		ctx, cancel, err := enhanceContext(ctx)
 		if err != nil {
+			cancel()
 			return errors.Wrap(err, "failed to enhance context with metadata")
 		}
 
 		stream, err := m.gRPCClient.NewServerStream(ctx, streamDesc, rpc.FullyQualifiedName)
 		if err != nil {
+			cancel()
 			return errors.Wrapf(err, "failed to create a new server stream for RPC '%s'", streamDesc.StreamName)
 		}
 
@@ -396,8 +402,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			return err
 		}
 
-		ctx, _, err := enhanceContext(ctx)
+		ctx, cancel, err := enhanceContext(ctx)
 		if err != nil {
+			cancel()
 			return errors.Wrap(err, "failed to enhance context with metadata")
 		}
 
@@ -408,6 +415,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		header, trailer, err := m.gRPCClient.Invoke(ctx, rpc.FullyQualifiedName, req, res)
 		stat, err := handleGRPCResponseError(err)
 		if err != nil {
+			cancel()
 			return errors.Wrap(err, "failed to send a request")
 		}
 
