@@ -34,9 +34,13 @@ import (
 )
 
 func main() {
+	os.Exit(realMain())
+}
+
+func realMain() int {
 	if len(os.Args) < 3 || strings.HasPrefix(os.Args[1], "-") {
 		fmt.Println("Usage: e2egen <file> <Evans flags>")
-		os.Exit(1)
+		return 1
 	}
 
 	fileName, args := os.Args[1], os.Args[2:]
@@ -44,13 +48,13 @@ func main() {
 	src, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to read the file: %s", err)
-		os.Exit(1)
+		return 1
 	}
 
 	f, err := os.Create(fileName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to open the file: %s", err)
-		os.Exit(1)
+		return 1
 	}
 	defer f.Close()
 
@@ -61,7 +65,7 @@ func main() {
 	code := app.New(cui.New()).Run(args)
 
 	if code != 0 {
-		os.Exit(code)
+		return code
 	}
 
 	testCaseName, _ := goprompt.Input("testcase name: ", func(goprompt.Document) []goprompt.Suggest { return nil })
@@ -70,14 +74,14 @@ func main() {
 		if _, err := f.Write(src); err != nil {
 			fmt.Fprintf(os.Stderr, "failed to write src to the file: %s", err)
 		}
-		os.Exit(1)
+		return 1
 	}
 
 	if err := generateFile(f, string(src), testCaseName, p.inputHistory, args); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to generate a file: %s", err)
 	}
 
-	os.Exit(code)
+	return code
 }
 
 func generateFile(w io.Writer, src, testCaseName string, input, args []string) error {

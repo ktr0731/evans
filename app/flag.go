@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+//nolint:maligned
 // flags defines available command line flags.
 type flags struct {
 	mode struct {
@@ -69,7 +70,7 @@ func (f *flags) validate() error {
 	return result
 }
 
-// -- stringToString Value
+// -- stringToString Value.
 type stringToStringSliceValue struct {
 	value   *map[string][]string
 	changed bool
@@ -82,7 +83,7 @@ func newStringToStringValue(val map[string][]string, p *map[string][]string) *st
 	return ssv
 }
 
-// Format: a=1,b=2
+// Format: a=1,b=2.
 func (s *stringToStringSliceValue) Set(val string) error {
 	var ss []string
 	n := strings.Count(val, "=")

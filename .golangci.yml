@@ -32,6 +32,14 @@ linters:
     - whitespace
     - interfacer
     - scopelint
+    - asciicheck
+    - depguard
+    - godot
+    - gomodguard
+    - goprintffuncname
+    - maligned
+    - nolintlint
+    - rowserrcheck
 
 issues:
   exclude:
@@ -40,3 +48,4 @@ issues:
     - path: _test\.go
       linters:
         - interfacer
+        - maligned

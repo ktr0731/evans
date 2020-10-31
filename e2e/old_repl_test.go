@@ -325,7 +325,7 @@ func TestE2E_OldREPL(t *testing.T) {
 			} else {
 				eout := ew.String()
 				// Trim "deprecated" message.
-				eout = strings.Replace(eout, color.YellowString("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")+"\n", "", -1)
+				eout = strings.ReplaceAll(eout, color.YellowString("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")+"\n", "")
 				if eout != "" {
 					t.Errorf("expected REPL didn't write errors to ew, but got '%s'", eout)
 				}
