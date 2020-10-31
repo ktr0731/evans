@@ -28,7 +28,7 @@ jobs:
       run: go build
 
     - name: Lint
-      uses: actions-contrib/golangci-lint@v1
+      uses: actions-contrib/golangci-lint@v2.3.0
       if: matrix.os == 'ubuntu-latest'
       env:
         GOROOT: ''
