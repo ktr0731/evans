@@ -1,6 +1,7 @@
 SHELL := /bin/bash
 
-export PATH := $(PWD)/_tools:$(PATH)
+export GOBIN := $(PWD)/_tools
+export PATH := $(GOBIN):$(PATH)
 export GO111MODULE := on
 
 .PHONY: version
@@ -21,14 +22,9 @@ deps: dep
 	@go mod verify
 	@go mod tidy
 
-.PHONY: dept
-dept:
-	@go get github.com/ktr0731/dept@v0.1.3
-	@go build -o _tools/dept github.com/ktr0731/dept
-
 .PHONY: tools
-tools: dept
-	@dept -v build
+tools:
+	@cat tools/tools.go | grep -E '^\s*_\s.*' | awk '{ print $$2 }' | xargs go install
 
 .PHONY: build
 build: deps

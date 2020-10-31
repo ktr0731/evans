@@ -10,14 +10,14 @@ jobs:
 
       - restore_cache:
           keys:
-            - tool-{{ checksum "gotool.sum" }}
+            - tool-{{ checksum "go.sum" }}
 
       - run:
           name: install tools
           command: make tools
 
       - save_cache:
-          key: tool-{{ checksum "gotool.sum" }}
+          key: tool-{{ checksum "go.sum" }}
           paths:
             - /go/pkg/dept
           when: always
