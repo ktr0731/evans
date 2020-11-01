@@ -10,7 +10,7 @@ import (
 // Test_migration tests whether Get doesn't return errors.
 func Test_migration(t *testing.T) {
 	toFileName := func(ver string) string {
-		return strings.Replace(ver, ".", "_", -1) + ".toml"
+		return strings.ReplaceAll(ver, ".", "_") + ".toml"
 	}
 
 	for oldVer := range migrationScripts {

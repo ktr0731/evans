@@ -449,9 +449,9 @@ func makePrefix(s string, field *desc.FieldDescriptor, ancestor []string, ancest
 		joinedAncestor += ancestorDelimiter
 	}
 
-	s = strings.Replace(s, "{ancestor}", joinedAncestor, -1)
-	s = strings.Replace(s, "{name}", field.GetName(), -1)
-	s = strings.Replace(s, "{type}", field.GetType().String(), -1)
+	s = strings.ReplaceAll(s, "{ancestor}", joinedAncestor)
+	s = strings.ReplaceAll(s, "{name}", field.GetName())
+	s = strings.ReplaceAll(s, "{type}", field.GetType().String())
 
 	if field.IsRepeated() || ancestorHasRepeated {
 		return repeatedStr + s

@@ -20,7 +20,7 @@ type Filler interface {
 
 // InteractiveFillerOpts
 // If DigManually is true, Fill asks whether to dig down if it encountered to a message field.
-// If BytesFromFile is true, Fill will read the contents of the file from the provided relative path
+// If BytesFromFile is true, Fill will read the contents of the file from the provided relative path.
 type InteractiveFillerOpts struct {
 	DigManually, BytesFromFile bool
 }

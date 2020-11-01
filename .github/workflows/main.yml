@@ -27,13 +27,11 @@ jobs:
     - name: Build
       run: go build
 
-    - name: Lint
-      uses: actions-contrib/golangci-lint@v1
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v2
       if: matrix.os == 'ubuntu-latest'
-      env:
-        GOROOT: ''
       with:
-        args: run ./...
+        version: v1.32.1
 
     - name: Test
       run: go test -p 1 -coverpkg ./... -covermode atomic -coverprofile coverage.txt ./...

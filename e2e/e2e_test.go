@@ -90,7 +90,7 @@ func startServer(t *testing.T, useTLS, useReflection, useWeb, registerEmptyPacka
 }
 
 func flatten(s string) string {
-	s = strings.Replace(s, "\n", " ", -1)
+	s = strings.ReplaceAll(s, "\n", " ")
 	s = strings.TrimSpace(s)
 	re := regexp.MustCompile(" +")
 	return re.ReplaceAllString(s, " ")

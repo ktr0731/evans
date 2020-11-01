@@ -346,7 +346,7 @@ func TestE2E_OldCLI(t *testing.T) {
 				}
 				eout := eoutBuf.String()
 				// Trim "deprecated" message.
-				eout = strings.Replace(eout, color.YellowString("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")+"\n", "", -1)
+				eout = strings.ReplaceAll(eout, color.YellowString("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")+"\n", "")
 				if eout != "" {
 					t.Errorf("expected code is 0, but got an error message: '%s'", eout)
 				}

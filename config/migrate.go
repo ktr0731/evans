@@ -55,7 +55,7 @@ func migrate0610To0611(old string, v *viper.Viper) string {
 	//
 	//   []interface {}{
 	//     {
-	//       "key": "grpc-client",                                                                                                                          "val": "evans",
+	//       "key": "grpc-client",
 	//       "val": "evans",
 	//     },
 	//   }
