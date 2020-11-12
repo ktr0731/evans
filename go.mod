@@ -11,7 +11,7 @@ require (
 	github.com/golangci/misspell v0.3.5 // indirect
 	github.com/golangci/revgrep v0.0.0-20180812185044-276a5c0a1039 // indirect
 	github.com/google/go-cmp v0.5.2
-	github.com/goreleaser/goreleaser v0.146.0
+	github.com/goreleaser/goreleaser v0.147.0
 	github.com/gostaticanalysis/analysisutil v0.4.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.1
@@ -60,7 +60,6 @@ require (
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
-	golang.org/x/sys v0.0.0-20201029080932-201ba4db2418 // indirect
 	golang.org/x/text v0.3.4 // indirect
 	golang.org/x/tools v0.0.0-20201031021630-582c62ec74d0
 	google.golang.org/genproto v0.0.0-20200608115520-7c474a2e3482
