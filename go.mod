@@ -30,7 +30,7 @@ require (
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.8.0
 	github.com/matoous/godox v0.0.0-20200801072554-4fb83dc2941e // indirect
-	github.com/matryer/moq v0.1.3
+	github.com/matryer/moq v0.1.4
 	github.com/mattn/go-colorable v0.1.8
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-pipeline v0.0.0-20190323144519-32d779b32768 // indirect
