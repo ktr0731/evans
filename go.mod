@@ -58,7 +58,7 @@ require (
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/tools v0.0.0-20201031021630-582c62ec74d0
 	google.golang.org/genproto v0.0.0-20200608115520-7c474a2e3482
-	google.golang.org/grpc v1.33.1
+	google.golang.org/grpc v1.33.2
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	mvdan.cc/gofumpt v0.0.0-20201027171050-85d5401eb0f6 // indirect
 )
