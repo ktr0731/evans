@@ -6,7 +6,7 @@ export GO111MODULE := on
 
 .PHONY: version
 version:
-	@echo "evans: $(shell _tools/bump show meta/meta.go)"
+	@echo "evans: $(shell bump show meta/meta.go)"
 
 
 .PHONY: dep
@@ -51,7 +51,7 @@ lint:
 
 .PHONY: brew-update
 release:
-	bash .circleci/scripts/release.bash $(shell _tools/bump show meta/meta.go)
+	bash .circleci/scripts/release.bash $(shell bump show meta/meta.go)
 
 .PHONY: depgraph
 depgraph:
