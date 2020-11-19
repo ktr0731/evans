@@ -11,7 +11,7 @@ require (
 	github.com/golangci/misspell v0.3.5 // indirect
 	github.com/golangci/revgrep v0.0.0-20180812185044-276a5c0a1039 // indirect
 	github.com/google/go-cmp v0.5.2
-	github.com/goreleaser/goreleaser v0.146.0
+	github.com/goreleaser/goreleaser v0.147.2
 	github.com/gostaticanalysis/analysisutil v0.4.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.1
@@ -28,7 +28,6 @@ require (
 	github.com/ktr0731/grpc-test v0.1.7
 	github.com/ktr0731/grpc-web-go-client v0.2.7
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
-	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/manifoldco/promptui v0.8.0
 	github.com/matoous/godox v0.0.0-20200801072554-4fb83dc2941e // indirect
 	github.com/matryer/moq v0.1.3
@@ -38,7 +37,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/mattn/go-tty v0.0.0-20190424173100-523744f04859 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/pelletier/go-toml v1.8.1
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
@@ -46,8 +44,6 @@ require (
 	github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 // indirect
 	github.com/quasilyte/regex/syntax v0.0.0-20200805063351-8f842688393c // indirect
 	github.com/rakyll/statik v0.1.7
-	github.com/securego/gosec/v2 v2.5.0 // indirect
-	github.com/spf13/afero v1.4.1 // indirect
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
@@ -60,12 +56,9 @@ require (
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
-	golang.org/x/sys v0.0.0-20201029080932-201ba4db2418 // indirect
-	golang.org/x/text v0.3.4 // indirect
 	golang.org/x/tools v0.0.0-20201031021630-582c62ec74d0
 	google.golang.org/genproto v0.0.0-20200608115520-7c474a2e3482
 	google.golang.org/grpc v1.33.1
-	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	mvdan.cc/gofumpt v0.0.0-20201027171050-85d5401eb0f6 // indirect
 )

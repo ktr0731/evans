@@ -14,12 +14,14 @@ jobs:
 
       - run:
           name: install tools
-          command: make tools
+          command: |
+            go get github.com/ktr0731/bump@latest
+            go get github.com/goreleaser/goreleaser@latest
 
       - save_cache:
           key: tool-{{ checksum "go.sum" }}
           paths:
-            - /go/pkg/dept
+            - /go/pkg
           when: always
 
       - attach_workspace:
@@ -37,4 +39,4 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - go-get-tools
