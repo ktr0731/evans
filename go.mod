@@ -10,7 +10,7 @@ require (
 	github.com/golangci/golangci-lint v1.33.0
 	github.com/golangci/misspell v0.3.5 // indirect
 	github.com/golangci/revgrep v0.0.0-20180812185044-276a5c0a1039 // indirect
-	github.com/google/go-cmp v0.5.3
+	github.com/google/go-cmp v0.5.4
 	github.com/goreleaser/goreleaser v0.147.2
 	github.com/gostaticanalysis/analysisutil v0.4.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
