@@ -7,7 +7,7 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.10.0
 	github.com/golang/protobuf v1.4.3
-	github.com/golangci/golangci-lint v1.32.2
+	github.com/golangci/golangci-lint v1.33.0
 	github.com/golangci/misspell v0.3.5 // indirect
 	github.com/golangci/revgrep v0.0.0-20180812185044-276a5c0a1039 // indirect
 	github.com/google/go-cmp v0.5.3
@@ -49,7 +49,6 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/tdakkota/asciicheck v0.0.0-20200416200610-e657995f937b // indirect
-	github.com/tetafro/godot v1.1.0 // indirect
 	github.com/timakin/bodyclose v0.0.0-20200424151742-cb6215831a94 // indirect
 	github.com/tj/go-spin v1.1.0
 	github.com/tomarrell/wrapcheck v0.0.0-20200820102009-a737f1327799 // indirect
