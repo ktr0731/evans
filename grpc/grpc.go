@@ -43,7 +43,7 @@ type Type struct {
 	FullyQualifiedName string
 
 	// New instantiates a new instance of Type.  It is used for decode requests and responses.
-	New func() (interface{}, error)
+	New func() interface{}
 }
 
 // Client represents the gRPC client.

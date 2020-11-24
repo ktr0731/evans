@@ -74,17 +74,15 @@ func (s *spec) RPC(svcName, rpcName string) (*grpc.RPC, error) {
 				RequestType: &grpc.Type{
 					Name:               d.GetInputType().GetName(),
 					FullyQualifiedName: d.GetInputType().GetFullyQualifiedName(),
-					New: func() (interface{}, error) {
-						m := dynamic.NewMessage(d.GetInputType())
-						return m, nil
+					New: func() interface{} {
+						return dynamic.NewMessage(d.GetInputType())
 					},
 				},
 				ResponseType: &grpc.Type{
 					Name:               d.GetOutputType().GetName(),
 					FullyQualifiedName: d.GetOutputType().GetFullyQualifiedName(),
-					New: func() (interface{}, error) {
-						m := dynamic.NewMessage(d.GetOutputType())
-						return m, nil
+					New: func() interface{} {
+						return dynamic.NewMessage(d.GetOutputType())
 					},
 				},
 				IsServerStreaming: d.IsServerStreaming(),
