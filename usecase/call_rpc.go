@@ -55,10 +55,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		return errors.Wrap(err, "failed to get the RPC descriptor")
 	}
 	newRequest := func() (interface{}, error) {
-		req, err := rpc.RequestType.New()
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to instantiate an instance of the request type '%s'", rpc.RequestType.FullyQualifiedName)
-		}
+		req := rpc.RequestType.New()
 		err = filler.Fill(req)
 		if errors.Is(err, io.EOF) {
 			return nil, io.EOF
@@ -68,12 +65,8 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		}
 		return req, nil
 	}
-	newResponse := func() (interface{}, error) {
-		res, err := rpc.ResponseType.New()
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to instantiate an instance of the response type '%s'", rpc.RequestType.FullyQualifiedName)
-		}
-		return res, nil
+	newResponse := func() interface{} {
+		return rpc.ResponseType.New()
 	}
 	flushHeader := func(header metadata.MD) {
 		m.responseFormatter.FormatHeader(header)
@@ -156,10 +149,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		)
 		eg.Go(func() error {
 			for {
-				res, err := newResponse()
-				if err != nil {
-					return err
-				}
+				res := newResponse()
 				stat, err := handleGRPCResponseError(stream.Receive(res))
 				if err != nil {
 					if errors.Is(err, context.Canceled) {
@@ -268,10 +258,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			req, err := newRequest()
 
 			if errors.Is(err, io.EOF) {
-				res, err := newResponse()
-				if err != nil {
-					return err
-				}
+				res := newResponse()
 				stat, err := handleGRPCResponseError(stream.CloseAndReceive(res))
 				if err != nil {
 					return errors.Wrapf(err, "failed to close the stream of RPC '%s'", streamDesc.StreamName)
@@ -340,10 +327,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		var writeHeaderOnce, writeTrailerOnce sync.Once
 
 		for {
-			res, err := newResponse()
-			if err != nil {
-				return err
-			}
+			res := newResponse()
 			stat, err := handleGRPCResponseError(stream.Receive(res))
 			if err != nil {
 				if errors.Is(err, context.Canceled) {
@@ -408,10 +392,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			return errors.Wrap(err, "failed to enhance context with metadata")
 		}
 
-		res, err := newResponse()
-		if err != nil {
-			return err
-		}
+		res := newResponse()
 		header, trailer, err := m.gRPCClient.Invoke(ctx, rpc.FullyQualifiedName, req, res)
 		stat, err := handleGRPCResponseError(err)
 		if err != nil {
