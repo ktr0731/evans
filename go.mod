@@ -7,7 +7,7 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.10.0
 	github.com/golang/protobuf v1.4.3
-	github.com/golangci/golangci-lint v1.33.0
+	github.com/golangci/golangci-lint v1.34.0
 	github.com/golangci/misspell v0.3.5 // indirect
 	github.com/golangci/revgrep v0.0.0-20180812185044-276a5c0a1039 // indirect
 	github.com/google/go-cmp v0.5.4
@@ -55,9 +55,8 @@ require (
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
-	golang.org/x/tools v0.0.0-20201031021630-582c62ec74d0
+	golang.org/x/tools v0.0.0-20201121010211-780cb80bd7fb
 	google.golang.org/genproto v0.0.0-20200608115520-7c474a2e3482
 	google.golang.org/grpc v1.34.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
-	mvdan.cc/gofumpt v0.0.0-20201027171050-85d5401eb0f6 // indirect
 )
