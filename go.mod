@@ -7,12 +7,11 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.10.0
 	github.com/golang/protobuf v1.4.3
-	github.com/golangci/golangci-lint v1.34.0
+	github.com/golangci/golangci-lint v1.34.1
 	github.com/golangci/misspell v0.3.5 // indirect
 	github.com/golangci/revgrep v0.0.0-20180812185044-276a5c0a1039 // indirect
 	github.com/google/go-cmp v0.5.4
-	github.com/goreleaser/goreleaser v0.149.0
-	github.com/gostaticanalysis/analysisutil v0.4.1 // indirect
+	github.com/goreleaser/goreleaser v0.150.0
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.1
 	github.com/jhump/protoreflect v1.5.1-0.20191024213132-10815c273d3f
@@ -51,12 +50,11 @@ require (
 	github.com/tdakkota/asciicheck v0.0.0-20200416200610-e657995f937b // indirect
 	github.com/timakin/bodyclose v0.0.0-20200424151742-cb6215831a94 // indirect
 	github.com/tj/go-spin v1.1.0
-	github.com/tomarrell/wrapcheck v0.0.0-20200820102009-a737f1327799 // indirect
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
-	golang.org/x/tools v0.0.0-20201121010211-780cb80bd7fb
-	google.golang.org/genproto v0.0.0-20200608115520-7c474a2e3482
+	golang.org/x/tools v0.0.0-20201208233053-a543418bbed2
+	google.golang.org/genproto v0.0.0-20201203001206-6486ece9c497
 	google.golang.org/grpc v1.34.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )
