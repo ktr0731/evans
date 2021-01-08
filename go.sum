@@ -455,6 +455,7 @@ github.com/goreleaser/goreleaser v0.149.0/go.mod h1:4IfM3GZYelDiM3x05po3Nk2N20lQ
 github.com/goreleaser/goreleaser v0.151.1/go.mod h1:11ksMY07HR3Uj/QEGuP2pIwNyAi8zDQIvJRbaEdZnGU=
 github.com/goreleaser/goreleaser v0.152.0/go.mod h1:11ksMY07HR3Uj/QEGuP2pIwNyAi8zDQIvJRbaEdZnGU=
 github.com/goreleaser/goreleaser v0.153.0/go.mod h1:dGXqxYAUJBpLKg3AKtGcjrp3kgDJZZqz1J1B2IlyQek=
+github.com/goreleaser/goreleaser v0.154.0/go.mod h1:Gd3nknYm5h8B9NMNqDy1WHRINvtFr16NcbfnwEQYVZg=
 github.com/goreleaser/nfpm v1.10.1 h1:v8CQ9Xe+1DLYkns2g0uAgQ/pCn5qs4/iBWWk1UDV6BA=
 github.com/goreleaser/nfpm v1.10.1/go.mod h1:G0vvOjif+gnnTTWBtvYqMBh8nMGM7eNkrZU/W2gdM6o=
 github.com/goreleaser/nfpm v1.10.2/go.mod h1:R3sQteLUCtPD7GJxvDl0eqlkTX0/hqFftT3WUPLjClA=
@@ -527,6 +528,7 @@ github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NH
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/jarcoal/httpmock v1.0.6 h1:e81vOSexXU3mJuJ4l//geOmKIt+Vkxerk1feQBC8D0g=
 github.com/jarcoal/httpmock v1.0.6/go.mod h1:ATjnClrvW/3tijVmpL/va5Z3aAyGvqU3gCT8nX0Txik=
+github.com/jarcoal/httpmock v1.0.7/go.mod h1:ATjnClrvW/3tijVmpL/va5Z3aAyGvqU3gCT8nX0Txik=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 h1:BQSFePA1RWJOlocH6Fxy8MmwDt+yVQYULKfN0RoTN8A=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99/go.mod h1:1lJo3i6rXxKeerYnT8Nvf0QmHCRC1n8sfWVwXF2Frvo=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
@@ -899,6 +901,7 @@ github.com/valyala/tcplisten v0.0.0-20161114210144-ceec8f93295a/go.mod h1:v3UYOV
 github.com/xanzy/go-gitlab v0.39.0 h1:7aiZ03fJfCdqoHFhsZq/SoVYp2lR91hfYWmiXLOU5Qo=
 github.com/xanzy/go-gitlab v0.39.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
 github.com/xanzy/go-gitlab v0.40.2/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
+github.com/xanzy/go-gitlab v0.41.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
 github.com/xanzy/ssh-agent v0.3.0 h1:wUMzuKtKilRgBAD1sUb8gOwwRr2FGoBVumcjoOACClI=
