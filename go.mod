@@ -7,7 +7,7 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.10.0
 	github.com/golang/protobuf v1.4.3
-	github.com/golangci/golangci-lint v1.35.0
+	github.com/golangci/golangci-lint v1.35.2
 	github.com/golangci/misspell v0.3.5 // indirect
 	github.com/golangci/revgrep v0.0.0-20180812185044-276a5c0a1039 // indirect
 	github.com/google/go-cmp v0.5.4
