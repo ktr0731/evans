@@ -2,7 +2,6 @@
 
 --- 
 
-[![CircleCI](https://circleci.com/gh/ktr0731/evans/tree/master.svg?style=svg)](https://circleci.com/gh/ktr0731/evans/tree/master)
 [![GitHub Actions](https://github.com/ktr0731/evans/workflows/main/badge.svg)](https://github.com/ktr0731/evans/actions)
 [![codecov](https://codecov.io/gh/ktr0731/evans/branch/master/graph/badge.svg)](https://codecov.io/gh/ktr0731/evans)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/ktr0731/evans)](https://pkg.go.dev/github.com/ktr0731/evans)

@@ -7,10 +7,6 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
-if [ "$CIRCLE_BRANCH" != "master" ]; then
-  exit 0
-fi
-
 if [ "$GITHUB_TOKEN" = "" ]; then
   echo 'please set $GITHUB_TOKEN'
   exit 1

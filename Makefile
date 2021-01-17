@@ -51,7 +51,7 @@ lint:
 
 .PHONY: brew-update
 release:
-	bash .circleci/scripts/release.bash $(shell bump show meta/meta.go)
+	bash scripts/release.bash $(shell bump show meta/meta.go)
 
 .PHONY: depgraph
 depgraph:
