@@ -8,7 +8,7 @@ import (
 )
 
 func TestWebClient(t *testing.T) {
-	client := grpc.NewWebClient("", false, false, "", "", "")
+	client := grpc.NewWebClient("", false, false, "", "", "", nil)
 	t.Run("Invoke returns an error if FQRN is invalid", func(t *testing.T) {
 		_, _, err := client.Invoke(context.Background(), "invalid-fqrn", nil, nil)
 		if err == nil {

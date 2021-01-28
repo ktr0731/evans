@@ -18,7 +18,7 @@ type webClient struct {
 	grpcreflection.Client
 }
 
-func NewWebClient(addr string, useReflection, useTLS bool, cacert, cert, certKey string) Client {
+func NewWebClient(addr string, useReflection, useTLS bool, cacert, cert, certKey string, headers Headers) Client {
 	conn, err := grpcweb.DialContext(addr)
 	if err != nil {
 		panic(err)
@@ -29,7 +29,7 @@ func NewWebClient(addr string, useReflection, useTLS bool, cacert, cert, certKey
 	}
 
 	if useReflection {
-		client.Client = grpcreflection.NewWebClient(conn)
+		client.Client = grpcreflection.NewWebClient(conn, headers)
 	}
 
 	return client
