@@ -31,7 +31,7 @@ func newGRPCClient(cfg *config.Config) (grpc.Client, error) {
 	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
 	if cfg.Request.Web {
 		//TODO: remove second arg
-		return grpc.NewWebClient(addr, cfg.Server.Reflection, false, "", "", ""), nil
+		return grpc.NewWebClient(addr, cfg.Server.Reflection, false, "", "", "", grpc.Headers(cfg.Request.Header)), nil
 	}
 	client, err := grpc.NewClient(
 		addr,
@@ -40,7 +40,8 @@ func newGRPCClient(cfg *config.Config) (grpc.Client, error) {
 		cfg.Server.TLS,
 		cfg.Request.CACertFile,
 		cfg.Request.CertFile,
-		cfg.Request.CertKeyFile)
+		cfg.Request.CertKeyFile,
+		cfg.Request.Header)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to instantiate a gRPC client")
 	}
