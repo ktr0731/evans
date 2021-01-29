@@ -114,7 +114,7 @@ type client struct {
 // The set of cert and certKey enables mutual authentication if useTLS is enabled.
 // If one of it is not found, NewClient returns ErrMutualAuthParamsAreNotEnough.
 // If useTLS is false, cacert, cert and certKey are ignored.
-func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert, certKey string) (Client, error) {
+func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert, certKey string, headers map[string][]string) (Client, error) {
 	var opts []grpc.DialOption
 	if !useTLS {
 		opts = append(opts, grpc.WithInsecure())
@@ -163,7 +163,7 @@ func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert
 	}
 
 	if useReflection {
-		client.Client = grpcreflection.NewClient(conn)
+		client.Client = grpcreflection.NewClient(conn, headers)
 	}
 
 	return client, nil

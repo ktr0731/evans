@@ -12,6 +12,7 @@ import (
 	"github.com/ktr0731/grpc-web-go-client/grpcweb/grpcweb_reflection_v1alpha"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/grpc/status"
 )
@@ -35,17 +36,21 @@ type client struct {
 	client *gr.Client
 }
 
+func getCtx(headers map[string][]string) context.Context {
+	return metadata.NewOutgoingContext(context.Background(), metadata.MD(headers))
+}
+
 // NewClient returns an instance of gRPC reflection client for gRPC protocol.
-func NewClient(conn grpc.ClientConnInterface) Client {
+func NewClient(conn grpc.ClientConnInterface, headers map[string][]string) Client {
 	return &client{
-		client: gr.NewClient(context.Background(), grpc_reflection_v1alpha.NewServerReflectionClient(conn)),
+		client: gr.NewClient(getCtx(headers), grpc_reflection_v1alpha.NewServerReflectionClient(conn)),
 	}
 }
 
 // NewWebClient returns an instance of gRPC reflection client for gRPC-Web protocol.
-func NewWebClient(conn *grpcweb.ClientConn) Client {
+func NewWebClient(conn *grpcweb.ClientConn, headers map[string][]string) Client {
 	return &client{
-		client: gr.NewClient(context.Background(), grpcweb_reflection_v1alpha.NewServerReflectionClient(conn)),
+		client: gr.NewClient(getCtx(headers), grpcweb_reflection_v1alpha.NewServerReflectionClient(conn)),
 	}
 }
 
