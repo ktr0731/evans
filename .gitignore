@@ -36,3 +36,4 @@ vendor/
 pkg
 dep.png
 _tools
+dist
