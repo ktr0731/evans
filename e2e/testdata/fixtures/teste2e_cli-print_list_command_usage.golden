@@ -1,4 +1,4 @@
-evans 0.9.1
+evans 0.9.2
 
 Usage: evans [global options ...] cli list [options ...] [fully-qualified service/method name]
 

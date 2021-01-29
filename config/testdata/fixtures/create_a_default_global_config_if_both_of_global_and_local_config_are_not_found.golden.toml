@@ -10,7 +10,7 @@
 
 [meta]
   autoupdate = false
-  configversion = "0.9.1"
+  configversion = "0.9.2"
   updatelevel = "patch"
 
 [repl]
