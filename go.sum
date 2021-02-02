@@ -598,6 +598,7 @@ github.com/matoous/godox v0.0.0-20200801072554-4fb83dc2941e h1:2U5rOmpaB96l35w+N
 github.com/matoous/godox v0.0.0-20200801072554-4fb83dc2941e/go.mod h1:1BELzlh859Sh1c6+90blK8lbYy0kwQf1bYlBhBysy1s=
 github.com/matryer/moq v0.1.4 h1:dkN4G4jtl0zpssB9OPCb8D+m4zTHdnZpi62HhlGnyTU=
 github.com/matryer/moq v0.1.4/go.mod h1:9RtPYjTnH1bSBIkpvtHkFN7nbWAnO7oRpdJkEIn6UtE=
+github.com/matryer/moq v0.1.6/go.mod h1:9RtPYjTnH1bSBIkpvtHkFN7nbWAnO7oRpdJkEIn6UtE=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-colorable v0.1.1/go.mod h1:FuOcm+DKB9mbwrcAfNl7/TZVBZ6rcnceauSikq3lYCQ=
 github.com/mattn/go-colorable v0.1.2/go.mod h1:U0ppj6V5qS13XJ6of8GYAs25YV2eR4EVcfRqFIhoBtE=
