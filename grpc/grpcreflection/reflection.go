@@ -37,7 +37,11 @@ type client struct {
 }
 
 func getCtx(headers map[string][]string) context.Context {
-	return metadata.NewOutgoingContext(context.Background(), metadata.MD(headers))
+	md := metadata.New(nil)
+	for k, v := range headers {
+		md.Append(k, v...)
+	}
+	return metadata.NewOutgoingContext(context.Background(), md)
 }
 
 // NewClient returns an instance of gRPC reflection client for gRPC protocol.
