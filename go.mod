@@ -24,7 +24,7 @@ require (
 	github.com/ktr0731/grpc-web-go-client v0.2.7
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.8.0
-	github.com/matryer/moq v0.2.0
+	github.com/matryer/moq v0.2.1
 	github.com/mattn/go-colorable v0.1.8
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-pipeline v0.0.0-20190323144519-32d779b32768 // indirect
