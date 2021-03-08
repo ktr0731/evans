@@ -7,7 +7,7 @@ require (
 	github.com/fatih/color v1.10.0
 	github.com/golang/protobuf v1.4.3
 	github.com/golangci/golangci-lint v1.38.0
-	github.com/google/go-cmp v0.5.4
+	github.com/google/go-cmp v0.5.5
 	github.com/goreleaser/goreleaser v0.158.0
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/go-version v1.2.1
