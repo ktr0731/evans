@@ -444,6 +444,7 @@ github.com/goreleaser/goreleaser v0.155.0 h1:+1WcjG3NFWJg5lb91d8n7Mo9/qsNxlx1tPW
 github.com/goreleaser/goreleaser v0.155.0/go.mod h1:2zpmKlkp5Qd0U/7mqKrqbW4fg5ylKUBqNKKskUDJ8+w=
 github.com/goreleaser/goreleaser v0.157.0/go.mod h1:GDgOqiBJi7z1tzW+/t10AbNWrhwtzBhNMMt/dOYlFLo=
 github.com/goreleaser/goreleaser v0.158.0/go.mod h1:iAWeuKBcm/A9z4Dnj0CiNse8hcC2Qzs9o40ygHnHkAQ=
+github.com/goreleaser/goreleaser v0.159.0/go.mod h1:aK3Vr09RwhDZQUqCu4AC3amjy3648q+caVpzIA9TV/g=
 github.com/goreleaser/nfpm/v2 v2.2.2 h1:aLGEqhMDcSNg1RHwzUBHwRUbmiK8HfD1sTq8bG7/WMc=
 github.com/goreleaser/nfpm/v2 v2.2.2/go.mod h1:WtPzYQh+Ls57prS9RzXegrGejqILUS1aZibXHTTJ8eI=
 github.com/goreleaser/nfpm/v2 v2.2.4/go.mod h1:d+D1TGGcyZjAIv0d7a5bQrcdEJcKXrUjQuk45H02bD8=
@@ -922,6 +923,7 @@ github.com/valyala/tcplisten v0.0.0-20161114210144-ceec8f93295a/go.mod h1:v3UYOV
 github.com/xanzy/go-gitlab v0.42.0 h1:daNdMFnw2FG+lDRBcX+YLnKbqIKMdefVyVztMHwsFhk=
 github.com/xanzy/go-gitlab v0.42.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
 github.com/xanzy/go-gitlab v0.44.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
+github.com/xanzy/go-gitlab v0.45.0/go.mod h1:sPLojNBn68fMUWSxIJtdVVIP8uSBYqesTfDUseX11Ug=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
 github.com/xanzy/ssh-agent v0.3.0 h1:wUMzuKtKilRgBAD1sUb8gOwwRr2FGoBVumcjoOACClI=
