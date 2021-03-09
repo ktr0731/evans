@@ -41,6 +41,10 @@ test: format gotest
 format:
 	go mod tidy
 
+.PHONY: credits
+credits:
+	gocredits -skip-missing . > CREDITS
+
 .PHONY: gotest
 gotest: lint
 	go test -race ./...
