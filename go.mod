@@ -3,6 +3,7 @@ module github.com/ktr0731/evans
 go 1.12
 
 require (
+	github.com/Songmu/gocredits v0.2.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.10.0
 	github.com/golang/protobuf v1.4.3
