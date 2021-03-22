@@ -9,7 +9,7 @@ require (
 	github.com/golang/protobuf v1.4.3
 	github.com/golangci/golangci-lint v1.38.0
 	github.com/google/go-cmp v0.5.5
-	github.com/goreleaser/goreleaser v0.159.0
+	github.com/goreleaser/goreleaser v0.160.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.2.1
 	github.com/jhump/protoreflect v1.5.1-0.20191024213132-10815c273d3f
