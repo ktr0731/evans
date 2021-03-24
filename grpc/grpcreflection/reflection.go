@@ -70,7 +70,7 @@ func (c *client) ListPackages() ([]*desc.FileDescriptor, error) {
 			strings.Contains(msg, "latest connection error: <nil>") {
 			return nil, ErrTLSHandshakeFailed
 		}
-		return nil, errors.Wrap(err, "failed to list services from reflecton enabled gRPC server")
+		return nil, errors.Wrap(err, "failed to list services from reflection enabled gRPC server")
 	}
 
 	fds := make([]*desc.FileDescriptor, 0, len(ssvcs))
