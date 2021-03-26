@@ -6,7 +6,7 @@ require (
 	github.com/Songmu/gocredits v0.2.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.10.0
-	github.com/golang/protobuf v1.4.3
+	github.com/golang/protobuf v1.5.1
 	github.com/golangci/golangci-lint v1.38.0
 	github.com/google/go-cmp v0.5.5
 	github.com/goreleaser/goreleaser v0.161.1
@@ -47,4 +47,5 @@ require (
 	golang.org/x/tools v0.1.0
 	google.golang.org/genproto v0.0.0-20201203001206-6486ece9c497
 	google.golang.org/grpc v1.36.0
+	google.golang.org/protobuf v1.26.0
 )
