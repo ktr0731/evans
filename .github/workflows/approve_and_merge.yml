@@ -27,7 +27,7 @@ jobs:
             }`)
 
             await github.graphql(`mutation {
-              enablePullRequestAutoMerge(input: { pullRequestId: "${res.repository.pullRequest.id}", mergeMethod: "SQUASH" }) {
+              enablePullRequestAutoMerge(input: { pullRequestId: "${res.repository.pullRequest.id}", mergeMethod: SQUASH }) {
                 clientMutationId
               }
             }`)
