@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
 	"github.com/golang/protobuf/proto"  //nolint:staticcheck
-	"github.com/golang/protobuf/ptypes"
 	"github.com/ktr0731/evans/format"
 	"github.com/ktr0731/evans/present"
 	"github.com/ktr0731/evans/present/json"
@@ -20,6 +19,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type responseFormatter struct {
@@ -143,7 +143,7 @@ func (p *responseFormatter) convertProtoMessageToMap(m proto.Message) (map[strin
 }
 
 func (p *responseFormatter) convertProtoMessageAsAnyToMap(m proto.Message) (map[string]interface{}, error) {
-	any, err := ptypes.MarshalAny(m)
+	any, err := anypb.New(proto.MessageV2(m))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert a message to *any.Any")
 	}

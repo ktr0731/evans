@@ -18,9 +18,11 @@ func Test_fqrnToEndpoint(t *testing.T) {
 }
 
 func TestNewClient(t *testing.T) {
+	//nolint:gocritic
 	certPath := func(s ...string) string {
 		return filepath.Join(append([]string{"testdata", "cert"}, s...)...)
 	}
+
 	cases := map[string]struct {
 		addr          string
 		useReflection bool
