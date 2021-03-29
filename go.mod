@@ -7,13 +7,12 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.10.0
 	github.com/golang/protobuf v1.5.1
-	github.com/golangci/golangci-lint v1.38.0
+	github.com/golangci/golangci-lint v1.39.0
 	github.com/google/go-cmp v0.5.5
 	github.com/goreleaser/goreleaser v0.161.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.2.1
-	github.com/jhump/protoreflect v1.5.1-0.20191024213132-10815c273d3f
-	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
+	github.com/jhump/protoreflect v1.6.1
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/kisielk/godepgraph v0.0.0-20190626013829-57a7e4a651a9
 	github.com/ktr0731/bump v0.1.0
