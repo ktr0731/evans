@@ -28,7 +28,7 @@ jobs:
       run: go build
 
     - name: golangci-lint
-      uses: golangci/golangci-lint-action@v2
+      uses: golangci/golangci-lint-action@v2.5.2
       if: matrix.os == 'ubuntu-latest'
       with:
         version: v1.32.1
