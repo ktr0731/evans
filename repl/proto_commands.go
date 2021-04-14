@@ -6,12 +6,12 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 type descCommand struct{}
@@ -66,7 +66,7 @@ func presentTypeName(f *desc.FieldDescriptor) string {
 	typeName := f.GetType().String()
 
 	switch f.GetType() {
-	case descriptor.FieldDescriptorProto_TYPE_MESSAGE:
+	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
 		if f.IsMap() {
 			typeName = fmt.Sprintf(
 				"map<%s, %s>",
@@ -75,7 +75,7 @@ func presentTypeName(f *desc.FieldDescriptor) string {
 		} else {
 			typeName += fmt.Sprintf(" (%s)", f.GetMessageType().GetName())
 		}
-	case descriptor.FieldDescriptorProto_TYPE_ENUM:
+	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
 		typeName += fmt.Sprintf(" (%s)", f.GetEnumType().GetName())
 	}
 	return typeName

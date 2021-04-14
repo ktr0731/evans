@@ -3,9 +3,9 @@ package proto
 import (
 	"testing"
 
-	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/ktr0731/evans/fill"
 	"github.com/ktr0731/evans/prompt"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 type testPrompt struct {
@@ -33,7 +33,7 @@ func TestInteractiveProtoFiller(t *testing.T) {
 	f.bytesFromFile = true
 
 	var v interface{}
-	v, err = f.inputPrimitiveField(descriptor.FieldDescriptorProto_TYPE_BYTES)
+	v, err = f.inputPrimitiveField(descriptorpb.FieldDescriptorProto_TYPE_BYTES)
 	if err != nil {
 		t.Error(err)
 	}
@@ -57,7 +57,7 @@ func TestInteractiveProtoFiller(t *testing.T) {
 
 	f = NewInteractiveFiller(tp, "")
 
-	v, err = f.inputPrimitiveField(descriptor.FieldDescriptorProto_TYPE_BYTES)
+	v, err = f.inputPrimitiveField(descriptorpb.FieldDescriptorProto_TYPE_BYTES)
 	if err != nil {
 		t.Error(err)
 	}

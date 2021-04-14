@@ -2,15 +2,12 @@
 package curl
 
 import (
-	"bytes"
 	gojson "encoding/json"
 	"fmt"
 	"io"
 	"sort"
 	"strings"
 
-	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
-	"github.com/golang/protobuf/proto"  //nolint:staticcheck
 	"github.com/ktr0731/evans/format"
 	"github.com/ktr0731/evans/present"
 	"github.com/ktr0731/evans/present/json"
@@ -19,6 +16,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -26,7 +25,7 @@ type responseFormatter struct {
 	w io.Writer
 
 	json        present.Presenter
-	pbMarshaler *jsonpb.Marshaler
+	pbMarshaler *protojson.MarshalOptions
 
 	wroteHeader, wroteMessage, wroteTrailer bool
 }
@@ -35,7 +34,7 @@ func NewResponseFormatter(w io.Writer) format.ResponseFormatterInterface {
 	return &responseFormatter{
 		w:           w,
 		json:        json.NewPresenter("  "),
-		pbMarshaler: &jsonpb.Marshaler{},
+		pbMarshaler: &protojson.MarshalOptions{},
 	}
 }
 
@@ -130,20 +129,19 @@ func (p *responseFormatter) Done() error {
 }
 
 func (p *responseFormatter) convertProtoMessageToMap(m proto.Message) (map[string]interface{}, error) {
-	var buf bytes.Buffer
-	err := p.pbMarshaler.Marshal(&buf, m)
+	b, err := p.pbMarshaler.Marshal(m)
 	if err != nil {
 		return nil, err
 	}
 	var res map[string]interface{}
-	if err := gojson.Unmarshal(buf.Bytes(), &res); err != nil {
+	if err := gojson.Unmarshal(b, &res); err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
 func (p *responseFormatter) convertProtoMessageAsAnyToMap(m proto.Message) (map[string]interface{}, error) {
-	any, err := anypb.New(proto.MessageV2(m))
+	any, err := anypb.New(m)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert a message to *any.Any")
 	}

@@ -4,115 +4,115 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 func Test_convertValue(t *testing.T) {
 	cases := map[string]struct {
 		v         string
-		fieldType descriptor.FieldDescriptorProto_Type
+		fieldType descriptorpb.FieldDescriptorProto_Type
 
 		expected interface{}
 		hasErr   bool
 	}{
 		"default of string": {
 			v:         "",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_STRING,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_STRING,
 			expected:  "",
 		},
 		"double": {
 			v:         "100.2",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_DOUBLE,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_DOUBLE,
 			expected:  float64(100.2),
 		},
 		"float": {
 			v:         "100.2",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_FLOAT,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_FLOAT,
 			expected:  float32(100.2),
 		},
 		"int64": {
 			v:         "100",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_INT64,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_INT64,
 			expected:  int64(100),
 		},
 		"uint64": {
 			v:         "100",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_UINT64,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_UINT64,
 			expected:  uint64(100),
 		},
 		"int32": {
 			v:         "100",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_INT32,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_INT32,
 			expected:  int32(100),
 		},
 		"uint32": {
 			v:         "100",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_UINT32,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_UINT32,
 			expected:  uint32(100),
 		},
 		"fixed64": {
 			v:         "100",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_FIXED64,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_FIXED64,
 			expected:  uint64(100),
 		},
 		"fixed32": {
 			v:         "100",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_FIXED32,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_FIXED32,
 			expected:  uint32(100),
 		},
 		"bool": {
 			v:         "true",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_BOOL,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_BOOL,
 			expected:  true,
 		},
 		"string": {
 			v:         "violet evergarden",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_STRING,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_STRING,
 			expected:  "violet evergarden",
 		},
 		"bytes": {
 			v:         "ogiso",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_BYTES,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_BYTES,
 			expected:  []byte("ogiso"),
 		},
 		"bytes (non-ascii string)": {
 			v:         "小木曽",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_BYTES,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_BYTES,
 			expected:  []byte("小木曽"),
 		},
 		"bytes (Unicode literals)": {
 			v:         "\u5c0f\u6728\u66fd",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_BYTES,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_BYTES,
 			expected:  []byte("小木曽"),
 		},
 		"sfixed64": {
 			v:         "100",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_SFIXED64,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_SFIXED64,
 			expected:  int64(100),
 		},
 		"sfixed32": {
 			v:         "100",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_SFIXED32,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_SFIXED32,
 			expected:  int32(100),
 		},
 		"sint64": {
 			v:         "100",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_SINT64,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_SINT64,
 			expected:  int64(100),
 		},
 		"sint32": {
 			v:         "100",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_SINT32,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_SINT32,
 			expected:  int32(100),
 		},
 		"invalid type": {
 			v:         "100",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_SINT64 + 1, // Invalid type.
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_SINT64 + 1, // Invalid type.
 			hasErr:    true,
 		},
 		"invalid value": {
 			v:         "100.10",
-			fieldType: descriptor.FieldDescriptorProto_TYPE_INT32,
+			fieldType: descriptorpb.FieldDescriptorProto_TYPE_INT32,
 			hasErr:    true,
 		},
 	}

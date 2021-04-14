@@ -6,12 +6,12 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/fill"
 	"github.com/ktr0731/evans/prompt"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 // InteractiveFiller is an implementation of fill.InteractiveFiller.
@@ -304,7 +304,7 @@ func (f *InteractiveFiller) inputRepeatedField(dmsg *dynamic.Message, field *des
 
 // inputPrimitiveField reads an input and converts it to a Go type.
 // If CTRL+d is entered, inputPrimitiveField returns io.EOF.
-func (f *InteractiveFiller) inputPrimitiveField(fieldType descriptor.FieldDescriptorProto_Type) (interface{}, error) {
+func (f *InteractiveFiller) inputPrimitiveField(fieldType descriptorpb.FieldDescriptorProto_Type) (interface{}, error) {
 	in, err := f.prompt.Input()
 	if errors.Is(err, io.EOF) {
 		return "", io.EOF
@@ -318,7 +318,7 @@ func (f *InteractiveFiller) inputPrimitiveField(fieldType descriptor.FieldDescri
 		return nil, err
 	}
 
-	if fieldType == descriptor.FieldDescriptorProto_TYPE_BYTES {
+	if fieldType == descriptorpb.FieldDescriptorProto_TYPE_BYTES {
 		return f.processBytesInput(v)
 	}
 
