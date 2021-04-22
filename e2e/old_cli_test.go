@@ -116,15 +116,15 @@ func TestE2E_OldCLI(t *testing.T) {
 		},
 		"call unary RPC with an input file by CLI mode": {
 			args:        "--package api --service Example --call Unary --file testdata/unary_call.in testdata/test.proto",
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call unary RPC without package name because the size of packages is 1": {
 			args:        "--service Example --call Unary --file testdata/unary_call.in testdata/test.proto",
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call unary RPC without package and service name because the size of packages and services are 1": {
 			args:        "--call Unary --file testdata/unary_call.in testdata/test.proto",
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call unary RPC with an input reader by CLI mode": {
 			args: "--package api --service Example --call Unary testdata/test.proto",
@@ -135,7 +135,7 @@ func TestE2E_OldCLI(t *testing.T) {
 					mode.DefaultCLIReader = old
 				}
 			},
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call client streaming RPC by CLI mode": {
 			args:        "--package api --service Example --call ClientStreaming --file testdata/client_streaming.in testdata/test.proto",
@@ -195,7 +195,7 @@ func TestE2E_OldCLI(t *testing.T) {
 		"call unary RPC by CLI mode with reflection with an input file": {
 			args:        "--reflection --package api --service Example --call Unary --file testdata/unary_call.in",
 			reflection:  true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 
 		// CLI mode with TLS
@@ -223,7 +223,7 @@ func TestE2E_OldCLI(t *testing.T) {
 		"call unary RPC with TLS by CLI mode": {
 			args:        "--tls --host localhost --cacert testdata/rootCA.pem --service Example --call Unary --file testdata/unary_call.in testdata/test.proto",
 			tls:         true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"cannot launch CLI mode with TLS and reflection by CLI mode because server didn't enable TLS": {
 			args:         "--tls -r --host localhost --cacert testdata/rootCA.pem --service Example --call Unary --file testdata/unary_call.in",
@@ -235,12 +235,12 @@ func TestE2E_OldCLI(t *testing.T) {
 			args:        "--tls -r --host localhost --cacert testdata/rootCA.pem --service Example --call Unary --file testdata/unary_call.in",
 			tls:         true,
 			reflection:  true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call unary RPC with TLS and --servername by CLI mode": {
 			args:        "--tls --servername localhost --cacert testdata/rootCA.pem --service Example --call Unary --file testdata/unary_call.in testdata/test.proto",
 			tls:         true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"cannot launch CLI mode with mutual TLS auth because --certkey is missing": {
 			args:         "--tls --host localhost --cacert testdata/rootCA.pem --cert testdata/localhost.pem --service Example --call Unary --file testdata/unary_call.in testdata/test.proto",
@@ -255,7 +255,7 @@ func TestE2E_OldCLI(t *testing.T) {
 		"call unary RPC with mutual TLS auth by CLI mode": {
 			args:        "--tls --host localhost --cacert testdata/rootCA.pem --cert testdata/localhost.pem --certkey testdata/localhost-key.pem --service Example --call Unary --file testdata/unary_call.in testdata/test.proto",
 			tls:         true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 
 		// CLI mode with gRPC-Web
@@ -268,13 +268,13 @@ func TestE2E_OldCLI(t *testing.T) {
 		"call unary RPC with an input file by CLI mode against to gRPC-Web server": {
 			args:        "--web --package api --service Example --call Unary --file testdata/unary_call.in testdata/test.proto testdata/test.proto",
 			web:         true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call unary RPC with an input file by CLI mode and reflection against to gRPC-Web server": {
 			args:        "--web -r --service Example --call Unary --file testdata/unary_call.in",
 			web:         true,
 			reflection:  true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call client streaming RPC by CLI mode against to gRPC-Web server": {
 			args:        "--web --service Example --call ClientStreaming --file testdata/client_streaming.in testdata/test.proto",

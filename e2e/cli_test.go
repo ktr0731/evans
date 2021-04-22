@@ -161,39 +161,39 @@ func TestE2E_CLI(t *testing.T) {
 			cmd:             "call",
 			args:            "--file testdata/unary_call.in Unary",
 			deprecatedUsage: true,
-			expectedOut:     `{ "message": "hello, oumae" }`,
+			expectedOut:     `{ "message": "oumae" }`,
 		},
 		"call unary RPC with an input file": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "call",
 			args:        "--file testdata/unary_call.in api.Example.Unary",
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call fully-qualified unary RPC with an input file": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "call",
 			args:        "--file testdata/unary_call.in api.Example.Unary",
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call unary RPC with --call flag (backward-compatibility)": {
 			commonFlags:     "--package api --service Example --proto testdata/test.proto",
 			cmd:             "",
 			args:            "--file testdata/unary_call.in --call Unary",
 			deprecatedUsage: true,
-			expectedOut:     `{ "message": "hello, oumae" }`,
+			expectedOut:     `{ "message": "oumae" }`,
 		},
 		"call unary RPC without package name because the size of packages is 1 (backward-compatibility)": {
 			commonFlags:     "--service Example --proto testdata/test.proto",
 			cmd:             "call",
 			args:            "--file testdata/unary_call.in Unary",
 			deprecatedUsage: true,
-			expectedOut:     `{ "message": "hello, oumae" }`,
+			expectedOut:     `{ "message": "oumae" }`,
 		},
 		"call unary RPC without package and service name because the size of packages and services are 1": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "call",
 			args:        "--file testdata/unary_call.in Unary",
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call unary RPC with an input reader": {
 			commonFlags: "--proto testdata/test.proto",
@@ -206,7 +206,7 @@ func TestE2E_CLI(t *testing.T) {
 					mode.DefaultCLIReader = old
 				}
 			},
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call client streaming RPC": {
 			commonFlags: "--proto testdata/test.proto",
@@ -271,7 +271,7 @@ func TestE2E_CLI(t *testing.T) {
 			commonFlags: "--header grpc-timeout=1s --proto testdata/test.proto",
 			cmd:         "call",
 			args:        "--file testdata/unary_call.in api.Example.Unary",
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"client streaming call timed out": {
 			commonFlags:  "--header grpc-timeout=0s --proto testdata/test.proto",
@@ -344,14 +344,14 @@ func TestE2E_CLI(t *testing.T) {
 			args:            "--file testdata/unary_call.in Unary",
 			reflection:      true,
 			deprecatedUsage: true,
-			expectedOut:     `{ "message": "hello, oumae" }`,
+			expectedOut:     `{ "message": "oumae" }`,
 		},
 		"call unary RPC with reflection with an input file": {
 			commonFlags: "--reflection",
 			cmd:         "call",
 			args:        "--file testdata/unary_call.in api.Example.Unary",
 			reflection:  true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 
 		// call command with TLS
@@ -389,7 +389,7 @@ func TestE2E_CLI(t *testing.T) {
 			cmd:         "call",
 			args:        "--file testdata/unary_call.in api.Example.Unary",
 			tls:         true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"cannot launch with TLS and reflection because server didn't enable TLS": {
 			commonFlags:  "--tls -r --host localhost --cacert testdata/rootCA.pem",
@@ -405,14 +405,14 @@ func TestE2E_CLI(t *testing.T) {
 			args:        "--file testdata/unary_call.in api.Example.Unary",
 			tls:         true,
 			reflection:  true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call unary RPC with TLS and --servername": {
 			commonFlags: "--tls --servername localhost --cacert testdata/rootCA.pem --proto testdata/test.proto",
 			cmd:         "call",
 			args:        "--file testdata/unary_call.in api.Example.Unary",
 			tls:         true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"cannot launch with mutual TLS auth because --certkey is missing": {
 			commonFlags:  "--tls --host localhost --cacert testdata/rootCA.pem --cert testdata/localhost.pem --proto testdata/test.proto",
@@ -433,7 +433,7 @@ func TestE2E_CLI(t *testing.T) {
 			cmd:         "call",
 			args:        "--file testdata/unary_call.in api.Example.Unary",
 			tls:         true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 
 		// call command with gRPC-Web
@@ -450,7 +450,7 @@ func TestE2E_CLI(t *testing.T) {
 			cmd:         "call",
 			args:        "--file testdata/unary_call.in api.Example.Unary",
 			web:         true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call unary RPC with an input file and reflection against to gRPC-Web server": {
 			commonFlags: "--web -r",
@@ -458,7 +458,7 @@ func TestE2E_CLI(t *testing.T) {
 			args:        "--file testdata/unary_call.in api.Example.Unary",
 			web:         true,
 			reflection:  true,
-			expectedOut: `{ "message": "hello, oumae" }`,
+			expectedOut: `{ "message": "oumae" }`,
 		},
 		"call client streaming RPC against to gRPC-Web server": {
 			commonFlags: "--web --proto testdata/test.proto",

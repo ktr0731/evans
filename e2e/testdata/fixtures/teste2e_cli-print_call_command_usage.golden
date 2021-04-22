@@ -12,6 +12,7 @@ Examples:
 
 Options:
         --enrich                   enrich response output includes header, message, trailer and status (default "false")
+        --emit-defaults            render fields with default values (default "false")
         --output, -o string        output format. one of "json" or "curl". "curl" is a curl-like format. (default "curl")
         --file, -f string          a script file that will be executed by (used only CLI mode)
         --help, -h                 display help text and exit (default "false")
