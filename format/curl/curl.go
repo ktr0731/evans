@@ -31,11 +31,13 @@ type responseFormatter struct {
 	wroteHeader, wroteMessage, wroteTrailer bool
 }
 
-func NewResponseFormatter(w io.Writer) format.ResponseFormatterInterface {
+func NewResponseFormatter(w io.Writer, emitDefaults bool) format.ResponseFormatterInterface {
 	return &responseFormatter{
-		w:           w,
-		json:        json.NewPresenter("  "),
-		pbMarshaler: &jsonpb.Marshaler{},
+		w:    w,
+		json: json.NewPresenter("  "),
+		pbMarshaler: &jsonpb.Marshaler{
+			EmitDefaults: emitDefaults,
+		},
 	}
 }
 
@@ -58,7 +60,13 @@ func (p *responseFormatter) FormatMessage(v interface{}) error {
 	if p.wroteHeader {
 		fmt.Fprintf(p.w, "\n")
 	}
-	msg, err := p.json.Format(v)
+
+	m, err := p.convertProtoMessageToMap(v.(proto.Message))
+	if err != nil {
+		return err
+	}
+
+	msg, err := p.json.Format(m)
 	if err != nil {
 		return err
 	}

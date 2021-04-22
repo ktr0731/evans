@@ -84,6 +84,10 @@ func TestE2E_REPL(t *testing.T) {
 			commonFlags: "--service Example --proto testdata/test.proto",
 			input:       []interface{}{"call Unary", "kaguya"},
 		},
+		"call Unary with --emit-defaults": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"package api", "service Example", "call --emit-defaults Unary", ""},
+		},
 		"call ClientStreaming": {
 			commonFlags: "--proto testdata/test.proto",
 			// io.EOF means end of inputting.

@@ -113,7 +113,10 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 			if cfg.repl || !isCLIMode {
 				return runREPLCommand(cfg, ui)
 			}
-			invoker, err := mode.NewCallCLIInvoker(ui, cfg.call, cfg.file, cfg.Config.Request.Header, false, "")
+			invoker, err := mode.NewCallCLIInvoker(ui, cfg.call, &mode.CallCLIInvokerOption{
+				Headers:  cfg.Config.Request.Header,
+				FilePath: cfg.file,
+			})
 			if err != nil {
 				return err
 			}
@@ -207,7 +210,10 @@ func newCLICommand(flags *flags, ui cui.UI) *cobra.Command {
 				}
 				call = args[0]
 			}
-			invoker, err := mode.NewCallCLIInvoker(ui, call, cfg.file, cfg.Config.Request.Header, false, "")
+			invoker, err := mode.NewCallCLIInvoker(ui, call, &mode.CallCLIInvokerOption{
+				Headers:  cfg.Config.Request.Header,
+				FilePath: cfg.file,
+			})
 			if err != nil {
 				return err
 			}

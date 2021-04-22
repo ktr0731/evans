@@ -29,16 +29,23 @@ var DefaultCLIReader io.Reader = os.Stdin
 // CLIInvoker represents an invokable function for CLI mode.
 type CLIInvoker func(context.Context) error
 
+type CallCLIInvokerOption struct {
+	Headers      config.Header
+	Enrich       bool
+	EmitDefaults bool
+	FilePath     string // If empty, the invoker tries to read input from stdin.
+	FormatType   string
+}
+
 // NewCallCLIInvoker returns an CLIInvoker implementation for calling RPCs.
-// If filePath is empty, the invoker tries to read input from stdin.
-func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.Header, enrich bool, formatType string) (CLIInvoker, error) {
+func NewCallCLIInvoker(ui cui.UI, methodName string, opt *CallCLIInvokerOption) (CLIInvoker, error) {
 	if methodName == "" {
 		return nil, errors.New("method is required")
 	}
 	return func(ctx context.Context) error {
 		in := DefaultCLIReader
-		if filePath != "" {
-			f, err := os.Open(filePath)
+		if opt.FilePath != "" {
+			f, err := os.Open(opt.FilePath)
 			if err != nil {
 				return errors.Wrap(err, "failed to open the script file")
 			}
@@ -47,20 +54,20 @@ func NewCallCLIInvoker(ui cui.UI, methodName, filePath string, headers config.He
 		}
 		filler := fill.NewSilentFiller(in)
 		var rfi format.ResponseFormatterInterface
-		switch formatType {
+		switch opt.FormatType {
 		case "curl":
-			rfi = curl.NewResponseFormatter(ui.Writer())
+			rfi = curl.NewResponseFormatter(ui.Writer(), opt.EmitDefaults)
 		case "json":
-			rfi = fmtjson.NewResponseFormatter(ui.Writer())
+			rfi = fmtjson.NewResponseFormatter(ui.Writer(), opt.EmitDefaults)
 		default:
-			rfi = curl.NewResponseFormatter(ui.Writer())
+			rfi = curl.NewResponseFormatter(ui.Writer(), opt.EmitDefaults)
 		}
 		usecase.InjectPartially(usecase.Dependencies{
-			ResponseFormatter: format.NewResponseFormatter(rfi, enrich),
+			ResponseFormatter: format.NewResponseFormatter(rfi, opt.Enrich),
 			Filler:            filler,
 		})
 
-		for k, v := range headers {
+		for k, v := range opt.Headers {
 			for _, vv := range v {
 				usecase.AddHeader(k, vv)
 			}

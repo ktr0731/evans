@@ -155,7 +155,7 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 }
 
 type callCommand struct {
-	enrich, digManually, bytesFromFile bool
+	enrich, digManually, bytesFromFile, emitDefaults bool
 }
 
 func (c *callCommand) FlagSet() (*pflag.FlagSet, bool) {
@@ -164,6 +164,7 @@ func (c *callCommand) FlagSet() (*pflag.FlagSet, bool) {
 	fs.BoolVar(&c.enrich, "enrich", false, "enrich response output includes header, message, trailer and status")
 	fs.BoolVar(&c.digManually, "dig-manually", false, "prompt asks whether to dig down if it encountered to a message field")
 	fs.BoolVar(&c.bytesFromFile, "bytes-from-file", false, "interpret TYPE_BYTES input as a relative path to a file")
+	fs.BoolVar(&c.emitDefaults, "emit-defaults", false, "render fields with default values")
 	return fs, true
 }
 
@@ -192,7 +193,7 @@ func (c *callCommand) Validate(args []string) error {
 func (c *callCommand) Run(w io.Writer, args []string) error {
 	usecase.InjectPartially(
 		usecase.Dependencies{
-			ResponseFormatter: format.NewResponseFormatter(curl.NewResponseFormatter(w), c.enrich),
+			ResponseFormatter: format.NewResponseFormatter(curl.NewResponseFormatter(w, c.emitDefaults), c.enrich),
 		},
 	)
 
