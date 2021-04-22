@@ -36,8 +36,10 @@ type responseFormatter struct {
 	pbMarshaler *jsonpb.Marshaler
 }
 
-func NewResponseFormatter(w io.Writer) format.ResponseFormatterInterface {
-	return &responseFormatter{w: w, p: json.NewPresenter("  "), pbMarshaler: &jsonpb.Marshaler{}}
+func NewResponseFormatter(w io.Writer, emitDefaults bool) format.ResponseFormatterInterface {
+	return &responseFormatter{w: w, p: json.NewPresenter("  "), pbMarshaler: &jsonpb.Marshaler{
+		EmitDefaults: emitDefaults,
+	}}
 }
 
 func (p *responseFormatter) FormatHeader(header metadata.MD) {

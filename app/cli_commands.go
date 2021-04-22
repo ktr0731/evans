@@ -11,8 +11,9 @@ import (
 
 func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 	var (
-		out    string
-		enrich bool
+		out          string
+		enrich       bool
+		emitDefaults bool
 	)
 	cmd := &cobra.Command{
 		Use:     "call [options ...] <method>",
@@ -34,7 +35,13 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 			if len(args) == 0 {
 				return errors.New("method is required")
 			}
-			invoker, err := mode.NewCallCLIInvoker(ui, args[0], cfg.file, cfg.Config.Request.Header, enrich, out)
+			invoker, err := mode.NewCallCLIInvoker(ui, args[0], &mode.CallCLIInvokerOption{
+				Headers:      cfg.Config.Request.Header,
+				Enrich:       enrich,
+				EmitDefaults: emitDefaults,
+				FilePath:     cfg.file,
+				FormatType:   out,
+			})
 			if err != nil {
 				return err
 			}
@@ -50,6 +57,7 @@ func newCLICallCommand(flags *flags, ui cui.UI) *cobra.Command {
 	f := cmd.Flags()
 	initFlagSet(f, ui.Writer())
 	f.BoolVar(&enrich, "enrich", false, `enrich response output includes header, message, trailer and status`)
+	f.BoolVar(&emitDefaults, "emit-defaults", false, `render fields with default values`)
 	f.StringVarP(&out, "output", "o", "curl", `output format. one of "json" or "curl". "curl" is a curl-like format.`)
 
 	cmd.SetHelpFunc(usageFunc(ui.Writer(), []string{"file"}))

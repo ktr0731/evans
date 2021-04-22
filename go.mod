@@ -20,7 +20,7 @@ require (
 	github.com/ktr0731/go-prompt v0.2.2-0.20190609072126-7894cc3f2925
 	github.com/ktr0731/go-shellstring v0.1.3
 	github.com/ktr0731/go-updater v0.1.5
-	github.com/ktr0731/grpc-test v0.1.7
+	github.com/ktr0731/grpc-test v0.1.8
 	github.com/ktr0731/grpc-web-go-client v0.2.7
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.8.0
