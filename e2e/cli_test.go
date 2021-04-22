@@ -208,6 +208,12 @@ func TestE2E_CLI(t *testing.T) {
 			},
 			expectedOut: `{ "message": "oumae" }`,
 		},
+		"call unary RPC with --emit-defaults": {
+			commonFlags: "--proto testdata/test.proto",
+			cmd:         "call",
+			args:        "--emit-defaults --file testdata/unary_empty_call.in api.Example.Unary",
+			expectedOut: `{ "message": "" }`,
+		},
 		"call client streaming RPC": {
 			commonFlags: "--proto testdata/test.proto",
 			cmd:         "call",
