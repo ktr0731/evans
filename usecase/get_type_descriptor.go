@@ -11,9 +11,6 @@ func GetTypeDescriptor(typeName string) (interface{}, error) {
 }
 func (m *dependencyManager) GetTypeDescriptor(typeName string) (interface{}, error) {
 	pkgName := m.state.selectedPackage
-	if pkgName == "" {
-		pkgName = "''"
-	}
 	fqmn := proto.FullyQualifiedMessageName(pkgName, typeName)
 	d, err := m.spec.ResolveSymbol(fqmn)
 	if err != nil {
