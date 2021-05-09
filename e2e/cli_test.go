@@ -665,6 +665,12 @@ func TestE2E_CLI(t *testing.T) {
 			args:             "api.SimpleRequest",
 			assertWithGolden: true,
 		},
+		"describe a message descriptor in empty package": {
+			commonFlags:      "--proto testdata/empty_package.proto",
+			cmd:              "desc",
+			args:             "SimpleRequest",
+			assertWithGolden: true,
+		},
 		"invalid symbol": {
 			commonFlags:  "--proto testdata/test.proto,testdata/empty_package.proto",
 			cmd:          "desc",
