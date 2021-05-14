@@ -68,7 +68,7 @@ var Get = func() (*Cache, error) { // Use variable for mocking from means_dev.go
 			return nil, errors.Wrap(err, "failed to create a new cache file")
 		}
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "failed to check the existency of cache file '%s'", p)
+		return nil, errors.Wrapf(err, "failed to check the existence of cache file '%s'", p)
 	}
 
 	f, err := os.Open(p)
