@@ -23,14 +23,20 @@ type dependencyManager struct {
 	responseFormatter *format.ResponseFormatter
 	resourcePresenter present.Presenter
 	state             state
-	lastRPCRequest    interface{}
-	lastRPC           *grpc.RPC
 }
 
 // state has the domain state modified by each usecase logic. The default value is used as the initial value.
 type state struct {
 	selectedPackage string // TODO: remove in v1.0.0.
 	selectedService string
+	rpcCallState    map[string]*callState
+}
+
+//call state maintained per
+type callState struct {
+	//lastRPCRequest      interface{}
+	lastRPCRequestBytes []byte
+	repeatable          bool
 }
 
 type Dependencies struct {

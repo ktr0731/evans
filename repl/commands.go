@@ -155,7 +155,7 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 }
 
 type callCommand struct {
-	enrich, digManually, bytesFromFile, emitDefaults, repeat bool
+	enrich, digManually, bytesFromFile, emitDefaults, repeatCall bool
 }
 
 func (c *callCommand) FlagSet() (*pflag.FlagSet, bool) {
@@ -165,7 +165,7 @@ func (c *callCommand) FlagSet() (*pflag.FlagSet, bool) {
 	fs.BoolVar(&c.digManually, "dig-manually", false, "prompt asks whether to dig down if it encountered to a message field")
 	fs.BoolVar(&c.bytesFromFile, "bytes-from-file", false, "interpret TYPE_BYTES input as a relative path to a file")
 	fs.BoolVar(&c.emitDefaults, "emit-defaults", false, "render fields with default values")
-	fs.BoolVarP(&c.repeat, "repeat", "r", true, "repeat previous unary or server streaming request (if exists)")
+	fs.BoolVarP(&c.repeatCall, "repeat", "r", false, "repeat previous unary or server streaming request (if exists)")
 	return fs, true
 }
 
@@ -200,8 +200,7 @@ func (c *callCommand) Run(w io.Writer, args []string) error {
 
 	// here we create the request context
 	// we also add the call command flags here
-	ctx := context.WithValue(context.Background(), "flags", args[1:])
-	err := usecase.CallRPCInteractively(ctx, w, args[0], c.digManually, c.bytesFromFile)
+	err := usecase.CallRPCInteractively(context.Background(), w, args[0], c.digManually, c.bytesFromFile, c.repeatCall)
 	if errors.Is(err, io.EOF) {
 		return errors.New("inputting canceled")
 	}
