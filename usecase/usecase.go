@@ -29,14 +29,14 @@ type dependencyManager struct {
 type state struct {
 	selectedPackage string // TODO: remove in v1.0.0.
 	selectedService string
-	rpcCallState    map[string]*callState
+	rpcCallState    map[string]callState
 }
 
 //call state maintained per
 type callState struct {
 	//lastRPCRequest      interface{}
-	lastRPCRequestBytes []byte
-	repeatable          bool
+	reqPayload []byte
+	repeatable bool
 }
 
 type Dependencies struct {
