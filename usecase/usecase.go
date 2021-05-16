@@ -22,14 +22,22 @@ type dependencyManager struct {
 	gRPCClient        grpc.Client
 	responseFormatter *format.ResponseFormatter
 	resourcePresenter present.Presenter
-
-	state state
+	state             state
 }
 
 // state has the domain state modified by each usecase logic. The default value is used as the initial value.
 type state struct {
 	selectedPackage string // TODO: remove in v1.0.0.
 	selectedService string
+	rpcCallState    map[string]callState
+}
+
+//call state maintained per
+type callState struct {
+	//lastRPCRequest      interface{}
+	lastRPCRequestBytes []byte
+	//lastRPCRequestBytes string
+	repeatable bool
 }
 
 type Dependencies struct {
