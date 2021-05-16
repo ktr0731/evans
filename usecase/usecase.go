@@ -25,14 +25,15 @@ type dependencyManager struct {
 	state             state
 }
 
+type rpcIdentifier string
+
 // state has the domain state modified by each usecase logic. The default value is used as the initial value.
 type state struct {
 	selectedPackage string // TODO: remove in v1.0.0.
 	selectedService string
-	rpcCallState    map[string]callState
+	rpcCallState    map[rpcIdentifier]callState
 }
 
-//call state maintained per
 type callState struct {
 	reqPayload []byte
 	repeatable bool

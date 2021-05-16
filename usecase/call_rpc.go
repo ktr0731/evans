@@ -3,13 +3,14 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"github.com/jhump/protoreflect/dynamic"
-	"github.com/ktr0731/evans/grpc"
-	"github.com/ktr0731/evans/idl/proto"
 	"io"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/jhump/protoreflect/dynamic"
+	"github.com/ktr0731/evans/grpc"
+	"github.com/ktr0731/evans/idl/proto"
 
 	"github.com/ktr0731/evans/fill"
 	"github.com/ktr0731/evans/logger"
@@ -71,9 +72,8 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 				return nil, err
 			}
 			return req, nil
-		} else {
-			return m.getPreviousRPCRequestIfExists(rpcName, err, req)
 		}
+		return m.getPreviousRPCRequestIfExists(rpcName, req)
 	}
 	newResponse := func() interface{} {
 		return rpc.ResponseType.New()
@@ -426,42 +426,42 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	}
 }
 
-//Gets a request with the body containing the payload of its previous RPC
-//Only RPCs that are repeatable get the request
-func (m *dependencyManager) getPreviousRPCRequestIfExists(rpcName string, err error, req interface{}) (interface{}, error) {
-	if m.state.rpcCallState[rpcName].repeatable {
-		if previousReqBytes := m.state.rpcCallState[rpcName].reqPayload; previousReqBytes == nil {
+// Gets a request with the body containing the payload of its previous RPC
+// Only RPCs that are repeatable by definition will have their previous requests returned.
+func (m *dependencyManager) getPreviousRPCRequestIfExists(rpcName string, req interface{}) (interface{}, error) {
+	id := rpcIdentifier(rpcName)
+	if m.state.rpcCallState[id].repeatable {
+		previousReqBytes := m.state.rpcCallState[id].reqPayload
+		if previousReqBytes == nil {
 			return nil, errors.New(fmt.Sprintf("No previous request body exists for RPC: %s. Please issue a normal request.", rpcName))
-		} else {
-			message := req.(*dynamic.Message)
-			err := message.Unmarshal(previousReqBytes)
-			if err != nil {
-				return nil, errors.Wrap(err, "Error while unmarshalling request for RPC [%s]. Please run without the -r option")
-			}
-			return req, nil
 		}
-	} else {
-		return nil, errors.New("Cannot rerun previous RPC. Client streaming RPCs are not supported.")
+		message := req.(*dynamic.Message)
+		err := message.Unmarshal(previousReqBytes)
+		if err != nil {
+			return nil, errors.Wrap(err, "Error while unmarshalling request for RPC [%s]. Please run without the -r option")
+		}
+		return req, nil
 	}
+	return nil, errors.New("cannot rerun previous RPC as client streaming RPCs are not supported")
 }
 
-//Updates the last call state for the given RPC. This is done by serializing
-//the request payload and store it into the state buffer indexed by the rpcName
-//The RPC is repeatable only if it is not a client streaming rpc.
+// Updates the last call state for the given RPC. This is done by serializing
+// the request payload and store it into the state buffer indexed by the rpcName
+// The RPC is repeatable only if it is not a client streaming rpc.
 func (m *dependencyManager) updateRPCCallState(rpcName string, req interface{}, rpc *grpc.RPC) error {
 	message := req.(*dynamic.Message)
-	if reqBytes, err := message.Marshal(); err == nil {
-		if m.state.rpcCallState == nil {
-			m.state.rpcCallState = make(map[string]callState)
-		}
-		m.state.rpcCallState[rpcName] = callState{
-			reqPayload: reqBytes,
-			repeatable: !rpc.IsClientStreaming,
-		}
-		return nil
-	} else {
+	reqBytes, err := message.Marshal()
+	if err != nil {
 		return err
 	}
+	if m.state.rpcCallState == nil {
+		m.state.rpcCallState = make(map[rpcIdentifier]callState)
+	}
+	m.state.rpcCallState[rpcIdentifier(rpcName)] = callState{
+		reqPayload: reqBytes,
+		repeatable: !rpc.IsClientStreaming,
+	}
+	return nil
 }
 
 type interactiveFiller struct {

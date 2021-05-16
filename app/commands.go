@@ -109,7 +109,7 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 				}
 			}()
 
-			isCLIMode := (cfg.cli || mode.IsCLIMode(cfg.file))
+			isCLIMode := cfg.cli || mode.IsCLIMode(cfg.file)
 			if cfg.repl || !isCLIMode {
 				return runREPLCommand(cfg, ui)
 			}
