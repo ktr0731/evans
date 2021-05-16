@@ -22,8 +22,9 @@ type dependencyManager struct {
 	gRPCClient        grpc.Client
 	responseFormatter *format.ResponseFormatter
 	resourcePresenter present.Presenter
-
-	state state
+	state             state
+	lastRPCRequest    interface{}
+	lastRPC           *grpc.RPC
 }
 
 // state has the domain state modified by each usecase logic. The default value is used as the initial value.

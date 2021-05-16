@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"github.com/ktr0731/evans/grpc"
 	"io"
 	"strings"
 	"sync"
@@ -50,20 +51,60 @@ func CallRPC(ctx context.Context, w io.Writer, rpcName string) error {
 }
 func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName string, filler fill.Filler) error {
 	fqsn := proto.FullyQualifiedServiceName(m.state.selectedPackage, m.state.selectedService)
-	rpc, err := m.spec.RPC(fqsn, rpcName)
-	if err != nil {
-		return errors.Wrap(err, "failed to get the RPC descriptor")
+	//todo if -r flag is sent, then use the cache and see if previous req for this rpc exists
+	rerunPrevious := false
+	var rpc *grpc.RPC
+	var err error
+
+	if rerunPrevious {
+		rpc = m.lastRPC
+		if rpc == nil {
+			return errors.Wrap(err, "-r specified but no previous RPC exists")
+		}
+	} else {
+		rpc, err = m.spec.RPC(fqsn, rpcName)
+		if err != nil {
+			return errors.Wrap(err, "failed to get the RPC descriptor")
+		}
 	}
 	newRequest := func() (interface{}, error) {
-		req := rpc.RequestType.New()
-		err = filler.Fill(req)
-		if errors.Is(err, io.EOF) {
-			return nil, io.EOF
+		//todo if this rpc's type is eligible for replay and prev exists, then replay prev
+		//todo post success, set this req as the last
+		//todo map[rpc.type]request
+		//todo if flag is set and the request is created, update the rpc cache
+		if rerunPrevious {
+			//todo below get previous rpc in cache
+			previousRPC := m.lastRPC
+			previousRPCRequest := m.lastRPCRequest
+
+			//todo if previousRPCRequest doesn't exist, throw err
+			if previousRPCRequest == nil {
+				return nil, errors.Wrap(nil, "No previous RPC request exists")
+			}
+			if previousRPC.IsClientStreaming || (previousRPC.IsClientStreaming && previousRPC.IsServerStreaming) {
+				//todo need previous req cache to enhance log messages
+				return nil, errors.Wrap(err, "Cannot rerun previous RPC as it was neither a server"+
+					" streaming request nor a unary request. Only these two are supported.")
+			} else {
+				//check if rpc in cache exists
+				//todo return map[previousRPCRequest]
+				//todo don't update the previous rpc
+				return previousRPCRequest, nil
+			}
+		} else {
+			req := rpc.RequestType.New()
+			err = filler.Fill(req)
+			if errors.Is(err, io.EOF) {
+				return nil, io.EOF
+			}
+			if err != nil {
+				return nil, err
+			}
+			//todo update the previous rpc
+			m.lastRPCRequest = req
+			m.lastRPC = rpc
+			return req, nil
 		}
-		if err != nil {
-			return nil, err
-		}
-		return req, nil
 	}
 	newResponse := func() interface{} {
 		return rpc.ResponseType.New()
@@ -382,6 +423,8 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	//
 	default:
 		req, err := newRequest()
+		//store request but where
+
 		if err != nil {
 			return err
 		}
