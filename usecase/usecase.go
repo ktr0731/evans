@@ -34,7 +34,6 @@ type state struct {
 
 //call state maintained per
 type callState struct {
-	//lastRPCRequest      interface{}
 	reqPayload []byte
 	repeatable bool
 }

@@ -426,6 +426,8 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	}
 }
 
+//Gets a request with the body containing the payload of its previous RPC
+//Only RPCs that are repeatable get the request
 func (m *dependencyManager) getPreviousRPCRequestIfExists(rpcName string, err error, req interface{}) (interface{}, error) {
 	if m.state.rpcCallState[rpcName].repeatable {
 		if previousReqBytes := m.state.rpcCallState[rpcName].reqPayload; previousReqBytes == nil {
@@ -434,12 +436,12 @@ func (m *dependencyManager) getPreviousRPCRequestIfExists(rpcName string, err er
 			message := req.(*dynamic.Message)
 			err := message.Unmarshal(previousReqBytes)
 			if err != nil {
-				return nil, errors.New("Error while unmarshalling request for RPC [%s]. Please run without the -r option")
+				return nil, errors.Wrap(err, "Error while unmarshalling request for RPC [%s]. Please run without the -r option")
 			}
 			return req, nil
 		}
 	} else {
-		return nil, errors.Wrap(err, "Cannot rerun previous RPC. Client streaming RPCs are not supported.")
+		return nil, errors.New("Cannot rerun previous RPC. Client streaming RPCs are not supported.")
 	}
 }
 
@@ -448,9 +450,7 @@ func (m *dependencyManager) getPreviousRPCRequestIfExists(rpcName string, err er
 //The RPC is repeatable only if it is not a client streaming rpc.
 func (m *dependencyManager) updateRPCCallState(rpcName string, req interface{}, rpc *grpc.RPC) error {
 	message := req.(*dynamic.Message)
-	if reqBytes, err := message.Marshal(); err != nil {
-		return err
-	} else {
+	if reqBytes, err := message.Marshal(); err == nil {
 		if m.state.rpcCallState == nil {
 			m.state.rpcCallState = make(map[string]callState)
 		}
@@ -459,6 +459,8 @@ func (m *dependencyManager) updateRPCCallState(rpcName string, req interface{}, 
 			repeatable: !rpc.IsClientStreaming,
 		}
 		return nil
+	} else {
+		return err
 	}
 }
 
