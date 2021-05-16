@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/jhump/protoreflect/dynamic"
-	"github.com/ktr0731/evans/grpc"
-	"github.com/ktr0731/evans/idl/proto"
 	"io"
 	"strings"
 	"sync"
@@ -47,19 +45,59 @@ func (e *gRPCError) Code() ErrorCode {
 
 // CallRPC constructs a request with input source such that prompt inputting, stdin or a file. After that, it sends
 // the request to the gRPC server and decodes the response body to res.
-// Note that req and res must be JSON-decodable structs. The output is written to w.
+// Note that req and res must be JSON-decode-able structs. The output is written to w.
 func CallRPC(ctx context.Context, w io.Writer, rpcName string) error {
 	return dm.CallRPC(ctx, w, rpcName, false, dm.filler)
 }
 func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName string, rerunPrevious bool, filler fill.Filler) error {
-	fqsn := proto.FullyQualifiedServiceName(m.state.selectedPackage, m.state.selectedService)
+	//fqsn := proto.FullyQualifiedServiceName(m.state.selectedPackage, m.state.selectedService)
+	fqsn := "protos.HelloWorld"
 	rpc, err := m.spec.RPC(fqsn, rpcName)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("failed to get the RPC descriptor for: %s", rpcName))
 	}
+	if rerunPrevious {
+		if _, ok := m.state.rpcCallState[rpcName]; !ok {
+			return errors.New(fmt.Sprintf("--repeat specified but no previous request available for RPC [%s]", rpcName))
+			//return errors.Wrap(err, fmt.Sprintf("--repeat specified but no previous RPC exists for %s", rpcName))
+		} else {
+			fmt.Println("Reusing previous request for: ", rpcName)
+		}
+	}
+
 	newRequest := func() (interface{}, error) {
-		req := rpc.RequestType.New()
-		if !rerunPrevious {
+		//todo if this rpc's type is eligible for replay and prev exists, then replay prev
+		//todo post success, set this req as the last
+		//todo map[rpc.type]request
+		//todo if flag is set and the request is created, update the rpc cache
+		if rerunPrevious {
+			//todo below get previous rpc in cache
+			previousRPCRequest := m.state.rpcCallState[rpcName].lastRPCRequestBytes
+			fmt.Println("Previous request bytes for: ", rpcName)
+
+			//todo if previousRPCRequest doesn't exist, throw err
+			if previousRPCRequest == nil {
+				return nil, errors.New("No request body exists for RPC. This shouldn't happen")
+			}
+			if m.state.rpcCallState[rpcName].repeatable {
+				//todo need previous req cache to enhance log messages
+				return nil, errors.Wrap(err, "Cannot rerun previous RPC as it was neither a server"+
+					" streaming request nor a unary request. Only these two are supported.")
+			} else {
+				fmt.Println("Body found and is repeatable for ", rpcName)
+				//check if rpc in cache exists
+				//todo return map[previousRPCRequest]
+				//todo don't update the previous rpc
+				newReq := rpc.RequestType.New()
+				err := newReq.(*dynamic.Message).Unmarshal(previousRPCRequest)
+				if err != nil {
+					return nil, errors.New("Error while unmarshalling request for RPC. Discarding old body. Run without the -r option")
+				}
+				//req := dynamic.Message.Unmarshal(previousRPCRequest)
+				return newReq, nil
+			}
+		} else {
+			req := rpc.RequestType.New()
 			err = filler.Fill(req)
 			if errors.Is(err, io.EOF) {
 				return nil, io.EOF
@@ -67,12 +105,22 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			if err != nil {
 				return nil, err
 			}
-			if err := m.updateRPCCallState(rpcName, req, rpc); err != nil {
-				return nil, err
+			//todo update the previous rpc
+			if m.state.rpcCallState == nil {
+				m.state.rpcCallState = make(map[string]*callState)
+			}
+			message := req.(*dynamic.Message)
+			if reqBytes, err := message.Marshal(); err != nil {
+				return nil, errors.New("Error while marshalling request for RPC")
+			} else {
+				m.state.rpcCallState[rpcName] = &callState{
+					//lastRPCRequest:      req,
+					lastRPCRequestBytes: reqBytes,
+					//todo extract into method
+					repeatable: !rpc.IsClientStreaming,
+				}
 			}
 			return req, nil
-		} else {
-			return m.getPreviousRPCRequestIfExists(rpcName, err, req)
 		}
 	}
 	newResponse := func() interface{} {
@@ -392,6 +440,8 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	//
 	default:
 		req, err := newRequest()
+		//store request but where
+
 		if err != nil {
 			return err
 		}
