@@ -5,7 +5,7 @@ go 1.12
 require (
 	github.com/Songmu/gocredits v0.2.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-	github.com/fatih/color v1.10.0
+	github.com/fatih/color v1.11.0
 	github.com/golang/protobuf v1.5.2
 	github.com/golangci/golangci-lint v1.39.0
 	github.com/google/go-cmp v0.5.5
@@ -31,7 +31,7 @@ require (
 	github.com/mattn/go-tty v0.0.0-20190424173100-523744f04859 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/pelletier/go-toml v1.9.0
+	github.com/pelletier/go-toml v1.9.1
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 // indirect
@@ -42,9 +42,9 @@ require (
 	github.com/tj/go-spin v1.1.0
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
-	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
-	golang.org/x/tools v0.1.0
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/tools v0.1.1
 	google.golang.org/genproto v0.0.0-20201203001206-6486ece9c497
-	google.golang.org/grpc v1.37.0
+	google.golang.org/grpc v1.37.1
 	google.golang.org/protobuf v1.26.0
 )
