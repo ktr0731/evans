@@ -2,6 +2,10 @@ package usecase
 
 import (
 	"testing"
+
+	"github.com/jhump/protoreflect/dynamic"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetPreviousRPCRequestReturnsErrorWhenPreviousDoesNotExist(t *testing.T) {
@@ -10,10 +14,10 @@ func TestGetPreviousRPCRequestReturnsErrorWhenPreviousDoesNotExist(t *testing.T)
 			rpcCallState: nil,
 		},
 	}
-	var req interface{}
-	if err := d.getPreviousRPCRequest("unknown", ""); err == nil {
-		t.Errorf("expected an error but got %s", req)
-	}
+	var req *dynamic.Message
+	err := d.getPreviousRPCRequest("TestRPC", req)
+	assert.Error(t, err)
+	assert.Equal(t, "no previous request exists for RPC: TestRPC, please issue a normal request", err.Error())
 }
 
 func TestGetPreviousRPCRequestReturnsErrorWhenRequestIsNotRepeatable(t *testing.T) {
@@ -26,10 +30,10 @@ func TestGetPreviousRPCRequestReturnsErrorWhenRequestIsNotRepeatable(t *testing.
 			},
 		},
 	}
-	var req interface{}
-	if err := d.getPreviousRPCRequest("TestRPC", ""); err == nil {
-		t.Errorf("expected an error but got %s", req)
-	}
+	var req *dynamic.Message
+	err := d.getPreviousRPCRequest("TestRPC", req)
+	assert.Error(t, err)
+	assert.Equal(t, "cannot rerun previous RPC: TestRPC as client/bidi streaming RPCs are not supported", err.Error())
 }
 
 func TestGetPreviousRPCRequestReturnsErrorWhenRequestBytesAreNil(t *testing.T) {
@@ -43,8 +47,8 @@ func TestGetPreviousRPCRequestReturnsErrorWhenRequestBytesAreNil(t *testing.T) {
 			},
 		},
 	}
-	var req interface{}
-	if err := d.getPreviousRPCRequest("TestRPC", ""); err == nil {
-		t.Errorf("expected an error but got %s", req)
-	}
+	var req *dynamic.Message
+	err := d.getPreviousRPCRequest("TestRPC", req)
+	assert.Error(t, err)
+	assert.Equal(t, "no previous request body exists for RPC: TestRPC, please issue a normal request", err.Error())
 }

@@ -56,7 +56,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	fqsn := proto.FullyQualifiedServiceName(m.state.selectedPackage, m.state.selectedService)
 	rpc, err := m.spec.RPC(fqsn, rpcName)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("failed to get the RPC descriptor for: %s", rpcName))
+		return errors.Wrapf(err, "failed to get the RPC descriptor for: %s", rpcName)
 	}
 	newRequest := func() (interface{}, error) {
 		req := rpc.RequestType.New()
@@ -73,7 +73,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			}
 			return req, nil
 		}
-		if err = m.getPreviousRPCRequest(rpcName, req); err != nil {
+		if err = m.getPreviousRPCRequest(rpcName, req.(*dynamic.Message)); err != nil {
 			return nil, err
 		}
 		return req, nil
@@ -431,17 +431,19 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 
 // Gets a request with the body containing the payload of its previous RPC
 // Only RPCs that are repeatable by definition will have their previous requests returned.
-func (m *dependencyManager) getPreviousRPCRequest(rpcName string, req interface{}) error {
+func (m *dependencyManager) getPreviousRPCRequest(rpcName string, req *dynamic.Message) error {
 	id := rpcIdentifier(rpcName)
+	if _, ok := m.state.rpcCallState[id]; !ok {
+		return errors.Errorf("no previous request exists for RPC: %s, please issue a normal request", rpcName)
+	}
 	if !m.state.rpcCallState[id].repeatable {
-		return errors.New("cannot rerun previous RPC as client streaming RPCs are not supported")
+		return errors.Errorf("cannot rerun previous RPC: %s as client/bidi streaming RPCs are not supported", rpcName)
 	}
 	previousReqBytes := m.state.rpcCallState[id].reqPayload
 	if previousReqBytes == nil {
-		return errors.New(fmt.Sprintf("No previous request body exists for RPC: %s. Please issue a normal request.", rpcName))
+		return errors.New(fmt.Sprintf("no previous request body exists for RPC: %s, please issue a normal request", rpcName))
 	}
-	message := req.(*dynamic.Message)
-	err := message.Unmarshal(previousReqBytes)
+	err := req.Unmarshal(previousReqBytes)
 	if err != nil {
 		return errors.Wrap(err, "Error while unmarshalling request for RPC [%s]. Please run without the -r option")
 	}
