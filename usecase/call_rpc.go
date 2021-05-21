@@ -433,19 +433,19 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 // Only RPCs that are repeatable by definition will have their previous requests returned.
 func (m *dependencyManager) getPreviousRPCRequest(rpcName string, req interface{}) error {
 	id := rpcIdentifier(rpcName)
-	if m.state.rpcCallState[id].repeatable {
-		previousReqBytes := m.state.rpcCallState[id].reqPayload
-		if previousReqBytes == nil {
-			return errors.New(fmt.Sprintf("No previous request body exists for RPC: %s. Please issue a normal request.", rpcName))
-		}
-		message := req.(*dynamic.Message)
-		err := message.Unmarshal(previousReqBytes)
-		if err != nil {
-			return errors.Wrap(err, "Error while unmarshalling request for RPC [%s]. Please run without the -r option")
-		}
-		return nil
+	if !m.state.rpcCallState[id].repeatable {
+		return errors.New("cannot rerun previous RPC as client streaming RPCs are not supported")
 	}
-	return errors.New("cannot rerun previous RPC as client streaming RPCs are not supported")
+	previousReqBytes := m.state.rpcCallState[id].reqPayload
+	if previousReqBytes == nil {
+		return errors.New(fmt.Sprintf("No previous request body exists for RPC: %s. Please issue a normal request.", rpcName))
+	}
+	message := req.(*dynamic.Message)
+	err := message.Unmarshal(previousReqBytes)
+	if err != nil {
+		return errors.Wrap(err, "Error while unmarshalling request for RPC [%s]. Please run without the -r option")
+	}
+	return nil
 }
 
 // Updates the last call state for the given RPC. This is done by serializing
