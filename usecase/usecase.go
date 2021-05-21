@@ -35,8 +35,7 @@ type state struct {
 }
 
 type callState struct {
-	reqPayload []byte
-	repeatable bool
+	requestPayload []byte
 }
 
 type Dependencies struct {
