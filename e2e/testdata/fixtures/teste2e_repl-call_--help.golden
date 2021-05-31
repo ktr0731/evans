@@ -5,4 +5,5 @@ Options:
       --dig-manually      prompt asks whether to dig down if it encountered to a message field
       --emit-defaults     render fields with default values
       --enrich            enrich response output includes header, message, trailer and status
+  -r, --repeat            repeat previous unary or server streaming request (if exists)
 
