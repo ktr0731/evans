@@ -7,8 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ktr0731/evans/fill"
+	"github.com/jhump/protoreflect/dynamic"
+	"github.com/ktr0731/evans/grpc"
 	"github.com/ktr0731/evans/idl/proto"
+
+	"github.com/ktr0731/evans/fill"
 	"github.com/ktr0731/evans/logger"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -46,21 +49,33 @@ func (e *gRPCError) Code() ErrorCode {
 // the request to the gRPC server and decodes the response body to res.
 // Note that req and res must be JSON-decodable structs. The output is written to w.
 func CallRPC(ctx context.Context, w io.Writer, rpcName string) error {
-	return dm.CallRPC(ctx, w, rpcName, dm.filler)
+	return dm.CallRPC(ctx, w, rpcName, false, dm.filler)
 }
-func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName string, filler fill.Filler) error {
+func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName string, rerunPrevious bool, filler fill.Filler) error {
 	fqsn := proto.FullyQualifiedServiceName(m.state.selectedPackage, m.state.selectedService)
 	rpc, err := m.spec.RPC(fqsn, rpcName)
 	if err != nil {
-		return errors.Wrap(err, "failed to get the RPC descriptor")
+		return errors.Wrapf(err, "failed to get the RPC descriptor for: %s", rpcName)
+	}
+	if rerunPrevious && rpc.IsClientStreaming {
+		return errors.New("cannot rerun previous RPC as client/bidi streaming RPCs are not supported")
 	}
 	newRequest := func() (interface{}, error) {
 		req := rpc.RequestType.New()
-		err = filler.Fill(req)
-		if errors.Is(err, io.EOF) {
-			return nil, io.EOF
+		if !rerunPrevious {
+			err = filler.Fill(req)
+			if errors.Is(err, io.EOF) {
+				return nil, io.EOF
+			}
+			if err != nil {
+				return nil, err
+			}
+			if err := m.updateRPCCallState(rpcName, req); err != nil {
+				return nil, err
+			}
+			return req, nil
 		}
-		if err != nil {
+		if err = m.getPreviousRPCRequest(rpc, req.(*dynamic.Message)); err != nil {
 			return nil, err
 		}
 		return req, nil
@@ -416,6 +431,45 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	}
 }
 
+// Gets a request with the body containing the payload of its previous RPC
+// Only RPCs that are repeatable by definition will have their previous requests returned.
+func (m *dependencyManager) getPreviousRPCRequest(rpc *grpc.RPC, req *dynamic.Message) error {
+	id := rpcIdentifier(rpc.Name)
+	if _, ok := m.state.rpcCallState[id]; !ok {
+		return errors.Errorf("no previous request exists for RPC: %s, please issue a normal request", id)
+	}
+	if rpc.IsClientStreaming {
+		return errors.Errorf("cannot rerun previous RPC: %s as client/bidi streaming RPCs are not supported", id)
+	}
+	previousReqBytes := m.state.rpcCallState[id].requestPayload
+	if previousReqBytes == nil {
+		return errors.Errorf("no previous request body exists for RPC: %s, please issue a normal request", id)
+	}
+	err := req.Unmarshal(previousReqBytes)
+	if err != nil {
+		return errors.Wrapf(err, "error while unmarshalling request for RPC: %s, please run without the --repeat option", id)
+	}
+	return nil
+}
+
+// Updates the last call state for the given RPC. This is done by serializing
+// the request payload and store it into the state buffer indexed by the rpcName
+// The RPC is repeatable only if it is not a client streaming rpc.
+func (m *dependencyManager) updateRPCCallState(rpcName string, req interface{}) error {
+	message := req.(*dynamic.Message)
+	reqBytes, err := message.Marshal()
+	if err != nil {
+		return err
+	}
+	if m.state.rpcCallState == nil {
+		m.state.rpcCallState = make(map[rpcIdentifier]callState)
+	}
+	m.state.rpcCallState[rpcIdentifier(rpcName)] = callState{
+		requestPayload: reqBytes,
+	}
+	return nil
+}
+
 type interactiveFiller struct {
 	fillFunc func(v interface{}) error
 }
@@ -424,12 +478,12 @@ func (f *interactiveFiller) Fill(v interface{}) error {
 	return f.fillFunc(v)
 }
 
-func CallRPCInteractively(ctx context.Context, w io.Writer, rpcName string, digManually, bytesFromFile bool) error {
-	return dm.CallRPCInteractively(ctx, w, rpcName, digManually, bytesFromFile)
+func CallRPCInteractively(ctx context.Context, w io.Writer, rpcName string, digManually, bytesFromFile bool, rerunPrevious bool) error {
+	return dm.CallRPCInteractively(ctx, w, rpcName, digManually, bytesFromFile, rerunPrevious)
 }
 
-func (m *dependencyManager) CallRPCInteractively(ctx context.Context, w io.Writer, rpcName string, digManually, bytesFromFile bool) error {
-	return m.CallRPC(ctx, w, rpcName, &interactiveFiller{
+func (m *dependencyManager) CallRPCInteractively(ctx context.Context, w io.Writer, rpcName string, digManually, bytesFromFile, rerunPrevious bool) error {
+	return m.CallRPC(ctx, w, rpcName, rerunPrevious, &interactiveFiller{
 		fillFunc: func(v interface{}) error {
 			return m.interactiveFiller.Fill(v, fill.InteractiveFillerOpts{DigManually: digManually, BytesFromFile: bytesFromFile})
 		},
