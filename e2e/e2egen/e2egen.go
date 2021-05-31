@@ -135,7 +135,7 @@ func generateFile(w io.Writer, src, testCaseName string, input, args []string) e
 		l4 := file.LineStart(fset.Position(nextLine).Line + 4)
 		l5 := file.LineStart(fset.Position(nextLine).Line + 5)
 
-		elts := append(compLit.Elts, &ast.KeyValueExpr{
+		compLit.Elts = append(compLit.Elts, &ast.KeyValueExpr{
 			Key: &ast.BasicLit{
 				ValuePos: l1,
 				Kind:     token.STRING,
@@ -182,7 +182,6 @@ func generateFile(w io.Writer, src, testCaseName string, input, args []string) e
 			},
 		})
 		compLit.Rbrace = l5
-		compLit.Elts = elts
 		return false
 	}, nil)
 
