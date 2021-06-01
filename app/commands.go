@@ -109,7 +109,7 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 				}
 			}()
 
-			isCLIMode := (cfg.cli || mode.IsCLIMode(cfg.file))
+			isCLIMode := cfg.cli || mode.IsCLIMode(cfg.file)
 			if cfg.repl || !isCLIMode {
 				return runREPLCommand(cfg, ui)
 			}
@@ -280,8 +280,8 @@ func runREPLCommand(cfg *mergedConfig, ui cui.UI) error {
 		return errors.Wrap(err, "failed to run REPL mode")
 	}
 
-	// Always call cancel func because it is hope to abort update checking if REPL mode is finished
-	// before update checking. If update checking is finished before REPL mode, cancel do nothing.
+	// Always call cancel() because it is hope to abort update checking if REPL mode is finished
+	// before update checking. If the update check is finished before REPL mode, cancel does nothing.
 	cancel()
 	if err := eg.Wait(); err != nil {
 		return errors.Wrap(err, "failed to check application update")
