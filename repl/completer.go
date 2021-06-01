@@ -81,8 +81,8 @@ func newCompleter(cmds map[string]commander) *completer {
 					s = []*prompt.Suggest{
 						prompt.NewSuggestion("package", "show loaded package names"),
 						prompt.NewSuggestion("service", "show loaded service names"),
-						prompt.NewSuggestion("message", "show loaded messsage names"),
-						prompt.NewSuggestion("rpc", "show RPC names belong to the current selected service"),
+						prompt.NewSuggestion("message", "show loaded message names"),
+						prompt.NewSuggestion("rpc", "show RPC names belonging to the current selected service"),
 						prompt.NewSuggestion("header", "show headers which will be added to each request"),
 					}
 				}

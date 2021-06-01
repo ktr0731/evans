@@ -9,7 +9,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/golangci/golangci-lint v1.40.1
 	github.com/google/go-cmp v0.5.5
-	github.com/goreleaser/goreleaser v0.164.0
+	github.com/goreleaser/goreleaser v0.165.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.3.0
 	github.com/jhump/protoreflect v1.8.2
@@ -44,7 +44,7 @@ require (
 	go.uber.org/goleak v0.10.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/tools v0.1.2-0.20210512205948-8287d5da45e4
-	google.golang.org/genproto v0.0.0-20201203001206-6486ece9c497
+	google.golang.org/genproto v0.0.0-20210506142907-4a47615972c2
 	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0
 )
