@@ -8,8 +8,8 @@ require (
 	github.com/fatih/color v1.12.0
 	github.com/golang/protobuf v1.5.2
 	github.com/golangci/golangci-lint v1.40.1
-	github.com/google/go-cmp v0.5.5
-	github.com/goreleaser/goreleaser v0.165.0
+	github.com/google/go-cmp v0.5.6
+	github.com/goreleaser/goreleaser v0.169.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.3.0
 	github.com/jhump/protoreflect v1.8.2
@@ -26,12 +26,12 @@ require (
 	github.com/manifoldco/promptui v0.8.0
 	github.com/matryer/moq v0.2.1
 	github.com/mattn/go-colorable v0.1.8
-	github.com/mattn/go-isatty v0.0.12
+	github.com/mattn/go-isatty v0.0.13
 	github.com/mattn/go-pipeline v0.0.0-20190323144519-32d779b32768 // indirect
 	github.com/mattn/go-tty v0.0.0-20190424173100-523744f04859 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/pelletier/go-toml v1.9.1
+	github.com/pelletier/go-toml v1.9.2
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 // indirect
