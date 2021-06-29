@@ -7,9 +7,9 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.12.0
 	github.com/golang/protobuf v1.5.2
-	github.com/golangci/golangci-lint v1.40.1
+	github.com/golangci/golangci-lint v1.41.1
 	github.com/google/go-cmp v0.5.6
-	github.com/goreleaser/goreleaser v0.169.0
+	github.com/goreleaser/goreleaser v0.172.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.3.0
 	github.com/jhump/protoreflect v1.8.2
@@ -31,20 +31,20 @@ require (
 	github.com/mattn/go-tty v0.0.0-20190424173100-523744f04859 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/pelletier/go-toml v1.9.2
+	github.com/pelletier/go-toml v1.9.3
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 // indirect
 	github.com/rakyll/statik v0.1.7
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.7.1
+	github.com/spf13/viper v1.8.1
 	github.com/tj/go-spin v1.1.0
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v0.10.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/tools v0.1.2-0.20210512205948-8287d5da45e4
-	google.golang.org/genproto v0.0.0-20210506142907-4a47615972c2
+	golang.org/x/tools v0.1.4
+	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
 	google.golang.org/grpc v1.38.0
-	google.golang.org/protobuf v1.26.0
+	google.golang.org/protobuf v1.27.0
 )
