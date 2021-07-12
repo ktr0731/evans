@@ -106,9 +106,13 @@ func TestE2E_REPL(t *testing.T) {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"call UnaryRepeated", "miyuki", "kaguya", "chika", "yu", io.EOF},
 		},
+		"call UnaryRepeated (specify default value)": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"call UnaryRepeated", "", io.EOF},
+		},
 		"call UnarySelf": {
 			commonFlags: "--proto testdata/test.proto",
-			input:       []interface{}{"call UnarySelf", "dig down", "ohana", "matsumae", "ohana", "dig down", "nako", "oshimizu", "nakochi", "finish", "dig down", "minko", "tsurugi", "minchi", "finish", "finish"},
+			input:       []interface{}{"call UnarySelf", "ohana", "matsumae", "ohana", "nako", "oshimizu", "nakochi", io.EOF, "minko", "tsurugi", "minchi", io.EOF, io.EOF},
 		},
 		"call UnaryMap": {
 			commonFlags: "--proto testdata/test.proto",
@@ -117,11 +121,11 @@ func TestE2E_REPL(t *testing.T) {
 		},
 		"call UnaryOneof": {
 			commonFlags: "--proto testdata/test.proto",
-			input:       []interface{}{"call UnaryOneof", "msg", "ai", "hayasaka"},
+			input:       []interface{}{"call UnaryOneof", 0, "ai", "hayasaka"},
 		},
 		"call UnaryEnum": {
 			commonFlags: "--proto testdata/test.proto",
-			input:       []interface{}{"call UnaryEnum", "Male"},
+			input:       []interface{}{"call UnaryEnum", 0},
 		},
 		"call UnaryBytes": {
 			commonFlags: "--proto testdata/test.proto",
@@ -129,7 +133,7 @@ func TestE2E_REPL(t *testing.T) {
 		},
 		"call UnaryRepeatedEnum": {
 			commonFlags: "--proto testdata/test.proto",
-			input:       []interface{}{"call UnaryRepeatedEnum", "Male", "Male", "Female", io.EOF},
+			input:       []interface{}{"call UnaryRepeatedEnum", 0, 0, 1, io.EOF},
 		},
 		"call Unary with an invalid flag": {
 			commonFlags: "--proto testdata/test.proto",
@@ -139,15 +143,15 @@ func TestE2E_REPL(t *testing.T) {
 		},
 		"call UnaryEcho": {
 			commonFlags: "--proto testdata/test.proto",
-			input:       []interface{}{"call --dig-manually UnaryEcho", "dig down", "kaguya", "shinomiya"},
+			input:       []interface{}{"call --dig-manually UnaryEcho", 0, "kaguya", "shinomiya"},
 		},
 		"call UnaryEcho with empty request": {
 			commonFlags: "--proto testdata/test.proto",
-			input:       []interface{}{"call --dig-manually UnaryEcho", "skip"},
+			input:       []interface{}{"call --dig-manually UnaryEcho", 1},
 		},
 		"call UnaryEcho with empty name request": {
 			commonFlags: "--proto testdata/test.proto",
-			input:       []interface{}{"call --dig-manually UnaryEcho", "dig down", prompt.ErrAbort},
+			input:       []interface{}{"call --dig-manually UnaryEcho", 0, prompt.ErrAbort},
 		},
 
 		// call (gRPC-Web)
@@ -335,7 +339,7 @@ func TestE2E_REPL(t *testing.T) {
 		},
 		"ctrl-c skips the rest of the current message and exits the repeated field": {
 			commonFlags: "--proto testdata/test.proto",
-			input:       []interface{}{"call UnaryRepeatedMessage", "kanade", "hisaishi", "kumiko", prompt.ErrAbort},
+			input:       []interface{}{"call UnaryRepeatedMessage", "kanade", "hisaishi", "kumiko", prompt.ErrAbort, io.EOF},
 		},
 		"ctrl-c is also enabled in streaming RPCs": {
 			commonFlags: "--proto testdata/test.proto",
