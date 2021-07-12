@@ -120,7 +120,7 @@ func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer, c *cach
 
 	printUpdateInfo(w, c.UpdateInfo.LatestVersion)
 
-	selected, err := prompt.Select("update?", []string{"yes", "no"})
+	_, selected, err := prompt.Select("update?", []string{"yes", "no"})
 	if err != nil || selected == "no" {
 		// Abort updating.
 		return nil

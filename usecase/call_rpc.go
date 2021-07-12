@@ -478,14 +478,18 @@ func (f *interactiveFiller) Fill(v interface{}) error {
 	return f.fillFunc(v)
 }
 
-func CallRPCInteractively(ctx context.Context, w io.Writer, rpcName string, digManually, bytesFromFile bool, rerunPrevious bool) error {
-	return dm.CallRPCInteractively(ctx, w, rpcName, digManually, bytesFromFile, rerunPrevious)
+func CallRPCInteractively(ctx context.Context, w io.Writer, rpcName string, digManually, bytesFromFile, rerunPrevious, addRepeatedManually bool) error {
+	return dm.CallRPCInteractively(ctx, w, rpcName, digManually, bytesFromFile, rerunPrevious, addRepeatedManually)
 }
 
-func (m *dependencyManager) CallRPCInteractively(ctx context.Context, w io.Writer, rpcName string, digManually, bytesFromFile, rerunPrevious bool) error {
+func (m *dependencyManager) CallRPCInteractively(ctx context.Context, w io.Writer, rpcName string, digManually, bytesFromFile, rerunPrevious, addRepeatedManually bool) error {
 	return m.CallRPC(ctx, w, rpcName, rerunPrevious, &interactiveFiller{
 		fillFunc: func(v interface{}) error {
-			return m.interactiveFiller.Fill(v, fill.InteractiveFillerOpts{DigManually: digManually, BytesFromFile: bytesFromFile})
+			return m.interactiveFiller.Fill(v, fill.InteractiveFillerOpts{
+				DigManually:         digManually,
+				BytesFromFile:       bytesFromFile,
+				AddRepeatedManually: addRepeatedManually,
+			})
 		},
 	})
 }

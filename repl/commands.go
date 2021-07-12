@@ -155,7 +155,7 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 }
 
 type callCommand struct {
-	enrich, digManually, bytesFromFile, emitDefaults, repeatCall bool
+	enrich, digManually, bytesFromFile, emitDefaults, repeatCall, addRepeatedManually bool
 }
 
 func (c *callCommand) FlagSet() (*pflag.FlagSet, bool) {
@@ -166,6 +166,7 @@ func (c *callCommand) FlagSet() (*pflag.FlagSet, bool) {
 	fs.BoolVar(&c.bytesFromFile, "bytes-from-file", false, "interpret TYPE_BYTES input as a relative path to a file")
 	fs.BoolVar(&c.emitDefaults, "emit-defaults", false, "render fields with default values")
 	fs.BoolVarP(&c.repeatCall, "repeat", "r", false, "repeat previous unary or server streaming request (if exists)")
+	fs.BoolVar(&c.addRepeatedManually, "add-repeated-manually", false, "prompt asks whether to add a value if it encountered to a repeated field")
 	return fs, true
 }
 
@@ -200,7 +201,7 @@ func (c *callCommand) Run(w io.Writer, args []string) error {
 
 	// here we create the request context
 	// we also add the call command flags here
-	err := usecase.CallRPCInteractively(context.Background(), w, args[0], c.digManually, c.bytesFromFile, c.repeatCall)
+	err := usecase.CallRPCInteractively(context.Background(), w, args[0], c.digManually, c.bytesFromFile, c.repeatCall, c.addRepeatedManually)
 	if errors.Is(err, io.EOF) {
 		return errors.New("inputting canceled")
 	}

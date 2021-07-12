@@ -48,12 +48,17 @@ func (c *Color) Next() {
 	*c = (*c + 1) % 16
 }
 
+// NextVal is the same as Next, but return color as value.
+func (c *Color) NextVal() Color {
+	return (*c + 1) % 16
+}
+
 type Prompt interface {
 	// Input reads keyboard input.
 	// If ctrl+d is entered, Input returns io.EOF.
 	// If ctrl+c is entered, Input returns ErrAbort.
 	Input() (string, error)
-	Select(message string, options []string) (selected string, _ error)
+	Select(message string, options []string) (idx int, selected string, _ error)
 
 	// SetPrefix changes the current prefix to the passed one.
 	SetPrefix(prefix string)
@@ -81,10 +86,9 @@ func newPrompt(opts ...Option) Prompt {
 	p := &prompt{
 		InputFunc:   goprompt.Input,
 		prefixColor: ColorInitial,
-		SelectFunc: func(message string, options []string) (string, error) {
+		SelectFunc: func(message string, options []string) (int, string, error) {
 			s := promptui.Select{Label: message, Items: options}
-			_, res, err := s.Run()
-			return res, err
+			return s.Run()
 		},
 		commandHistory: opt.commandHistory,
 	}
@@ -116,7 +120,7 @@ type prompt struct {
 
 	// Treat prompt functions as fields for testing.
 	InputFunc  func(prefix string, completer goprompt.Completer, opts ...goprompt.Option) (string, error)
-	SelectFunc func(message string, options []string) (string, error)
+	SelectFunc func(message string, options []string) (int, string, error)
 }
 
 func (p *prompt) Input() (in string, err error) {
@@ -137,20 +141,18 @@ func (p *prompt) Input() (in string, err error) {
 	return in, nil
 }
 
-func (p *prompt) Select(message string, options []string) (string, error) {
-	for {
-		res, err := p.SelectFunc(message, options)
-		if errors.Is(err, promptui.ErrInterrupt) {
-			continue
-		}
-		if errors.Is(err, promptui.ErrEOF) {
-			return "", io.EOF
-		}
-		if err != nil {
-			return "", errors.Wrap(err, "failed to select an item")
-		}
-		return res, nil
+func (p *prompt) Select(message string, options []string) (int, string, error) {
+	n, res, err := p.SelectFunc(message, options)
+	if errors.Is(err, promptui.ErrInterrupt) {
+		return 0, "", ErrAbort
 	}
+	if errors.Is(err, promptui.ErrEOF) {
+		return 0, "", io.EOF
+	}
+	if err != nil {
+		return 0, "", errors.Wrap(err, "failed to select an item")
+	}
+	return n, res, nil
 }
 
 func (p *prompt) SetPrefix(prefix string) {
