@@ -152,7 +152,7 @@ func (f *InteractiveFiller) inputField(dmsg *dynamic.Message, field *desc.FieldD
 			}
 			prefix += field.GetName()
 
-			choice, err := f.prompt.Select(
+			_, choice, err := f.prompt.Select(
 				fmt.Sprintf("circulated field was found. dig down or finish? field: %s (%s)", prefix, strings.Join(f.state.circulatedMessages[field.GetMessageType().GetFullyQualifiedName()], ">")),
 				[]string{"dig down", "finish"},
 			)
@@ -171,7 +171,7 @@ func (f *InteractiveFiller) inputField(dmsg *dynamic.Message, field *desc.FieldD
 		f.state.ancestor = append(f.state.ancestor, field.GetName())
 
 		if f.digManually {
-			choice, err := f.prompt.Select(
+			_, choice, err := f.prompt.Select(
 				fmt.Sprintf(
 					"dig down? field: %s, message: %s",
 					field.GetFullyQualifiedName(),
@@ -245,7 +245,7 @@ func (f *InteractiveFiller) selectOneOf(field *desc.FieldDescriptor) (*desc.Fiel
 		fieldOf[choice.GetName()] = choice
 	}
 
-	choice, err := f.prompt.Select(oneof.GetName(), options)
+	_, choice, err := f.prompt.Select(oneof.GetName(), options)
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func (f *InteractiveFiller) selectEnum(enum *desc.FieldDescriptor) (*desc.EnumVa
 		valOf[v.GetName()] = v
 	}
 
-	choice, err := f.prompt.Select(enum.GetName(), options)
+	_, choice, err := f.prompt.Select(enum.GetName(), options)
 	if err != nil {
 		return nil, err
 	}

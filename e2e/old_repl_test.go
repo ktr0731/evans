@@ -357,8 +357,9 @@ func (p *stubPrompt) Input() (string, error) {
 	}
 }
 
-func (p *stubPrompt) Select(string, []string) (string, error) {
-	return p.Input()
+func (p *stubPrompt) Select(string, []string) (int, string, error) {
+	s, err := p.Input()
+	return 0, s, err
 }
 
 var (
