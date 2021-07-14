@@ -66,34 +66,30 @@ func TestPrompt_Select(t *testing.T) {
 	_ = counter
 
 	cases := map[string]struct {
-		SelectFunc func(message string, options []string) (string, error)
+		SelectFunc func(message string, options []string) (int, string, error)
 
 		expectedErr error
 	}{
 		"normal": {
-			SelectFunc: func(message string, options []string) (string, error) {
-				return "an selection", nil
+			SelectFunc: func(message string, options []string) (int, string, error) {
+				return 0, "an selection", nil
 			},
 		},
-		"retry if prompttui.ErrInterrupt is returned from SelectFunc": {
-			SelectFunc: func(message string, options []string) (string, error) {
-				// To escape from the loop, check whether this call is the second or not.
-				if counter != 1 {
-					counter++
-					return "", promptui.ErrInterrupt
-				}
-				return "an selection", nil
+		"returns ErrAbort if prompttui.ErrInterrupt is returned from SelectFunc": {
+			SelectFunc: func(message string, options []string) (int, string, error) {
+				return 0, "", promptui.ErrInterrupt
 			},
+			expectedErr: ErrAbort,
 		},
 		"returns io.EOF if promptui.ErrEOF is returned from SelectFunc": {
-			SelectFunc: func(message string, options []string) (string, error) {
-				return "", promptui.ErrEOF
+			SelectFunc: func(message string, options []string) (int, string, error) {
+				return 0, "", promptui.ErrEOF
 			},
 			expectedErr: io.EOF,
 		},
 		"returns an error if an error is returned from SelectFunc": {
-			SelectFunc: func(message string, options []string) (string, error) {
-				return "", io.ErrUnexpectedEOF
+			SelectFunc: func(message string, options []string) (int, string, error) {
+				return 0, "", io.ErrUnexpectedEOF
 			},
 			expectedErr: io.ErrUnexpectedEOF,
 		},
@@ -104,7 +100,7 @@ func TestPrompt_Select(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			p := newPrompt()
 			p.(*prompt).SelectFunc = c.SelectFunc
-			_, err := p.Select("", []string{"foo", "bar"})
+			_, _, err := p.Select("", []string{"foo", "bar"})
 			if c.expectedErr == nil {
 				if err != nil {
 					t.Fatalf("Input must not return an error, but got nil")

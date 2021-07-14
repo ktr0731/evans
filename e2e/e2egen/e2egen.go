@@ -209,12 +209,12 @@ func (p *recorderPrompt) Input() (string, error) {
 	return s, err
 }
 
-func (p *recorderPrompt) Select(message string, options []string) (string, error) {
-	s, err := p.Prompt.Select(message, options)
+func (p *recorderPrompt) Select(message string, options []string) (int, string, error) {
+	_, s, err := p.Prompt.Select(message, options)
 	if err == nil {
 		p.inputHistory = append(p.inputHistory, s)
 	}
-	return s, err
+	return 0, s, err
 }
 
 func filterArgs(args []string) []string {

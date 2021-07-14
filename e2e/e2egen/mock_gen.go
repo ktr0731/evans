@@ -8,49 +8,40 @@ import (
 	"sync"
 )
 
-var (
-	lockPromptMockGetCommandHistory sync.RWMutex
-	lockPromptMockInput             sync.RWMutex
-	lockPromptMockSelect            sync.RWMutex
-	lockPromptMockSetCompleter      sync.RWMutex
-	lockPromptMockSetPrefix         sync.RWMutex
-	lockPromptMockSetPrefixColor    sync.RWMutex
-)
-
-// Ensure, that PromptMock does implement Prompt.
+// Ensure, that PromptMock does implement prompt.Prompt.
 // If this is not the case, regenerate this file with moq.
 var _ prompt.Prompt = &PromptMock{}
 
-// PromptMock is a mock implementation of Prompt.
+// PromptMock is a mock implementation of prompt.Prompt.
 //
-//     func TestSomethingThatUsesPrompt(t *testing.T) {
+// 	func TestSomethingThatUsesPrompt(t *testing.T) {
 //
-//         // make and configure a mocked Prompt
-//         mockedPrompt := &PromptMock{
-//             GetCommandHistoryFunc: func() []string {
-// 	               panic("mock out the GetCommandHistory method")
-//             },
-//             InputFunc: func() (string, error) {
-// 	               panic("mock out the Input method")
-//             },
-//             SelectFunc: func(message string, options []string) (string, error) {
-// 	               panic("mock out the Select method")
-//             },
-//             SetCompleterFunc: func(c prompt.Completer)  {
-// 	               panic("mock out the SetCompleter method")
-//             },
-//             SetPrefixFunc: func(prefix string)  {
-// 	               panic("mock out the SetPrefix method")
-//             },
-//             SetPrefixColorFunc: func(color prompt.Color)  {
-// 	               panic("mock out the SetPrefixColor method")
-//             },
-//         }
+// 		// make and configure a mocked prompt.Prompt
+// 		mockedPrompt := &PromptMock{
+// 			GetCommandHistoryFunc: func() []string {
+// 				panic("mock out the GetCommandHistory method")
+// 			},
+// 			InputFunc: func() (string, error) {
+// 				panic("mock out the Input method")
+// 			},
+// 			SelectFunc: func(message string, options []string) (int, string, error) {
+// 				panic("mock out the Select method")
+// 			},
+// 			SetCompleterFunc: func(c prompt.Completer)  {
+// 				panic("mock out the SetCompleter method")
+// 			},
+// 			SetPrefixFunc: func(prefix string)  {
+// 				panic("mock out the SetPrefix method")
+// 			},
+// 			SetPrefixColorFunc: func(color prompt.Color)  {
+// 				panic("mock out the SetPrefixColor method")
+// 			},
+// 		}
 //
-//         // use mockedPrompt in code that requires Prompt
-//         // and then make assertions.
+// 		// use mockedPrompt in code that requires prompt.Prompt
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type PromptMock struct {
 	// GetCommandHistoryFunc mocks the GetCommandHistory method.
 	GetCommandHistoryFunc func() []string
@@ -59,7 +50,7 @@ type PromptMock struct {
 	InputFunc func() (string, error)
 
 	// SelectFunc mocks the Select method.
-	SelectFunc func(message string, options []string) (string, error)
+	SelectFunc func(message string, options []string) (int, string, error)
 
 	// SetCompleterFunc mocks the SetCompleter method.
 	SetCompleterFunc func(c prompt.Completer)
@@ -101,6 +92,12 @@ type PromptMock struct {
 			Color prompt.Color
 		}
 	}
+	lockGetCommandHistory sync.RWMutex
+	lockInput             sync.RWMutex
+	lockSelect            sync.RWMutex
+	lockSetCompleter      sync.RWMutex
+	lockSetPrefix         sync.RWMutex
+	lockSetPrefixColor    sync.RWMutex
 }
 
 // GetCommandHistory calls GetCommandHistoryFunc.
@@ -110,9 +107,9 @@ func (mock *PromptMock) GetCommandHistory() []string {
 	}
 	callInfo := struct {
 	}{}
-	lockPromptMockGetCommandHistory.Lock()
+	mock.lockGetCommandHistory.Lock()
 	mock.calls.GetCommandHistory = append(mock.calls.GetCommandHistory, callInfo)
-	lockPromptMockGetCommandHistory.Unlock()
+	mock.lockGetCommandHistory.Unlock()
 	return mock.GetCommandHistoryFunc()
 }
 
@@ -123,9 +120,9 @@ func (mock *PromptMock) GetCommandHistoryCalls() []struct {
 } {
 	var calls []struct {
 	}
-	lockPromptMockGetCommandHistory.RLock()
+	mock.lockGetCommandHistory.RLock()
 	calls = mock.calls.GetCommandHistory
-	lockPromptMockGetCommandHistory.RUnlock()
+	mock.lockGetCommandHistory.RUnlock()
 	return calls
 }
 
@@ -136,9 +133,9 @@ func (mock *PromptMock) Input() (string, error) {
 	}
 	callInfo := struct {
 	}{}
-	lockPromptMockInput.Lock()
+	mock.lockInput.Lock()
 	mock.calls.Input = append(mock.calls.Input, callInfo)
-	lockPromptMockInput.Unlock()
+	mock.lockInput.Unlock()
 	return mock.InputFunc()
 }
 
@@ -149,14 +146,14 @@ func (mock *PromptMock) InputCalls() []struct {
 } {
 	var calls []struct {
 	}
-	lockPromptMockInput.RLock()
+	mock.lockInput.RLock()
 	calls = mock.calls.Input
-	lockPromptMockInput.RUnlock()
+	mock.lockInput.RUnlock()
 	return calls
 }
 
 // Select calls SelectFunc.
-func (mock *PromptMock) Select(message string, options []string) (string, error) {
+func (mock *PromptMock) Select(message string, options []string) (int, string, error) {
 	if mock.SelectFunc == nil {
 		panic("PromptMock.SelectFunc: method is nil but Prompt.Select was just called")
 	}
@@ -167,9 +164,9 @@ func (mock *PromptMock) Select(message string, options []string) (string, error)
 		Message: message,
 		Options: options,
 	}
-	lockPromptMockSelect.Lock()
+	mock.lockSelect.Lock()
 	mock.calls.Select = append(mock.calls.Select, callInfo)
-	lockPromptMockSelect.Unlock()
+	mock.lockSelect.Unlock()
 	return mock.SelectFunc(message, options)
 }
 
@@ -184,9 +181,9 @@ func (mock *PromptMock) SelectCalls() []struct {
 		Message string
 		Options []string
 	}
-	lockPromptMockSelect.RLock()
+	mock.lockSelect.RLock()
 	calls = mock.calls.Select
-	lockPromptMockSelect.RUnlock()
+	mock.lockSelect.RUnlock()
 	return calls
 }
 
@@ -200,9 +197,9 @@ func (mock *PromptMock) SetCompleter(c prompt.Completer) {
 	}{
 		C: c,
 	}
-	lockPromptMockSetCompleter.Lock()
+	mock.lockSetCompleter.Lock()
 	mock.calls.SetCompleter = append(mock.calls.SetCompleter, callInfo)
-	lockPromptMockSetCompleter.Unlock()
+	mock.lockSetCompleter.Unlock()
 	mock.SetCompleterFunc(c)
 }
 
@@ -215,9 +212,9 @@ func (mock *PromptMock) SetCompleterCalls() []struct {
 	var calls []struct {
 		C prompt.Completer
 	}
-	lockPromptMockSetCompleter.RLock()
+	mock.lockSetCompleter.RLock()
 	calls = mock.calls.SetCompleter
-	lockPromptMockSetCompleter.RUnlock()
+	mock.lockSetCompleter.RUnlock()
 	return calls
 }
 
@@ -231,9 +228,9 @@ func (mock *PromptMock) SetPrefix(prefix string) {
 	}{
 		Prefix: prefix,
 	}
-	lockPromptMockSetPrefix.Lock()
+	mock.lockSetPrefix.Lock()
 	mock.calls.SetPrefix = append(mock.calls.SetPrefix, callInfo)
-	lockPromptMockSetPrefix.Unlock()
+	mock.lockSetPrefix.Unlock()
 	mock.SetPrefixFunc(prefix)
 }
 
@@ -246,9 +243,9 @@ func (mock *PromptMock) SetPrefixCalls() []struct {
 	var calls []struct {
 		Prefix string
 	}
-	lockPromptMockSetPrefix.RLock()
+	mock.lockSetPrefix.RLock()
 	calls = mock.calls.SetPrefix
-	lockPromptMockSetPrefix.RUnlock()
+	mock.lockSetPrefix.RUnlock()
 	return calls
 }
 
@@ -262,9 +259,9 @@ func (mock *PromptMock) SetPrefixColor(color prompt.Color) {
 	}{
 		Color: color,
 	}
-	lockPromptMockSetPrefixColor.Lock()
+	mock.lockSetPrefixColor.Lock()
 	mock.calls.SetPrefixColor = append(mock.calls.SetPrefixColor, callInfo)
-	lockPromptMockSetPrefixColor.Unlock()
+	mock.lockSetPrefixColor.Unlock()
 	mock.SetPrefixColorFunc(color)
 }
 
@@ -277,8 +274,8 @@ func (mock *PromptMock) SetPrefixColorCalls() []struct {
 	var calls []struct {
 		Color prompt.Color
 	}
-	lockPromptMockSetPrefixColor.RLock()
+	mock.lockSetPrefixColor.RLock()
 	calls = mock.calls.SetPrefixColor
-	lockPromptMockSetPrefixColor.RUnlock()
+	mock.lockSetPrefixColor.RUnlock()
 	return calls
 }

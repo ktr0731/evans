@@ -41,7 +41,7 @@ func (f *InteractiveFiller) Fill(v interface{}, opts fill.InteractiveFillerOpts)
 		return fill.ErrCodecMismatch
 	}
 
-	resolver := newResolver(f.prompt, f.prefixFormat, prompt.ColorInitial, msg, nil, opts)
+	resolver := newResolver(f.prompt, f.prefixFormat, prompt.ColorInitial, msg, nil, false, opts)
 	_, err := resolver.resolve()
 	if err != nil {
 		return err
@@ -59,6 +59,9 @@ type resolver struct {
 
 	m         *desc.MessageDescriptor
 	ancestors []string
+	// repeated represents that the message is repeated field or not.
+	// If the message is not a field or not a repeated field, it is false.
+	repeated bool
 
 	opts fill.InteractiveFillerOpts
 }
@@ -69,10 +72,9 @@ func newResolver(
 	color prompt.Color,
 	msg *dynamic.Message,
 	ancestors []string,
+	repeated bool,
 	opts fill.InteractiveFillerOpts,
 ) *resolver {
-	prompt.SetPrefixColor(color)
-
 	return &resolver{
 		prompt:       prompt,
 		prefixFormat: prefixFormat,
@@ -80,6 +82,7 @@ func newResolver(
 		msg:          msg,
 		m:            msg.GetMessageDescriptor(),
 		ancestors:    ancestors,
+		repeated:     repeated,
 		opts:         opts,
 	}
 }
@@ -144,6 +147,7 @@ func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
 				r.color.NextVal(),
 				dynamic.NewMessage(f.GetMessageType()),
 				append(r.ancestors, f.GetName()),
+				r.repeated || f.IsRepeated(),
 				r.opts,
 			)
 			return msgr.resolve()
@@ -223,11 +227,16 @@ func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
 		return r.msg.TrySetField(f, v)
 	}
 
+	color := r.color
+
 	for {
 		// Return nil to keep inputted values.
 		if !r.addRepeatedField(f) {
 			return nil
 		}
+
+		r.prompt.SetPrefixColor(color)
+		color.Next()
 
 		v, err := resolve(f)
 		if err == io.EOF {
@@ -261,6 +270,8 @@ func (r *resolver) resolveEnum(e *desc.EnumDescriptor) (int32, error) {
 
 func (r *resolver) input(prefix string, f *desc.FieldDescriptor, converter func(string) (interface{}, error)) (interface{}, error) {
 	r.prompt.SetPrefix(prefix)
+	r.prompt.SetPrefixColor(r.color)
+
 	in, err := r.prompt.Input()
 	if err != nil {
 		return nil, err
@@ -327,9 +338,11 @@ func (r *resolver) skipMessage(f *desc.FieldDescriptor) bool {
 }
 
 func (r *resolver) makePrefix(field *desc.FieldDescriptor) string {
-	joinedAncestor := strings.Join(r.ancestors, ancestorDelimiter)
+	const delimiter = "::"
+
+	joinedAncestor := strings.Join(r.ancestors, delimiter)
 	if joinedAncestor != "" {
-		joinedAncestor += ancestorDelimiter
+		joinedAncestor += delimiter
 	}
 
 	s := r.prefixFormat
@@ -337,6 +350,10 @@ func (r *resolver) makePrefix(field *desc.FieldDescriptor) string {
 	s = strings.ReplaceAll(s, "{ancestor}", joinedAncestor)
 	s = strings.ReplaceAll(s, "{name}", field.GetName())
 	s = strings.ReplaceAll(s, "{type}", field.GetType().String())
+
+	if r.repeated || field.IsRepeated() {
+		return "<repeated> " + s
+	}
 
 	return s
 }

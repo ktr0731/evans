@@ -30,14 +30,11 @@ linters:
     - unused
     - varcheck
     - whitespace
-    - interfacer
-    - scopelint
     - asciicheck
     - depguard
     - godot
     - gomodguard
     - goprintffuncname
-    - maligned
     - nolintlint
     - rowserrcheck
 
@@ -47,5 +44,4 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
-        - interfacer
         - maligned
