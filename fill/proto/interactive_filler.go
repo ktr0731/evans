@@ -314,7 +314,12 @@ func (r *resolver) selectChoices(msg string, choices []string) (int, error) {
 
 func (r *resolver) addRepeatedField(f *desc.FieldDescriptor) bool {
 	if !r.opts.AddRepeatedManually {
-		return true
+		if f.GetType() != descriptorpb.FieldDescriptorProto_TYPE_MESSAGE || len(f.GetMessageType().GetFields()) != 0 {
+			return true
+		}
+
+		// f is repeated empty message field. It will cause infinite-loop if r.opts.AddRepeatedManually is false.
+		// For user's experience, always display prompt in this case.
 	}
 
 	msg := fmt.Sprintf("add a repeated field value? field=%s", f.GetFullyQualifiedName())
