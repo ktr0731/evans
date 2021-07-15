@@ -367,6 +367,6 @@ type promptMock struct {
 	err    error
 }
 
-func (p *promptMock) Select(_ string, options []string) (string, error) {
-	return p.result, p.err
+func (p *promptMock) Select(_ string, options []string) (int, string, error) {
+	return 0, p.result, p.err
 }

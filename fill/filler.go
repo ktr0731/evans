@@ -18,11 +18,15 @@ type Filler interface {
 	Fill(v interface{}) error
 }
 
-// InteractiveFillerOpts
-// If DigManually is true, Fill asks whether to dig down if it encountered to a message field.
-// If BytesFromFile is true, Fill will read the contents of the file from the provided relative path.
+// InteractiveFillerOpts represents options for InteractiveFiller.
 type InteractiveFillerOpts struct {
-	DigManually, BytesFromFile bool
+	// DigManually is true, Fill asks whether to dig down if it encountered to a message field.
+	DigManually,
+	// BytesFromFile is true, Fill will read the contents of the file from the provided relative path.
+	BytesFromFile,
+	// AddRepeatedManually is true, Fill asks whether to add a repeated field value
+	// if it encountered to a repeated field.
+	AddRepeatedManually bool
 }
 
 // Filler tries to correspond input text to a struct interactively.

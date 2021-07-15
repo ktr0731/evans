@@ -99,9 +99,13 @@ func TestE2E_OldREPL(t *testing.T) {
 			args:  "testdata/test.proto",
 			input: []interface{}{"call UnaryRepeated", "miyuki", "kaguya", "chika", "yu", io.EOF},
 		},
+		"call UnaryRepeated (with --add-repeated-manually)": {
+			args:  "testdata/test.proto",
+			input: []interface{}{"call --add-repeated-manually UnaryRepeated", 0, "miyuki", 0, "kaguya", 0, "chika", 0, "yu", 1},
+		},
 		"call UnarySelf": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnarySelf", "dig down", "ohana", "matsumae", "ohana", "dig down", "nako", "oshimizu", "nakochi", "finish", "dig down", "minko", "tsurugi", "minchi", "finish", "finish"},
+			input: []interface{}{"call UnarySelf", "ohana", "matsumae", "ohana", "nako", "oshimizu", "nakochi", io.EOF, "minko", "tsurugi", "minchi", io.EOF, io.EOF},
 		},
 		"call UnaryMap": {
 			args:       "testdata/test.proto",
@@ -110,11 +114,11 @@ func TestE2E_OldREPL(t *testing.T) {
 		},
 		"call UnaryOneof": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryOneof", "msg", "ai", "hayasaka"},
+			input: []interface{}{"call UnaryOneof", 0, "ai", "hayasaka"},
 		},
 		"call UnaryEnum": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryEnum", "Male"},
+			input: []interface{}{"call UnaryEnum", 0},
 		},
 		"call UnaryBytes": {
 			args:  "testdata/test.proto",
@@ -122,7 +126,7 @@ func TestE2E_OldREPL(t *testing.T) {
 		},
 		"call UnaryRepeatedEnum": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryRepeatedEnum", "Male", "Male", "Female", io.EOF},
+			input: []interface{}{"call UnaryRepeatedEnum", 0, 0, 1, io.EOF},
 		},
 
 		// call (gRPC-Web)
@@ -272,7 +276,7 @@ func TestE2E_OldREPL(t *testing.T) {
 		},
 		"ctrl-c skips the rest of the current message and exits the repeated field": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryRepeatedMessage", "kanade", "hisaishi", "kumiko", prompt.ErrAbort},
+			input: []interface{}{"call UnaryRepeatedMessage", "kanade", "hisaishi", "kumiko", prompt.ErrAbort, io.EOF},
 		},
 		"ctrl-c is also enabled in streaming RPCs": {
 			args:  "testdata/test.proto",
@@ -342,9 +346,12 @@ type stubPrompt struct {
 }
 
 func (p *stubPrompt) Input() (string, error) {
+	p.t.Helper()
+
 	if len(p.input) == 0 {
 		p.t.Fatal("p.input is empty, but testing is continued yet. Are you forgot to use io.EOF for finishing inputting?")
 	}
+
 	s := p.input[0]
 	p.input = p.input[1:]
 	switch e := s.(type) {
@@ -353,12 +360,31 @@ func (p *stubPrompt) Input() (string, error) {
 	case error:
 		return "", e
 	default:
-		panic(fmt.Sprintf("expected string or error, but got '%T'", e))
+		p.t.Fatalf("expected string or error, but got '%T'", e)
+		return "", nil
 	}
 }
 
-func (p *stubPrompt) Select(string, []string) (string, error) {
-	return p.Input()
+func (p *stubPrompt) Select(string, []string) (int, string, error) {
+	p.t.Helper()
+
+	if len(p.input) == 0 {
+		p.t.Fatal("p.input is empty, but testing is continued yet. Are you forgot to use io.EOF for finishing inputting?")
+	}
+
+	s := p.input[0]
+	p.input = p.input[1:]
+
+	switch v := s.(type) {
+	case int:
+		// TODO: Remove 2nd arg.
+		return v, "", nil
+	case error:
+		return 0, "", v
+	default:
+		p.t.Fatalf("expected int or error, but got '%T'", v)
+		return 0, "", nil
+	}
 }
 
 var (

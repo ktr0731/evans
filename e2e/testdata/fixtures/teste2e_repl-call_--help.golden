@@ -1,9 +1,10 @@
 usage: call <method name>
 
 Options:
-      --bytes-from-file   interpret TYPE_BYTES input as a relative path to a file
-      --dig-manually      prompt asks whether to dig down if it encountered to a message field
-      --emit-defaults     render fields with default values
-      --enrich            enrich response output includes header, message, trailer and status
-  -r, --repeat            repeat previous unary or server streaming request (if exists)
+      --add-repeated-manually   prompt asks whether to add a value if it encountered to a repeated field
+      --bytes-from-file         interpret TYPE_BYTES input as a relative path to a file
+      --dig-manually            prompt asks whether to dig down if it encountered to a message field
+      --emit-defaults           render fields with default values
+      --enrich                  enrich response output includes header, message, trailer and status
+  -r, --repeat                  repeat previous unary or server streaming request (if exists)
 
