@@ -47,6 +47,7 @@ So, you can format it by any commands like `jq`. Also, if you want to use the sa
    - [Bidirectional streaming RPC](#bidirectional-streaming-rpc)
    - [Skip the rest of fields](#skip-the-rest-of-fields)
    - [Enriched response](#enriched-response)
+   - [Repeat the previous call](#repeat-the-previous-call)
 - [Usage (CLI)](#usage-cli)
    - [Basic usage](#basic-usage-1)
    - [Repeated fields](#repeated-fields-1)
@@ -233,7 +234,9 @@ You can input some values and finish with <kbd>CTRL-D</kbd>
 
 ### Enum fields
 You can select one from the proposed selections.  
-To abort it, input <kbd>CTRL-C</kbd>.
+When <kbd>CTRL-C</kbd> is entered, default value 0 will be used.  
+When <kbd>CTRL-D</kbd> is entered, inputting will be aborted.
+
 ```
 > call UnaryEnum
 ? UnaryEnumRequest  [Use arrows to move, type to filter]
@@ -407,6 +410,24 @@ trailer_key2: trailer_val2
 code: OK
 number: 0
 message: ""
+```
+
+### Repeat the previous call
+With `--repeat` option, you can repeat the previous call with the same input.  
+Note that Client/Bidirectional streaming RPC is not supported.
+
+```
+> call Unary
+name (TYPE_STRING) => ktr
+{
+  "message": "hello, ktr"
+}
+
+> call --repeat Unary
+name (TYPE_STRING) => ktr
+{
+  "message": "hello, ktr"
+}
 ```
 
 ## Usage (CLI)
