@@ -525,9 +525,9 @@ $ echo '{ "name": ["foo", "bar"] }' | evans -r cli call api.Example.UnaryRepeate
 
 ### Enum fields
 ``` sh
-$ echo '{ "gender": 0 }' | evans -r cli call api.Example.UnaryEnum
+$ echo '{ "choice": 0 }' | evans -r cli call api.Example.UnaryEnum
 {
-  "message": "M"
+  "message": "1"
 }
 ```
 
