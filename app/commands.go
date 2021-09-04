@@ -129,6 +129,7 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
+	cmd.CompletionOptions.DisableDefaultCmd = true
 	cmd.Flags().SortFlags = false
 	bindFlags(cmd.PersistentFlags(), flags, ui.Writer())
 	cmd.SetHelpFunc(usageFunc(ui.Writer(), nil))
