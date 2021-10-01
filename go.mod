@@ -7,7 +7,7 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.12.0
 	github.com/golang/protobuf v1.5.2
-	github.com/golangci/golangci-lint v1.42.0
+	github.com/golangci/golangci-lint v1.42.1
 	github.com/google/go-cmp v0.5.6
 	github.com/goreleaser/goreleaser v0.176.0
 	github.com/hashicorp/go-multierror v1.1.1
