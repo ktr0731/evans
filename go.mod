@@ -12,7 +12,7 @@ require (
 	github.com/goreleaser/goreleaser v0.176.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.3.0
-	github.com/jhump/protoreflect v1.9.0
+	github.com/jhump/protoreflect v1.10.0
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/kisielk/godepgraph v0.0.0-20190626013829-57a7e4a651a9
 	github.com/ktr0731/bump v0.1.0
