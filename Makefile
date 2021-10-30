@@ -2,36 +2,21 @@ SHELL := /bin/bash
 
 export GOBIN := $(PWD)/_tools
 export PATH := $(GOBIN):$(PATH)
-export GO111MODULE := on
 
 .PHONY: version
 version:
 	@echo "evans: $(shell bump show meta/meta.go)"
-
-
-.PHONY: dep
-dep:
-ifeq ($(shell go help mod 2>/dev/null),)
-	@echo "Go v1.11 or later required"
-	@exit 1
-endif
-
-.PHONY: deps
-deps: dep
-	@go mod download
-	@go mod verify
-	@go mod tidy
 
 .PHONY: tools
 tools:
 	@cat tools/tools.go | grep -E '^\s*_\s.*' | awk '{ print $$2 }' | xargs go install
 
 .PHONY: build
-build: deps
+build:
 	go build
 
 .PHONY: build-dev
-build-dev: deps
+build-dev:
 	go build -tags dev
 
 .PHONY: test
@@ -51,9 +36,9 @@ gotest: lint
 
 .PHONY: lint
 lint:
-	golangci-lint run ./...
+	go vet ./...
 
-.PHONY: brew-update
+.PHONY: release
 release:
 	bash scripts/release.bash $(shell bump show meta/meta.go)
 
