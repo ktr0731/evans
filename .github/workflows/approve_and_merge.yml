@@ -1,33 +1,25 @@
 name: "Auto approve Pull Requests and enable auto-merge"
 on:
   pull_request_target
+permissions:
+  pull-requests: write
 jobs:
   worker:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     steps:
-      - name: automerge
-        uses: actions/github-script@v5
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1.1.1
         with:
-          github-token: "${{ secrets.GH_TOKEN }}"
-          script: |
-            await github.pulls.createReview({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              event: 'APPROVE'
-            })
-
-            const res = await github.graphql(`query {
-              repository(owner: "${context.repo.owner}", name: "${context.repo.repo}") {
-                pullRequest(number: ${context.issue.number}) {
-                  id
-                }
-              }
-            }`)
-
-            await github.graphql(`mutation {
-              enablePullRequestAutoMerge(input: { pullRequestId: "${res.repository.pullRequest.id}", mergeMethod: SQUASH }) {
-                clientMutationId
-              }
-            }`)
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Approve
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Enable auto-merge
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
