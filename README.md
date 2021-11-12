@@ -81,11 +81,12 @@ $ brew tap ktr0731/evans
 $ brew install evans
 ```
 
-### **[Not-recommended]** go get
-Go v1.13 (with mod-aware mode) or later is required.  
-`go get` installation is not supported officially.
+### **[Not-recommended]** go install
+
+Go v1.16 or later is required.  
+
 ``` sh
-$ go get github.com/ktr0731/evans
+$ go install github.com/ktr0731/evans@latest
 ```
 
 ## Usage (REPL)
