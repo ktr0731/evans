@@ -152,7 +152,7 @@ func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
 			)
 			return msgr.resolve()
 		case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-			return r.resolveEnum(f.GetEnumType())
+			return r.resolveEnum(r.makePrefix(f), f.GetEnumType())
 		case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
 			converter = func(v string) (interface{}, error) { return strconv.ParseFloat(v, 64) }
 
@@ -254,13 +254,13 @@ func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
 	}
 }
 
-func (r *resolver) resolveEnum(e *desc.EnumDescriptor) (int32, error) {
+func (r *resolver) resolveEnum(prefix string, e *desc.EnumDescriptor) (int32, error) {
 	choices := make([]string, 0, len(e.GetValues()))
 	for _, v := range e.GetValues() {
 		choices = append(choices, v.GetName())
 	}
 
-	choice, err := r.selectChoices(e.GetFullyQualifiedName(), choices)
+	choice, err := r.selectChoices(prefix, choices)
 	if err != nil {
 		return 0, err
 	}
