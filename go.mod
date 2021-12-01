@@ -40,7 +40,7 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/tools v0.1.7
 	google.golang.org/genproto v0.0.0-20211029142109-e255c875f7c7
-	google.golang.org/grpc v1.41.0
+	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 )
 
