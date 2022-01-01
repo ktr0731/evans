@@ -23,7 +23,7 @@ require (
 	github.com/ktr0731/grpc-web-go-client v0.2.7
 	github.com/manifoldco/promptui v0.9.0
 	github.com/matryer/moq v0.2.3
-	github.com/mattn/go-colorable v0.1.11
+	github.com/mattn/go-colorable v0.1.12
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
