@@ -31,7 +31,7 @@ require (
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.9.1
 	github.com/rakyll/statik v0.1.7
-	github.com/spf13/cobra v1.2.1
+	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
 	github.com/tj/go-spin v1.1.0
@@ -91,7 +91,7 @@ require (
 	github.com/caarlos0/go-shellwords v1.0.12 // indirect
 	github.com/cavaliercoder/go-cpio v0.0.0-20180626203310-925f9528c45e // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/dghubble/go-twitter v0.0.0-20210609183100-2fdbf421508e // indirect
 	github.com/dghubble/oauth1 v0.7.0 // indirect
@@ -146,7 +146,7 @@ require (
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
 	github.com/pkg/term v1.2.0-beta.2 // indirect
 	github.com/rs/cors v1.7.0 // indirect
-	github.com/russross/blackfriday/v2 v2.0.1 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sassoftware/go-rpmutils v0.0.0-20190420191620-a8f1baeba37b // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
