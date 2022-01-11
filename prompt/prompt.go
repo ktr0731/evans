@@ -2,6 +2,7 @@
 package prompt
 
 import (
+	"fmt"
 	"io"
 	"os"
 
@@ -87,7 +88,11 @@ func newPrompt(opts ...Option) Prompt {
 		InputFunc:   goprompt.Input,
 		prefixColor: ColorInitial,
 		SelectFunc: func(message string, options []string) (int, string, error) {
-			s := promptui.Select{Label: message, Items: options}
+			s := promptui.Select{
+				Label:     message,
+				Items:     options,
+				Templates: &promptui.SelectTemplates{Label: fmt.Sprintf("%s {{.}}", promptui.IconInitial)},
+			}
 			return s.Run()
 		},
 		commandHistory: opt.commandHistory,
