@@ -265,7 +265,9 @@ func (r *resolver) resolveEnum(prefix string, e *desc.EnumDescriptor) (int32, er
 		return 0, err
 	}
 
-	return int32(choice), nil
+	value := e.GetValues()[choice].AsEnumValueDescriptorProto()
+
+	return *value.Number, nil
 }
 
 func (r *resolver) input(prefix string, f *desc.FieldDescriptor, converter func(string) (interface{}, error)) (interface{}, error) {
