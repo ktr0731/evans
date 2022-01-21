@@ -1,6 +1,7 @@
 package proto
 
 import (
+	"fmt"
 	"runtime"
 	"testing"
 
@@ -19,7 +20,7 @@ type stubPrompt struct {
 	input []string
 
 	idx       int
-	selection []string
+	selection []int
 }
 
 func (p *stubPrompt) Input() (string, error) {
@@ -42,12 +43,10 @@ func (p *stubPrompt) Select(string, []string) (int, string, error) {
 		p.t.Fatal("no selection")
 	}
 
-	idx := p.idx
-	sel := p.selection[0]
+	sel := p.selection[p.idx]
 	p.idx++
-	p.selection = p.selection[1:]
 
-	return idx, sel, nil
+	return sel, fmt.Sprintf("%d", sel), nil
 }
 
 func (p *stubPrompt) SetPrefix(string) {}
@@ -59,8 +58,8 @@ func TestInteractiveFiller(t *testing.T) {
 	b.AddField(builder.NewField("a", builder.FieldTypeMessage(builder.NewMessage("SubMessage"))).SetRepeated())
 	b.AddField(builder.NewField("b", builder.FieldTypeEnum(
 		builder.NewEnum("Enum").
-			AddValue(builder.NewEnumValue("foo")).
-			AddValue(builder.NewEnumValue("bar")),
+			AddValue(builder.NewEnumValue("enum1").SetNumber(5)).
+			AddValue(builder.NewEnumValue("enum2").SetNumber(7)),
 	)))
 	b.AddField(builder.NewField("c", builder.FieldTypeDouble()))
 	b.AddField(builder.NewField("d", builder.FieldTypeFloat()))
@@ -106,7 +105,11 @@ func TestInteractiveFiller(t *testing.T) {
 			"\x62\x61\x7a", // r
 			"./proto.go",   // s
 		},
-		selection: []string{"0", "1", "1"},
+		selection: []int{
+			0, // a - yes
+			1, // a - no
+			1, // b - enum2
+		},
 	}
 	f := NewInteractiveFiller(p, "")
 	if err := f.Fill(msg, fill.InteractiveFillerOpts{BytesFromFile: true}); err != nil {
@@ -118,7 +121,7 @@ func TestInteractiveFiller(t *testing.T) {
 		return
 	}
 
-	const want = `{"a":[{}],"b":2,"c":1.1,"d":1.2,"e":"1","f":"2","g":"3","h":"4","i":"5","j":6,"k":7,"l":8,"m":9,"n":10,"o":true,"p":"foo","q":"YmFy","r":"YmF6","s":"Ly8gUGFja2FnZSBwcm90byBwcm92aWRlcyBhIGZpbGxlciBpbXBsZW1lbnRhdGlvbiBmb3IgUHJvdG9jb2wgQnVmZmVycy4KcGFja2FnZSBwcm90bwo="}`
+	const want = `{"a":[{}],"b":"enum2","c":1.1,"d":1.2,"e":"1","f":"2","g":"3","h":"4","i":"5","j":6,"k":7,"l":8,"m":9,"n":10,"o":true,"p":"foo","q":"YmFy","r":"YmF6","s":"Ly8gUGFja2FnZSBwcm90byBwcm92aWRlcyBhIGZpbGxlciBpbXBsZW1lbnRhdGlvbiBmb3IgUHJvdG9jb2wgQnVmZmVycy4KcGFja2FnZSBwcm90bwo="}`
 
 	marshaler := jsonpb.Marshaler{EmitDefaults: true}
 	got, err := marshaler.MarshalToString(msg)
