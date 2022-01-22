@@ -1,6 +1,3 @@
-before:
-  hooks:
-    - make deps
 builds:
 -
   env:
@@ -12,6 +9,7 @@ builds:
   goarch:
     - amd64
     - arm
+    - arm64
     - '386'
   flags:
     - -tags=github
