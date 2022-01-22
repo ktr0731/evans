@@ -10,7 +10,7 @@ require (
 	github.com/google/go-cmp v0.5.7
 	github.com/goreleaser/goreleaser v1.3.1
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hashicorp/go-version v1.3.0
+	github.com/hashicorp/go-version v1.4.0
 	github.com/jhump/protoreflect v1.10.1
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/kisielk/godepgraph v0.0.0-20190626013829-57a7e4a651a9
