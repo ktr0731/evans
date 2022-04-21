@@ -14,6 +14,9 @@ import (
 	"github.com/ktr0731/evans/grpc/grpcreflection"
 	"github.com/ktr0731/evans/idl"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/reflect/protodesc"
+	"google.golang.org/protobuf/reflect/protoregistry"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 type spec struct {
@@ -140,7 +143,7 @@ func LoadFiles(importPaths []string, fnames []string) (idl.Spec, error) {
 		fileDescs = append(fileDescs, d.GetDependencies()...)
 	}
 
-	return newSpec(fileDescs), nil
+	return newSpec(fileDescs)
 }
 
 // LoadByReflection receives a gRPC reflection client, then tries to instantiate a new idl.Spec by using gRPC reflection.
@@ -149,10 +152,10 @@ func LoadByReflection(client grpcreflection.Client) (idl.Spec, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to list packages by gRPC reflection")
 	}
-	return newSpec(fileDescs), nil
+	return newSpec(fileDescs)
 }
 
-func newSpec(fds []*desc.FileDescriptor) idl.Spec {
+func newSpec(fds []*desc.FileDescriptor) (idl.Spec, error) {
 	var (
 		encounteredPkgs = make(map[string]interface{})
 		encounteredSvcs = make(map[string]interface{})
@@ -161,6 +164,7 @@ func newSpec(fds []*desc.FileDescriptor) idl.Spec {
 		rpcDescs        = make(map[string][]*desc.MethodDescriptor)
 		msgDescs        = make(map[string]*desc.MessageDescriptor)
 	)
+
 	for _, f := range fds {
 		if _, encountered := encounteredPkgs[f.GetPackage()]; !encountered {
 			pkgNames = append(pkgNames, f.GetPackage())
@@ -175,8 +179,21 @@ func newSpec(fds []*desc.FileDescriptor) idl.Spec {
 			rpcDescs[fqsn] = append(rpcDescs[fqsn], svc.GetMethods()...)
 		}
 
-		for _, m := range f.GetMessageTypes() {
-			msgDescs[m.GetFullyQualifiedName()] = m
+		prfd, err := protodesc.NewFile(f.AsFileDescriptorProto(), nil)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to new protodesc")
+		}
+
+		for i := 0; i < prfd.Messages().Len(); i++ {
+			md := prfd.Messages().Get(i)
+			if _, err := protoregistry.GlobalTypes.FindMessageByName(md.FullName()); !errors.Is(err, protoregistry.NotFound) {
+				continue
+			}
+
+			mt := dynamicpb.NewMessageType(md)
+			if err := protoregistry.GlobalTypes.RegisterMessage(mt); err != nil {
+				return nil, errors.Wrapf(err, "failed to register message %s", mt.Descriptor().FullName())
+			}
 		}
 	}
 
@@ -190,7 +207,7 @@ func newSpec(fds []*desc.FileDescriptor) idl.Spec {
 		svcDescs:  svcDescs,
 		rpcDescs:  rpcDescs,
 		msgDescs:  msgDescs,
-	}
+	}, nil
 }
 
 // FullyQualifiedServiceName returns the fully-qualified service name.

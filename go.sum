@@ -728,8 +728,8 @@ github.com/ktr0731/go-shellstring v0.1.3/go.mod h1:f0/XX0hsm6A02Es/UDQ9MGd3VqpCH
 github.com/ktr0731/go-updater v0.1.5 h1:AiaQxJoI0OTGqvsJYdIITCOaEzQQOqU2MHKUwttVShY=
 github.com/ktr0731/go-updater v0.1.5/go.mod h1:dsdOg7a9sj6ttcOU5ZxPCtKdm9WeB1hwcX/7oKgz9/0=
 github.com/ktr0731/grpc-test v0.1.4/go.mod h1:v47616grayBYXQveGWxO3OwjLB3nEEnHsZuMTc73FM0=
-github.com/ktr0731/grpc-test v0.1.10 h1:W+fdfNrcSY0+9aiIIx+CWpFcNjdcqysPQchDcuMk4Pk=
-github.com/ktr0731/grpc-test v0.1.10/go.mod h1:AP4+ZrqSzdDaUNhAsp2fye06MXO2fdYY6YQJifb588M=
+github.com/ktr0731/grpc-test v0.1.11 h1:sXacyTdat8F1SWURSqECG1Cu546A5sYgI88XVexJ66Q=
+github.com/ktr0731/grpc-test v0.1.11/go.mod h1:AP4+ZrqSzdDaUNhAsp2fye06MXO2fdYY6YQJifb588M=
 github.com/ktr0731/grpc-web-go-client v0.2.8 h1:nUf9p+YWirmFwmH0mwtAWhuXvzovc+/3C/eAY2Fshnk=
 github.com/ktr0731/grpc-web-go-client v0.2.8/go.mod h1:1Iac8gFJvC/DRfZoGnFZsfEbEq/wQFK+2Ve1o3pHkCQ=
 github.com/ktr0731/modfile v1.11.2/go.mod h1:LzNwnHJWHbuDh3BO17lIqzqDldXqGu1HCydWH3SinE0=
