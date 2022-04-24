@@ -53,6 +53,11 @@ func TestMain(m *testing.M) {
 	cleanup2 := setEnv("XDG_CACHE_HOME", cacheDir)
 	defer cleanup2()
 
+	// TODO: Make registered types to be independent instead of ignoring conflicts.
+	// Need to make grpc-status-details-bin decoding to be used a passed registry.
+	cleanup3 := setEnv("GOLANG_PROTOBUF_REGISTRATION_CONFLICT", "ignore")
+	defer cleanup3()
+
 	goleak.VerifyTestMain(m, goleak.IgnoreTopFunction("github.com/desertbit/timer.timerRoutine"))
 }
 

@@ -99,3 +99,7 @@ message UnaryHeaderRequest {}
 message MapResponse {
   map<string, Name> names = 1;
 }
+
+message FailureDetail {
+  string code = 1;
+}

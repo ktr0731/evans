@@ -515,6 +515,14 @@ func TestE2E_CLI(t *testing.T) {
 			unflatten:        true,
 			assertWithGolden: true,
 		},
+		"call failure unary RPC with --enrich flag without reflection": {
+			commonFlags:      "--proto testdata/test.proto",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --enrich api.Example.UnaryHeaderTrailerFailure",
+			unflatten:        true,
+			assertWithGolden: true,
+			expectedCode:     1,
+		},
 		"call failure unary RPC with --enrich flag": {
 			commonFlags:      "-r",
 			cmd:              "call",
@@ -541,6 +549,15 @@ func TestE2E_CLI(t *testing.T) {
 			reflection:       true,
 			unflatten:        true,
 			assertWithGolden: true,
+		},
+		"call failure unary RPC with --enrich flag without reflection against to gRPC-Web server": {
+			commonFlags:      "--web --proto testdata/test.proto",
+			cmd:              "call",
+			args:             "--file testdata/unary_call.in --enrich api.Example.UnaryHeaderTrailerFailure",
+			web:              true,
+			unflatten:        true,
+			assertWithGolden: true,
+			expectedCode:     1,
 		},
 		"call failure unary RPC with --enrich flag against to gRPC-Web server": {
 			commonFlags:      "--web -r",
