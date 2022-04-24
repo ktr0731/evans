@@ -16,7 +16,7 @@ require (
 	github.com/kisielk/godepgraph v0.0.0-20190626013829-57a7e4a651a9
 	github.com/ktr0731/bump v0.1.0
 	github.com/ktr0731/go-multierror v0.0.0-20171204182908-b7773ae21874
-	github.com/ktr0731/go-prompt v0.2.3
+	github.com/ktr0731/go-prompt v0.2.4
 	github.com/ktr0731/go-shellstring v0.1.3
 	github.com/ktr0731/go-updater v0.1.5
 	github.com/ktr0731/grpc-test v0.1.11
