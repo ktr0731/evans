@@ -179,9 +179,15 @@ func newSpec(fds []*desc.FileDescriptor) (idl.Spec, error) {
 			rpcDescs[fqsn] = append(rpcDescs[fqsn], svc.GetMethods()...)
 		}
 
-		prfd, err := protodesc.NewFile(f.AsFileDescriptorProto(), nil)
+		prfd, err := protodesc.NewFile(f.AsFileDescriptorProto(), protoregistry.GlobalFiles)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to new protodesc")
+		}
+
+		if _, err := protoregistry.GlobalFiles.FindFileByPath(prfd.Path()); errors.Is(err, protoregistry.NotFound) {
+			if err := protoregistry.GlobalFiles.RegisterFile(prfd); err != nil {
+				return nil, err
+			}
 		}
 
 		for i := 0; i < prfd.Messages().Len(); i++ {
