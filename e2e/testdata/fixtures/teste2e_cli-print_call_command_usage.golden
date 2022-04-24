@@ -1,4 +1,4 @@
-evans 0.10.4
+evans 0.10.5
 
 Usage: evans [global options ...] cli call [options ...] <method>
 
