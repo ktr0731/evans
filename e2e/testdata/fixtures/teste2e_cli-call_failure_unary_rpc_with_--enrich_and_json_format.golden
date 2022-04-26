@@ -22,10 +22,6 @@
             "type": "type"
           }
         ]
-      },
-      {
-        "@type": "type.googleapis.com/api.FailureDetail",
-        "code": "001"
       }
     ]
   },
