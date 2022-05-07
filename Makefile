@@ -32,7 +32,8 @@ credits:
 
 .PHONY: gotest
 gotest: lint
-	go test -race ./...
+	# TODO: Remove conflictPolicy flag.
+	go test -race -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn" ./...
 
 .PHONY: lint
 lint:
