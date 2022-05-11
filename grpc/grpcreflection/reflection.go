@@ -4,10 +4,12 @@ package grpcreflection
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/jhump/protoreflect/desc"
 	gr "github.com/jhump/protoreflect/grpcreflect"
+	"github.com/ktr0731/evans/proto"
 	"github.com/ktr0731/grpc-web-go-client/grpcweb"
 	"github.com/ktr0731/grpc-web-go-client/grpcweb/grpcweb_reflection_v1alpha"
 	"github.com/pkg/errors"
@@ -15,6 +17,9 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/reflect/protodesc"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
 // ServiceName represents the gRPC reflection service name.
@@ -28,6 +33,7 @@ type Client interface {
 	// ListPackages returns these errors:
 	//   - ErrTLSHandshakeFailed: TLS misconfig.
 	ListPackages() ([]*desc.FileDescriptor, error)
+	FindSymbol(name string) (protoreflect.MessageDescriptor, error)
 	// Reset clears internal states of Client.
 	Reset()
 }
@@ -88,6 +94,29 @@ func (c *client) ListPackages() ([]*desc.FileDescriptor, error) {
 	}
 
 	return fds, nil
+}
+
+func (c *client) FindSymbol(name string) (protoreflect.MessageDescriptor, error) {
+	prfd, err := c.client.FileContainingSymbol(name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to find file containing symbol %s", name)
+	}
+
+	if err := proto.RegisterFileAndType(prfd); err != nil {
+		return nil, errors.Wrap(err, "failed to register file dscriptor")
+	}
+
+	fd, err := protodesc.NewFile(prfd.AsFileDescriptorProto(), protoregistry.GlobalFiles)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to find file containing symbol %s", name)
+	}
+
+	md := fd.Messages().ByName(protoreflect.FullName(name).Name())
+	if md == nil {
+		return nil, fmt.Errorf("failed to find message '%s'", name)
+	}
+
+	return md, nil
 }
 
 func (c *client) Reset() {

@@ -2,9 +2,14 @@
 package format
 
 import (
+	pb "github.com/ktr0731/evans/proto"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
+
+// DescriptorSource will be injected at runtime.
+// TODO: Modify to avoid using global variable.
+var DescriptorSource pb.DescriptorSource
 
 // ResponseFormatter provides formatting feature for gRPC response.
 type ResponseFormatter struct {

@@ -11,22 +11,25 @@ import (
 
 	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
 	"github.com/golang/protobuf/proto"  //nolint:staticcheck
+	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/format"
 	"github.com/ktr0731/evans/present"
 	"github.com/ktr0731/evans/present/json"
-	"github.com/pkg/errors"
+	pb "github.com/ktr0731/evans/proto"
 	_ "google.golang.org/genproto/googleapis/rpc/errdetails" // For calling RegisterType.
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/encoding/protojson"
+	protov2 "google.golang.org/protobuf/proto"
 )
 
 type responseFormatter struct {
 	w io.Writer
 
-	json        present.Presenter
-	pbMarshaler *jsonpb.Marshaler
+	json          present.Presenter
+	pbMarshaler   *jsonpb.Marshaler
+	pbMarshalerV2 *protojson.MarshalOptions
 
 	wroteHeader, wroteMessage, wroteTrailer bool
 }
@@ -37,6 +40,10 @@ func NewResponseFormatter(w io.Writer, emitDefaults bool) format.ResponseFormatt
 		json: json.NewPresenter("  "),
 		pbMarshaler: &jsonpb.Marshaler{
 			EmitDefaults: emitDefaults,
+		},
+		pbMarshalerV2: &protojson.MarshalOptions{
+			EmitUnpopulated: emitDefaults,
+			Resolver:        pb.NewAnyResolver(format.DescriptorSource),
 		},
 	}
 }
@@ -108,13 +115,8 @@ func (p *responseFormatter) FormatStatus(status *status.Status) error {
 	fmt.Fprintf(p.w, "code: %s\nnumber: %d\nmessage: %q\n", status.Code().String(), status.Code(), status.Message())
 	if len(status.Details()) > 0 {
 		details := make([]string, 0, len(status.Details()))
-		for _, d := range status.Details() {
-			d, ok := d.(proto.Message)
-			if !ok {
-				continue
-			}
-			// Convert to Any to insert @type field.
-			m, err := p.convertProtoMessageAsAnyToMap(d)
+		for _, d := range status.Proto().Details {
+			m, err := p.convertProtoMessageToMap(d)
 			if err != nil {
 				return err
 			}
@@ -138,22 +140,27 @@ func (p *responseFormatter) Done() error {
 }
 
 func (p *responseFormatter) convertProtoMessageToMap(m proto.Message) (map[string]interface{}, error) {
-	var buf bytes.Buffer
-	err := p.pbMarshaler.Marshal(&buf, m)
-	if err != nil {
-		return nil, err
+	var b []byte
+	switch m.(type) {
+	case *dynamic.Message:
+		// Use jsonpb because protojson can't marshal *dynamic.Message correctly.
+		var buf bytes.Buffer
+		if err := p.pbMarshaler.Marshal(&buf, m); err != nil {
+			return nil, err
+		}
+
+		b = buf.Bytes()
+	case protov2.Message:
+		mb, err := p.pbMarshalerV2.Marshal(proto.MessageV2(m))
+		if err != nil {
+			return nil, err
+		}
+
+		b = mb
 	}
 	var res map[string]interface{}
-	if err := gojson.Unmarshal(buf.Bytes(), &res); err != nil {
+	if err := gojson.Unmarshal(b, &res); err != nil {
 		return nil, err
 	}
 	return res, nil
-}
-
-func (p *responseFormatter) convertProtoMessageAsAnyToMap(m proto.Message) (map[string]interface{}, error) {
-	any, err := anypb.New(proto.MessageV2(m))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to convert a message to *any.Any")
-	}
-	return p.convertProtoMessageToMap(any)
 }

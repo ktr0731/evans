@@ -5,10 +5,12 @@ import (
 	"strings"
 
 	"github.com/ktr0731/evans/config"
+	"github.com/ktr0731/evans/format"
 	"github.com/ktr0731/evans/grpc"
 	"github.com/ktr0731/evans/grpc/grpcreflection"
 	"github.com/ktr0731/evans/idl"
 	"github.com/ktr0731/evans/idl/proto"
+	pb "github.com/ktr0731/evans/proto"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/pkg/errors"
 )
@@ -46,6 +48,21 @@ func newGRPCClient(cfg *config.Config) (grpc.Client, error) {
 		return nil, errors.Wrap(err, "failed to instantiate a gRPC client")
 	}
 	return client, nil
+}
+
+func registerDescriptorSource(cfg *config.Config, client grpcreflection.Client) error {
+	if cfg.Server.Reflection {
+		format.DescriptorSource = pb.NewDescriptorSourceFromReflection(client)
+		return nil
+	}
+
+	ds, err := pb.NewDescriptorSourceFromFiles(cfg.Default.ProtoPath, cfg.Default.ProtoFile)
+	if err != nil {
+		return errors.Wrap(err, "failed to new descriptor source from files")
+	}
+	format.DescriptorSource = ds
+
+	return nil
 }
 
 func gRPCReflectionPackageFilteredPackages(pkgNames []string) []string {
