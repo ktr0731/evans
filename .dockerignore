@@ -1,0 +1,9 @@
+/.git*
+/.idea
+/.vscode
+/scripts
+/Dockerfile*
+/*.md
+/*.gif
+/Makefile
+/evans
