@@ -7,11 +7,8 @@ WORKDIR /src
 
 COPY . /src
 
-# arguments to pass on each go tool link invocation
-ENV LDFLAGS="-s -w"
-
 RUN set -x \
-    && CGO_ENABLED=0 go build -trimpath -ldflags "$LDFLAGS" -o ./evans . \
+    && CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o ./evans . \
     && ./evans --version
 
 WORKDIR /tmp/rootfs
