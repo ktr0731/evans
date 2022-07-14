@@ -36,6 +36,7 @@ So, you can format it by any commands like `jq`. Also, if you want to use the sa
 - [Installation](#installation)
    - [From GitHub Releases](#from-github-releases)
    - [macOS](#macos)
+   - [Docker image](#docker-image)
    - [[Not-recommended] go get](#not-recommended-go-get)
 - [Usage (REPL)](#usage-repl)
    - [Basic usage](#basic-usage)
@@ -79,6 +80,19 @@ Available binaries are:
 ``` sh
 $ brew tap ktr0731/evans
 $ brew install evans
+```
+
+### Docker image
+You can use our docker image to run Evans - please see [container registry](https://github.com/ktr0731/evans/pkgs/container/evans).
+For example, if you want to connect to the server on host `example.com` on port `50051` using proto file in `./proto/files/file-name.proto`  (default working directory is `/mount`):
+```sh
+$ docker run --rm -v "$(pwd):/mount:ro" \
+    ghcr.io/ktr0731/evans:latest \
+      --path ./proto/files \
+      --proto file-name.proto \
+      --host example.com \
+      --port 50051 \
+      repl
 ```
 
 ### **[Not-recommended]** go install
