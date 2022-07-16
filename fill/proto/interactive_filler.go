@@ -106,6 +106,9 @@ func (r *resolver) resolve() (*dynamic.Message, error) {
 		}
 
 		err := r.resolveField(f)
+		if errors.Is(err, prompt.ErrSkip) {
+			continue
+		}
 		if errors.Is(err, prompt.ErrAbort) {
 			return r.msg, nil
 		}
@@ -138,7 +141,7 @@ func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
 		switch t := f.GetType(); t {
 		case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
 			if r.skipMessage(f) {
-				return nil, prompt.ErrAbort
+				return nil, prompt.ErrSkip
 			}
 
 			msgr := newResolver(

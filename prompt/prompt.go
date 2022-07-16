@@ -38,6 +38,7 @@ var (
 )
 
 var (
+	ErrSkip  = errors.New("skip")
 	ErrAbort = errors.New("abort")
 )
 
