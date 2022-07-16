@@ -31,8 +31,7 @@ jobs:
       run: go vet ./...
 
     - name: Test
-      # TODO: Remove conflictPolicy flag.
-      run: go test -race -coverpkg ./... -covermode atomic -coverprofile coverage.txt -ldflags "-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn" ./...
+      run: go test -p 1 -coverpkg ./... -covermode atomic -coverprofile coverage.txt ./...
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3.1.0
