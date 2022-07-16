@@ -28,6 +28,10 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 		return errors.Wrap(err, "failed to instantiate a new spec")
 	}
 
+	if err := registerDescriptorSource(cfg, gRPCClient); err != nil {
+		return errors.Wrap(err, "failed to register descriptor source")
+	}
+
 	usecase.Inject(
 		usecase.Dependencies{
 			Spec:              spec,

@@ -198,6 +198,10 @@ func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 		injectResult = multierror.Append(injectResult, err)
 	}
 
+	if err := registerDescriptorSource(cfg, gRPCClient); err != nil {
+		injectResult = multierror.Append(injectResult, err)
+	}
+
 	if injectResult != nil {
 		return injectResult
 	}

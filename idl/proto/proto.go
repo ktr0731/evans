@@ -13,10 +13,8 @@ import (
 	"github.com/ktr0731/evans/grpc"
 	"github.com/ktr0731/evans/grpc/grpcreflection"
 	"github.com/ktr0731/evans/idl"
+	pb "github.com/ktr0731/evans/proto"
 	"github.com/pkg/errors"
-	"google.golang.org/protobuf/reflect/protodesc"
-	"google.golang.org/protobuf/reflect/protoregistry"
-	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 type spec struct {
@@ -160,7 +158,7 @@ func newSpec(fds []*desc.FileDescriptor) (idl.Spec, error) {
 		msgDescs        = make(map[string]*desc.MessageDescriptor)
 	)
 	for _, f := range fds {
-		if err := registerFileAndType(f); err != nil {
+		if err := pb.RegisterFileAndType(f); err != nil {
 			return nil, errors.Wrap(err, "failed to register file descriptor")
 		}
 
@@ -193,37 +191,6 @@ func newSpec(fds []*desc.FileDescriptor) (idl.Spec, error) {
 		rpcDescs:  rpcDescs,
 		msgDescs:  msgDescs,
 	}, nil
-}
-
-func registerFileAndType(fd *desc.FileDescriptor) error {
-	deps := fd.GetDependencies()
-	for _, d := range deps {
-		if err := registerFileAndType(d); err != nil {
-			return err
-		}
-	}
-
-	prfd, err := protodesc.NewFile(fd.AsFileDescriptorProto(), protoregistry.GlobalFiles)
-	if err != nil {
-		return errors.Wrap(err, "failed to new file descriptor")
-	}
-
-	if _, err := protoregistry.GlobalFiles.FindFileByPath(prfd.Path()); errors.Is(err, protoregistry.NotFound) {
-		if err := protoregistry.GlobalFiles.RegisterFile(prfd); err != nil {
-			return err
-		}
-	}
-
-	for i := 0; i < prfd.Messages().Len(); i++ {
-		md := prfd.Messages().Get(i)
-		if _, err := protoregistry.GlobalTypes.FindMessageByName(md.FullName()); errors.Is(err, protoregistry.NotFound) {
-			if err := protoregistry.GlobalTypes.RegisterMessage(dynamicpb.NewMessageType(md)); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 // FullyQualifiedServiceName returns the fully-qualified service name.
