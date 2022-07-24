@@ -4,7 +4,7 @@ package fill
 import "errors"
 
 var (
-	ErrCodecMismatch = errors.New("unsupported codec")
+	ErrCodecMismatch = errors.New("unsupported codec (could be invalid JSON format)")
 )
 
 // Filler tries to correspond input text to a struct.
