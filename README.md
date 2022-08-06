@@ -78,8 +78,8 @@ Available binaries are:
 
 ### macOS
 ``` sh
-$ brew tap ktr0731/evans
-$ brew install evans
+brew tap ktr0731/evans
+brew install evans
 ```
 
 ### Docker image
