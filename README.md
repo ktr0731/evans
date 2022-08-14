@@ -100,7 +100,7 @@ $ docker run --rm -v "$(pwd):/mount:ro" \
 Go v1.16 or later is required.  
 
 ``` sh
-$ go install github.com/ktr0731/evans@latest
+go install github.com/ktr0731/evans@latest
 ```
 
 ## Usage (REPL)
@@ -112,18 +112,18 @@ The proto file which read in the demonstration and its implementation are availa
 
 Enter to REPL.
 ``` sh
-$ cd grpc-test
-$ evans repl api/api.proto
+cd grpc-test
+evans repl api/api.proto
 ```
 
 If your server is enabling [gRPC reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md), you can launch Evans with only `-r` (`--reflection`) option.
 ``` sh
-$ evans -r repl
+evans -r repl
 ```
 
 Also if the server requires secure TLS connections, you can launch Evans with the `-t` (`--tls`) option.
 ``` sh
-$ evans --tls --host example.com -r repl
+evans --tls --host example.com -r repl
 ```
 
 To show package names of proto files REPL read:  
