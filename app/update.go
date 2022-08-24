@@ -60,17 +60,17 @@ func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache) error 
 		}
 	}
 
-	u := newUpdater(cfg, meta.Version, m)
-	updatable, latest, err := u.Updatable(ctx)
-	if errors.Cause(err) != context.Canceled && err != nil {
-		return errors.Wrap(err, "failed to check updatable")
-	}
-	if updatable {
-		c.UpdateInfo.LatestVersion = latest.String()
-		if err := c.Save(); err != nil {
-			return errors.Wrap(err, "failed to save a cache")
-		}
-	}
+	// u := newUpdater(cfg, meta.Version, m)
+	// updatable, latest, err := u.Updatable(ctx)
+	// if errors.Cause(err) != context.Canceled && err != nil {
+	// 	return errors.Wrap(err, "failed to check updatable")
+	// }
+	// if updatable {
+	// 	c.UpdateInfo.LatestVersion = latest.String()
+	// 	if err := c.Save(); err != nil {
+	// 		return errors.Wrap(err, "failed to save a cache")
+	// 	}
+	// }
 	return nil
 }
 
