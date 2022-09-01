@@ -19,7 +19,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Cache modules
-      uses: actions/cache@v3.0.5
+      uses: actions/cache@v3.0.8
       with:
         path: ~/go/pkg/mod
         key: ${{ runner.OS }}-go-${{ hashFiles('**/go.sum') }}
