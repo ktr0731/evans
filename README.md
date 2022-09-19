@@ -113,7 +113,7 @@ The proto file which read in the demonstration and its implementation are availa
 Enter to REPL.
 ``` sh
 cd grpc-test
-evans repl api/api.proto
+evans --proto api/api.proto repl
 ```
 
 If your server is enabling [gRPC reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md), you can launch Evans with only `-r` (`--reflection`) option.
