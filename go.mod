@@ -3,7 +3,7 @@ module github.com/ktr0731/evans
 go 1.17
 
 require (
-	github.com/Songmu/gocredits v0.2.0
+	github.com/Songmu/gocredits v0.3.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.13.0
 	github.com/golang/protobuf v1.5.2
@@ -36,7 +36,7 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/tj/go-spin v1.1.0
 	github.com/zchee/go-xdgbasedir v1.0.3
-	go.uber.org/goleak v1.1.12
+	go.uber.org/goleak v1.2.0
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	golang.org/x/tools v0.1.12
 	google.golang.org/genproto v0.0.0-20220616135557-88e70c0c3a90
