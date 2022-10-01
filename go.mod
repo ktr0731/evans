@@ -8,7 +8,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.9
-	github.com/goreleaser/goreleaser v1.11.2
+	github.com/goreleaser/goreleaser v1.11.4
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/jhump/protoreflect v1.13.0
@@ -95,20 +95,20 @@ require (
 	github.com/aymanbagabas/go-osc52 v1.0.3 // indirect
 	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb // indirect
 	github.com/caarlos0/ctrlc v1.2.0 // indirect
-	github.com/caarlos0/env/v6 v6.10.0 // indirect
+	github.com/caarlos0/env/v6 v6.10.1 // indirect
 	github.com/caarlos0/go-reddit/v3 v3.0.1 // indirect
 	github.com/caarlos0/go-shellwords v1.0.12 // indirect
-	github.com/caarlos0/log v0.1.2 // indirect
+	github.com/caarlos0/log v0.1.6 // indirect
 	github.com/cavaliergopher/cpio v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
-	github.com/charmbracelet/lipgloss v0.5.1-0.20220615005615-2e17a8a06096 // indirect
+	github.com/charmbracelet/lipgloss v0.6.1-0.20220911181249-6304a734e792 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/dghubble/go-twitter v0.0.0-20211115160449-93a8679adecb // indirect
 	github.com/dghubble/oauth1 v0.7.1 // indirect
 	github.com/dghubble/sling v1.4.0 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
-	github.com/disgoorg/disgo v0.13.17 // indirect
+	github.com/disgoorg/disgo v0.13.20 // indirect
 	github.com/disgoorg/log v1.2.0 // indirect
 	github.com/disgoorg/snowflake/v2 v2.0.0 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
@@ -164,17 +164,17 @@ require (
 	github.com/muesli/mango v0.1.0 // indirect
 	github.com/muesli/mango-cobra v1.2.0 // indirect
 	github.com/muesli/mango-pflag v0.1.0 // indirect
-	github.com/muesli/reflow v0.2.1-0.20210115123740-9e1d0d53df68 // indirect
+	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/roff v0.1.0 // indirect
-	github.com/muesli/termenv v0.12.1-0.20220615005108-4e9068de9898 // indirect
+	github.com/muesli/termenv v0.12.1-0.20220901123159-d729275e0977 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/pkg/term v1.2.0-beta.2 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rivo/uniseg v0.4.2 // indirect
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
-	github.com/slack-go/slack v0.11.2 // indirect
+	github.com/slack-go/slack v0.11.3 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -192,7 +192,7 @@ require (
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220805013720-a33c5aa5df48 // indirect
 	golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c // indirect
-	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
+	golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
