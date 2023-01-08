@@ -9,7 +9,12 @@ func UsePackage(pkgName string) error {
 	return dm.UsePackage(pkgName)
 }
 func (m *dependencyManager) UsePackage(pkgName string) error {
-	for _, pkg := range ListPackages() {
+	pkgs, err := ListPackages()
+	if err != nil {
+		return err
+	}
+
+	for _, pkg := range pkgs {
 		if pkg == pkgName {
 			m.state.selectedPackage = pkgName
 			m.state.selectedService = ""

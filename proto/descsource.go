@@ -11,25 +11,25 @@ import (
 
 //go:generate moq -out mock.go . DescriptorSource
 type DescriptorSource interface {
-	ListServices() []string
+	ListServices() ([]string, error)
 	FindSymbol(name string) (protoreflect.Descriptor, error)
 }
 
 type reflection struct {
 	client interface {
-		ListServices() []string
+		ListServices() ([]string, error)
 		FindSymbol(name string) (protoreflect.Descriptor, error)
 	}
 }
 
 func NewDescriptorSourceFromReflection(c interface {
-	ListServices() []string
+	ListServices() ([]string, error)
 	FindSymbol(name string) (protoreflect.Descriptor, error)
 }) DescriptorSource {
 	return &reflection{c}
 }
 
-func (r *reflection) ListServices() []string {
+func (r *reflection) ListServices() ([]string, error) {
 	return r.client.ListServices()
 }
 
@@ -57,7 +57,7 @@ func NewDescriptorSourceFromFiles(importPaths []string, fnames []string) (Descri
 
 var errSymbolNotFound = errors.New("proto: symbol not found")
 
-func (f *files) ListServices() []string {
+func (f *files) ListServices() ([]string, error) {
 	var services []string
 	for _, fd := range f.fds {
 		for i := 0; i < fd.Services().Len(); i++ {
@@ -65,7 +65,7 @@ func (f *files) ListServices() []string {
 		}
 	}
 
-	return services
+	return services, nil
 }
 
 func (f *files) FindSymbol(name string) (protoreflect.Descriptor, error) {
@@ -75,5 +75,5 @@ func (f *files) FindSymbol(name string) (protoreflect.Descriptor, error) {
 		}
 	}
 
-	return nil, errSymbolNotFound
+	return nil, errors.Wrapf(errSymbolNotFound, "symbol %s", name)
 }

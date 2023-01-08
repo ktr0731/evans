@@ -23,10 +23,16 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 	}
 	defer gRPCClient.Close(context.Background())
 
+	descSource, err := newDescSource(cfg, gRPCClient)
+	if err != nil {
+		return errors.Wrap(err, "failed to instantiate a desc source")
+	}
+
 	usecase.Inject(
 		usecase.Dependencies{
 			InteractiveFiller: proto.NewInteractiveFiller(prompt.New(), cfg.REPL.InputPromptFormat),
 			GRPCClient:        gRPCClient,
+			DescSource:        descSource,
 			ResourcePresenter: table.NewPresenter(),
 		},
 	)

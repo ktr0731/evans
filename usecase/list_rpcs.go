@@ -24,7 +24,12 @@ func (m *dependencyManager) ListRPCs(svcName string) ([]*grpc.RPC, error) {
 
 func (m *dependencyManager) listRPCs(fqsn string) ([]*grpc.RPC, error) {
 	var rpcs []*grpc.RPC
-	for _, service := range m.descSource.ListServices() {
+	svcs, err := m.descSource.ListServices()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, service := range svcs {
 		d, err := m.descSource.FindSymbol(service)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to resolve service %s", service)

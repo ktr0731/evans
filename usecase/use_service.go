@@ -18,8 +18,14 @@ func (m *dependencyManager) UseService(svcName string) error {
 	if svcName == "" {
 		return errors.Errorf("invalid service name '%s'", svcName)
 	}
+
+	fqsns, err := m.descSource.ListServices()
+	if err != nil {
+		return err
+	}
+
 	var hasPackage bool
-	for _, fqsn := range m.descSource.ListServices() {
+	for _, fqsn := range fqsns {
 		pkg, svc := proto.ParseFullyQualifiedServiceName(fqsn)
 		if m.state.selectedPackage == pkg {
 			hasPackage = true

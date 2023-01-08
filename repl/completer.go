@@ -90,7 +90,11 @@ func newCompleter(cmds map[string]commander) *completer {
 			},
 			"package": func(args []string) (s []*prompt.Suggest) {
 				if len(args) == 1 {
-					pkgs := usecase.ListPackages()
+					pkgs, err := usecase.ListPackages()
+					if err != nil {
+						return
+					}
+
 					for _, pkg := range pkgs {
 						if pkg == "" {
 							s = append(s, prompt.NewSuggestion(`''`, "default for package name unspecified protos"))
@@ -103,7 +107,12 @@ func newCompleter(cmds map[string]commander) *completer {
 			},
 			"service": func(args []string) (s []*prompt.Suggest) {
 				if len(args) == 1 {
-					for _, svc := range usecase.ListServices() {
+					svcs, err := usecase.ListServices()
+					if err != nil {
+						return
+					}
+
+					for _, svc := range svcs {
 						s = append(s, prompt.NewSuggestion(svc, ""))
 					}
 				}
@@ -126,8 +135,13 @@ func newCompleter(cmds map[string]commander) *completer {
 					return nil
 				}
 
+				svcs, err := usecase.ListServices()
+				if err != nil {
+					return
+				}
+
 				encountered := make(map[string]interface{})
-				for _, svc := range usecase.ListServices() {
+				for _, svc := range svcs {
 					rpcs, err := usecase.ListRPCs(svc)
 					if err != nil {
 						panic(fmt.Sprintf("ListRPCs must not return an error, but got '%s'", err))

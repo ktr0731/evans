@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jhump/protoreflect/dynamic"
 	pb "github.com/ktr0731/evans/proto"
 
 	"github.com/ktr0731/evans/fill"
@@ -56,7 +55,7 @@ func CallRPC(ctx context.Context, w io.Writer, rpcName string) error {
 }
 func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName string, rerunPrevious bool, filler fill.Filler) error {
 	fqsn := pb.FullyQualifiedServiceName(m.state.selectedPackage, m.state.selectedService)
-	d, err := m.descSource.FindSymbol(fmt.Sprintf("%s/%s", fqsn, rpcName))
+	d, err := m.descSource.FindSymbol(fmt.Sprintf("%s.%s", fqsn, rpcName))
 	if err != nil {
 		return errors.Wrapf(err, "failed to get the RPC descriptor for: %s", rpcName)
 	}
@@ -66,7 +65,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	if rerunPrevious && rpc.IsStreamingClient() {
 		return errors.New("cannot rerun previous RPC as client/bidi streaming RPCs are not supported")
 	}
-	newRequest := func() (interface{}, error) {
+	newRequest := func() (*dynamicpb.Message, error) {
 		req := dynamicpb.NewMessage(rpc.Input())
 		if !rerunPrevious {
 			err = filler.Fill(req)
@@ -461,9 +460,8 @@ func (m *dependencyManager) getPreviousRPCRequest(method protoreflect.MethodDesc
 // Updates the last call state for the given method. This is done by serializing
 // the request payload and store it into the state buffer indexed by the rpcName
 // The method is repeatable only if it is not a client streaming method.
-func (m *dependencyManager) updateMethodCallState(rpcName string, req interface{}) error {
-	message := req.(*dynamic.Message)
-	reqBytes, err := message.Marshal()
+func (m *dependencyManager) updateMethodCallState(rpcName string, req *dynamicpb.Message) error {
+	reqBytes, err := proto.Marshal(req)
 	if err != nil {
 		return err
 	}
@@ -477,10 +475,10 @@ func (m *dependencyManager) updateMethodCallState(rpcName string, req interface{
 }
 
 type interactiveFiller struct {
-	fillFunc func(v interface{}) error
+	fillFunc func(v *dynamicpb.Message) error
 }
 
-func (f *interactiveFiller) Fill(v interface{}) error {
+func (f *interactiveFiller) Fill(v *dynamicpb.Message) error {
 	return f.fillFunc(v)
 }
 
@@ -490,7 +488,7 @@ func CallRPCInteractively(ctx context.Context, w io.Writer, rpcName string, digM
 
 func (m *dependencyManager) CallRPCInteractively(ctx context.Context, w io.Writer, rpcName string, digManually, bytesFromFile, rerunPrevious, addRepeatedManually bool) error {
 	return m.CallRPC(ctx, w, rpcName, rerunPrevious, &interactiveFiller{
-		fillFunc: func(v interface{}) error {
+		fillFunc: func(v *dynamicpb.Message) error {
 			return m.interactiveFiller.Fill(v, fill.InteractiveFillerOpts{
 				DigManually:         digManually,
 				BytesFromFile:       bytesFromFile,

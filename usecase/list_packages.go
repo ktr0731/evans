@@ -7,12 +7,17 @@ import (
 )
 
 // ListPackages lists all package names.
-func ListPackages() []string {
+func ListPackages() ([]string, error) {
 	return dm.ListPackages()
 }
-func (m *dependencyManager) ListPackages() []string {
+func (m *dependencyManager) ListPackages() ([]string, error) {
 	pkgMap := map[string]struct{}{}
-	for _, s := range m.descSource.ListServices() {
+	svcs, err := m.descSource.ListServices()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, s := range svcs {
 		pkg, _ := proto.ParseFullyQualifiedServiceName(s)
 		pkgMap[pkg] = struct{}{}
 	}
@@ -26,5 +31,5 @@ func (m *dependencyManager) ListPackages() []string {
 		return pkgs[i] < pkgs[j]
 	})
 
-	return pkgs
+	return pkgs, nil
 }

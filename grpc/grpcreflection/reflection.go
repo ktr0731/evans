@@ -6,7 +6,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/jhump/protoreflect/desc"
 	gr "github.com/jhump/protoreflect/grpcreflect"
 	"github.com/ktr0731/grpc-web-go-client/grpcweb"
 	"github.com/ktr0731/grpc-web-go-client/grpcweb/grpcweb_reflection_v1alpha"
@@ -15,6 +14,9 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/reflect/protodesc"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
 // ServiceName represents the gRPC reflection service name.
@@ -24,16 +26,19 @@ var ErrTLSHandshakeFailed = errors.New("TLS handshake failed")
 
 // Client defines gRPC reflection client.
 type Client interface {
-	// ListPackages lists file descriptors from the gRPC reflection server.
-	// ListPackages returns these errors:
+	// ListServices lists registered service names.
+	// ListServices returns these errors:
 	//   - ErrTLSHandshakeFailed: TLS misconfig.
-	ListPackages() ([]*desc.FileDescriptor, error)
+	ListServices() ([]string, error)
+	// FindSymbol returns the symbol associated with the given name.
+	FindSymbol(name string) (protoreflect.Descriptor, error)
 	// Reset clears internal states of Client.
 	Reset()
 }
 
 type client struct {
-	client *gr.Client
+	resolver *protoregistry.Files
+	client   *gr.Client
 }
 
 func getCtx(headers map[string][]string) context.Context {
@@ -47,19 +52,21 @@ func getCtx(headers map[string][]string) context.Context {
 // NewClient returns an instance of gRPC reflection client for gRPC protocol.
 func NewClient(conn grpc.ClientConnInterface, headers map[string][]string) Client {
 	return &client{
-		client: gr.NewClient(getCtx(headers), grpc_reflection_v1alpha.NewServerReflectionClient(conn)),
+		client:   gr.NewClient(getCtx(headers), grpc_reflection_v1alpha.NewServerReflectionClient(conn)),
+		resolver: protoregistry.GlobalFiles,
 	}
 }
 
 // NewWebClient returns an instance of gRPC reflection client for gRPC-Web protocol.
 func NewWebClient(conn *grpcweb.ClientConn, headers map[string][]string) Client {
 	return &client{
-		client: gr.NewClient(getCtx(headers), grpcweb_reflection_v1alpha.NewServerReflectionClient(conn)),
+		client:   gr.NewClient(getCtx(headers), grpcweb_reflection_v1alpha.NewServerReflectionClient(conn)),
+		resolver: protoregistry.GlobalFiles,
 	}
 }
 
-func (c *client) ListPackages() ([]*desc.FileDescriptor, error) {
-	ssvcs, err := c.client.ListServices()
+func (c *client) ListServices() ([]string, error) {
+	svcs, err := c.client.ListServices()
 	if err != nil {
 		msg := status.Convert(err).Message()
 		// Check whether the error message contains TLS related error.
@@ -73,21 +80,36 @@ func (c *client) ListPackages() ([]*desc.FileDescriptor, error) {
 		return nil, errors.Wrap(err, "failed to list services from reflection enabled gRPC server")
 	}
 
-	fds := make([]*desc.FileDescriptor, 0, len(ssvcs))
-	for _, s := range ssvcs {
-		svc, err := c.client.ResolveService(s)
-		if err != nil {
-			if gr.IsElementNotFoundError(err) {
-				// Service doesn't expose the ServiceDescriptor, skip.
-				continue
-			}
-			return nil, errors.Wrapf(err, "failed to resolve service '%s'", s)
-		}
+	return svcs, nil
+}
 
-		fds = append(fds, svc.GetFile())
+func (c *client) FindSymbol(name string) (protoreflect.Descriptor, error) {
+	fullName := protoreflect.FullName(name)
+
+	d, err := c.resolver.FindDescriptorByName(fullName)
+	if err != nil && !errors.Is(err, protoregistry.NotFound) {
+		return nil, err
+	}
+	if err == nil {
+		return d, nil
 	}
 
-	return fds, nil
+	jfd, err := c.client.FileContainingSymbol(name)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to find file containing symbol")
+	}
+
+	// TODO: consider dependencies
+	fd, err := protodesc.NewFile(jfd.AsFileDescriptorProto(), c.resolver)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := c.resolver.RegisterFile(fd); err != nil {
+		return nil, err
+	}
+
+	return c.resolver.FindDescriptorByName(fullName)
 }
 
 func (c *client) Reset() {

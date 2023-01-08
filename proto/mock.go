@@ -21,7 +21,7 @@ var _ DescriptorSource = &DescriptorSourceMock{}
 //			FindSymbolFunc: func(name string) (protoreflect.Descriptor, error) {
 //				panic("mock out the FindSymbol method")
 //			},
-//			ListServicesFunc: func() []string {
+//			ListServicesFunc: func() ([]string, error) {
 //				panic("mock out the ListServices method")
 //			},
 //		}
@@ -35,7 +35,7 @@ type DescriptorSourceMock struct {
 	FindSymbolFunc func(name string) (protoreflect.Descriptor, error)
 
 	// ListServicesFunc mocks the ListServices method.
-	ListServicesFunc func() []string
+	ListServicesFunc func() ([]string, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -85,7 +85,7 @@ func (mock *DescriptorSourceMock) FindSymbolCalls() []struct {
 }
 
 // ListServices calls ListServicesFunc.
-func (mock *DescriptorSourceMock) ListServices() []string {
+func (mock *DescriptorSourceMock) ListServices() ([]string, error) {
 	if mock.ListServicesFunc == nil {
 		panic("DescriptorSourceMock.ListServicesFunc: method is nil but DescriptorSource.ListServices was just called")
 	}

@@ -26,12 +26,17 @@ func (m *dependencyManager) FormatDescriptor(symbol string) (string, error) {
 		return "", err
 	}
 
+	jd := fd.FindSymbol(symbol)
+	if jd == nil {
+		return "", errors.New("symbol should be found")
+	}
+
 	p := &protoprint.Printer{
 		Compact:                  true,
 		ForceFullyQualifiedNames: true,
 		SortElements:             true,
 	}
-	str, err := p.PrintProtoToString(fd)
+	str, err := p.PrintProtoToString(jd)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to convert the descriptor to string")
 	}

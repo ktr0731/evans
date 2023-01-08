@@ -11,7 +11,11 @@ func FormatServiceDescriptors() (string, error) {
 	return dm.FormatServiceDescriptors()
 }
 func (m *dependencyManager) FormatServiceDescriptors() (string, error) {
-	svcs := ListServices()
+	svcs, err := m.ListServices()
+	if err != nil {
+		return "", err
+	}
+
 	out := make([]string, 0, len(svcs))
 	for _, s := range svcs {
 		o, err := FormatDescriptor(s)

@@ -192,6 +192,11 @@ func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 		}()
 	}
 
+	descSource, err := newDescSource(cfg, gRPCClient)
+	if err != nil {
+		injectResult = multierror.Append(injectResult, err)
+	}
+
 	if injectResult != nil {
 		return injectResult
 	}
@@ -199,6 +204,7 @@ func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 	usecase.InjectPartially(
 		usecase.Dependencies{
 			GRPCClient:        gRPCClient,
+			DescSource:        descSource,
 			ResourcePresenter: json.NewPresenter("  "),
 		},
 	)
