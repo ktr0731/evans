@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/Songmu/gocredits v0.3.0
+	github.com/bufbuild/protocompile v0.1.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.13.0
 	github.com/golang/protobuf v1.5.2
@@ -41,7 +42,7 @@ require (
 	golang.org/x/tools v0.2.0
 	google.golang.org/genproto v0.0.0-20220616135557-88e70c0c3a90
 	google.golang.org/grpc v1.49.0
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
 )
 
 require (

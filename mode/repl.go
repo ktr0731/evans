@@ -23,14 +23,8 @@ func RunAsREPLMode(cfg *config.Config, ui cui.UI, cache *cache.Cache) error {
 	}
 	defer gRPCClient.Close(context.Background())
 
-	spec, err := newSpec(cfg, gRPCClient)
-	if err != nil {
-		return errors.Wrap(err, "failed to instantiate a new spec")
-	}
-
 	usecase.Inject(
 		usecase.Dependencies{
-			Spec:              spec,
 			InteractiveFiller: proto.NewInteractiveFiller(prompt.New(), cfg.REPL.InputPromptFormat),
 			GRPCClient:        gRPCClient,
 			ResourcePresenter: table.NewPresenter(),

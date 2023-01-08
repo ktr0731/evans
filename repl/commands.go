@@ -64,7 +64,7 @@ func (c *packageCommand) Validate(args []string) error {
 func (c *packageCommand) Run(_ io.Writer, args []string) error {
 	pkgName := args[0]
 	err := usecase.UsePackage(pkgName)
-	if errors.Is(err, idl.ErrUnknownPackageName) {
+	if errors.Is(err, usecase.ErrUnknownPackageName) {
 		return errors.Errorf("unknown package name '%s'", args[0])
 	}
 	return err
@@ -132,7 +132,7 @@ func (c *showCommand) Run(w io.Writer, args []string) error {
 	case "p", "package", "packages":
 		f = usecase.FormatPackages
 	case "s", "svc", "service", "services":
-		f = usecase.FormatServicesOld
+		f = usecase.FormatServices
 	case "m", "msg", "message", "messages":
 		f = usecase.FormatMessages
 	case "a", "r", "rpc", "api":

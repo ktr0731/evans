@@ -12,8 +12,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/cui"
-	"github.com/ktr0731/evans/grpc"
 	"github.com/ktr0731/evans/prompt"
+	"github.com/ktr0731/evans/proto"
 	"github.com/ktr0731/evans/usecase"
 )
 
@@ -88,7 +88,6 @@ func TestREPL_makePrefix(t *testing.T) {
 	cases := map[string]struct {
 		pkgName string
 		svcName string
-		RPCsErr error
 
 		hasErr   bool
 		expected string
@@ -108,16 +107,11 @@ func TestREPL_makePrefix(t *testing.T) {
 			REPL:   &config.REPL{},
 			Server: &config.Server{Host: "127.0.0.1", Port: "50051"},
 		}
-		dummySpec := &SpecMock{
-			ServiceNamesFunc: func() []string {
-				return []string{"api.Example"}
-			},
-			RPCsFunc: func(svcName string) ([]*grpc.RPC, error) {
-				return nil, c.RPCsErr
-			},
+		dummyDescSource := &proto.DescriptorSourceMock{
+			ListServicesFunc: func() []string { return []string{"api.Example"} },
 		}
 		t.Run(name, func(t *testing.T) {
-			usecase.Inject(usecase.Dependencies{Spec: dummySpec})
+			usecase.Inject(usecase.Dependencies{DescSource: dummyDescSource})
 
 			r, err := New(dummyCfg, prompt.New(), nil, c.pkgName, c.svcName)
 			if c.hasErr {

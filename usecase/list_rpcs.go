@@ -2,8 +2,10 @@ package usecase
 
 import (
 	"github.com/ktr0731/evans/grpc"
-	"github.com/ktr0731/evans/idl/proto"
+	"github.com/ktr0731/evans/proto"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 // ListRPCs lists all RPC belong to the selected service.
@@ -21,9 +23,38 @@ func (m *dependencyManager) ListRPCs(svcName string) ([]*grpc.RPC, error) {
 }
 
 func (m *dependencyManager) listRPCs(fqsn string) ([]*grpc.RPC, error) {
-	rpcs, err := m.spec.RPCs(fqsn)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to list RPCs")
+	var rpcs []*grpc.RPC
+	for _, service := range m.descSource.ListServices() {
+		d, err := m.descSource.FindSymbol(service)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to resolve service %s", service)
+		}
+
+		sd := d.(protoreflect.ServiceDescriptor) // TODO: handle "ok".
+		for i := 0; i < sd.Methods().Len(); i++ {
+			md := sd.Methods().Get(i)
+			rpcs = append(rpcs, &grpc.RPC{
+				Name:               string(md.Name()),
+				FullyQualifiedName: string(md.FullName()),
+				RequestType: &grpc.Type{
+					Name:               string(md.Input().Name()),
+					FullyQualifiedName: string(md.Input().FullName()),
+					New: func() interface{} {
+						return dynamicpb.NewMessageType(md.Input())
+					},
+				},
+				ResponseType: &grpc.Type{
+					Name:               string(md.Output().Name()),
+					FullyQualifiedName: string(md.Output().FullName()),
+					New: func() interface{} {
+						return dynamicpb.NewMessageType(md.Output())
+					},
+				},
+				IsServerStreaming: md.IsStreamingServer(),
+				IsClientStreaming: md.IsStreamingClient(),
+			})
+		}
 	}
+
 	return rpcs, nil
 }

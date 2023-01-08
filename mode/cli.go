@@ -12,11 +12,10 @@ import (
 	"github.com/ktr0731/evans/format"
 	"github.com/ktr0731/evans/format/curl"
 	fmtjson "github.com/ktr0731/evans/format/json"
-	"github.com/ktr0731/evans/idl"
-	"github.com/ktr0731/evans/idl/proto"
 	"github.com/ktr0731/evans/present"
 	"github.com/ktr0731/evans/present/json"
 	"github.com/ktr0731/evans/present/name"
+	"github.com/ktr0731/evans/proto"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/ktr0731/go-multierror"
 	"github.com/mattn/go-isatty"
@@ -140,7 +139,7 @@ func NewListCLIInvoker(ui cui.UI, fqn, format string) CLIInvoker {
 				return "", commonErr // Return commonErr because UsePackage will be deprecated.
 			}
 
-			if err := usecase.UseService(svc); err != nil && errors.Is(err, idl.ErrUnknownServiceName) {
+			if err := usecase.UseService(svc); err != nil && errors.Is(err, usecase.ErrUnknownServiceName) {
 				return "", commonErr
 			} else if err != nil {
 				return "", errors.Wrapf(err, "failed to use service '%s'", svc)
@@ -193,18 +192,12 @@ func RunAsCLIMode(cfg *config.Config, invoker CLIInvoker) error {
 		}()
 	}
 
-	spec, err := newSpec(cfg, gRPCClient)
-	if err != nil {
-		injectResult = multierror.Append(injectResult, err)
-	}
-
 	if injectResult != nil {
 		return injectResult
 	}
 
 	usecase.InjectPartially(
 		usecase.Dependencies{
-			Spec:              spec,
 			GRPCClient:        gRPCClient,
 			ResourcePresenter: json.NewPresenter("  "),
 		},

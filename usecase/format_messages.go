@@ -11,7 +11,7 @@ func FormatMessages() (string, error) {
 	return dm.FormatMessages()
 }
 func (m *dependencyManager) FormatMessages() (string, error) {
-	svcs := m.ListServicesOld()
+	svcs := m.ListServices()
 	type message struct {
 		Message string `json:"message"`
 	}

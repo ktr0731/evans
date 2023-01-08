@@ -7,25 +7,9 @@ import (
 	"github.com/ktr0731/evans/config"
 	"github.com/ktr0731/evans/grpc"
 	"github.com/ktr0731/evans/grpc/grpcreflection"
-	"github.com/ktr0731/evans/idl"
-	"github.com/ktr0731/evans/idl/proto"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/pkg/errors"
 )
-
-func newSpec(cfg *config.Config, grpcClient grpcreflection.Client) (spec idl.Spec, err error) {
-	if cfg.Server.Reflection {
-		spec, err = proto.LoadByReflection(grpcClient)
-	} else {
-		spec, err = proto.LoadFiles(cfg.Default.ProtoPath, cfg.Default.ProtoFile)
-	}
-	if errors.Is(err, grpcreflection.ErrTLSHandshakeFailed) {
-		return nil, errors.New("TLS handshake failed. check whether client or server is misconfigured")
-	} else if err != nil {
-		return nil, errors.Wrap(err, "failed to instantiate the spec")
-	}
-	return spec, nil
-}
 
 func newGRPCClient(cfg *config.Config) (grpc.Client, error) {
 	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
@@ -88,7 +72,7 @@ func setDefault(cfg *config.Config) error {
 
 	// If the spec has only one service, mark it as the default service.
 	if cfg.Default.Service == "" {
-		svcNames := usecase.ListServicesOld()
+		svcNames := usecase.ListServices()
 		if len(svcNames) != 1 {
 			return nil
 		}

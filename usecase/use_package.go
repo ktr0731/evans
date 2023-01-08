@@ -1,11 +1,9 @@
 package usecase
 
-import "github.com/ktr0731/evans/idl"
-
 // UsePackage modifies pkgName as the currently selected package.
 // UsePackage may return these errors:
 //
-//   - idl.ErrUnknownPackageName: pkgName is not in loaded packages.
+//   - ErrUnknownPackageName: pkgName is not in loaded packages.
 //
 func UsePackage(pkgName string) error {
 	return dm.UsePackage(pkgName)
@@ -18,5 +16,5 @@ func (m *dependencyManager) UsePackage(pkgName string) error {
 			return nil
 		}
 	}
-	return idl.ErrUnknownPackageName
+	return ErrUnknownPackageName
 }

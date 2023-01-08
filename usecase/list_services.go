@@ -9,5 +9,5 @@ func (m *dependencyManager) ListServices() []string {
 }
 
 func (m *dependencyManager) listServices() []string {
-	return m.spec.ServiceNames()
+	return m.descSource.ListServices()
 }

@@ -3,30 +3,29 @@ package usecase
 import (
 	"testing"
 
-	"github.com/ktr0731/evans/grpc"
-
-	"github.com/jhump/protoreflect/dynamic"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func TestGetPreviousRPCRequest(t *testing.T) {
 	cases := map[string]struct {
 		expectedError string
-		rpc           *grpc.RPC
+		method        protoreflect.MethodDescriptor
 		rpcCallState  map[rpcIdentifier]callState
 	}{
 		"no previous request exists": {
-			rpc:           getStubRPC(false),
-			expectedError: "no previous request exists for RPC: TestRPC, please issue a normal request",
+			method:        getStubMethod(false),
+			expectedError: "no previous request exists for method: TestRPC, please issue a normal request",
 		},
 		"previous request is client streaming": {
 			rpcCallState:  map[rpcIdentifier]callState{"TestRPC": {}},
-			rpc:           getStubRPC(true),
-			expectedError: "cannot rerun previous RPC: TestRPC as client/bidi streaming RPCs are not supported",
+			method:        getStubMethod(true),
+			expectedError: "cannot rerun previous method: TestRPC as client/bidi streaming RPCs are not supported",
 		},
 		"previous request bytes are nil": {
 			rpcCallState:  map[rpcIdentifier]callState{"TestRPC": {}},
-			rpc:           getStubRPC(false),
-			expectedError: "no previous request body exists for RPC: TestRPC, please issue a normal request",
+			method:        getStubMethod(false),
+			expectedError: "no previous request body exists for method: TestRPC, please issue a normal request",
 		},
 	}
 	for name, c := range cases {
@@ -37,8 +36,8 @@ func TestGetPreviousRPCRequest(t *testing.T) {
 					rpcCallState: c.rpcCallState,
 				},
 			}
-			var req *dynamic.Message
-			err := d.getPreviousRPCRequest(c.rpc, req)
+			var req proto.Message
+			err := d.getPreviousRPCRequest(c.method, req)
 			if err == nil || err.Error() != c.expectedError {
 				t.Errorf("expected error %s, but got %s", c.expectedError, err)
 			}
@@ -46,10 +45,18 @@ func TestGetPreviousRPCRequest(t *testing.T) {
 	}
 }
 
-func getStubRPC(clientStreaming bool) *grpc.RPC {
-	return &grpc.RPC{
-		Name:              "TestRPC",
-		IsServerStreaming: true,
-		IsClientStreaming: clientStreaming,
+type stubMethod struct {
+	protoreflect.MethodDescriptor
+
+	isStreamingClient bool
+}
+
+func (m *stubMethod) FullName() protoreflect.FullName { return protoreflect.FullName("TestRPC") }
+func (m *stubMethod) IsStreamingClient() bool         { return m.isStreamingClient }
+func (m *stubMethod) IsStreamingServer() bool         { return true }
+
+func getStubMethod(clientStreaming bool) *stubMethod {
+	return &stubMethod{
+		isStreamingClient: clientStreaming,
 	}
 }
