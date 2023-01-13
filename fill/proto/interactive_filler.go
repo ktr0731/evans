@@ -3,7 +3,7 @@ package proto
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
@@ -202,7 +202,7 @@ func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
 		case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
 			converter = func(v string) (interface{}, error) {
 				if r.opts.BytesFromFile {
-					b, err := ioutil.ReadFile(v)
+					b, err := os.ReadFile(v)
 					if err == nil {
 						return b, nil
 					}

@@ -3,7 +3,6 @@ package repl
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"os"
 	"runtime"
 	"strings"
@@ -56,7 +55,7 @@ func TestREPL_printSplash(t *testing.T) {
 		t.Fatalf("failed to get user home dir: %s", err)
 	}
 
-	f, err := ioutil.TempFile(home, "")
+	f, err := os.MkdirTemp(home, "")
 	if err != nil {
 		t.Fatalf("failed to create a temp file: %s", err)
 	}

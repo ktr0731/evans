@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
@@ -22,9 +21,9 @@ import (
 )
 
 // checkUpdate checks whether an update exists. Update checking is instructed by following steps:
-//   1. If install means is known, use it as an update means.
-//      If install means is unknown, checkUpdate selects an available means from candidates.
-//   2. Check whether update exists. It it is found, cache the latest version.
+//  1. If install means is known, use it as an update means.
+//     If install means is unknown, checkUpdate selects an available means from candidates.
+//  2. Check whether update exists. If it is found, cache the latest version.
 func checkUpdate(ctx context.Context, cfg *config.Config, c *cache.Cache) error {
 	var (
 		m   updater.Means
@@ -109,7 +108,7 @@ func processUpdate(ctx context.Context, cfg *config.Config, w io.Writer, c *cach
 	// If auto update is enabled, do process update without user's confirmation.
 	if cfg.Meta.AutoUpdate {
 		// If canceled, ignore and return
-		err := update(ctx, ioutil.Discard, newUpdater(cfg, meta.Version, m), c)
+		err := update(ctx, io.Discard, newUpdater(cfg, meta.Version, m), c)
 		if errors.Is(err, context.Canceled) {
 			return nil
 		}

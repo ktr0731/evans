@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -42,14 +41,13 @@ func init() {
 //
 // The directory structure is as follows:
 //
-//   - (temp dir): dir
-//     - config: $XDG_CONFIG_HOME
-//       - evans: evansCfgDir
-//
+//	─ (temp dir): dir
+//	   ─ config: $XDG_CONFIG_HOME
+//	      ─ evans: evansCfgDir
 func setupEnv(t *testing.T) (string, string, func()) {
 	cwd := getWorkDir(t)
 
-	dir, err := ioutil.TempDir("", "")
+	dir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Fatalf("failed to create a temp dir to setup testing environment: %s", err)
 	}
