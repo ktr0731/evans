@@ -31,7 +31,7 @@ type Server struct {
 	Reflection bool   `toml:"reflection"`
 	TLS        bool   `toml:"tls"`
 	Name       string `toml:"name"`
-    Insecure   bool   `toml:"insecure"`
+	Insecure   bool   `toml:"insecure"`
 }
 
 type Header map[string][]string

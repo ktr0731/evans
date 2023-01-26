@@ -141,9 +141,9 @@ func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert
 		} else if cert != "" || certKey != "" {
 			return nil, ErrMutualAuthParamsAreNotEnough
 		}
-        if insecure {
-            tlsCfg.InsecureSkipVerify = true
-        }
+		if insecure {
+			tlsCfg.InsecureSkipVerify = true
+		}
 
 		creds := credentials.NewTLS(&tlsCfg)
 		if serverName != "" {
