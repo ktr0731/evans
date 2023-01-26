@@ -41,7 +41,8 @@ func newGRPCClient(cfg *config.Config) (grpc.Client, error) {
 		cfg.Request.CACertFile,
 		cfg.Request.CertFile,
 		cfg.Request.CertKeyFile,
-		cfg.Request.Header)
+		cfg.Request.Header,
+        cfg.Server.Insecure)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to instantiate a gRPC client")
 	}

@@ -42,6 +42,7 @@ type flags struct {
 		cert       string
 		certKey    string
 		serverName string
+        insecure   bool
 	}
 
 	meta struct {

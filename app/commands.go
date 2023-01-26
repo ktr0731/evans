@@ -170,6 +170,9 @@ func bindFlags(f *pflag.FlagSet, flags *flags, w io.Writer) {
 	f.StringVar(
 		&flags.common.serverName,
 		"servername", "", "override the server name used to verify the hostname (ignored if --tls is disabled)")
+    f.BoolVarP(
+        &flags.common.insecure,
+        "insecure", "k", false, "Ignore TLS certificate errors (ignored if --tls is disabled) (insecure!)")
 
 	f.BoolVarP(&flags.meta.edit, "edit", "e", false, "edit the project config file by using $EDITOR")
 	f.BoolVar(&flags.meta.editGlobal, "edit-global", false, "edit the global config file by using $EDITOR")
