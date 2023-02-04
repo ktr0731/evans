@@ -6,12 +6,11 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/golang/protobuf/protoc-gen-go/descriptor"
-	"github.com/jhump/protoreflect/desc"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 type descCommand struct{}
@@ -43,13 +42,14 @@ func (c *descCommand) Run(w io.Writer, args []string) error {
 
 	table := tablewriter.NewWriter(w)
 	table.SetHeader([]string{"field", "type", "repeated"})
-	fields := td.(*desc.MessageDescriptor).GetFields()
-	rows := make([][]string, len(fields))
-	for i, field := range fields {
+	fields := td.(protoreflect.MessageDescriptor).Fields()
+	rows := make([][]string, fields.Len())
+	for i := 0; i < fields.Len(); i++ {
+		field := fields.Get(i)
 		rows[i] = []string{
-			field.GetName(),
+			string(field.Name()),
 			presentTypeName(field),
-			strconv.FormatBool(field.IsRepeated() && !field.IsMap()),
+			strconv.FormatBool(field.IsList() && !field.IsMap()), // TODO
 		}
 	}
 
@@ -62,21 +62,21 @@ func (c *descCommand) Run(w io.Writer, args []string) error {
 	return nil
 }
 
-func presentTypeName(f *desc.FieldDescriptor) string {
-	typeName := f.GetType().String()
+func presentTypeName(f protoreflect.FieldDescriptor) string {
+	typeName := f.Kind().String()
 
-	switch f.GetType() {
-	case descriptor.FieldDescriptorProto_TYPE_MESSAGE:
+	switch f.Kind() {
+	case protoreflect.MessageKind:
 		if f.IsMap() {
 			typeName = fmt.Sprintf(
 				"map<%s, %s>",
-				presentTypeName(f.GetMapKeyType()),
-				presentTypeName(f.GetMapValueType()))
+				presentTypeName(f.MapKey()),
+				presentTypeName(f.MapValue()))
 		} else {
-			typeName += fmt.Sprintf(" (%s)", f.GetMessageType().GetName())
+			typeName += fmt.Sprintf(" (%s)", f.Message().Name())
 		}
-	case descriptor.FieldDescriptorProto_TYPE_ENUM:
-		typeName += fmt.Sprintf(" (%s)", f.GetEnumType().GetName())
+	case protoreflect.EnumKind:
+		typeName += fmt.Sprintf(" (%s)", f.Enum().Name())
 	}
 	return typeName
 }

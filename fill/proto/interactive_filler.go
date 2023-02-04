@@ -132,13 +132,13 @@ func (r *resolver) resolveOneof(o protoreflect.OneofDescriptor) error {
 }
 
 func (r *resolver) resolveField(f protoreflect.FieldDescriptor) error {
-	resolve := func(f protoreflect.FieldDescriptor) (interface{}, error) {
-		var converter func(string) (interface{}, error)
+	resolve := func(f protoreflect.FieldDescriptor) (protoreflect.Value, error) {
+		var converter func(string) (protoreflect.Value, error)
 
 		switch t := f.Kind(); t {
 		case protoreflect.MessageKind:
 			if r.skipMessage(f) {
-				return nil, prompt.ErrSkip
+				return protoreflect.Value{}, prompt.ErrSkip
 			}
 
 			msgr := newResolver(
@@ -150,61 +150,115 @@ func (r *resolver) resolveField(f protoreflect.FieldDescriptor) error {
 				r.repeated || f.IsList(),
 				r.opts,
 			)
-			return msgr.resolve()
+			msg, err := msgr.resolve()
+			if err != nil {
+				return protoreflect.Value{}, err
+			}
+
+			return protoreflect.ValueOf(msg), nil
 		case protoreflect.EnumKind:
-			return r.resolveEnum(r.makePrefix(f), f.Enum())
+			v, err := r.resolveEnum(r.makePrefix(f), f.Enum())
+			if err != nil {
+				return protoreflect.Value{}, err
+			}
+
+			return protoreflect.ValueOf(protoreflect.EnumNumber(v)), nil
 		case protoreflect.DoubleKind:
-			converter = func(v string) (interface{}, error) { return strconv.ParseFloat(v, 64) }
+			converter = func(v string) (protoreflect.Value, error) {
+				f, err := strconv.ParseFloat(v, 64)
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf(f), nil
+			}
 
 		case protoreflect.FloatKind:
-			converter = func(v string) (interface{}, error) {
+			converter = func(v string) (protoreflect.Value, error) {
 				f, err := strconv.ParseFloat(v, 32)
-				return float32(f), err
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf(float32(f)), nil
 			}
 
 		case protoreflect.Int64Kind, protoreflect.Sfixed64Kind, protoreflect.Sint64Kind:
-			converter = func(v string) (interface{}, error) { return strconv.ParseInt(v, 10, 64) }
+			converter = func(v string) (protoreflect.Value, error) {
+				n, err := strconv.ParseInt(v, 10, 64)
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf(n), nil
+			}
 
 		case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
-			converter = func(v string) (interface{}, error) { return strconv.ParseUint(v, 10, 64) }
+			converter = func(v string) (protoreflect.Value, error) {
+				n, err := strconv.ParseUint(v, 10, 64)
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf(n), nil
+			}
 
 		case protoreflect.Int32Kind, protoreflect.Sfixed32Kind, protoreflect.Sint32Kind:
-			converter = func(v string) (interface{}, error) {
+			converter = func(v string) (protoreflect.Value, error) {
 				i, err := strconv.ParseInt(v, 10, 32)
-				return int32(i), err
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf(int32(i)), err
 			}
 
 		case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
-			converter = func(v string) (interface{}, error) {
+			converter = func(v string) (protoreflect.Value, error) {
 				u, err := strconv.ParseUint(v, 10, 32)
-				return uint32(u), err
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf(uint32(u)), err
 			}
 
 		case protoreflect.BoolKind:
-			converter = func(v string) (interface{}, error) { return strconv.ParseBool(v) }
+			converter = func(v string) (protoreflect.Value, error) {
+				b, err := strconv.ParseBool(v)
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf(b), nil
+			}
 
 		case protoreflect.StringKind:
-			converter = func(v string) (interface{}, error) { return v, nil }
+			converter = func(v string) (protoreflect.Value, error) { return protoreflect.ValueOf(v), nil }
 
 		// Use strconv.Unquote to interpret byte literals and Unicode literals.
 		// For example, a user inputs `\x6f\x67\x69\x73\x6f`,
 		// His expects "ogiso" in string, but backslashes in the input are not interpreted as an escape sequence.
 		// So, we need to call strconv.Unquote to interpret backslashes as an escape sequence.
 		case protoreflect.BytesKind:
-			converter = func(v string) (interface{}, error) {
+			converter = func(v string) (protoreflect.Value, error) {
 				if r.opts.BytesFromFile {
 					b, err := ioutil.ReadFile(v)
 					if err == nil {
-						return b, nil
+						return protoreflect.ValueOf(b), nil
 					}
 				}
 
 				v, err := strconv.Unquote(`"` + v + `"`)
-				return []byte(v), err
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf([]byte(v)), nil
 			}
 
 		default:
-			return nil, fmt.Errorf("invalid type: %s", t)
+			return protoreflect.Value{}, fmt.Errorf("invalid type: %s", t)
 		}
 
 		prefix := r.makePrefix(f)
@@ -212,14 +266,14 @@ func (r *resolver) resolveField(f protoreflect.FieldDescriptor) error {
 		return r.input(prefix, f, converter)
 	}
 
-	if !f.IsList() { // TODO: or cardinality
+	if f.Cardinality() != protoreflect.Repeated { // TODO: or cardinality
 		v, err := resolve(f)
 		if err != nil {
 			return err
 		}
 
 		// TODO: is it okay?
-		r.msg.Mutable(f).List().Append(protoreflect.ValueOf(v))
+		r.msg.Set(f, v)
 		return nil
 	}
 
@@ -244,8 +298,14 @@ func (r *resolver) resolveField(f protoreflect.FieldDescriptor) error {
 			return err
 		}
 
-		// TODO: is it okay?
-		r.msg.Mutable(f).List().Append(protoreflect.ValueOf(v))
+		switch {
+		case f.IsList():
+			r.msg.Mutable(f).List().Append(v)
+		case f.IsMap():
+			key := v.Message().Get(v.Message().Descriptor().Fields().Get(0)).MapKey()
+			val := v.Message().Get(v.Message().Descriptor().Fields().Get(1))
+			r.msg.Mutable(f).Map().Set(key, val)
+		}
 	}
 }
 
@@ -267,19 +327,19 @@ func (r *resolver) resolveEnum(prefix string, e protoreflect.EnumDescriptor) (in
 	return num, nil
 }
 
-func (r *resolver) input(prefix string, f protoreflect.FieldDescriptor, converter func(string) (interface{}, error)) (interface{}, error) {
+func (r *resolver) input(prefix string, f protoreflect.FieldDescriptor, converter func(string) (protoreflect.Value, error)) (protoreflect.Value, error) {
 	r.prompt.SetPrefix(prefix)
 	r.prompt.SetPrefixColor(r.color)
 
 	in, err := r.prompt.Input()
 	if err != nil {
-		return nil, err
+		return protoreflect.Value{}, err
 	}
 	if in == "" {
 		if f.IsList() {
-			panic("should be debug")
+			return kindToDefaultValue(f.Kind()), nil
 		}
-		return f.Default().Interface(), nil
+		return protoreflect.ValueOf(f.Default().Interface()), nil
 	}
 
 	return converter(in)
@@ -350,4 +410,40 @@ func (r *resolver) makePrefix(field protoreflect.FieldDescriptor) string {
 	}
 
 	return s
+}
+
+func kindToDefaultValue(kind protoreflect.Kind) protoreflect.Value {
+	var v interface{}
+	switch kind {
+	case protoreflect.BoolKind:
+		v = false
+	case protoreflect.EnumKind:
+		v = protoreflect.EnumNumber(0)
+	case protoreflect.Int32Kind,
+		protoreflect.Sint32Kind,
+		protoreflect.Sfixed32Kind:
+		v = int32(0)
+	case protoreflect.Int64Kind,
+		protoreflect.Sint64Kind,
+		protoreflect.Sfixed64Kind:
+		v = int64(0)
+	case protoreflect.Uint32Kind,
+		protoreflect.Fixed32Kind:
+		v = uint32(0)
+	case protoreflect.Uint64Kind,
+		protoreflect.Fixed64Kind:
+		v = uint64(0)
+	case protoreflect.FloatKind:
+		v = float32(0)
+	case protoreflect.DoubleKind:
+		v = float64(0)
+	case protoreflect.BytesKind:
+		v = byte(0)
+	case protoreflect.StringKind:
+		v = ""
+	case protoreflect.MessageKind, protoreflect.GroupKind:
+		v = (protoreflect.Message)(nil)
+	}
+
+	return protoreflect.ValueOf(v)
 }

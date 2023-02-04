@@ -3,13 +3,14 @@ package usecase
 import (
 	"github.com/ktr0731/evans/proto"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // GetTypeDescriptor gets the descriptor of a type which belongs to the currently selected package.
-func GetTypeDescriptor(typeName string) (interface{}, error) {
+func GetTypeDescriptor(typeName string) (protoreflect.Descriptor, error) {
 	return dm.GetTypeDescriptor(typeName)
 }
-func (m *dependencyManager) GetTypeDescriptor(typeName string) (interface{}, error) {
+func (m *dependencyManager) GetTypeDescriptor(typeName string) (protoreflect.Descriptor, error) {
 	pkgName := m.state.selectedPackage
 	fqmn := proto.FullyQualifiedMessageName(pkgName, typeName)
 
