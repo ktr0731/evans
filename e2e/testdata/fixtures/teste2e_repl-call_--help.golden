@@ -2,7 +2,8 @@ usage: call <method name>
 
 Options:
       --add-repeated-manually   prompt asks whether to add a value if it encountered to a repeated field
-      --bytes-from-file         interpret TYPE_BYTES input as a relative path to a file
+      --bytes-as-base64         interpret TYPE_BYTES input as base64-encoded string (mutually exclusive with --bytes-from-file)
+      --bytes-from-file         interpret TYPE_BYTES input as a relative path to a file (mutually exclusive with --bytes-as-base64)
       --dig-manually            prompt asks whether to dig down if it encountered to a message field
       --emit-defaults           render fields with default values
       --enrich                  enrich response output includes header, message, trailer and status
