@@ -1,6 +1,7 @@
 package proto
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"os"
@@ -201,7 +202,12 @@ func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
 		// So, we need to call strconv.Unquote to interpret backslashes as an escape sequence.
 		case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
 			converter = func(v string) (interface{}, error) {
-				if r.opts.BytesFromFile {
+				if r.opts.BytesAsBase64 {
+					b, err := base64.StdEncoding.DecodeString(v)
+					if err == nil {
+						return b, nil
+					}
+				} else if r.opts.BytesFromFile {
 					b, err := os.ReadFile(v)
 					if err == nil {
 						return b, nil
