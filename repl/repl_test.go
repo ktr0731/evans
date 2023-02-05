@@ -55,7 +55,7 @@ func TestREPL_printSplash(t *testing.T) {
 		t.Fatalf("failed to get user home dir: %s", err)
 	}
 
-	f, err := os.MkdirTemp(home, "")
+	f, err := os.CreateTemp(home, "")
 	if err != nil {
 		t.Fatalf("failed to create a temp file: %s", err)
 	}
