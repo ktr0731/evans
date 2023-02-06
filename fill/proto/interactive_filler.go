@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
@@ -208,7 +208,7 @@ func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
 						return b, nil
 					}
 				} else if r.opts.BytesFromFile {
-					b, err := ioutil.ReadFile(v)
+					b, err := os.ReadFile(v)
 					if err == nil {
 						return b, nil
 					}

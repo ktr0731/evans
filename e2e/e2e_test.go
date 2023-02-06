@@ -2,7 +2,7 @@ package e2e_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,13 +22,12 @@ import (
 
 // TestMain prepares the test environment for E2E testing. TestMain do following things for clean up the environment.
 //
-//   - Set log output to ioutil.Discard.
+//   - Set log output to io.Discard.
 //   - Remove .evans.toml in this project root.
 //   - Change $XDG_CONFIG_HOME and $XDG_CACHE_HOME to ignore the root config and cache data.
 //     These envvars are reset at the end of E2E testing.
-//
 func TestMain(m *testing.M) {
-	logger.SetOutput(ioutil.Discard)
+	logger.SetOutput(io.Discard)
 
 	b, err := exec.Command("git", "rev-parse", "--show-cdup").Output()
 	if err != nil {
@@ -108,14 +107,14 @@ func compareWithGolden(t *testing.T, actual string) {
 	fname := normalizeFilename(name)
 
 	if *update {
-		if err := ioutil.WriteFile(fname, []byte(actual), 0600); err != nil {
+		if err := os.WriteFile(fname, []byte(actual), 0600); err != nil {
 			t.Fatalf("failed to update the golden file: %s", err)
 		}
 		return
 	}
 
 	// Load the golden file.
-	b, err := ioutil.ReadFile(fname)
+	b, err := os.ReadFile(fname)
 	if err != nil {
 		t.Fatalf("failed to load a golden file: %s", err)
 	}

@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -181,7 +180,7 @@ func (r *REPL) printSplash(p string) {
 
 	_, err := os.Stat(abs)
 	if !os.IsNotExist(err) {
-		b, err := ioutil.ReadFile(abs)
+		b, err := os.ReadFile(abs)
 		if err == nil {
 			r.ui.Output(string(b))
 		}

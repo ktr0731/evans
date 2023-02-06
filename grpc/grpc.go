@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/grpc/grpcreflection"
@@ -121,7 +121,7 @@ func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert
 	} else { // Enable TLS authentication
 		var tlsCfg tls.Config
 		if cacert != "" {
-			b, err := ioutil.ReadFile(cacert)
+			b, err := os.ReadFile(cacert)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read the CA certificate")
 			}
@@ -308,6 +308,7 @@ func (c *client) NewBidiStream(ctx context.Context, streamDesc *grpc.StreamDesc,
 // fqrnToEndpoint converts FullQualifiedRPCName to endpoint
 //
 // e.g.
+//
 //	pkg_name.svc_name.rpc_name -> /pkg_name.svc_name/rpc_name
 func fqrnToEndpoint(fqrn string) (string, error) {
 	sp := strings.Split(fqrn, ".")
