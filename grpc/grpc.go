@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -117,7 +118,7 @@ type client struct {
 func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert, certKey string, headers map[string][]string) (Client, error) {
 	var opts []grpc.DialOption
 	if !useTLS {
-		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	} else { // Enable TLS authentication
 		var tlsCfg tls.Config
 		if cacert != "" {
@@ -143,12 +144,11 @@ func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert
 		}
 
 		creds := credentials.NewTLS(&tlsCfg)
-		if serverName != "" {
-			if err := creds.OverrideServerName(serverName); err != nil {
-				return nil, errors.Wrapf(err, "failed to override the server name by '%s'", serverName)
-			}
-		}
 		opts = append(opts, grpc.WithTransportCredentials(creds))
+
+		if serverName != "" {
+			opts = append(opts, grpc.WithAuthority(serverName))
+		}
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
 	defer cancel()
