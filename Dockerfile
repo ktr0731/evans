@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.2
 
 # Image page: <https://hub.docker.com/_/golang>
-FROM golang:1.18-alpine as builder
+FROM golang:1.20-alpine as builder
 
 WORKDIR /src
 
