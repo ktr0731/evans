@@ -11,7 +11,6 @@ import (
 	"github.com/jhump/protoreflect/desc/protoprint"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/grpc"
-	"github.com/ktr0731/evans/grpc/grpcreflection"
 	"github.com/ktr0731/evans/idl"
 	"github.com/pkg/errors"
 )
@@ -140,15 +139,6 @@ func LoadFiles(importPaths []string, fnames []string) (idl.Spec, error) {
 		fileDescs = append(fileDescs, d.GetDependencies()...)
 	}
 
-	return newSpec(fileDescs), nil
-}
-
-// LoadByReflection receives a gRPC reflection client, then tries to instantiate a new idl.Spec by using gRPC reflection.
-func LoadByReflection(client grpcreflection.Client) (idl.Spec, error) {
-	fileDescs, err := client.ListPackages()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to list packages by gRPC reflection")
-	}
 	return newSpec(fileDescs), nil
 }
 

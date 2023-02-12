@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package api;
+
+message Message {
+  message SubMessage {}
+  enum Enum {
+    enum1 = 0;
+    enum2 = 7;
+  }
+
+  repeated SubMessage a = 1;
+  Enum b = 2;
+  double c = 3;
+  float d = 4;
+  int64 e = 5;
+  sfixed64 f = 6;
+  sint64 g = 7;
+  uint64 h = 8;
+  fixed64 i = 9;
+  int32 j = 10;
+  sfixed32 k = 11;
+  sint32 l = 12;
+  uint32 m = 13;
+  fixed32 n = 14;
+  bool o = 15;
+  string p = 16;
+  bytes q = 17;
+  bytes r = 18;
+  bytes s = 19;
+}

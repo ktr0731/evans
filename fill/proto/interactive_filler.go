@@ -337,7 +337,7 @@ func (r *resolver) input(prefix string, f protoreflect.FieldDescriptor, converte
 	}
 	if in == "" {
 		if f.IsList() {
-			return kindToDefaultValue(f.Kind()), nil
+			return defaultValueFromKind(f.Kind()), nil
 		}
 		return protoreflect.ValueOf(f.Default().Interface()), nil
 	}
@@ -412,38 +412,25 @@ func (r *resolver) makePrefix(field protoreflect.FieldDescriptor) string {
 	return s
 }
 
-func kindToDefaultValue(kind protoreflect.Kind) protoreflect.Value {
-	var v interface{}
-	switch kind {
-	case protoreflect.BoolKind:
-		v = false
-	case protoreflect.EnumKind:
-		v = protoreflect.EnumNumber(0)
-	case protoreflect.Int32Kind,
-		protoreflect.Sint32Kind,
-		protoreflect.Sfixed32Kind:
-		v = int32(0)
-	case protoreflect.Int64Kind,
-		protoreflect.Sint64Kind,
-		protoreflect.Sfixed64Kind:
-		v = int64(0)
-	case protoreflect.Uint32Kind,
-		protoreflect.Fixed32Kind:
-		v = uint32(0)
-	case protoreflect.Uint64Kind,
-		protoreflect.Fixed64Kind:
-		v = uint64(0)
-	case protoreflect.FloatKind:
-		v = float32(0)
-	case protoreflect.DoubleKind:
-		v = float64(0)
-	case protoreflect.BytesKind:
-		v = byte(0)
-	case protoreflect.StringKind:
-		v = ""
-	case protoreflect.MessageKind, protoreflect.GroupKind:
-		v = (protoreflect.Message)(nil)
-	}
+var protoDefaults = map[protoreflect.Kind]interface{}{
+	protoreflect.DoubleKind:   float64(0),
+	protoreflect.FloatKind:    float32(0),
+	protoreflect.Int64Kind:    int64(0),
+	protoreflect.Uint64Kind:   uint64(0),
+	protoreflect.Int32Kind:    int32(0),
+	protoreflect.Uint32Kind:   uint32(0),
+	protoreflect.Fixed64Kind:  uint64(0),
+	protoreflect.Fixed32Kind:  uint32(0),
+	protoreflect.BoolKind:     false,
+	protoreflect.StringKind:   "",
+	protoreflect.BytesKind:    []byte{},
+	protoreflect.Sfixed64Kind: int64(0),
+	protoreflect.Sfixed32Kind: int32(0),
+	protoreflect.Sint64Kind:   int64(0),
+	protoreflect.Sint32Kind:   int32(0),
+}
 
-	return protoreflect.ValueOf(v)
+// convertValue converts a string input pv to protoreflect.Value.
+func defaultValueFromKind(kind protoreflect.Kind) protoreflect.Value {
+	return protoreflect.ValueOf(protoDefaults[kind])
 }

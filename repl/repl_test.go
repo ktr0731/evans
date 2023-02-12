@@ -108,7 +108,7 @@ func TestREPL_makePrefix(t *testing.T) {
 			Server: &config.Server{Host: "127.0.0.1", Port: "50051"},
 		}
 		dummyDescSource := &proto.DescriptorSourceMock{
-			ListServicesFunc: func() []string { return []string{"api.Example"} },
+			ListServicesFunc: func() ([]string, error) { return []string{"api.Example"}, nil },
 		}
 		t.Run(name, func(t *testing.T) {
 			usecase.Inject(usecase.Dependencies{DescSource: dummyDescSource})
