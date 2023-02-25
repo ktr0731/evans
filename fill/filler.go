@@ -24,6 +24,8 @@ type InteractiveFillerOpts struct {
 	DigManually,
 	// BytesAsBase64 is true, Fill will interpret input as base64-encoded string
 	BytesAsBase64,
+	// BytesAsQuotedLiterals is true, Fill will interpret input as a string of (quoted) byte literal or Unicode
+	BytesAsQuotedLiterals,
 	// BytesFromFile is true, Fill will read the contents of the file from the provided relative path.
 	BytesFromFile,
 	// AddRepeatedManually is true, Fill asks whether to add a repeated field value
