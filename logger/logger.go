@@ -4,7 +4,6 @@ package logger
 
 import (
 	"io"
-	"io/ioutil"
 	"log"
 )
 
@@ -60,5 +59,5 @@ func Scriptf(format string, f func() []interface{}) {
 }
 
 func newDefaultLogger() *log.Logger {
-	return log.New(ioutil.Discard, "evans: ", 0)
+	return log.New(io.Discard, "evans: ", 0)
 }

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"testing"
 	"time"
 
@@ -324,7 +324,7 @@ func Test_processUpdate(t *testing.T) {
 
 func Test_update(t *testing.T) {
 	updater := updater.New(meta.Version, &dummyMeans{dummyMeansBuilderOption: dummyMeansBuilderOption{version: "v1.0.0"}})
-	err := update(context.Background(), ioutil.Discard, updater, &cache.Cache{SaveFunc: func() error { return nil }})
+	err := update(context.Background(), io.Discard, updater, &cache.Cache{SaveFunc: func() error { return nil }})
 	if err != nil {
 		t.Errorf("update must not return an error, but got '%s'", err)
 	}

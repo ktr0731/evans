@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/ktr0731/evans/grpc/grpcreflection"
@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -117,11 +118,11 @@ type client struct {
 func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert, certKey string, headers map[string][]string) (Client, error) {
 	var opts []grpc.DialOption
 	if !useTLS {
-		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	} else { // Enable TLS authentication
 		var tlsCfg tls.Config
 		if cacert != "" {
-			b, err := ioutil.ReadFile(cacert)
+			b, err := os.ReadFile(cacert)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read the CA certificate")
 			}
@@ -143,12 +144,11 @@ func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert
 		}
 
 		creds := credentials.NewTLS(&tlsCfg)
-		if serverName != "" {
-			if err := creds.OverrideServerName(serverName); err != nil {
-				return nil, errors.Wrapf(err, "failed to override the server name by '%s'", serverName)
-			}
-		}
 		opts = append(opts, grpc.WithTransportCredentials(creds))
+
+		if serverName != "" {
+			opts = append(opts, grpc.WithAuthority(serverName))
+		}
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
 	defer cancel()
@@ -308,6 +308,7 @@ func (c *client) NewBidiStream(ctx context.Context, streamDesc *grpc.StreamDesc,
 // fqrnToEndpoint converts FullQualifiedRPCName to endpoint
 //
 // e.g.
+//
 //	pkg_name.svc_name.rpc_name -> /pkg_name.svc_name/rpc_name
 func fqrnToEndpoint(fqrn string) (string, error) {
 	sp := strings.Split(fqrn, ".")

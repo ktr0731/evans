@@ -26,6 +26,8 @@ type Filler interface {
 type InteractiveFillerOpts struct {
 	// DigManually is true, Fill asks whether to dig down if it encountered to a message field.
 	DigManually,
+	// BytesAsBase64 is true, Fill will interpret input as base64-encoded string
+	BytesAsBase64,
 	// BytesFromFile is true, Fill will read the contents of the file from the provided relative path.
 	BytesFromFile,
 	// AddRepeatedManually is true, Fill asks whether to add a repeated field value

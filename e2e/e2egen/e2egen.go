@@ -2,7 +2,7 @@
 //
 // e2egen generates a new testcase stub from execution result. e2egen accepts following args.
 //
-//   e2egen <file> <Evans flags>
+//	e2egen <file> <Evans flags>
 //
 // file is the source code of REPL E2E test. Updated code is written to it. Evans flags are options of Evans.
 //
@@ -20,7 +20,6 @@ import (
 	"go/printer"
 	"go/token"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -45,7 +44,7 @@ func realMain() int {
 
 	fileName, args := os.Args[1], os.Args[2:]
 
-	src, err := ioutil.ReadFile(fileName)
+	src, err := os.ReadFile(fileName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to read the file: %s", err)
 		return 1

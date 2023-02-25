@@ -52,7 +52,7 @@ func getCtx(headers map[string][]string) context.Context {
 // NewClient returns an instance of gRPC reflection client for gRPC protocol.
 func NewClient(conn grpc.ClientConnInterface, headers map[string][]string) Client {
 	return &client{
-		client:   gr.NewClient(getCtx(headers), grpc_reflection_v1alpha.NewServerReflectionClient(conn)),
+		client:   gr.NewClientV1Alpha(getCtx(headers), grpc_reflection_v1alpha.NewServerReflectionClient(conn)),
 		resolver: protoregistry.GlobalFiles,
 	}
 }
@@ -60,7 +60,7 @@ func NewClient(conn grpc.ClientConnInterface, headers map[string][]string) Clien
 // NewWebClient returns an instance of gRPC reflection client for gRPC-Web protocol.
 func NewWebClient(conn *grpcweb.ClientConn, headers map[string][]string) Client {
 	return &client{
-		client:   gr.NewClient(getCtx(headers), grpcweb_reflection_v1alpha.NewServerReflectionClient(conn)),
+		client:   gr.NewClientV1Alpha(getCtx(headers), grpcweb_reflection_v1alpha.NewServerReflectionClient(conn)),
 		resolver: protoregistry.GlobalFiles,
 	}
 }

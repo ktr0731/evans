@@ -1,9 +1,10 @@
 package proto
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
@@ -242,8 +243,13 @@ func (r *resolver) resolveField(f protoreflect.FieldDescriptor) error {
 		// So, we need to call strconv.Unquote to interpret backslashes as an escape sequence.
 		case protoreflect.BytesKind:
 			converter = func(v string) (protoreflect.Value, error) {
-				if r.opts.BytesFromFile {
-					b, err := ioutil.ReadFile(v)
+				if r.opts.BytesAsBase64 {
+					b, err := base64.StdEncoding.DecodeString(v)
+					if err == nil {
+						return protoreflect.ValueOf(b), nil
+					}
+				} else if r.opts.BytesFromFile {
+					b, err := os.ReadFile(v)
 					if err == nil {
 						return protoreflect.ValueOf(b), nil
 					}

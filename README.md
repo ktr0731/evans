@@ -97,7 +97,7 @@ $ docker run --rm -v "$(pwd):/mount:ro" \
 
 ### **[Not-recommended]** go install
 
-Go v1.16 or later is required.  
+Go v1.20 or later is required.  
 
 ``` sh
 go install github.com/ktr0731/evans@latest
@@ -277,6 +277,12 @@ data (TYPE_BYTES) => \u65e5\u672c\u8a9e
 {
   "message": "received: (bytes) e6 97 a5 e6 9c ac e8 aa 9e, (string) 日本語"
 }
+```
+
+Or add the flag `--bytes-as-base64` to pass bytes as a base64-encoded string
+```
+> call UnaryBytes --bytes-as-base64
+data (TYPE_BYTES) => SGVsbG8gV29ybGQh
 ```
 
 Or add the flag `--bytes-from-file` to read bytes from the provided relative path
