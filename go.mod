@@ -1,6 +1,6 @@
 module github.com/ktr0731/evans
 
-go 1.17
+go 1.20
 
 require (
 	github.com/Songmu/gocredits v0.3.0

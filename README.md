@@ -97,7 +97,7 @@ $ docker run --rm -v "$(pwd):/mount:ro" \
 
 ### **[Not-recommended]** go install
 
-Go v1.16 or later is required.  
+Go v1.20 or later is required.  
 
 ``` sh
 go install github.com/ktr0731/evans@latest
