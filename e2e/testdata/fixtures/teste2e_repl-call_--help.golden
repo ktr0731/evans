@@ -1,11 +1,12 @@
 usage: call <method name>
 
 Options:
-      --add-repeated-manually   prompt asks whether to add a value if it encountered to a repeated field
-      --bytes-as-base64         interpret TYPE_BYTES input as base64-encoded string (mutually exclusive with --bytes-from-file)
-      --bytes-from-file         interpret TYPE_BYTES input as a relative path to a file (mutually exclusive with --bytes-as-base64)
-      --dig-manually            prompt asks whether to dig down if it encountered to a message field
-      --emit-defaults           render fields with default values
-      --enrich                  enrich response output includes header, message, trailer and status
-  -r, --repeat                  repeat previous unary or server streaming request (if exists)
+      --add-repeated-manually      prompt asks whether to add a value if it encountered to a repeated field
+      --bytes-as-base64            explicitly interpret TYPE_BYTES input as base64-encoded string (mutually exclusive with --bytes-from-file and --bytes-as-quoted-literals)
+      --bytes-as-quoted-literals   interpret TYPE_BYTES input as a string of (quoted) byte literal or Unicode (mutually exclusive with --bytes-from-file and --bytes-as-base64)
+      --bytes-from-file            interpret TYPE_BYTES input as a relative path to a file (mutually exclusive with --bytes-as-base64)
+      --dig-manually               prompt asks whether to dig down if it encountered to a message field
+      --emit-defaults              render fields with default values
+      --enrich                     enrich response output includes header, message, trailer and status
+  -r, --repeat                     repeat previous unary or server streaming request (if exists)
 
