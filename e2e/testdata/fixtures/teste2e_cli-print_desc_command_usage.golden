@@ -1,4 +1,4 @@
-evans 0.10.9
+evans 0.10.10
 
 Usage: evans [global options ...] cli desc [options ...] [symbol]
 
