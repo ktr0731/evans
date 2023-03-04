@@ -1,7 +1,11 @@
 // Package fill provides fillers that fills each field with a value.
 package fill
 
-import "errors"
+import (
+	"errors"
+
+	"google.golang.org/protobuf/types/dynamicpb"
+)
 
 var (
 	ErrCodecMismatch = errors.New("unsupported codec (could be invalid JSON format)")
@@ -15,7 +19,7 @@ type Filler interface {
 	//   - io.EOF: At the end of input.
 	//   - ErrCodecMismatch: If v isn't a supported type.
 	//
-	Fill(v interface{}) error
+	Fill(v *dynamicpb.Message) error
 }
 
 // InteractiveFillerOpts represents options for InteractiveFiller.
@@ -41,5 +45,5 @@ type InteractiveFiller interface {
 	//   - io.EOF: At the end of input.
 	//   - ErrCodecMismatch: If v isn't a supported type.
 	//
-	Fill(v interface{}, opts InteractiveFillerOpts) error
+	Fill(v *dynamicpb.Message, opts InteractiveFillerOpts) error
 }

@@ -1,9 +1,6 @@
-// Package proto implements idl.Spec for Protocol Buffers.
 package proto
 
-import (
-	"strings"
-)
+import "strings"
 
 // FullyQualifiedServiceName returns the fully-qualified service name.
 func FullyQualifiedServiceName(pkg, svc string) string {

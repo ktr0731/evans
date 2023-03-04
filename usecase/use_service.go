@@ -1,8 +1,7 @@
 package usecase
 
 import (
-	"github.com/ktr0731/evans/idl"
-	"github.com/ktr0731/evans/idl/proto"
+	"github.com/ktr0731/evans/proto"
 	"github.com/pkg/errors"
 )
 
@@ -19,20 +18,28 @@ func (m *dependencyManager) UseService(svcName string) error {
 	if svcName == "" {
 		return errors.Errorf("invalid service name '%s'", svcName)
 	}
+
+	fqsns, err := m.descSource.ListServices()
+	if err != nil {
+		return err
+	}
+
 	var hasPackage bool
-	for _, fqsn := range m.spec.ServiceNames() {
+	for _, fqsn := range fqsns {
 		pkg, svc := proto.ParseFullyQualifiedServiceName(fqsn)
 		if m.state.selectedPackage == pkg {
 			hasPackage = true
-			if svcName == svc {
-				m.state.selectedService = svcName
+			// Keep backward-compatibility.
+			// TODO: Delete package related code after releasing v1.0.0.
+			if svcName == svc || svcName == fqsn {
+				m.state.selectedService = svc
 				return nil
 			}
 		}
 	}
 	if hasPackage {
-		return idl.ErrUnknownServiceName
+		return ErrUnknownServiceName
 	}
 	// In the case of empty package.
-	return idl.ErrPackageUnselected
+	return ErrPackageUnselected
 }

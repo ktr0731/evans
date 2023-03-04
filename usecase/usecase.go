@@ -6,8 +6,19 @@ import (
 	"github.com/ktr0731/evans/fill"
 	"github.com/ktr0731/evans/format"
 	"github.com/ktr0731/evans/grpc"
-	"github.com/ktr0731/evans/idl"
 	"github.com/ktr0731/evans/present"
+	"github.com/ktr0731/evans/proto"
+	"github.com/pkg/errors"
+)
+
+var (
+	ErrPackageUnselected = errors.New("package unselected")
+	ErrServiceUnselected = errors.New("service unselected")
+
+	ErrUnknownPackageName = errors.New("unknown package name")
+	ErrUnknownServiceName = errors.New("unknown service name")
+	ErrUnknownRPCName     = errors.New("unknown RPC name")
+	ErrUnknownSymbol      = errors.New("unknown symbol")
 )
 
 var (
@@ -16,7 +27,7 @@ var (
 )
 
 type dependencyManager struct {
-	spec              idl.Spec
+	descSource        proto.DescriptorSource
 	filler            fill.Filler
 	interactiveFiller fill.InteractiveFiller
 	gRPCClient        grpc.Client
@@ -39,7 +50,7 @@ type callState struct {
 }
 
 type Dependencies struct {
-	Spec              idl.Spec
+	DescSource        proto.DescriptorSource
 	Filler            fill.Filler
 	InteractiveFiller fill.InteractiveFiller
 	GRPCClient        grpc.Client
@@ -54,7 +65,7 @@ func Inject(deps Dependencies) {
 
 func (m *dependencyManager) Inject(d Dependencies) {
 	dm = &dependencyManager{
-		spec:              d.Spec,
+		descSource:        d.DescSource,
 		filler:            d.Filler,
 		interactiveFiller: d.InteractiveFiller,
 		gRPCClient:        d.GRPCClient,
@@ -71,8 +82,8 @@ func InjectPartially(deps Dependencies) {
 }
 
 func (m *dependencyManager) InjectPartially(d Dependencies) {
-	if d.Spec != nil {
-		m.spec = d.Spec
+	if d.DescSource != nil {
+		m.descSource = d.DescSource
 	}
 	if d.Filler != nil {
 		m.filler = d.Filler

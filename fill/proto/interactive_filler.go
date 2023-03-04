@@ -8,14 +8,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jhump/protoreflect/desc"
-	"github.com/jhump/protoreflect/desc/builder"
-	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/fill"
 	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/prompt"
 	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 // InteractiveFiller is an implementation of fill.InteractiveFiller.
@@ -37,13 +35,8 @@ func NewInteractiveFiller(prompt prompt.Prompt, prefixFormat string) *Interactiv
 // Fill let you input each field interactively by using a prompt. v will be set field values inputted by a prompt.
 //
 // Note that Fill resets the previous state when it is called again.
-func (f *InteractiveFiller) Fill(v interface{}, opts fill.InteractiveFillerOpts) error {
-	msg, ok := v.(*dynamic.Message)
-	if !ok {
-		return fill.ErrCodecMismatch
-	}
-
-	resolver := newResolver(f.prompt, f.prefixFormat, prompt.ColorInitial, msg, nil, false, opts)
+func (f *InteractiveFiller) Fill(v *dynamicpb.Message, opts fill.InteractiveFillerOpts) error {
+	resolver := newResolver(f.prompt, f.prefixFormat, prompt.ColorInitial, v, nil, false, opts)
 	_, err := resolver.resolve()
 	if err != nil {
 		return err
@@ -57,9 +50,9 @@ type resolver struct {
 	prefixFormat string
 	color        prompt.Color
 
-	msg *dynamic.Message
+	msg *dynamicpb.Message
 
-	m         *desc.MessageDescriptor
+	m         protoreflect.MessageDescriptor
 	ancestors []string
 	// repeated represents that the message is repeated field or not.
 	// If the message is not a field or not a repeated field, it is false.
@@ -72,7 +65,7 @@ func newResolver(
 	prompt prompt.Prompt,
 	prefixFormat string,
 	color prompt.Color,
-	msg *dynamic.Message,
+	msg *dynamicpb.Message,
 	ancestors []string,
 	repeated bool,
 	opts fill.InteractiveFillerOpts,
@@ -82,26 +75,29 @@ func newResolver(
 		prefixFormat: prefixFormat,
 		color:        color,
 		msg:          msg,
-		m:            msg.GetMessageDescriptor(),
+		m:            msg.Descriptor(),
 		ancestors:    ancestors,
 		repeated:     repeated,
 		opts:         opts,
 	}
 }
 
-func (r *resolver) resolve() (*dynamic.Message, error) {
+func (r *resolver) resolve() (*dynamicpb.Message, error) {
 	selectedOneof := make(map[string]interface{})
 
-	for _, f := range r.m.GetFields() {
-		if isOneOfField := f.GetOneOf() != nil; isOneOfField {
-			fqn := f.GetOneOf().GetFullyQualifiedName()
+	// for _, f := range r.m.Fields(). {
+	for i := 0; i < r.m.Fields().Len(); i++ {
+		f := r.m.Fields().Get(i)
+
+		if isOneOfField := f.ContainingOneof() != nil; isOneOfField {
+			fqn := string(f.ContainingOneof().FullName())
 			if _, selected := selectedOneof[fqn]; selected {
 				// Skip if one of choices is already selected.
 				continue
 			}
 
 			selectedOneof[fqn] = nil
-			if err := r.resolveOneof(f.GetOneOf()); err != nil {
+			if err := r.resolveOneof(f.ContainingOneof()); err != nil {
 				return nil, err
 			}
 			continue
@@ -122,80 +118,125 @@ func (r *resolver) resolve() (*dynamic.Message, error) {
 	return r.msg, nil
 }
 
-func (r *resolver) resolveOneof(o *desc.OneOfDescriptor) error {
-	choices := make([]string, 0, len(o.GetChoices()))
-	for _, c := range o.GetChoices() {
-		choices = append(choices, c.GetName())
+func (r *resolver) resolveOneof(o protoreflect.OneofDescriptor) error {
+	choices := make([]string, 0, o.Fields().Len())
+	for i := 0; i < o.Fields().Len(); i++ {
+		c := o.Fields().Get(i)
+		choices = append(choices, string(c.Name()))
 	}
 
-	choice, err := r.selectChoices(o.GetFullyQualifiedName(), choices)
+	choice, err := r.selectChoices(string(o.FullName()), choices)
 	if err != nil {
 		return err
 	}
 
-	return r.resolveField(o.GetChoices()[choice])
+	return r.resolveField(o.Fields().Get(choice))
 }
 
-func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
-	resolve := func(f *desc.FieldDescriptor) (interface{}, error) {
-		var converter func(string) (interface{}, error)
+func (r *resolver) resolveField(f protoreflect.FieldDescriptor) error {
+	resolve := func(f protoreflect.FieldDescriptor) (protoreflect.Value, error) {
+		var converter func(string) (protoreflect.Value, error)
 
-		switch t := f.GetType(); t {
-		case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+		switch t := f.Kind(); t {
+		case protoreflect.MessageKind:
 			if r.skipMessage(f) {
-				return nil, prompt.ErrSkip
+				return protoreflect.Value{}, prompt.ErrSkip
 			}
 
 			msgr := newResolver(
 				r.prompt,
 				r.prefixFormat,
 				r.color.NextVal(),
-				dynamic.NewMessage(f.GetMessageType()),
-				append(r.ancestors, f.GetName()),
-				r.repeated || f.IsRepeated(),
+				dynamicpb.NewMessage(f.Message()),
+				append(r.ancestors, string(f.Name())),
+				r.repeated || f.IsList(),
 				r.opts,
 			)
-			return msgr.resolve()
-		case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-			return r.resolveEnum(r.makePrefix(f), f.GetEnumType())
-		case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
-			converter = func(v string) (interface{}, error) { return strconv.ParseFloat(v, 64) }
+			msg, err := msgr.resolve()
+			if err != nil {
+				return protoreflect.Value{}, err
+			}
 
-		case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
-			converter = func(v string) (interface{}, error) {
+			return protoreflect.ValueOf(msg), nil
+		case protoreflect.EnumKind:
+			v, err := r.resolveEnum(r.makePrefix(f), f.Enum())
+			if err != nil {
+				return protoreflect.Value{}, err
+			}
+
+			return protoreflect.ValueOf(protoreflect.EnumNumber(v)), nil
+		case protoreflect.DoubleKind:
+			converter = func(v string) (protoreflect.Value, error) {
+				f, err := strconv.ParseFloat(v, 64)
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf(f), nil
+			}
+
+		case protoreflect.FloatKind:
+			converter = func(v string) (protoreflect.Value, error) {
 				f, err := strconv.ParseFloat(v, 32)
-				return float32(f), err
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf(float32(f)), nil
 			}
 
-		case descriptorpb.FieldDescriptorProto_TYPE_INT64,
-			descriptorpb.FieldDescriptorProto_TYPE_SFIXED64,
-			descriptorpb.FieldDescriptorProto_TYPE_SINT64:
-			converter = func(v string) (interface{}, error) { return strconv.ParseInt(v, 10, 64) }
+		case protoreflect.Int64Kind, protoreflect.Sfixed64Kind, protoreflect.Sint64Kind:
+			converter = func(v string) (protoreflect.Value, error) {
+				n, err := strconv.ParseInt(v, 10, 64)
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
 
-		case descriptorpb.FieldDescriptorProto_TYPE_UINT64,
-			descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
-			converter = func(v string) (interface{}, error) { return strconv.ParseUint(v, 10, 64) }
+				return protoreflect.ValueOf(n), nil
+			}
 
-		case descriptorpb.FieldDescriptorProto_TYPE_INT32,
-			descriptorpb.FieldDescriptorProto_TYPE_SFIXED32,
-			descriptorpb.FieldDescriptorProto_TYPE_SINT32:
-			converter = func(v string) (interface{}, error) {
+		case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+			converter = func(v string) (protoreflect.Value, error) {
+				n, err := strconv.ParseUint(v, 10, 64)
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf(n), nil
+			}
+
+		case protoreflect.Int32Kind, protoreflect.Sfixed32Kind, protoreflect.Sint32Kind:
+			converter = func(v string) (protoreflect.Value, error) {
 				i, err := strconv.ParseInt(v, 10, 32)
-				return int32(i), err
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf(int32(i)), err
 			}
 
-		case descriptorpb.FieldDescriptorProto_TYPE_UINT32,
-			descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
-			converter = func(v string) (interface{}, error) {
+		case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
+			converter = func(v string) (protoreflect.Value, error) {
 				u, err := strconv.ParseUint(v, 10, 32)
-				return uint32(u), err
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
+
+				return protoreflect.ValueOf(uint32(u)), err
 			}
 
-		case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
-			converter = func(v string) (interface{}, error) { return strconv.ParseBool(v) }
+		case protoreflect.BoolKind:
+			converter = func(v string) (protoreflect.Value, error) {
+				b, err := strconv.ParseBool(v)
+				if err != nil {
+					return protoreflect.Value{}, err
+				}
 
-		case descriptorpb.FieldDescriptorProto_TYPE_STRING:
-			converter = func(v string) (interface{}, error) { return v, nil }
+				return protoreflect.ValueOf(b), nil
+			}
+
+		case protoreflect.StringKind:
+			converter = func(v string) (protoreflect.Value, error) { return protoreflect.ValueOf(v), nil }
 
 		// For bytes, if neither BytesAsBase64 nor BytesAsQuotedLiterals is explicitly set,
 		// try to decode as base64 first, and if that fails, fall back trying to parse
@@ -211,28 +252,27 @@ func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
 		// For example, a user inputs `\x6f\x67\x69\x73\x6f`,
 		// His expects "ogiso" in string, but backslashes in the input are not interpreted as an escape sequence.
 		// So, we need to call strconv.Unquote to interpret backslashes as an escape sequence.
-		case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
-			converter = func(v string) (interface{}, error) {
+		case protoreflect.BytesKind:
+			converter = func(v string) (protoreflect.Value, error) {
 				if r.opts.BytesFromFile {
 					b, err := os.ReadFile(v)
 					if err != nil {
-						return nil, err
+						return protoreflect.Value{}, err
 					}
-					return b, nil
-
+					return protoreflect.ValueOf(b), nil
 				} else if r.opts.BytesAsBase64 {
 					b, err := base64.StdEncoding.DecodeString(v)
 					if err != nil {
-						return nil, err
+						return protoreflect.Value{}, err
 					}
-					return b, nil
+					return protoreflect.ValueOf(b), nil
 				} else if r.opts.BytesAsQuotedLiterals {
 					v, err := strconv.Unquote(`"` + v + `"`)
 
 					if err != nil {
-						return nil, err
+						return protoreflect.Value{}, err
 					}
-					return []byte(v), nil
+					return protoreflect.ValueOf([]byte(v)), nil
 				}
 
 				// try to decode as base64
@@ -243,18 +283,18 @@ func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
 					if err2 != nil {
 						// failed to parse as this too, assume user intended to input base64, propagate
 						// that error
-						return nil, err
+						return protoreflect.Value{}, err
 					}
 					// log a warning and return the decoded literal string
 					logger.Println(`warning: entering bytes as quoted literal is deprecated. Use --bytes-as-quoted-literals or base64 encoding"`)
-					return []byte(v), nil
+					return protoreflect.ValueOf([]byte(v)), nil
 				}
 				// succeeded decoding as base64, return
-				return b, nil
+				return protoreflect.ValueOf(b), nil
 			}
 
 		default:
-			return nil, fmt.Errorf("invalid type: %s", t)
+			return protoreflect.Value{}, fmt.Errorf("invalid type: %s", t)
 		}
 
 		prefix := r.makePrefix(f)
@@ -262,13 +302,15 @@ func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
 		return r.input(prefix, f, converter)
 	}
 
-	if !f.IsRepeated() {
+	if f.Cardinality() != protoreflect.Repeated { // TODO: or cardinality
 		v, err := resolve(f)
 		if err != nil {
 			return err
 		}
 
-		return r.msg.TrySetField(f, v)
+		// TODO: is it okay?
+		r.msg.Set(f, v)
+		return nil
 	}
 
 	color := r.color
@@ -292,16 +334,23 @@ func (r *resolver) resolveField(f *desc.FieldDescriptor) error {
 			return err
 		}
 
-		if err := r.msg.TryAddRepeatedField(f, v); err != nil {
-			return err
+		switch {
+		case f.IsList():
+			r.msg.Mutable(f).List().Append(v)
+		case f.IsMap():
+			key := v.Message().Get(v.Message().Descriptor().Fields().Get(0)).MapKey()
+			val := v.Message().Get(v.Message().Descriptor().Fields().Get(1))
+			r.msg.Mutable(f).Map().Set(key, val)
 		}
 	}
 }
 
-func (r *resolver) resolveEnum(prefix string, e *desc.EnumDescriptor) (int32, error) {
-	choices := make([]string, 0, len(e.GetValues()))
-	for _, v := range e.GetValues() {
-		choices = append(choices, v.GetName())
+func (r *resolver) resolveEnum(prefix string, e protoreflect.EnumDescriptor) (int32, error) {
+	choices := make([]string, 0, e.Values().Len())
+	// for _, v := range e.GetValues() {
+	for i := 0; i < e.Values().Len(); i++ {
+		v := e.Values().Get(i)
+		choices = append(choices, string(v.Name()))
 	}
 
 	choice, err := r.selectChoices(prefix, choices)
@@ -309,34 +358,24 @@ func (r *resolver) resolveEnum(prefix string, e *desc.EnumDescriptor) (int32, er
 		return 0, err
 	}
 
-	value := e.GetValues()[choice].AsEnumValueDescriptorProto()
+	num := int32(e.Values().Get(choice).Number())
 
-	return *value.Number, nil
+	return num, nil
 }
 
-func (r *resolver) input(prefix string, f *desc.FieldDescriptor, converter func(string) (interface{}, error)) (interface{}, error) {
+func (r *resolver) input(prefix string, f protoreflect.FieldDescriptor, converter func(string) (protoreflect.Value, error)) (protoreflect.Value, error) {
 	r.prompt.SetPrefix(prefix)
 	r.prompt.SetPrefixColor(r.color)
 
 	in, err := r.prompt.Input()
 	if err != nil {
-		return nil, err
+		return protoreflect.Value{}, err
 	}
 	if in == "" {
-		if f.IsRepeated() {
-			builder, err := builder.FromField(f)
-			if err != nil {
-				return nil, err
-			}
-
-			// Clear "repeated".
-			builder.Label = descriptorpb.FieldDescriptorProto_Label(0)
-			f, err = builder.Build()
-			if err != nil {
-				return nil, err
-			}
+		if f.IsList() {
+			return defaultValueFromKind(f.Kind()), nil
 		}
-		return f.GetDefaultValue(), nil
+		return protoreflect.ValueOf(f.Default().Interface()), nil
 	}
 
 	return converter(in)
@@ -358,9 +397,9 @@ func (r *resolver) selectChoices(msg string, choices []string) (int, error) {
 	return n, nil
 }
 
-func (r *resolver) addRepeatedField(f *desc.FieldDescriptor) bool {
+func (r *resolver) addRepeatedField(f protoreflect.FieldDescriptor) bool {
 	if !r.opts.AddRepeatedManually {
-		if f.GetType() != descriptorpb.FieldDescriptorProto_TYPE_MESSAGE || len(f.GetMessageType().GetFields()) != 0 {
+		if f.Kind() != protoreflect.MessageKind || f.Message().Fields().Len() != 0 {
 			return true
 		}
 
@@ -368,7 +407,7 @@ func (r *resolver) addRepeatedField(f *desc.FieldDescriptor) bool {
 		// For user's experience, always display prompt in this case.
 	}
 
-	msg := fmt.Sprintf("add a repeated field value? field=%s", f.GetFullyQualifiedName())
+	msg := fmt.Sprintf("add a repeated field value? field=%s", f.FullName())
 	choices := []string{"yes", "no"}
 	n, _, err := r.prompt.Select(msg, choices)
 	if err != nil || n == 1 {
@@ -378,17 +417,17 @@ func (r *resolver) addRepeatedField(f *desc.FieldDescriptor) bool {
 	return true
 }
 
-func (r *resolver) skipMessage(f *desc.FieldDescriptor) bool {
+func (r *resolver) skipMessage(f protoreflect.FieldDescriptor) bool {
 	if !r.opts.DigManually {
 		return false
 	}
 
-	msg := fmt.Sprintf("dig down? field=%s", f.GetFullyQualifiedName())
+	msg := fmt.Sprintf("dig down? field=%s", f.FullName())
 	n, _, _ := r.prompt.Select(msg, []string{"dig down", "skip"})
 	return n == 1
 }
 
-func (r *resolver) makePrefix(field *desc.FieldDescriptor) string {
+func (r *resolver) makePrefix(field protoreflect.FieldDescriptor) string {
 	const delimiter = "::"
 
 	joinedAncestor := strings.Join(r.ancestors, delimiter)
@@ -399,12 +438,35 @@ func (r *resolver) makePrefix(field *desc.FieldDescriptor) string {
 	s := r.prefixFormat
 
 	s = strings.ReplaceAll(s, "{ancestor}", joinedAncestor)
-	s = strings.ReplaceAll(s, "{name}", field.GetName())
-	s = strings.ReplaceAll(s, "{type}", field.GetType().String())
+	s = strings.ReplaceAll(s, "{name}", string(field.Name()))
+	s = strings.ReplaceAll(s, "{type}", field.Kind().String())
 
-	if r.repeated || field.IsRepeated() {
+	if r.repeated || field.IsList() {
 		return "<repeated> " + s
 	}
 
 	return s
+}
+
+var protoDefaults = map[protoreflect.Kind]interface{}{
+	protoreflect.DoubleKind:   float64(0),
+	protoreflect.FloatKind:    float32(0),
+	protoreflect.Int64Kind:    int64(0),
+	protoreflect.Uint64Kind:   uint64(0),
+	protoreflect.Int32Kind:    int32(0),
+	protoreflect.Uint32Kind:   uint32(0),
+	protoreflect.Fixed64Kind:  uint64(0),
+	protoreflect.Fixed32Kind:  uint32(0),
+	protoreflect.BoolKind:     false,
+	protoreflect.StringKind:   "",
+	protoreflect.BytesKind:    []byte{},
+	protoreflect.Sfixed64Kind: int64(0),
+	protoreflect.Sfixed32Kind: int32(0),
+	protoreflect.Sint64Kind:   int64(0),
+	protoreflect.Sint32Kind:   int32(0),
+}
+
+// convertValue converts a string input pv to protoreflect.Value.
+func defaultValueFromKind(kind protoreflect.Kind) protoreflect.Value {
+	return protoreflect.ValueOf(protoDefaults[kind])
 }

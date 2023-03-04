@@ -1,15 +1,18 @@
 package proto
 
 import (
+	"context"
 	"fmt"
+	"reflect"
 	"runtime"
 	"testing"
 
+	"github.com/bufbuild/protocompile"
 	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
-	"github.com/jhump/protoreflect/desc/builder"
-	"github.com/jhump/protoreflect/dynamic"
 	"github.com/ktr0731/evans/fill"
 	"github.com/ktr0731/evans/prompt"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 type stubPrompt struct {
@@ -54,34 +57,18 @@ func (p *stubPrompt) SetPrefix(string) {}
 func (p *stubPrompt) SetPrefixColor(prompt.Color) {}
 
 func TestInteractiveFiller(t *testing.T) {
-	b := builder.NewMessage("Message")
-	b.AddField(builder.NewField("a", builder.FieldTypeMessage(builder.NewMessage("SubMessage"))).SetRepeated())
-	b.AddField(builder.NewField("b", builder.FieldTypeEnum(
-		builder.NewEnum("Enum").
-			AddValue(builder.NewEnumValue("enum1").SetNumber(5)).
-			AddValue(builder.NewEnumValue("enum2").SetNumber(7)),
-	)))
-	b.AddField(builder.NewField("c", builder.FieldTypeDouble()))
-	b.AddField(builder.NewField("d", builder.FieldTypeFloat()))
-	b.AddField(builder.NewField("e", builder.FieldTypeInt64()))
-	b.AddField(builder.NewField("f", builder.FieldTypeSFixed64()))
-	b.AddField(builder.NewField("g", builder.FieldTypeSInt64()))
-	b.AddField(builder.NewField("h", builder.FieldTypeUInt64()))
-	b.AddField(builder.NewField("i", builder.FieldTypeFixed64()))
-	b.AddField(builder.NewField("j", builder.FieldTypeInt32()))
-	b.AddField(builder.NewField("k", builder.FieldTypeSFixed32()))
-	b.AddField(builder.NewField("l", builder.FieldTypeSInt32()))
-	b.AddField(builder.NewField("m", builder.FieldTypeUInt32()))
-	b.AddField(builder.NewField("n", builder.FieldTypeFixed32()))
-	b.AddField(builder.NewField("o", builder.FieldTypeBool()))
-	b.AddField(builder.NewField("p", builder.FieldTypeString()))
-	b.AddField(builder.NewField("q", builder.FieldTypeBytes()))
-	m, err := b.Build()
+	c := &protocompile.Compiler{
+		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{
+			ImportPaths: []string{"testdata"},
+		}),
+	}
+	compiled, err := c.Compile(context.TODO(), "test.proto")
 	if err != nil {
-		t.Fatalf("Build should not return an error, but got '%s'", err)
+		t.Fatal(err)
 	}
 
-	msg := dynamic.NewMessage(m)
+	m := compiled[0].Messages().ByName(protoreflect.Name("Message"))
+	msg := dynamicpb.NewMessage(m)
 	p := &stubPrompt{
 		t: t,
 		input: []string{
@@ -127,5 +114,85 @@ func TestInteractiveFiller(t *testing.T) {
 
 	if want != got {
 		t.Errorf("want: %s\ngot: %s", want, got)
+	}
+}
+
+func Test_defaultValueFromKind(t *testing.T) {
+	cases := map[string]struct {
+		kind protoreflect.Kind
+
+		expected protoreflect.Value
+	}{
+		"string": {
+			kind:     protoreflect.StringKind,
+			expected: protoreflect.ValueOf(""),
+		},
+		"double": {
+			kind:     protoreflect.DoubleKind,
+			expected: protoreflect.ValueOf(float64(0)),
+		},
+		"float": {
+			kind:     protoreflect.FloatKind,
+			expected: protoreflect.ValueOf(float32(0)),
+		},
+		"int64": {
+			kind:     protoreflect.Int64Kind,
+			expected: protoreflect.ValueOf(int64(0)),
+		},
+		"uint64": {
+			kind:     protoreflect.Uint64Kind,
+			expected: protoreflect.ValueOf(uint64(0)),
+		},
+		"int32": {
+			kind:     protoreflect.Int32Kind,
+			expected: protoreflect.ValueOf(int32(0)),
+		},
+		"uint32": {
+			kind:     protoreflect.Uint32Kind,
+			expected: protoreflect.ValueOf(uint32(0)),
+		},
+		"fixed64": {
+			kind:     protoreflect.Fixed64Kind,
+			expected: protoreflect.ValueOf(uint64(0)),
+		},
+		"fixed32": {
+			kind:     protoreflect.Fixed32Kind,
+			expected: protoreflect.ValueOf(uint32(0)),
+		},
+		"bool": {
+			kind:     protoreflect.BoolKind,
+			expected: protoreflect.ValueOf(false),
+		},
+		"bytes": {
+			kind:     protoreflect.BytesKind,
+			expected: protoreflect.ValueOf([]byte{}),
+		},
+		"sfixed64": {
+			kind:     protoreflect.Sfixed64Kind,
+			expected: protoreflect.ValueOf(int64(0)),
+		},
+		"sfixed32": {
+			kind:     protoreflect.Sfixed32Kind,
+			expected: protoreflect.ValueOf(int32(0)),
+		},
+		"sint64": {
+			kind:     protoreflect.Sint64Kind,
+			expected: protoreflect.ValueOf(int64(0)),
+		},
+		"sint32": {
+			kind:     protoreflect.Sint32Kind,
+			expected: protoreflect.ValueOf(int32(0)),
+		},
+	}
+
+	for name, c := range cases {
+		name, c := name, c
+		t.Run(name, func(t *testing.T) {
+			actual := defaultValueFromKind(c.kind)
+			if !reflect.DeepEqual(c.expected, actual) {
+				t.Errorf("expected '%v' (type = %T), but got '%v' (type = %T)",
+					c.expected, c.expected, actual, actual)
+			}
+		})
 	}
 }

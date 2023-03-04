@@ -11,7 +11,11 @@ func FormatPackages() (string, error) {
 	return dm.FormatPackages()
 }
 func (m *dependencyManager) FormatPackages() (string, error) {
-	pkgs := m.ListPackages()
+	pkgs, err := m.ListPackages()
+	if err != nil {
+		return "", err
+	}
+
 	type pkg struct {
 		Package string `json:"package"`
 	}

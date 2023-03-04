@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/Songmu/gocredits v0.3.0
+	github.com/bufbuild/protocompile v0.1.0
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/fatih/color v1.13.0
 	github.com/golang/protobuf v1.5.2
@@ -37,11 +38,12 @@ require (
 	github.com/tj/go-spin v1.1.0
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v1.2.0
+	golang.org/x/exp v0.0.0-20220325121720-054d8573a5d8
 	golang.org/x/sync v0.1.0
 	golang.org/x/tools v0.5.0
 	google.golang.org/genproto v0.0.0-20221024183307-1bc688fe9f3e
 	google.golang.org/grpc v1.51.0
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
 )
 
 require (

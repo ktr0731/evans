@@ -3,7 +3,7 @@ package usecase
 import (
 	"sort"
 
-	"github.com/ktr0731/evans/idl/proto"
+	"github.com/ktr0731/evans/proto"
 	"github.com/pkg/errors"
 )
 
