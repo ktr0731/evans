@@ -10,7 +10,6 @@ import (
 
 // SilentFilter is a Filler implementation that doesn't behave interactive actions.
 type SilentFiller struct {
-	// dec *json.Decoder
 	dec *protojson.UnmarshalOptions
 	in  *json.Decoder
 }
@@ -18,7 +17,6 @@ type SilentFiller struct {
 // NewSilentFiller receives input as io.Reader and returns an instance of SilentFiller.
 func NewSilentFiller(in io.Reader) *SilentFiller {
 	return &SilentFiller{
-		// dec: json.NewDecoder(in),
 		dec: &protojson.UnmarshalOptions{
 			Resolver: nil, // TODO
 		},

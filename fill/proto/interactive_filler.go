@@ -442,7 +442,7 @@ func (r *resolver) makePrefix(field protoreflect.FieldDescriptor) string {
 	s = strings.ReplaceAll(s, "{type}", field.Kind().String())
 
 	if r.repeated || field.IsList() {
-		return "<repeated> " + s // TODO: OK? Or should check cardinality?
+		return "<repeated> " + s
 	}
 
 	return s

@@ -49,7 +49,7 @@ func (c *descCommand) Run(w io.Writer, args []string) error {
 		rows[i] = []string{
 			string(field.Name()),
 			presentTypeName(field),
-			strconv.FormatBool(field.IsList() && !field.IsMap()), // TODO
+			strconv.FormatBool(field.IsList() && !field.IsMap()),
 		}
 	}
 

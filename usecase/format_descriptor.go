@@ -20,7 +20,6 @@ func (m *dependencyManager) FormatDescriptor(symbol string) (string, error) {
 		return "", errors.Wrapf(err, "failed to resolve symbol '%s'", symbol)
 	}
 
-	// TODO: It works?
 	fd, err := desc.CreateFileDescriptor(protodesc.ToFileDescriptorProto(d.ParentFile()))
 	if err != nil {
 		return "", err
