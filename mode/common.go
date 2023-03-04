@@ -82,6 +82,10 @@ func setDefault(cfg *config.Config) error {
 		if err != nil {
 			return err
 		}
+
+		// Ignore server reflection name because it's provided imply when reflection is enabled.
+		svcNames = dropString(svcNames, "grpc.reflection.v1alpha.ServerReflection")
+
 		if len(svcNames) != 1 {
 			return nil
 		}
@@ -111,4 +115,15 @@ func newDescSource(cfg *config.Config, grpcClient grpcreflection.Client) (descSo
 	}
 
 	return
+}
+
+func dropString(slice []string, s string) []string {
+	newSlice := make([]string, 0, len(slice))
+	for _, e := range slice {
+		if e != s {
+			newSlice = append(newSlice, e)
+		}
+	}
+
+	return newSlice
 }

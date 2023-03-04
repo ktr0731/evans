@@ -312,6 +312,10 @@ func TestE2E_REPL(t *testing.T) {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"desc SimpleRequest"},
 		},
+		"desc a fully-qualified message": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"desc api.SimpleRequest"},
+		},
 		"desc simple message in empty package": {
 			commonFlags: "--proto testdata/empty_package.proto",
 			input:       []interface{}{"desc SimpleRequest"},
