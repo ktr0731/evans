@@ -20,7 +20,7 @@ require (
 	github.com/ktr0731/go-prompt v0.2.4
 	github.com/ktr0731/go-shellstring v0.1.3
 	github.com/ktr0731/go-updater v0.1.6
-	github.com/ktr0731/grpc-test v0.1.10
+	github.com/ktr0731/grpc-test v0.1.12
 	github.com/ktr0731/grpc-web-go-client v0.2.8
 	github.com/manifoldco/promptui v0.9.0
 	github.com/matryer/moq v0.2.7
@@ -38,7 +38,6 @@ require (
 	github.com/tj/go-spin v1.1.0
 	github.com/zchee/go-xdgbasedir v1.0.3
 	go.uber.org/goleak v1.2.0
-	golang.org/x/exp v0.0.0-20220325121720-054d8573a5d8
 	golang.org/x/sync v0.1.0
 	golang.org/x/tools v0.5.0
 	google.golang.org/genproto v0.0.0-20221024183307-1bc688fe9f3e

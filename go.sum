@@ -738,8 +738,8 @@ github.com/ktr0731/go-shellstring v0.1.3/go.mod h1:f0/XX0hsm6A02Es/UDQ9MGd3VqpCH
 github.com/ktr0731/go-updater v0.1.6 h1:GW88jEdipFqCmPf9bJNg/jSp4CKDZyakxG32MjlchJ8=
 github.com/ktr0731/go-updater v0.1.6/go.mod h1:dsdOg7a9sj6ttcOU5ZxPCtKdm9WeB1hwcX/7oKgz9/0=
 github.com/ktr0731/grpc-test v0.1.4/go.mod h1:v47616grayBYXQveGWxO3OwjLB3nEEnHsZuMTc73FM0=
-github.com/ktr0731/grpc-test v0.1.10 h1:W+fdfNrcSY0+9aiIIx+CWpFcNjdcqysPQchDcuMk4Pk=
-github.com/ktr0731/grpc-test v0.1.10/go.mod h1:AP4+ZrqSzdDaUNhAsp2fye06MXO2fdYY6YQJifb588M=
+github.com/ktr0731/grpc-test v0.1.12 h1:Yha+zH2hB48huOfbsEMfyG7FeHCrVWq4fYmHfr3iH3U=
+github.com/ktr0731/grpc-test v0.1.12/go.mod h1:AP4+ZrqSzdDaUNhAsp2fye06MXO2fdYY6YQJifb588M=
 github.com/ktr0731/grpc-web-go-client v0.2.8 h1:nUf9p+YWirmFwmH0mwtAWhuXvzovc+/3C/eAY2Fshnk=
 github.com/ktr0731/grpc-web-go-client v0.2.8/go.mod h1:1Iac8gFJvC/DRfZoGnFZsfEbEq/wQFK+2Ve1o3pHkCQ=
 github.com/ktr0731/modfile v1.11.2/go.mod h1:LzNwnHJWHbuDh3BO17lIqzqDldXqGu1HCydWH3SinE0=
@@ -1095,8 +1095,6 @@ golang.org/x/exp v0.0.0-20200119233911-0405dc783f0a/go.mod h1:2RIsYlXP63K8oxa1u0
 golang.org/x/exp v0.0.0-20200207192155-f17229e696bd/go.mod h1:J/WKrq2StrnmMY6+EHIKF9dgMWnmCNThgcyBT1FY9mM=
 golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6/go.mod h1:3jZMyOhIsHpP37uCMkUooju7aAi5cS1Q23tOzKc+0MU=
 golang.org/x/exp v0.0.0-20200331195152-e8c3332aa8e5/go.mod h1:4M0jN8W1tt0AVLNr8HDosyJCDCDuyL9N9+3m7wDWgKw=
-golang.org/x/exp v0.0.0-20220325121720-054d8573a5d8 h1:Xt4/LzbTwfocTk9ZLEu4onjeFucl88iW+v4j4PWbQuE=
-golang.org/x/exp v0.0.0-20220325121720-054d8573a5d8/go.mod h1:lgLbSvA5ygNOMpwM/9anMpWVlVJ7Z+cHWq/eFuinpGE=
 golang.org/x/image v0.0.0-20190227222117-0694c2d4d067/go.mod h1:kZ7UVZpmo3dzQBMxlp+ypCbDeSB+sBbTgSJuh5dn5js=
 golang.org/x/image v0.0.0-20190802002840-cff245a6509b/go.mod h1:FeLwcggjj3mMvU+oOTbSwawSJRM1uh48EjtB4UJZlP0=
 golang.org/x/lint v0.0.0-20181026193005-c67002cb31c3/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
