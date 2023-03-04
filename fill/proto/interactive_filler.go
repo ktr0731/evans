@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/ktr0731/evans/fill"
+	"github.com/ktr0731/evans/logger"
 	"github.com/ktr0731/evans/prompt"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -237,30 +238,59 @@ func (r *resolver) resolveField(f protoreflect.FieldDescriptor) error {
 		case protoreflect.StringKind:
 			converter = func(v string) (protoreflect.Value, error) { return protoreflect.ValueOf(v), nil }
 
+		// For bytes, if neither BytesAsBase64 nor BytesAsQuotedLiterals is explicitly set,
+		// try to decode as base64 first, and if that fails, fall back trying to parse
+		// as quoted literals (logging a warning).
+		//
+		// This is to preserve backwards compatibility, as we used to be accept quoted
+		// literals, but want to switch to base64.
+		//
+		// If either BytesAsBase64 or BytesAsQuotedLiterals is set, only parse it in that format,
+		// and if BytesFromFile is set, read it from file.
+		//
 		// Use strconv.Unquote to interpret byte literals and Unicode literals.
 		// For example, a user inputs `\x6f\x67\x69\x73\x6f`,
 		// His expects "ogiso" in string, but backslashes in the input are not interpreted as an escape sequence.
 		// So, we need to call strconv.Unquote to interpret backslashes as an escape sequence.
 		case protoreflect.BytesKind:
 			converter = func(v string) (protoreflect.Value, error) {
-				if r.opts.BytesAsBase64 {
-					b, err := base64.StdEncoding.DecodeString(v)
-					if err == nil {
-						return protoreflect.ValueOf(b), nil
-					}
-				} else if r.opts.BytesFromFile {
+				if r.opts.BytesFromFile {
 					b, err := os.ReadFile(v)
-					if err == nil {
-						return protoreflect.ValueOf(b), nil
+					if err != nil {
+						return protoreflect.Value{}, err
 					}
+					return protoreflect.ValueOf(b), nil
+				} else if r.opts.BytesAsBase64 {
+					b, err := base64.StdEncoding.DecodeString(v)
+					if err != nil {
+						return protoreflect.Value{}, err
+					}
+					return protoreflect.ValueOf(b), nil
+				} else if r.opts.BytesAsQuotedLiterals {
+					v, err := strconv.Unquote(`"` + v + `"`)
+
+					if err != nil {
+						return protoreflect.Value{}, err
+					}
+					return protoreflect.ValueOf([]byte(v)), nil
 				}
 
-				v, err := strconv.Unquote(`"` + v + `"`)
+				// try to decode as base64
+				b, err := base64.StdEncoding.DecodeString(v)
 				if err != nil {
-					return protoreflect.Value{}, err
+					// failed, try to parse as quoted literal
+					v, err2 := strconv.Unquote(`"` + v + `"`)
+					if err2 != nil {
+						// failed to parse as this too, assume user intended to input base64, propagate
+						// that error
+						return protoreflect.Value{}, err
+					}
+					// log a warning and return the decoded literal string
+					logger.Println(`warning: entering bytes as quoted literal is deprecated. Use --bytes-as-quoted-literals or base64 encoding"`)
+					return protoreflect.ValueOf([]byte(v)), nil
 				}
-
-				return protoreflect.ValueOf([]byte(v)), nil
+				// succeeded decoding as base64, return
+				return protoreflect.ValueOf(b), nil
 			}
 
 		default:

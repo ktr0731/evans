@@ -26,6 +26,4 @@ message Message {
   bool o = 15;
   string p = 16;
   bytes q = 17;
-  bytes r = 18;
-  bytes s = 19;
 }

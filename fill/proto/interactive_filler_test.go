@@ -72,23 +72,21 @@ func TestInteractiveFiller(t *testing.T) {
 	p := &stubPrompt{
 		t: t,
 		input: []string{
-			"1.1",          // c
-			"1.2",          // d
-			"1",            // e
-			"2",            // f
-			"3",            // g
-			"4",            // h
-			"5",            // i
-			"6",            // j
-			"7",            // k
-			"8",            // l
-			"9",            // m
-			"10",           // n
-			"true",         // o
-			"foo",          // p
-			"bar",          // q
-			"\x62\x61\x7a", // r
-			"./proto.go",   // s
+			"1.1",        // c
+			"1.2",        // d
+			"1",          // e
+			"2",          // f
+			"3",          // g
+			"4",          // h
+			"5",          // i
+			"6",          // j
+			"7",          // k
+			"8",          // l
+			"9",          // m
+			"10",         // n
+			"true",       // o
+			"foo",        // p
+			"./proto.go", // q
 		},
 		selection: []int{
 			0, // a - yes
@@ -106,7 +104,7 @@ func TestInteractiveFiller(t *testing.T) {
 		return
 	}
 
-	const want = `{"a":[{}],"b":"enum2","c":1.1,"d":1.2,"e":"1","f":"2","g":"3","h":"4","i":"5","j":6,"k":7,"l":8,"m":9,"n":10,"o":true,"p":"foo","q":"YmFy","r":"YmF6","s":"Ly8gUGFja2FnZSBwcm90byBwcm92aWRlcyBhIGZpbGxlciBpbXBsZW1lbnRhdGlvbiBmb3IgUHJvdG9jb2wgQnVmZmVycy4KcGFja2FnZSBwcm90bwo="}`
+	const want = `{"a":[{}],"b":"enum2","c":1.1,"d":1.2,"e":"1","f":"2","g":"3","h":"4","i":"5","j":6,"k":7,"l":8,"m":9,"n":10,"o":true,"p":"foo","q":"Ly8gUGFja2FnZSBwcm90byBwcm92aWRlcyBhIGZpbGxlciBpbXBsZW1lbnRhdGlvbiBmb3IgUHJvdG9jb2wgQnVmZmVycy4KcGFja2FnZSBwcm90bwo="}`
 
 	marshaler := jsonpb.Marshaler{EmitDefaults: true}
 	got, err := marshaler.MarshalToString(msg)

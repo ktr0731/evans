@@ -263,27 +263,41 @@ When <kbd>CTRL-D</kbd> is entered, inputting will be aborted.
 ```
 
 ### Bytes type fields
-You can use byte literal and Unicode literal.
+You can pass bytes as a base64-encoded string.
 
 ```
 > call UnaryBytes
+data (TYPE_BYTES) => SGVsbG8gV29ybGQh
+{
+  "message": "received: (bytes) 48 65 6c 6c 6f 20 57 6f 72 6c 64 21, (string) Hello World!"
+}
+```
+
+⚠️  Warning: Previously, bytes were passed as a (quoted) byte literal or Unicode
+literal string.
+
+While evans currenty still attempts to fall back to that encoding if decoding
+as base64 fails, it's discouraged, and might be dropped.
+
+Please either encode bytes as base64, or pass `--bytes-as-quoted-literals`
+explicitly:
+
+```
+> call UnaryBytes --bytes-as-quoted-literals
 data (TYPE_BYTES) => \x46\x6f\x6f
 {
   "message": "received: (bytes) 46 6f 6f, (string) Foo"
 }
 
-> call UnaryBytes
+> call UnaryBytes --bytes-as-quoted-literals
 data (TYPE_BYTES) => \u65e5\u672c\u8a9e
 {
   "message": "received: (bytes) e6 97 a5 e6 9c ac e8 aa 9e, (string) 日本語"
 }
 ```
 
-Or add the flag `--bytes-as-base64` to pass bytes as a base64-encoded string
-```
-> call UnaryBytes --bytes-as-base64
-data (TYPE_BYTES) => SGVsbG8gV29ybGQh
-```
+You can also add the flag `--bytes-as-base64` to explicitly disable the
+fallback behaviour.
 
 Or add the flag `--bytes-from-file` to read bytes from the provided relative path
 ```

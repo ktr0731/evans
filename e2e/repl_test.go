@@ -129,7 +129,19 @@ func TestE2E_REPL(t *testing.T) {
 		},
 		"call UnaryBytes": {
 			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"call UnaryBytes", "44KE44Gv44KK5L+644Gu6Z2S5pil44Op44OW44Kz44Oh44Gv44G+44Gh44GM44Gj44Gm44GE44KL44CC"},
+		},
+		"call UnaryBytes (fallback)": {
+			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"call UnaryBytes", "\\u3084\\u306f\\u308a\\u4ffa\\u306e\\u9752\\u6625\\u30e9\\u30d6\\u30b3\\u30e1\\u306f\\u307e\\u3061\\u304c\\u3063\\u3066\\u3044\\u308b\\u3002"},
+		},
+		"call UnaryBytes --bytes-as-base64": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"call UnaryBytes --bytes-as-base64", "44KE44Gv44KK5L+644Gu6Z2S5pil44Op44OW44Kz44Oh44Gv44G+44Gh44GM44Gj44Gm44GE44KL44CC"},
+		},
+		"call UnaryBytes --bytes-as-quoted-literals": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"call UnaryBytes --bytes-as-quoted-literals", "\\u3084\\u306f\\u308a\\u4ffa\\u306e\\u9752\\u6625\\u30e9\\u30d6\\u30b3\\u30e1\\u306f\\u307e\\u3061\\u304c\\u3063\\u3066\\u3044\\u308b\\u3002"},
 		},
 		"call UnaryRepeatedEnum": {
 			commonFlags: "--proto testdata/test.proto",
