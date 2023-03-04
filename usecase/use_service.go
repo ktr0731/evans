@@ -29,8 +29,10 @@ func (m *dependencyManager) UseService(svcName string) error {
 		pkg, svc := proto.ParseFullyQualifiedServiceName(fqsn)
 		if m.state.selectedPackage == pkg {
 			hasPackage = true
-			if svcName == svc {
-				m.state.selectedService = svcName
+			// Keep backward-compatibility.
+			// TODO: Delete package related code after releasing v1.0.0.
+			if svcName == svc || svcName == fqsn {
+				m.state.selectedService = svc
 				return nil
 			}
 		}

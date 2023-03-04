@@ -75,6 +75,10 @@ func TestE2E_REPL(t *testing.T) {
 			commonFlags: "--proto testdata/test.proto",
 			input:       []interface{}{"service Example", "call Unary", "kaguya"},
 		},
+		"call Unary by selecting only fully-qualified service": {
+			commonFlags: "--proto testdata/test.proto",
+			input:       []interface{}{"service api.Example", "call Unary", "kaguya"},
+		},
 		"call Unary by selecting only service (empty package)": {
 			registerEmptyPackageService: true,
 			commonFlags:                 "--proto testdata/empty_package.proto",
