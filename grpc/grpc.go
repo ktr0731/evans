@@ -44,13 +44,13 @@ type Type struct {
 	FullyQualifiedName string
 
 	// New instantiates a new instance of Type.  It is used for decode requests and responses.
-	New func() interface{}
+	New func() any
 }
 
 // Client represents the gRPC client.
 type Client interface {
 	// Invoke invokes a request req to the gRPC server. Then, Invoke decodes the response to res.
-	Invoke(ctx context.Context, fqrn string, req, res interface{}) (header, trailer metadata.MD, _ error)
+	Invoke(ctx context.Context, fqrn string, req, res any) (header, trailer metadata.MD, _ error)
 
 	// NewClientStream creates a new client stream.
 	NewClientStream(ctx context.Context, streamDesc *grpc.StreamDesc, fqrn string) (ClientStream, error)
@@ -75,8 +75,8 @@ type ClientStream interface {
 	Header() (metadata.MD, error)
 	// Trailer returns the response trailer.
 	Trailer() metadata.MD
-	Send(req interface{}) error
-	CloseAndReceive(res interface{}) error
+	Send(req any) error
+	CloseAndReceive(res any) error
 }
 
 type ServerStream interface {
@@ -84,8 +84,8 @@ type ServerStream interface {
 	Header() (metadata.MD, error)
 	// Trailer returns the response trailer.
 	Trailer() metadata.MD
-	Send(req interface{}) error
-	Receive(res interface{}) error
+	Send(req any) error
+	Receive(res any) error
 }
 
 type BidiStream interface {
@@ -93,8 +93,8 @@ type BidiStream interface {
 	Header() (metadata.MD, error)
 	// Trailer returns the response trailer.
 	Trailer() metadata.MD
-	Send(req interface{}) error
-	Receive(res interface{}) error
+	Send(req any) error
+	Receive(res any) error
 	CloseSend() error
 }
 
@@ -169,13 +169,13 @@ func NewClient(addr, serverName string, useReflection, useTLS bool, cacert, cert
 	return client, nil
 }
 
-func (c *client) Invoke(ctx context.Context, fqrn string, req, res interface{}) (header, trailer metadata.MD, _ error) {
-	logger.Scriptln(func() []interface{} {
+func (c *client) Invoke(ctx context.Context, fqrn string, req, res any) (header, trailer metadata.MD, _ error) {
+	logger.Scriptln(func() []any {
 		md, ok := metadata.FromOutgoingContext(ctx)
 		if !ok {
 			return nil
 		}
-		return []interface{}{md}
+		return []any{md}
 	})
 
 	endpoint, err := fqrnToEndpoint(fqrn)
@@ -226,12 +226,12 @@ func (s *clientStream) Trailer() metadata.MD {
 	return s.cs.Trailer()
 }
 
-func (s *clientStream) Send(req interface{}) error {
+func (s *clientStream) Send(req any) error {
 	loggingRequest(req)
 	return s.cs.SendMsg(req)
 }
 
-func (s *clientStream) CloseAndReceive(res interface{}) error {
+func (s *clientStream) CloseAndReceive(res any) error {
 	if err := s.cs.CloseSend(); err != nil {
 		return errors.Wrap(err, "failed to close client stream")
 	}
@@ -260,7 +260,7 @@ type serverStream struct {
 	*clientStream
 }
 
-func (s *serverStream) Receive(res interface{}) error {
+func (s *serverStream) Receive(res any) error {
 	return s.cs.RecvMsg(res)
 }
 
@@ -284,12 +284,12 @@ func (s *bidiStream) Trailer() metadata.MD {
 	return s.s.Trailer()
 }
 
-func (s *bidiStream) Send(req interface{}) error {
+func (s *bidiStream) Send(req any) error {
 	loggingRequest(req)
 	return s.s.cs.SendMsg(req)
 }
 
-func (s *bidiStream) Receive(res interface{}) error {
+func (s *bidiStream) Receive(res any) error {
 	return s.s.cs.RecvMsg(res)
 }
 
@@ -326,12 +326,12 @@ func wakeUpClientConn(conn *grpc.ClientConn) {
 	}
 }
 
-func loggingRequest(req interface{}) {
-	logger.Scriptln(func() []interface{} {
+func loggingRequest(req any) {
+	logger.Scriptln(func() []any {
 		b, err := json.MarshalIndent(&req, "", "  ")
 		if err != nil {
 			return nil
 		}
-		return []interface{}{"request:\n" + string(b)}
+		return []any{"request:\n" + string(b)}
 	})
 }

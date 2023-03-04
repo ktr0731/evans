@@ -20,7 +20,7 @@ func indirect(rv reflect.Value) reflect.Value {
 // Format formats v into the list of names. v should be a struct type.
 // Format tries to find "name" tag from the struct fields and format the first appeared field.
 // The struct type is only allowed to have struct, slice or primitive type fields.
-func (p *Presenter) Format(v interface{}) (string, error) {
+func (p *Presenter) Format(v any) (string, error) {
 	return formatFromStruct(reflect.ValueOf(v))
 }
 

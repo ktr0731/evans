@@ -26,10 +26,10 @@ type responseFormatter struct {
 			Code    string        `json:"code"`
 			Number  uint32        `json:"number"`
 			Message string        `json:"message"`
-			Details []interface{} `json:"details,omitempty"`
+			Details []any `json:"details,omitempty"`
 		} `json:"status,omitempty"`
 		Header   *metadata.MD             `json:"header,omitempty"`
-		Messages []map[string]interface{} `json:"messages,omitempty"`
+		Messages []map[string]any `json:"messages,omitempty"`
 		Trailer  *metadata.MD             `json:"trailer,omitempty"`
 	}
 	p           present.Presenter
@@ -46,7 +46,7 @@ func (p *responseFormatter) FormatHeader(header metadata.MD) {
 	p.s.Header = &header
 }
 
-func (p *responseFormatter) FormatMessage(v interface{}) error {
+func (p *responseFormatter) FormatMessage(v any) error {
 	m, err := p.convertProtoMessageToMap(v.(proto.Message))
 	if err != nil {
 		return err
@@ -60,9 +60,9 @@ func (p *responseFormatter) FormatTrailer(trailer metadata.MD) {
 }
 
 func (p *responseFormatter) FormatStatus(s *status.Status) error {
-	var details []interface{}
+	var details []any
 	if len(s.Details()) != 0 {
-		details = make([]interface{}, 0, len(s.Details()))
+		details = make([]any, 0, len(s.Details()))
 		for _, d := range s.Details() {
 			d, ok := d.(proto.Message)
 			if !ok {
@@ -81,7 +81,7 @@ func (p *responseFormatter) FormatStatus(s *status.Status) error {
 		Code    string        `json:"code"`
 		Number  uint32        `json:"number"`
 		Message string        `json:"message"`
-		Details []interface{} `json:"details,omitempty"`
+		Details []any `json:"details,omitempty"`
 	}{
 		Code:    s.Code().String(),
 		Number:  uint32(s.Code()),
@@ -100,20 +100,20 @@ func (p *responseFormatter) Done() error {
 	return err
 }
 
-func (p *responseFormatter) convertProtoMessageToMap(m proto.Message) (map[string]interface{}, error) {
+func (p *responseFormatter) convertProtoMessageToMap(m proto.Message) (map[string]any, error) {
 	var buf bytes.Buffer
 	err := p.pbMarshaler.Marshal(&buf, m)
 	if err != nil {
 		return nil, err
 	}
-	var res map[string]interface{}
+	var res map[string]any
 	if err := gojson.Unmarshal(buf.Bytes(), &res); err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
-func (p *responseFormatter) convertProtoMessageAsAnyToMap(m proto.Message) (map[string]interface{}, error) {
+func (p *responseFormatter) convertProtoMessageAsAnyToMap(m proto.Message) (map[string]any, error) {
 	any, err := anypb.New(proto.MessageV2(m))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert a message to *any.Any")

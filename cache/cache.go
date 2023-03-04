@@ -55,7 +55,7 @@ func (c *Cache) Save() error {
 	return toml.NewEncoder(f).Encode(*c)
 }
 
-var decodeTOML = func(r io.Reader, i interface{}) error {
+var decodeTOML = func(r io.Reader, i any) error {
 	return toml.NewDecoder(r).Decode(i)
 }
 

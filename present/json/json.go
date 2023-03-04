@@ -13,7 +13,7 @@ type Presenter struct {
 }
 
 // Format formats v into JSON string.
-func (p *Presenter) Format(v interface{}) (string, error) {
+func (p *Presenter) Format(v any) (string, error) {
 	b, err := gojson.MarshalIndent(v, "", p.indent)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to format v into JSON string")

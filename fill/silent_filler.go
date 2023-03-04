@@ -27,7 +27,7 @@ func NewSilentFiller(in io.Reader) *SilentFiller {
 // Fill fills values of each field from a JSON string. If the JSON string is invalid JSON format or v is a nil pointer,
 // Fill returns ErrCodecMismatch.
 func (f *SilentFiller) Fill(v *dynamicpb.Message) error {
-	var in interface{}
+	var in any
 	if err := f.in.Decode(&in); err != nil {
 		return err
 	}

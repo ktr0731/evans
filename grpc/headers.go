@@ -31,7 +31,7 @@ func (h Headers) Remove(k string) {
 // distinct removes duplicated elements.
 func distinct(s []string) []string {
 	newSlice := make([]string, 0, len(s))
-	encountered := map[string]interface{}{}
+	encountered := map[string]any{}
 	for _, v := range s {
 		if _, found := encountered[v]; !found {
 			newSlice = append(newSlice, v)

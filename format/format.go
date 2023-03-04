@@ -13,7 +13,7 @@ type ResponseFormatter struct {
 	impl ResponseFormatterInterface
 }
 
-func (f *ResponseFormatter) Format(s *status.Status, header, trailer metadata.MD, v interface{}) error {
+func (f *ResponseFormatter) Format(s *status.Status, header, trailer metadata.MD, v any) error {
 	f.FormatHeader(header)
 	if err := f.FormatMessage(v); err != nil {
 		return err
@@ -30,7 +30,7 @@ func (f *ResponseFormatter) FormatHeader(header metadata.MD) {
 	}
 }
 
-func (f *ResponseFormatter) FormatMessage(v interface{}) error {
+func (f *ResponseFormatter) FormatMessage(v any) error {
 	if v == nil {
 		return nil
 	}
@@ -63,7 +63,7 @@ type ResponseFormatterInterface interface {
 	// FormatHeader formats the response header.
 	FormatHeader(header metadata.MD)
 	// FormatMessage formats the response message (body).
-	FormatMessage(v interface{}) error
+	FormatMessage(v any) error
 	// FormatStatus formats the response status.
 	FormatStatus(status *status.Status) error
 	// FormatTrailer formats the response trailer.

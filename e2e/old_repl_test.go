@@ -36,7 +36,7 @@ func TestE2E_OldREPL(t *testing.T) {
 	commonFlags := []string{"--silent", "--repl"}
 
 	cases := map[string]struct {
-		input []interface{}
+		input []any
 
 		// Space separated arguments text.
 		args string
@@ -66,79 +66,79 @@ func TestE2E_OldREPL(t *testing.T) {
 
 		"call Unary by selecting package and service": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"package api", "service Example", "call Unary", "kaguya"},
+			input: []any{"package api", "service Example", "call Unary", "kaguya"},
 		},
 		"call Unary by selecting only service": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"service Example", "call Unary", "kaguya"},
+			input: []any{"service Example", "call Unary", "kaguya"},
 		},
 		"call Unary by selecting only service (empty package)": {
 			args:                        "testdata/empty_package.proto",
 			registerEmptyPackageService: true,
-			input:                       []interface{}{"service EmptyPackageService", "call Unary", "kaguya"},
+			input:                       []any{"service EmptyPackageService", "call Unary", "kaguya"},
 		},
 		"call Unary by specifying --service": {
 			args:  "--service Example testdata/test.proto",
-			input: []interface{}{"call Unary", "kaguya"},
+			input: []any{"call Unary", "kaguya"},
 		},
 		"call ClientStreaming": {
 			args: "testdata/test.proto",
 			// io.EOF means end of inputting.
-			input: []interface{}{"call ClientStreaming", "kaguya", "chika", "miko", io.EOF},
+			input: []any{"call ClientStreaming", "kaguya", "chika", "miko", io.EOF},
 		},
 		"call BidiStreaming": {
 			args: "testdata/test.proto",
 			// io.EOF means end of inputting.
-			input: []interface{}{"call BidiStreaming", "kaguya", "chika", "miko", io.EOF},
+			input: []any{"call BidiStreaming", "kaguya", "chika", "miko", io.EOF},
 		},
 		"call UnaryMessage": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryMessage", "kaguya", "shinomiya"},
+			input: []any{"call UnaryMessage", "kaguya", "shinomiya"},
 		},
 		"call UnaryRepeated": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryRepeated", "miyuki", "kaguya", "chika", "yu", io.EOF},
+			input: []any{"call UnaryRepeated", "miyuki", "kaguya", "chika", "yu", io.EOF},
 		},
 		"call UnaryRepeated (with --add-repeated-manually)": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call --add-repeated-manually UnaryRepeated", 0, "miyuki", 0, "kaguya", 0, "chika", 0, "yu", 1},
+			input: []any{"call --add-repeated-manually UnaryRepeated", 0, "miyuki", 0, "kaguya", 0, "chika", 0, "yu", 1},
 		},
 		"call UnarySelf": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnarySelf", "ohana", "matsumae", "ohana", "nako", "oshimizu", "nakochi", io.EOF, "minko", "tsurugi", "minchi", io.EOF, io.EOF},
+			input: []any{"call UnarySelf", "ohana", "matsumae", "ohana", "nako", "oshimizu", "nakochi", io.EOF, "minko", "tsurugi", "minchi", io.EOF, io.EOF},
 		},
 		"call UnaryMap": {
 			args:       "testdata/test.proto",
-			input:      []interface{}{"call UnaryMap", "key1", "val1", "key2", "val2", io.EOF},
+			input:      []any{"call UnaryMap", "key1", "val1", "key2", "val2", io.EOF},
 			skipGolden: true,
 		},
 		"call UnaryOneof": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryOneof", 0, "ai", "hayasaka"},
+			input: []any{"call UnaryOneof", 0, "ai", "hayasaka"},
 		},
 		"call UnaryEnum": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryEnum", 0},
+			input: []any{"call UnaryEnum", 0},
 		},
 		"call UnaryBytes": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryBytes", "44KE44Gv44KK5L+644Gu6Z2S5pil44Op44OW44Kz44Oh44Gv44G+44Gh44GM44Gj44Gm44GE44KL44CC"},
+			input: []any{"call UnaryBytes", "44KE44Gv44KK5L+644Gu6Z2S5pil44Op44OW44Kz44Oh44Gv44G+44Gh44GM44Gj44Gm44GE44KL44CC"},
 		},
 		"call UnaryBytes (fallback)": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryBytes", "\\u3084\\u306f\\u308a\\u4ffa\\u306e\\u9752\\u6625\\u30e9\\u30d6\\u30b3\\u30e1\\u306f\\u307e\\u3061\\u304c\\u3063\\u3066\\u3044\\u308b\\u3002"},
+			input: []any{"call UnaryBytes", "\\u3084\\u306f\\u308a\\u4ffa\\u306e\\u9752\\u6625\\u30e9\\u30d6\\u30b3\\u30e1\\u306f\\u307e\\u3061\\u304c\\u3063\\u3066\\u3044\\u308b\\u3002"},
 		},
 		"call UnaryBytes --bytes-as-base64": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryBytes --bytes-as-base64", "44KE44Gv44KK5L+644Gu6Z2S5pil44Op44OW44Kz44Oh44Gv44G+44Gh44GM44Gj44Gm44GE44KL44CC"},
+			input: []any{"call UnaryBytes --bytes-as-base64", "44KE44Gv44KK5L+644Gu6Z2S5pil44Op44OW44Kz44Oh44Gv44G+44Gh44GM44Gj44Gm44GE44KL44CC"},
 		},
 		"call UnaryBytes --bytes-as-quoted-literals": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryBytes --bytes-as-quoted-literals", "\\u3084\\u306f\\u308a\\u4ffa\\u306e\\u9752\\u6625\\u30e9\\u30d6\\u30b3\\u30e1\\u306f\\u307e\\u3061\\u304c\\u3063\\u3066\\u3044\\u308b\\u3002"},
+			input: []any{"call UnaryBytes --bytes-as-quoted-literals", "\\u3084\\u306f\\u308a\\u4ffa\\u306e\\u9752\\u6625\\u30e9\\u30d6\\u30b3\\u30e1\\u306f\\u307e\\u3061\\u304c\\u3063\\u3066\\u3044\\u308b\\u3002"},
 		},
 		"call UnaryRepeatedEnum": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryRepeatedEnum", 0, 0, 1, io.EOF},
+			input: []any{"call UnaryRepeatedEnum", 0, 0, 1, io.EOF},
 		},
 
 		// call (gRPC-Web)
@@ -146,44 +146,44 @@ func TestE2E_OldREPL(t *testing.T) {
 		"call client streaming RPC against to gRPC-Web server": {
 			args:  "--web testdata/test.proto",
 			web:   true,
-			input: []interface{}{"call ClientStreaming", "oumae", "kousaka", "kawashima", "kato", io.EOF},
+			input: []any{"call ClientStreaming", "oumae", "kousaka", "kawashima", "kato", io.EOF},
 		},
 		"call server streaming RPC against to gRPC-Web server": {
 			args:  "--web testdata/test.proto",
 			web:   true,
-			input: []interface{}{"call ServerStreaming", "violet"},
+			input: []any{"call ServerStreaming", "violet"},
 		},
 		"call bidi streaming RPC against to gRPC-Web server": {
 			args:  "--web testdata/test.proto",
 			web:   true,
-			input: []interface{}{"call BidiStreaming", "oumae", "kousaka", "kawashima", "kato", io.EOF},
+			input: []any{"call BidiStreaming", "oumae", "kousaka", "kawashima", "kato", io.EOF},
 		},
 
 		// show command.
 
 		"show --help": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"show --help"},
+			input: []any{"show --help"},
 		},
 		"show package": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"show package"},
+			input: []any{"show package"},
 		},
 		"show service": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"show service"},
+			input: []any{"show service"},
 		},
 		"show message": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"show message"},
+			input: []any{"show message"},
 		},
 		"show rpc": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"show rpc"},
+			input: []any{"show rpc"},
 		},
 		"show an invalid target": {
 			args:       "testdata/test.proto",
-			input:      []interface{}{"show foo"},
+			input:      []any{"show foo"},
 			skipGolden: true,
 			hasErr:     true,
 		},
@@ -192,12 +192,12 @@ func TestE2E_OldREPL(t *testing.T) {
 
 		"select a package": {
 			args:       "testdata/test.proto",
-			input:      []interface{}{"package api"},
+			input:      []any{"package api"},
 			skipGolden: true,
 		},
 		"specify an invalid package name": {
 			args:       "testdata/test.proto",
-			input:      []interface{}{"package foo"},
+			input:      []any{"package foo"},
 			skipGolden: true,
 			hasErr:     true,
 		},
@@ -206,12 +206,12 @@ func TestE2E_OldREPL(t *testing.T) {
 
 		"select a service": {
 			args:       "testdata/test.proto",
-			input:      []interface{}{"service Example"},
+			input:      []any{"service Example"},
 			skipGolden: true,
 		},
 		"specify an invalid service name": {
 			args:       "testdata/test.proto",
-			input:      []interface{}{"service foo"},
+			input:      []any{"service foo"},
 			skipGolden: true,
 			hasErr:     true,
 		},
@@ -220,50 +220,50 @@ func TestE2E_OldREPL(t *testing.T) {
 
 		"header help": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"header -h"},
+			input: []any{"header -h"},
 		},
 		"add a header": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"header mizore=yoroizuka", "show header"},
+			input: []any{"header mizore=yoroizuka", "show header"},
 		},
 		"add a header with --raw flag": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"header -r touma=youko,kazusa", "show header"},
+			input: []any{"header -r touma=youko,kazusa", "show header"},
 		},
 		"add two headers": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"header mizore=yoroizuka nozomi=kasaki", "show header"},
+			input: []any{"header mizore=yoroizuka nozomi=kasaki", "show header"},
 		},
 		"add two values to a key": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"header touma=youko", "header touma=kazusa", "show header"},
+			input: []any{"header touma=youko", "header touma=kazusa", "show header"},
 		},
 		"add two values in one command": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"header touma=youko,kazusa", "show header"},
+			input: []any{"header touma=youko,kazusa", "show header"},
 		},
 		"remove a header": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"header grpc-client", "show header"},
+			input: []any{"header grpc-client", "show header"},
 		},
 
 		// desc command.
 
 		"desc simple message": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"desc SimpleRequest"},
+			input: []any{"desc SimpleRequest"},
 		},
 		"desc a repeated message": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"desc UnaryRepeatedMessageRequest"},
+			input: []any{"desc UnaryRepeatedMessageRequest"},
 		},
 		"desc a map": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"desc UnaryMapMessageRequest"},
+			input: []any{"desc UnaryMapMessageRequest"},
 		},
 		"desc an invalid message": {
 			args:       "testdata/test.proto",
-			input:      []interface{}{"desc foo"},
+			input:      []any{"desc foo"},
 			skipGolden: true,
 			hasErr:     true,
 		},
@@ -272,7 +272,7 @@ func TestE2E_OldREPL(t *testing.T) {
 
 		"quit executes exit": {
 			args:       "testdata/test.proto",
-			input:      []interface{}{"quit"},
+			input:      []any{"quit"},
 			skipGolden: true,
 		},
 
@@ -280,19 +280,19 @@ func TestE2E_OldREPL(t *testing.T) {
 
 		"ctrl-c skips the rest of fields if there are no message type fields": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call Unary", prompt.ErrAbort},
+			input: []any{"call Unary", prompt.ErrAbort},
 		},
 		"ctrl-c skips the rest of the current message": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryMessage", "mumei", prompt.ErrAbort},
+			input: []any{"call UnaryMessage", "mumei", prompt.ErrAbort},
 		},
 		"ctrl-c skips the rest of the current message and exits the repeated field": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call UnaryRepeatedMessage", "kanade", "hisaishi", "kumiko", prompt.ErrAbort, io.EOF},
+			input: []any{"call UnaryRepeatedMessage", "kanade", "hisaishi", "kumiko", prompt.ErrAbort, io.EOF},
 		},
 		"ctrl-c is also enabled in streaming RPCs": {
 			args:  "testdata/test.proto",
-			input: []interface{}{"call BidiStreaming", "kanade", "ririka", prompt.ErrAbort, io.EOF},
+			input: []any{"call BidiStreaming", "kanade", "ririka", prompt.ErrAbort, io.EOF},
 		},
 	}
 	oldNewPrompt := prompt.New
@@ -354,7 +354,7 @@ type stubPrompt struct {
 	t *testing.T
 	prompt.Prompt
 
-	input []interface{}
+	input []any
 }
 
 func (p *stubPrompt) Input() (string, error) {

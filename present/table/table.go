@@ -30,7 +30,7 @@ func indirectType(rt reflect.Type) reflect.Type {
 
 // Format formats v with table layout. v should be a struct type that has a slice field. Format extract the slice field
 // and display them. See test cases for example.
-func (p *Presenter) Format(v interface{}) (string, error) {
+func (p *Presenter) Format(v any) (string, error) {
 	rv := indirect(reflect.ValueOf(v))
 	rt := rv.Type()
 	if rt.Kind() != reflect.Struct {

@@ -27,7 +27,7 @@ var _ idl.Spec = &SpecMock{}
 //
 //         // make and configure a mocked idl.Spec
 //         mockedSpec := &SpecMock{
-//             FormatDescriptorFunc: func(v interface{}) (string, error) {
+//             FormatDescriptorFunc: func(v any) (string, error) {
 // 	               panic("mock out the FormatDescriptor method")
 //             },
 //             RPCFunc: func(svcName string, rpcName string) (*grpc.RPC, error) {
@@ -36,7 +36,7 @@ var _ idl.Spec = &SpecMock{}
 //             RPCsFunc: func(svcName string) ([]*grpc.RPC, error) {
 // 	               panic("mock out the RPCs method")
 //             },
-//             ResolveSymbolFunc: func(symbol string) (interface{}, error) {
+//             ResolveSymbolFunc: func(symbol string) (any, error) {
 // 	               panic("mock out the ResolveSymbol method")
 //             },
 //             ServiceNamesFunc: func() []string {
@@ -50,7 +50,7 @@ var _ idl.Spec = &SpecMock{}
 //     }
 type SpecMock struct {
 	// FormatDescriptorFunc mocks the FormatDescriptor method.
-	FormatDescriptorFunc func(v interface{}) (string, error)
+	FormatDescriptorFunc func(v any) (string, error)
 
 	// RPCFunc mocks the RPC method.
 	RPCFunc func(svcName string, rpcName string) (*grpc.RPC, error)
@@ -59,7 +59,7 @@ type SpecMock struct {
 	RPCsFunc func(svcName string) ([]*grpc.RPC, error)
 
 	// ResolveSymbolFunc mocks the ResolveSymbol method.
-	ResolveSymbolFunc func(symbol string) (interface{}, error)
+	ResolveSymbolFunc func(symbol string) (any, error)
 
 	// ServiceNamesFunc mocks the ServiceNames method.
 	ServiceNamesFunc func() []string
@@ -69,7 +69,7 @@ type SpecMock struct {
 		// FormatDescriptor holds details about calls to the FormatDescriptor method.
 		FormatDescriptor []struct {
 			// V is the v argument value.
-			V interface{}
+			V any
 		}
 		// RPC holds details about calls to the RPC method.
 		RPC []struct {
@@ -95,12 +95,12 @@ type SpecMock struct {
 }
 
 // FormatDescriptor calls FormatDescriptorFunc.
-func (mock *SpecMock) FormatDescriptor(v interface{}) (string, error) {
+func (mock *SpecMock) FormatDescriptor(v any) (string, error) {
 	if mock.FormatDescriptorFunc == nil {
 		panic("SpecMock.FormatDescriptorFunc: method is nil but Spec.FormatDescriptor was just called")
 	}
 	callInfo := struct {
-		V interface{}
+		V any
 	}{
 		V: v,
 	}
@@ -114,10 +114,10 @@ func (mock *SpecMock) FormatDescriptor(v interface{}) (string, error) {
 // Check the length with:
 //     len(mockedSpec.FormatDescriptorCalls())
 func (mock *SpecMock) FormatDescriptorCalls() []struct {
-	V interface{}
+	V any
 } {
 	var calls []struct {
-		V interface{}
+		V any
 	}
 	lockSpecMockFormatDescriptor.RLock()
 	calls = mock.calls.FormatDescriptor
@@ -192,7 +192,7 @@ func (mock *SpecMock) RPCsCalls() []struct {
 }
 
 // ResolveSymbol calls ResolveSymbolFunc.
-func (mock *SpecMock) ResolveSymbol(symbol string) (interface{}, error) {
+func (mock *SpecMock) ResolveSymbol(symbol string) (any, error) {
 	if mock.ResolveSymbolFunc == nil {
 		panic("SpecMock.ResolveSymbolFunc: method is nil but Spec.ResolveSymbol was just called")
 	}

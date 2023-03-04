@@ -122,7 +122,7 @@ func assertWithGolden(t *testing.T, name string, f func(t *testing.T) *Config) {
 func createGolden(t *testing.T, fname string, cfg *Config) {
 	t.Helper()
 
-	m := structToMap(cfg).(map[string]interface{})
+	m := structToMap(cfg).(map[string]any)
 	tree, err := toml.TreeFromMap(m)
 	if err != nil {
 		log.Fatal(err)
@@ -138,13 +138,13 @@ func createGolden(t *testing.T, fname string, cfg *Config) {
 	}
 }
 
-func structToMap(i interface{}) interface{} {
+func structToMap(i any) any {
 	rv := reflect.ValueOf(i)
 	if rv.Kind() != reflect.Struct && rv.Kind() != reflect.Ptr {
 		return rv.Interface()
 	}
 
-	m := make(map[string]interface{})
+	m := make(map[string]any)
 	el := rv.Elem()
 	for i := 0; i < el.Type().NumField(); i++ {
 		// spf13/viper formats all keys to lower-case.

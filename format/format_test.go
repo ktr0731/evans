@@ -17,7 +17,7 @@ func (f *formatter) FormatHeader(header metadata.MD) {
 	f.FormatHeaderCalled = true
 }
 
-func (f *formatter) FormatMessage(v interface{}) error {
+func (f *formatter) FormatMessage(v any) error {
 	f.FormatMessageCalled = true
 	return nil
 }
