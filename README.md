@@ -645,7 +645,7 @@ number: 0
 message: ""
 ```
 
-JSON output is also available with `--json` option.
+JSON output is also available with `--out json` option.
 
 ## Other features
 ### gRPC-Web
