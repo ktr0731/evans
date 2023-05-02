@@ -30,18 +30,18 @@ func SetOutput(w io.Writer) {
 }
 
 // Println provides fmt.Println like logging.
-func Println(v ...interface{}) {
+func Println(v ...any) {
 	defaultLogger.Println(v...)
 }
 
 // Printf provides fmt.Printf like logging.
-func Printf(format string, v ...interface{}) {
+func Printf(format string, v ...any) {
 	defaultLogger.Printf(format, v...)
 }
 
 // Scriptln receives a function f which executes something and returns some values as a slice of empty interfaces.
 // If logging is disabled, f is not executed.
-func Scriptln(f func() []interface{}) {
+func Scriptln(f func() []any) {
 	if !enabled {
 		return
 	}
@@ -50,7 +50,7 @@ func Scriptln(f func() []interface{}) {
 }
 
 // Scriptf is similar with Scriptln, but for formatting output.
-func Scriptf(format string, f func() []interface{}) {
+func Scriptf(format string, f func() []any) {
 	if !enabled {
 		return
 	}

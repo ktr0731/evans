@@ -150,7 +150,7 @@ func TestE2E_OldCLI(t *testing.T) {
 			assertTest: func(t *testing.T, output string) {
 				dec := json.NewDecoder(strings.NewReader(output))
 				for {
-					var iface interface{}
+					var iface any
 					err := dec.Decode(&iface)
 					if errors.Is(err, io.EOF) {
 						return
@@ -292,7 +292,7 @@ func TestE2E_OldCLI(t *testing.T) {
 			assertTest: func(t *testing.T, output string) {
 				dec := json.NewDecoder(strings.NewReader(output))
 				for {
-					var iface interface{}
+					var iface any
 					err := dec.Decode(&iface)
 					if errors.Is(err, io.EOF) {
 						return

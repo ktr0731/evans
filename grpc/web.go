@@ -35,7 +35,7 @@ func NewWebClient(addr string, useReflection, useTLS bool, cacert, cert, certKey
 	return client
 }
 
-func (c *webClient) Invoke(ctx context.Context, fqrn string, req, res interface{}) (header, trailer metadata.MD, _ error) {
+func (c *webClient) Invoke(ctx context.Context, fqrn string, req, res any) (header, trailer metadata.MD, _ error) {
 	endpoint, err := fqrnToEndpoint(fqrn)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "grpc-web: failed to convert FQRN to endpoint")
@@ -60,7 +60,7 @@ func (s *webClientStream) Trailer() metadata.MD {
 	return s.stream.Trailer()
 }
 
-func (s *webClientStream) Send(req interface{}) error {
+func (s *webClientStream) Send(req any) error {
 	loggingRequest(req)
 	if err := s.stream.Send(s.ctx, req); err != nil {
 		return errors.Wrap(err, "failed to send a request")
@@ -68,7 +68,7 @@ func (s *webClientStream) Send(req interface{}) error {
 	return nil
 }
 
-func (s *webClientStream) CloseAndReceive(res interface{}) error {
+func (s *webClientStream) CloseAndReceive(res any) error {
 	err := s.stream.CloseAndReceive(s.ctx, res)
 	if err != nil {
 		return errors.Wrap(err, "failed to send CloseAndReceive")
@@ -105,7 +105,7 @@ func (s *webServerStream) Trailer() metadata.MD {
 	return s.stream.Trailer()
 }
 
-func (s *webServerStream) Send(req interface{}) (err error) {
+func (s *webServerStream) Send(req any) (err error) {
 	loggingRequest(req)
 	if err := s.stream.Send(s.ctx, req); err != nil {
 		return errors.Wrap(err, "failed to send a request")
@@ -113,7 +113,7 @@ func (s *webServerStream) Send(req interface{}) (err error) {
 	return nil
 }
 
-func (s *webServerStream) Receive(res interface{}) error {
+func (s *webServerStream) Receive(res any) error {
 	if s.stream == nil {
 		return errors.New("Receive must be call after Send method")
 	}
@@ -151,7 +151,7 @@ func (s *webBidiStream) Trailer() metadata.MD {
 	return s.stream.Trailer()
 }
 
-func (s *webBidiStream) Send(req interface{}) error {
+func (s *webBidiStream) Send(req any) error {
 	loggingRequest(req)
 	if err := s.stream.Send(s.ctx, req); err != nil {
 		return errors.Wrap(err, "failed to send a request")
@@ -159,7 +159,7 @@ func (s *webBidiStream) Send(req interface{}) error {
 	return nil
 }
 
-func (s *webBidiStream) Receive(res interface{}) error {
+func (s *webBidiStream) Receive(res any) error {
 	err := s.stream.Receive(s.ctx, res)
 	if errors.Is(err, io.EOF) {
 		return io.EOF

@@ -85,13 +85,13 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		}
 		return req, nil
 	}
-	newResponse := func() interface{} {
+	newResponse := func() any {
 		return dynamicpb.NewMessage(rpc.Output())
 	}
 	flushHeader := func(header metadata.MD) {
 		m.responseFormatter.FormatHeader(header)
 	}
-	flushResponse := func(res interface{}) error {
+	flushResponse := func(res any) error {
 		return m.responseFormatter.FormatMessage(res)
 	}
 	flushTrailer := func(status *status.Status, trailer metadata.MD) error {
@@ -100,7 +100,7 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 	flushDone := func() error {
 		return m.responseFormatter.Done()
 	}
-	flushAll := func(status *status.Status, header, trailer metadata.MD, res interface{}) error {
+	flushAll := func(status *status.Status, header, trailer metadata.MD, res any) error {
 		flushHeader(header)
 		if err := flushResponse(res); err != nil {
 			return err

@@ -83,7 +83,7 @@ func newResolver(
 }
 
 func (r *resolver) resolve() (*dynamicpb.Message, error) {
-	selectedOneof := make(map[string]interface{})
+	selectedOneof := make(map[string]any)
 
 	// for _, f := range r.m.Fields(). {
 	for i := 0; i < r.m.Fields().Len(); i++ {
@@ -448,7 +448,7 @@ func (r *resolver) makePrefix(field protoreflect.FieldDescriptor) string {
 	return s
 }
 
-var protoDefaults = map[protoreflect.Kind]interface{}{
+var protoDefaults = map[protoreflect.Kind]any{
 	protoreflect.DoubleKind:   float64(0),
 	protoreflect.FloatKind:    float32(0),
 	protoreflect.Int64Kind:    int64(0),

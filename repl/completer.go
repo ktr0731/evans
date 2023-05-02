@@ -140,7 +140,7 @@ func newCompleter(cmds map[string]commander) *completer {
 					return
 				}
 
-				encountered := make(map[string]interface{})
+				encountered := make(map[string]any)
 				for _, svc := range svcs {
 					rpcs, err := usecase.ListRPCs(svc)
 					if err != nil {

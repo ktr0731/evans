@@ -56,10 +56,10 @@ type Spec interface {
 	//
 	//   - ErrUnknownSymbol: symbol is not loaded.
 	//
-	ResolveSymbol(symbol string) (interface{}, error)
+	ResolveSymbol(symbol string) (any, error)
 
 	// FormatDescriptor formats v according to its IDL type.
-	FormatDescriptor(v interface{}) (string, error)
+	FormatDescriptor(v any) (string, error)
 }
 
 // FullyQualifiedMethodName returns the fully-qualified method joined with '.'.

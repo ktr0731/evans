@@ -44,14 +44,14 @@ func (m *dependencyManager) listRPCs(fqsn string) ([]*grpc.RPC, error) {
 				RequestType: &grpc.Type{
 					Name:               string(md.Input().Name()),
 					FullyQualifiedName: string(md.Input().FullName()),
-					New: func() interface{} {
+					New: func() any {
 						return dynamicpb.NewMessageType(md.Input())
 					},
 				},
 				ResponseType: &grpc.Type{
 					Name:               string(md.Output().Name()),
 					FullyQualifiedName: string(md.Output().FullName()),
-					New: func() interface{} {
+					New: func() any {
 						return dynamicpb.NewMessageType(md.Output())
 					},
 				},

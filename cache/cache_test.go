@@ -33,7 +33,7 @@ func TestCache(t *testing.T) {
 			decodeTOML = oldDecodeTOML
 		}()
 		// Do nothing.
-		decodeTOML = func(r io.Reader, v interface{}) error {
+		decodeTOML = func(r io.Reader, v any) error {
 			return nil
 		}
 		_, err := Get()

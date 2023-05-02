@@ -129,8 +129,8 @@ func Get(fs *pflag.FlagSet) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger.Scriptf("the conclusive config: %s\n", func() []interface{} {
-		return []interface{}{pp.Sprint(cfg)}
+	logger.Scriptf("the conclusive config: %s\n", func() []any {
+		return []any{pp.Sprint(cfg)}
 	})
 	return cfg, nil
 }
@@ -202,9 +202,9 @@ func bindFlags(vp *viper.Viper, fs *pflag.FlagSet) {
 		case "slice of strings":
 			currentMap := vp.GetStringMapStringSlice(k)
 			newMap := stringToStringSliceToMap(f.Value.String())
-			encountered := make(map[string]map[string]interface{})
+			encountered := make(map[string]map[string]any)
 			for k, v := range currentMap {
-				encountered[k] = make(map[string]interface{})
+				encountered[k] = make(map[string]any)
 				for _, vv := range v {
 					encountered[k][vv] = nil
 				}

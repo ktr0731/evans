@@ -12,8 +12,8 @@ func TestScriptln(t *testing.T) {
 		defer logger.Reset()
 		w := new(bytes.Buffer)
 		logger.SetOutput(w)
-		logger.Scriptln(func() []interface{} {
-			return []interface{}{"aoi", "miyamori"}
+		logger.Scriptln(func() []any {
+			return []any{"aoi", "miyamori"}
 		})
 		if w.Len() == 0 {
 			t.Errorf("Scriptln must write the result to w, but empty")
@@ -24,8 +24,8 @@ func TestScriptln(t *testing.T) {
 
 		w.Truncate(0)
 
-		logger.Scriptf("%s-%s", func() []interface{} {
-			return []interface{}{"aoi", "miyamori"}
+		logger.Scriptf("%s-%s", func() []any {
+			return []any{"aoi", "miyamori"}
 		})
 		if w.Len() == 0 {
 			t.Errorf("Scriptf must write the result to w, but empty")
@@ -38,8 +38,8 @@ func TestScriptln(t *testing.T) {
 	t.Run("logger must not write the result of Scriptln to w because SetOutput is not called", func(t *testing.T) {
 		defer logger.Reset()
 		w := new(bytes.Buffer)
-		logger.Scriptln(func() []interface{} {
-			return []interface{}{"erika", "yano"}
+		logger.Scriptln(func() []any {
+			return []any{"erika", "yano"}
 		})
 		if w.Len() != 0 {
 			t.Errorf("Scriptln must not write the result to w")

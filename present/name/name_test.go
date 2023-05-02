@@ -9,7 +9,7 @@ import (
 
 func TestPresenter(t *testing.T) {
 	cases := map[string]struct {
-		v        interface{}
+		v        any
 		expected string
 		hasErr   bool
 	}{
