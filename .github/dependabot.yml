@@ -7,7 +7,7 @@ updates:
     labels:
       - update
     reviewers:
-      - ktr0731
+      - cequals/security
   - package-ecosystem: gomod
     directory: /
     schedule:
@@ -15,4 +15,4 @@ updates:
     labels:
       - update
     reviewers:
-      - ktr0731
+      - cequals/security
