@@ -37,6 +37,9 @@
     ]
   },
   "trailer": {
+    "grpc-status-details-bin": [
+      "\u0008\r\u0012\u000einternal error\u001aC\n)type.googleapis.com/google.rpc.BadRequest\u0012\u0016\n\u0014\n\u0005field\u0012\u000bdescription\u001aT\n2type.googleapis.com/google.rpc.PreconditionFailure\u0012\u001e\n\u001c\n\u0004type\u0012\u0007subject\u001a\u000bdescription"
+    ],
     "trailer_key1": [
       "trailer_val1"
     ],
