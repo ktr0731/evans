@@ -137,6 +137,7 @@ func Get(fs *pflag.FlagSet) (*Config, error) {
 
 func newDefaultViper() *viper.Viper {
 	v := viper.New()
+
 	v.SetDefault("default.protoPath", []string{""})
 	v.SetDefault("default.protoFile", []string{""})
 	v.SetDefault("default.package", "")
@@ -167,6 +168,13 @@ func newDefaultViper() *viper.Viper {
 	v.SetDefault("request.certFile", "")
 	v.SetDefault("request.certKeyFile", "")
 	v.SetDefault("request.web", false)
+
+	v.SetEnvPrefix("EVANS")
+	v.SetEnvKeyReplacer(strings.NewReplacer(
+		".", "_", // for nested values
+	))
+	v.AllowEmptyEnv(true)
+	v.AutomaticEnv()
 
 	return v
 }
