@@ -9,7 +9,7 @@ import (
 
 func TestHeader(t *testing.T) {
 	defer Clear()
-	client, err := grpc.NewClient("", "", false, false, "", "", "", nil)
+	client, err := grpc.NewClient("localhost", "", false, false, "", "", "", nil)
 	if err != nil {
 		t.Fatalf("grpc.NewClient must not return an error, but got '%s'", err)
 	}
