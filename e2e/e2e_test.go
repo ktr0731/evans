@@ -118,7 +118,7 @@ func compareWithGolden(t *testing.T, actual string) {
 	if err != nil {
 		t.Fatalf("failed to load a golden file: %s", err)
 	}
-	expected := goldenReplacer.Replace(string(b))
+	expected := string(b)
 
 	if diff := cmp.Diff(expected, actual); diff != "" {
 		t.Errorf("wrong result: \n%s", diff)

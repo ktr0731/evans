@@ -408,7 +408,4 @@ var (
 		`"`, "",
 		",", "",
 	)
-	goldenReplacer = strings.NewReplacer(
-		"\r", "", // For Windows.
-	)
 )
