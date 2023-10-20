@@ -40,7 +40,6 @@ require (
 	go.uber.org/goleak v1.2.0
 	golang.org/x/sync v0.4.0
 	golang.org/x/tools v0.14.0
-	google.golang.org/genproto v0.0.0-20231016165738-49dd2c1f3d0b
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231016165738-49dd2c1f3d0b
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
@@ -128,11 +127,11 @@ require (
 	github.com/google/go-github/v47 v47.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/rpmpack v0.0.0-20220314092521-38642b5e571e // indirect
+	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/google/uuid v1.3.1 // indirect
 	github.com/google/wire v0.5.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.1 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
-	github.com/googleapis/go-type-adapters v1.0.0 // indirect
 	github.com/goreleaser/chglog v0.2.2 // indirect
 	github.com/goreleaser/fileglob v1.3.0 // indirect
 	github.com/goreleaser/nfpm/v2 v2.18.1 // indirect
@@ -173,7 +172,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/pkg/term v1.2.0-beta.2 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.3.0 // indirect
@@ -184,7 +182,6 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.10.0 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
-	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
@@ -207,11 +204,12 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.143.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/genproto v0.0.0-20231016165738-49dd2c1f3d0b // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20231012201019-e917dd12ba7a // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/mail.v2 v2.3.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
