@@ -1,7 +1,6 @@
 package repl
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -144,7 +143,7 @@ func newCompleter(cmds map[string]commander) *completer {
 				for _, svc := range svcs {
 					rpcs, err := usecase.ListRPCs(svc)
 					if err != nil {
-						panic(fmt.Sprintf("ListRPCs must not return an error, but got '%s'", err))
+						return nil
 					}
 					for _, rpc := range rpcs {
 						if _, found := encountered[rpc.RequestType.Name]; !found {
