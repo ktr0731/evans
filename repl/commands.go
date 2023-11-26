@@ -10,7 +10,6 @@ import (
 
 	"github.com/ktr0731/evans/format"
 	"github.com/ktr0731/evans/format/curl"
-	"github.com/ktr0731/evans/idl"
 	"github.com/ktr0731/evans/usecase"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
@@ -94,9 +93,9 @@ func (c *serviceCommand) Validate(args []string) error {
 func (c *serviceCommand) Run(_ io.Writer, args []string) error {
 	err := usecase.UseService(args[0])
 	switch errors.Cause(err) {
-	case idl.ErrPackageUnselected:
+	case usecase.ErrPackageUnselected:
 		return errors.New("package unselected. please execute 'package' command at the first")
-	case idl.ErrUnknownServiceName:
+	case usecase.ErrUnknownServiceName:
 		return errors.Errorf("unknown service name '%s'", args[0])
 	}
 	return err
