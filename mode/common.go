@@ -13,7 +13,13 @@ import (
 )
 
 func newGRPCClient(cfg *config.Config) (grpc.Client, error) {
-	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
+	addr := cfg.Server.Host
+
+	// as long as the address doesn't start with unix, also add the port.
+	if !strings.HasPrefix(cfg.Server.Host, "unix://") {
+		addr = fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
+	}
+
 	if cfg.Request.Web {
 		//TODO: remove second arg
 		return grpc.NewWebClient(addr, cfg.Server.Reflection, false, "", "", "", grpc.Headers(cfg.Request.Header)), nil
