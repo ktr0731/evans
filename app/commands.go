@@ -104,7 +104,7 @@ func newOldCommand(flags *flags, ui cui.UI) *command {
 			}
 
 			defer func() {
-				if err == nil {
+				if err != nil {
 					ui.Warn("evans: deprecated usage, please use sub-commands. see `evans -h` for more details.")
 				}
 			}()
