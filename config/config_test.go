@@ -53,15 +53,13 @@ func setupEnv(t *testing.T) (string, string, func()) {
 	}
 
 	mustChdir(t, dir)
-	oldEnv := os.Getenv("XDG_CONFIG_HOME")
 	cfgDir := filepath.Join(dir, "config")
-	os.Setenv("XDG_CONFIG_HOME", cfgDir)
+	t.Setenv("XDG_CONFIG_HOME", cfgDir)
 	evansCfgDir := filepath.Join(cfgDir, "evans")
 	mkdir(t, evansCfgDir)
 
 	return dir, evansCfgDir, func() {
 		mustChdir(t, cwd)
-		os.Setenv("XDG_CONFIG_HOME", oldEnv)
 		os.RemoveAll(dir)
 		viper.Reset()
 	}
@@ -172,7 +170,6 @@ func TestLoad(t *testing.T) {
 			}
 		}
 	}
-
 	assertWithGolden(t, "create a default global config if both of global and local config are not found",
 		func(t *testing.T) *Config {
 			_, _, cleanup := setupEnv(t)
@@ -184,6 +181,19 @@ func TestLoad(t *testing.T) {
 
 			return cfg
 		})
+
+	t.Run("load an environmental variable that overrides local config", func(t *testing.T) {
+		t.Setenv("EVANS_SERVER_PORT", "9001")
+
+		_, _, cleanup := setupEnv(t)
+		defer cleanup()
+
+		cfg := mustGet(t, nil)
+
+		if cfg.Server.Port != "9001" {
+			t.Errorf("port %s not set by os env", cfg.Server.Port)
+		}
+	})
 
 	assertWithGolden(t, "load a global config if local config is not found", func(t *testing.T) *Config {
 		oldCWD := getWorkDir(t)
@@ -329,9 +339,7 @@ func TestEdit(t *testing.T) {
 	for name, c := range cases {
 		c := c
 		t.Run(name, func(t *testing.T) {
-			oldEnv := os.Getenv("EDITOR")
-			os.Setenv("EDITOR", c.expectedEditor)
-			defer os.Setenv("EDITOR", oldEnv)
+			t.Setenv("EDITOR", c.expectedEditor)
 
 			if c.outsideGitRepo {
 				wd, err := os.Getwd()
@@ -393,9 +401,7 @@ func TestEditGlobal(t *testing.T) {
 	for name, c := range cases {
 		c := c
 		t.Run(name, func(t *testing.T) {
-			oldEnv := os.Getenv("EDITOR")
-			os.Setenv("EDITOR", c.expectedEditor)
-			defer os.Setenv("EDITOR", oldEnv)
+			t.Setenv("EDITOR", c.expectedEditor)
 
 			var called bool
 			runEditor = func(editor string, cfgPath string) error {
