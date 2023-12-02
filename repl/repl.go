@@ -188,7 +188,13 @@ func (r *REPL) printSplash(p string) {
 }
 
 func (r *REPL) makePrefix() string {
-	p := fmt.Sprintf("%s:%s> ", r.serverCfg.Host, r.serverCfg.Port)
+	var p string
+	if strings.HasPrefix(r.serverCfg.Host, "unix://") {
+		p = fmt.Sprintf("%s> ", r.serverCfg.Host)
+	} else {
+		p = fmt.Sprintf("%s:%s> ", r.serverCfg.Host, r.serverCfg.Port)
+	}
+
 	dsn := usecase.GetDomainSourceName()
 	if dsn != "" {
 		p = fmt.Sprintf("%s@%s", dsn, p)
