@@ -20,7 +20,7 @@ require (
 	github.com/ktr0731/go-prompt v0.2.4
 	github.com/ktr0731/go-shellstring v0.1.3
 	github.com/ktr0731/go-updater v0.1.6
-	github.com/ktr0731/grpc-test v0.1.10
+	github.com/ktr0731/grpc-test v0.1.12
 	github.com/ktr0731/grpc-web-go-client v0.2.8
 	github.com/manifoldco/promptui v0.9.0
 	github.com/matryer/moq v0.2.7
