@@ -15,16 +15,6 @@ import (
 	"github.com/ktr0731/evans/grpc"
 )
 
-var (
-	ErrPackageUnselected = errors.New("package unselected")
-	ErrServiceUnselected = errors.New("service unselected")
-
-	ErrUnknownPackageName = errors.New("unknown package name")
-	ErrUnknownServiceName = errors.New("unknown service name")
-	ErrUnknownRPCName     = errors.New("unknown RPC name")
-	ErrUnknownSymbol      = errors.New("unknown symbol")
-)
-
 // Spec represents the interface specification from loaded IDL files.
 type Spec interface {
 	// ServiceNames returns all service names the spec loaded.
