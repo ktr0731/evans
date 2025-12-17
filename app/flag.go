@@ -10,8 +10,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-//nolint:maligned
 // flags defines available command line flags.
+//
+//nolint:maligned
 type flags struct {
 	mode struct {
 		repl bool
@@ -28,20 +29,21 @@ type flags struct {
 	}
 
 	common struct {
-		pkg        string
-		service    string
-		path       []string
-		proto      []string
-		host       string
-		port       string
-		header     map[string][]string
-		web        bool
-		reflection bool
-		tls        bool
-		cacert     string
-		cert       string
-		certKey    string
-		serverName string
+		pkg         string
+		service     string
+		path        []string
+		proto       []string
+		host        string
+		port        string
+		header      map[string][]string
+		web         bool
+		reflection  bool
+		tls         bool
+		tlsInsecure bool
+		cacert      string
+		cert        string
+		certKey     string
+		serverName  string
 	}
 
 	meta struct {
