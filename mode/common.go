@@ -23,6 +23,7 @@ func newGRPCClient(cfg *config.Config) (grpc.Client, error) {
 		cfg.Server.Name,
 		cfg.Server.Reflection,
 		cfg.Server.TLS,
+		cfg.Server.TLSInsecure,
 		cfg.Request.CACertFile,
 		cfg.Request.CertFile,
 		cfg.Request.CertKeyFile,
