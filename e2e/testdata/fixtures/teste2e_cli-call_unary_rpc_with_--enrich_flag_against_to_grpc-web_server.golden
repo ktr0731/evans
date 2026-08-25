@@ -13,3 +13,4 @@ trailer_key2: trailer_val2
 code: OK
 number: 0
 message: ""
+duration: <duration>

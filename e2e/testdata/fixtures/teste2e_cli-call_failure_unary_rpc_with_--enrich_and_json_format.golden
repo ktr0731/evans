@@ -43,5 +43,6 @@
     "trailer_key2": [
       "trailer_val2"
     ]
-  }
+  },
+  "duration": "<duration>"
 }

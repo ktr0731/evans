@@ -2,6 +2,8 @@
 package format
 
 import (
+	"time"
+
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
@@ -47,6 +49,14 @@ func (f *ResponseFormatter) FormatTrailer(status *status.Status, trailer metadat
 	return nil
 }
 
+// FormatDuration formats the elapsed time of the RPC. It is only emitted for
+// enriched output, alongside the header, trailer and status.
+func (f *ResponseFormatter) FormatDuration(d time.Duration) {
+	if f.enrich {
+		f.impl.FormatDuration(d)
+	}
+}
+
 func (f *ResponseFormatter) Done() error {
 	return f.impl.Done()
 }
@@ -68,6 +78,8 @@ type ResponseFormatterInterface interface {
 	FormatStatus(status *status.Status) error
 	// FormatTrailer formats the response trailer.
 	FormatTrailer(trailer metadata.MD)
+	// FormatDuration formats the elapsed time of the RPC.
+	FormatDuration(d time.Duration)
 	// Done indicates all response information is formatted.
 	// The client of ResponseFormatter should call it at the end.
 	Done() error

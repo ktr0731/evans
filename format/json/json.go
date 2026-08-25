@@ -5,6 +5,7 @@ import (
 	"bytes"
 	gojson "encoding/json"
 	"io"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
 	"github.com/golang/protobuf/proto"  //nolint:staticcheck
@@ -31,6 +32,7 @@ type responseFormatter struct {
 		Header   *metadata.MD             `json:"header,omitempty"`
 		Messages []map[string]interface{} `json:"messages,omitempty"`
 		Trailer  *metadata.MD             `json:"trailer,omitempty"`
+		Duration string                   `json:"duration,omitempty"`
 	}
 	p           present.Presenter
 	pbMarshaler *jsonpb.Marshaler
@@ -89,6 +91,10 @@ func (p *responseFormatter) FormatStatus(s *status.Status) error {
 		Details: details,
 	}
 	return nil
+}
+
+func (p *responseFormatter) FormatDuration(d time.Duration) {
+	p.s.Duration = d.String()
 }
 
 func (p *responseFormatter) Done() error {
