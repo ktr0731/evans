@@ -445,6 +445,7 @@ trailer_key2: trailer_val2
 code: OK
 number: 0
 message: ""
+duration: 1.23ms
 ```
 
 ### Repeat the previous call
@@ -643,6 +644,7 @@ trailer_key2: trailer_val2
 code: OK
 number: 0
 message: ""
+duration: 1.23ms
 ```
 
 JSON output is also available with `--out json` option.

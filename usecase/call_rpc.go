@@ -413,7 +413,9 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 		}
 
 		res := newResponse()
+		start := time.Now()
 		header, trailer, err := m.gRPCClient.Invoke(ctx, string(rpc.FullName()), req, res)
+		elapsed := time.Since(start)
 		stat, err := handleGRPCResponseError(err)
 		if err != nil {
 			cancel()
@@ -424,8 +426,15 @@ func (m *dependencyManager) CallRPC(ctx context.Context, w io.Writer, rpcName st
 			res = nil
 		}
 
-		err = flushAll(stat, header, trailer, res)
-		if err != nil {
+		flushHeader(header)
+		if err := flushResponse(res); err != nil {
+			return err
+		}
+		if err := flushTrailer(stat, trailer); err != nil {
+			return err
+		}
+		m.responseFormatter.FormatDuration(elapsed)
+		if err := flushDone(); err != nil {
 			return err
 		}
 

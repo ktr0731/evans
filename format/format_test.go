@@ -2,6 +2,7 @@ package format
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
@@ -10,7 +11,7 @@ import (
 )
 
 type formatter struct {
-	FormatHeaderCalled, FormatMessageCalled, FormatStatusCalled, FormatTrailerCalled bool
+	FormatHeaderCalled, FormatMessageCalled, FormatStatusCalled, FormatTrailerCalled, FormatDurationCalled bool
 }
 
 func (f *formatter) FormatHeader(header metadata.MD) {
@@ -29,6 +30,10 @@ func (f *formatter) FormatStatus(status *status.Status) error {
 
 func (f *formatter) FormatTrailer(trailer metadata.MD) {
 	f.FormatTrailerCalled = true
+}
+
+func (f *formatter) FormatDuration(d time.Duration) {
+	f.FormatDurationCalled = true
 }
 
 func (f *formatter) Done() error {
@@ -55,8 +60,13 @@ func TestResponseFormatter(t *testing.T) {
 			if err := f.FormatTrailer(status.New(codes.Internal, "internal error"), metadata.Pairs("key", "val")); err != nil {
 				t.Fatalf("FormatTrailer should not return an error, but got '%s'", err)
 			}
+			f.FormatDuration(time.Second)
 			if err := f.Done(); err != nil {
 				t.Fatalf("Done should not return an error, but got '%s'", err)
+			}
+
+			if impl.FormatDurationCalled != c.enrich {
+				t.Errorf("FormatDuration called = %t, but want %t", impl.FormatDurationCalled, c.enrich)
 			}
 
 			res := map[bool]bool{

@@ -8,6 +8,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
 	"github.com/golang/protobuf/proto"  //nolint:staticcheck
@@ -131,6 +132,10 @@ func (p *responseFormatter) FormatStatus(status *status.Status) error {
 		fmt.Fprintf(p.w, "\n")
 	}
 	return nil
+}
+
+func (p *responseFormatter) FormatDuration(d time.Duration) {
+	fmt.Fprintf(p.w, "duration: %s\n", d)
 }
 
 func (p *responseFormatter) Done() error {

@@ -95,8 +95,18 @@ func flatten(s string) string {
 	return re.ReplaceAllString(s, " ")
 }
 
+// curlDurationRe and jsonDurationRe match the non-deterministic RPC duration
+// line in enriched output so it can be normalized before comparing goldens.
+var (
+	curlDurationRe = regexp.MustCompile(`(?m)^duration: .*$`)
+	jsonDurationRe = regexp.MustCompile(`"duration": ".*?"`)
+)
+
 func compareWithGolden(t *testing.T, actual string) {
 	t.Helper()
+
+	actual = curlDurationRe.ReplaceAllString(actual, "duration: <duration>")
+	actual = jsonDurationRe.ReplaceAllString(actual, `"duration": "<duration>"`)
 
 	name := t.Name()
 	normalizeFilename := func(name string) string {
