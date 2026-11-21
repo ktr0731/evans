@@ -34,16 +34,9 @@ func newGRPCClient(cfg *config.Config) (grpc.Client, error) {
 }
 
 func gRPCReflectionPackageFilteredPackages(pkgNames []string) []string {
-	pkgs := make([]string, len(pkgNames))
-	copy(pkgs, pkgNames)
-
 	n := grpcreflection.ServiceName[:strings.LastIndex(grpcreflection.ServiceName, ".")]
-	for i := range pkgs {
-		if n == pkgs[i] {
-			return append(pkgs[:i], pkgs[i+1:]...)
-		}
-	}
-	return pkgs
+	nV1 := grpcreflection.ServiceNameV1[:strings.LastIndex(grpcreflection.ServiceNameV1, ".")]
+	return dropString(dropString(pkgNames, n), nV1)
 }
 
 func setDefault(cfg *config.Config) error {
@@ -84,7 +77,8 @@ func setDefault(cfg *config.Config) error {
 		}
 
 		// Ignore server reflection name because it's provided imply when reflection is enabled.
-		svcNames = dropString(svcNames, "grpc.reflection.v1alpha.ServerReflection")
+		svcNames = dropString(svcNames, grpcreflection.ServiceName)
+		svcNames = dropString(svcNames, grpcreflection.ServiceNameV1)
 
 		if len(svcNames) != 1 {
 			return nil

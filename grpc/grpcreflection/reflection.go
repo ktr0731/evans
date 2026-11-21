@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -21,6 +20,9 @@ import (
 
 // ServiceName represents the gRPC reflection service name.
 const ServiceName = "grpc.reflection.v1alpha.ServerReflection"
+
+// ServiceNameV1 represents the gRPC v1 reflection service name.
+const ServiceNameV1 = "grpc.reflection.v1.ServerReflection"
 
 var ErrTLSHandshakeFailed = errors.New("TLS handshake failed")
 
@@ -52,7 +54,7 @@ func getCtx(headers map[string][]string) context.Context {
 // NewClient returns an instance of gRPC reflection client for gRPC protocol.
 func NewClient(conn grpc.ClientConnInterface, headers map[string][]string) Client {
 	return &client{
-		client:   gr.NewClientV1Alpha(getCtx(headers), grpc_reflection_v1alpha.NewServerReflectionClient(conn)),
+		client:   gr.NewClientAuto(getCtx(headers), conn),
 		resolver: protoregistry.GlobalFiles,
 	}
 }
